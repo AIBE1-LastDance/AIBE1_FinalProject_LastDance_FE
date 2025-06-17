@@ -25,7 +25,12 @@ function App() {
     console.log('App component rendered, isAuthenticated:', isAuthenticated);
 
     return (
-        <Router>
+        <Router 
+            future={{
+                v7_startTransition: true,
+                v7_relativeSplatPath: true
+            }}
+        >
             <ScrollToTop/>
             {/* Version indicator for debugging */}
             <div style={{

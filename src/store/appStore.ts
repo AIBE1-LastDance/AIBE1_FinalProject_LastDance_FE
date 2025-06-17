@@ -34,6 +34,8 @@ interface AppState {
   addTask: (task: Omit<Task, 'id' | 'createdAt'>) => void;
   updateTask: (id: string, updates: Partial<Task>) => void;
   deleteTask: (id: string) => void;
+  toggleTask: (id: string) => void;
+  reorderTasks: (startIndex: number, endIndex: number) => void;
   
   // Event actions
   addEvent: (event: Omit<Event, 'id'>) => void;
@@ -402,6 +404,29 @@ export const useAppStore = create<AppState>()(
         }));
       },
 
+      toggleTask: (id) => {
+        set((state) => ({
+          tasks: state.tasks.map(task =>
+            task.id === id 
+              ? { 
+                  ...task, 
+                  completed: !task.completed,
+                  completedAt: !task.completed ? new Date() : undefined
+                } 
+              : task
+          )
+        }));
+      },
+
+      reorderTasks: (startIndex, endIndex) => {
+        set((state) => {
+          const result = Array.from(state.tasks);
+          const [removed] = result.splice(startIndex, 1);
+          result.splice(endIndex, 0, removed);
+          return { tasks: result };
+        });
+      },
+
       // Event actions
       addEvent: (eventData) => {
         const newEvent: Event = {
@@ -496,94 +521,103 @@ export const useAppStore = create<AppState>()(
         currentView: state.currentView,
         version: state.version,
       }),
-      // Date 객체 직렬화/역직렬화 처리
-      serialize: (state) => {
-        const serialized = JSON.stringify({
-          ...state,
-          state: {
-            ...state.state,
-            currentDate: state.state.currentDate?.toISOString(),
-            version: state.state.version,
-            joinedGroups: state.state.joinedGroups?.map((group: Group) => ({
-              ...group,
-              createdAt: group.createdAt?.toISOString(),
-            })),
-            tasks: state.state.tasks?.map((task: Task) => ({
-              ...task,
-              createdAt: task.createdAt?.toISOString(),
-              dueDate: task.dueDate?.toISOString(),
-            })),
-            events: state.state.events?.map((event: Event) => ({
-              ...event,
-              date: event.date?.toISOString(),
-              endDate: event.endDate?.toISOString(),
-            })),
-            expenses: state.state.expenses?.map((expense: Expense) => ({
-              ...expense,
-              createdAt: expense.createdAt?.toISOString(),
-              date: expense.date?.toISOString(),
-            })),
-            posts: state.state.posts?.map((post: Post) => ({
-              ...post,
-              createdAt: post.createdAt?.toISOString(),
-              comments: post.comments?.map((comment) => ({
-                ...comment,
-                createdAt: comment.createdAt?.toISOString(),
+      storage: {
+        getItem: (name) => {
+          const str = localStorage.getItem(name);
+          if (!str) return null;
+
+          try {
+            const parsed = JSON.parse(str);
+            
+            // 버전 체크 및 마이그레이션
+            const dataVersion = parsed.state.version || 1;
+            if (dataVersion < STORE_VERSION) {
+              console.log(`Migrating app store from version ${dataVersion} to ${STORE_VERSION}`);
+              // 새로운 샘플 그룹 데이터로 교체
+              parsed.state.joinedGroups = sampleGroups;
+              parsed.state.currentGroup = null; // 현재 그룹 초기화
+              parsed.state.posts = samplePosts; // 새로운 샘플 포스트 데이터 적용
+              parsed.state.version = STORE_VERSION;
+            }
+            
+            return {
+              ...parsed,
+              state: {
+                ...parsed.state,
+                currentDate: parsed.state.currentDate ? new Date(parsed.state.currentDate) : new Date(),
+                joinedGroups: parsed.state.joinedGroups?.map((group: any) => ({
+                  ...group,
+                  createdAt: group.createdAt ? new Date(group.createdAt) : new Date(),
+                })) || sampleGroups,
+                tasks: parsed.state.tasks?.map((task: any) => ({
+                  ...task,
+                  createdAt: task.createdAt ? new Date(task.createdAt) : new Date(),
+                  dueDate: task.dueDate ? new Date(task.dueDate) : undefined,
+                })) || [],
+                events: parsed.state.events?.map((event: any) => ({
+                  ...event,
+                  date: event.date ? new Date(event.date) : new Date(),
+                  endDate: event.endDate ? new Date(event.endDate) : undefined,
+                })) || [],
+                expenses: parsed.state.expenses?.map((expense: any) => ({
+                  ...expense,
+                  createdAt: expense.createdAt ? new Date(expense.createdAt) : new Date(),
+                  date: expense.date ? new Date(expense.date) : new Date(),
+                })) || [],
+                posts: parsed.state.posts?.map((post: any) => ({
+                  ...post,
+                  createdAt: post.createdAt ? new Date(post.createdAt) : new Date(),
+                  comments: post.comments?.map((comment: any) => ({
+                    ...comment,
+                    createdAt: comment.createdAt ? new Date(comment.createdAt) : new Date(),
+                  })) || [],
+                })) || samplePosts,
+                version: STORE_VERSION,
+              },
+            };
+          } catch (error) {
+            console.error('Error parsing stored data:', error);
+            return null;
+          }
+        },
+        setItem: (name, value) => {
+          const serializedValue = JSON.stringify({
+            ...value,
+            state: {
+              ...value.state,
+              currentDate: value.state.currentDate?.toISOString(),
+              joinedGroups: value.state.joinedGroups?.map((group: Group) => ({
+                ...group,
+                createdAt: group.createdAt?.toISOString(),
               })),
-            })),
-          },
-        });
-        return serialized;
-      },
-      deserialize: (str) => {
-        const parsed = JSON.parse(str);
-        
-        // 버전 체크 및 마이그레이션
-        const dataVersion = parsed.state.version || 1;
-        if (dataVersion < STORE_VERSION) {
-          console.log(`Migrating app store from version ${dataVersion} to ${STORE_VERSION}`);
-          // 새로운 샘플 그룹 데이터로 교체
-          parsed.state.joinedGroups = sampleGroups;
-          parsed.state.currentGroup = null; // 현재 그룹 초기화
-          parsed.state.posts = samplePosts; // 새로운 샘플 포스트 데이터 적용
-          parsed.state.version = STORE_VERSION;
-        }
-        
-        return {
-          ...parsed,
-          state: {
-            ...parsed.state,
-            currentDate: parsed.state.currentDate ? new Date(parsed.state.currentDate) : new Date(),
-            joinedGroups: parsed.state.joinedGroups?.map((group: any) => ({
-              ...group,
-              createdAt: group.createdAt ? new Date(group.createdAt) : new Date(),
-            })) || sampleGroups, // 폴백으로 새 샘플 데이터 사용
-            tasks: parsed.state.tasks?.map((task: any) => ({
-              ...task,
-              createdAt: task.createdAt ? new Date(task.createdAt) : new Date(),
-              dueDate: task.dueDate ? new Date(task.dueDate) : undefined,
-            })) || [],
-            events: parsed.state.events?.map((event: any) => ({
-              ...event,
-              date: event.date ? new Date(event.date) : new Date(),
-              endDate: event.endDate ? new Date(event.endDate) : undefined,
-            })) || [],
-            expenses: parsed.state.expenses?.map((expense: any) => ({
-              ...expense,
-              createdAt: expense.createdAt ? new Date(expense.createdAt) : new Date(),
-              date: expense.date ? new Date(expense.date) : new Date(),
-            })) || [],
-            posts: parsed.state.posts?.map((post: any) => ({
-              ...post,
-              createdAt: post.createdAt ? new Date(post.createdAt) : new Date(),
-              comments: post.comments?.map((comment: any) => ({
-                ...comment,
-                createdAt: comment.createdAt ? new Date(comment.createdAt) : new Date(),
-              })) || [],
-            })) || samplePosts, // 폴백으로 새 샘플 데이터 사용
-            version: STORE_VERSION, // 항상 최신 버전으로 설정
-          },
-        };
+              tasks: value.state.tasks?.map((task: Task) => ({
+                ...task,
+                createdAt: task.createdAt?.toISOString(),
+                dueDate: task.dueDate?.toISOString(),
+              })),
+              events: value.state.events?.map((event: Event) => ({
+                ...event,
+                date: event.date?.toISOString(),
+                endDate: event.endDate?.toISOString(),
+              })),
+              expenses: value.state.expenses?.map((expense: Expense) => ({
+                ...expense,
+                createdAt: expense.createdAt?.toISOString(),
+                date: expense.date?.toISOString(),
+              })),
+              posts: value.state.posts?.map((post: Post) => ({
+                ...post,
+                createdAt: post.createdAt?.toISOString(),
+                comments: post.comments?.map((comment) => ({
+                  ...comment,
+                  createdAt: comment.createdAt?.toISOString(),
+                })),
+              })),
+            },
+          });
+          localStorage.setItem(name, serializedValue);
+        },
+        removeItem: (name) => localStorage.removeItem(name),
       },
     }
   )

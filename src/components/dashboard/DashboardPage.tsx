@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Calendar, CheckSquare, CreditCard, TrendingUp, Clock, Target, BarChart3, Activity, PieChart, ChevronLeft, ChevronRight, Circle, Flag } from 'lucide-react';
+import { Calendar, CheckSquare, CreditCard, TrendingUp, Clock, Target, BarChart3, Activity, PieChart, ChevronLeft, ChevronRight, Circle, Flag, Users, Plus } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useAppStore } from '../../store/appStore';
 import { useNavigate } from 'react-router-dom';
@@ -10,7 +10,7 @@ import { ko } from 'date-fns/locale';
 
 const DashboardPage: React.FC = () => {
   const { user } = useAuthStore();
-  const { mode, currentGroup, tasks, expenses, events } = useAppStore();
+  const { mode, currentGroup, tasks, expenses, events, toggleTask } = useAppStore();
   const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [calendarDate, setCalendarDate] = useState(new Date());
@@ -87,23 +87,19 @@ const DashboardPage: React.FC = () => {
     setCalendarDate(addMonths(calendarDate, 1));
   };
 
-  const getEventsForDate = (date: Date) => {
-    console.log('Dashboard - Getting events for date:', date);
-    console.log('Dashboard - All events:', events);
-    console.log('Dashboard - Current mode:', mode);
-
+  const getEventsForDate = React.useCallback((date: Date) => {
     // Ensure date is a valid Date object
     const safeDate = date instanceof Date ? date : new Date();
     const targetDate = new Date(safeDate.getFullYear(), safeDate.getMonth(), safeDate.getDate());
 
     const filteredEvents = events.filter(event => {
       // Ensure event.date is a valid Date object
-      const eventDate = event.date instanceof Date ? new Date(event.date) : new Date();
+      const eventDate = event.date instanceof Date ? new Date(event.date) : new Date(event.date);
       const eventDateOnly = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
 
       const isSameDay = targetDate.getTime() === eventDateOnly.getTime();
 
-      // 모드에 따른 필터링 수정
+      // 모드에 따른 필터링
       let modeFilter = false;
       if (mode === 'personal') {
         // 개인모드: groupId가 없는 일정만 표시
@@ -113,24 +109,13 @@ const DashboardPage: React.FC = () => {
         modeFilter = !!event.groupId;
       }
 
-      console.log(`Dashboard - Event ${event.title}:`, {
-        eventDateOnly,
-        targetDate,
-        isSameDay,
-        modeFilter,
-        groupId: event.groupId,
-        mode,
-        finalResult: isSameDay && modeFilter
-      });
-
       return isSameDay && modeFilter;
     });
 
-    console.log('Dashboard - Filtered events for date:', filteredEvents);
     return filteredEvents;
-  };
+  }, [events, mode]);
 
-  const selectedDateEvents = getEventsForDate(selectedDate);
+  const selectedDateEvents = React.useMemo(() => getEventsForDate(selectedDate), [getEventsForDate, selectedDate]);
 
   // Filter tasks for current mode
   const filteredTasks = tasks.filter(task => 
@@ -325,8 +310,8 @@ const DashboardPage: React.FC = () => {
             <h3 className="text-lg font-bold text-gray-900">주간 활동</h3>
             <Activity className="w-5 h-5 text-primary-600" />
           </div>
-          <div className="flex-1 min-h-0">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="flex-1 min-h-[200px]">
+            <ResponsiveContainer width="100%" height={200}>
               <AreaChart data={activityData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="day" />
@@ -367,7 +352,7 @@ const DashboardPage: React.FC = () => {
             {/* Pie Chart */}
             <div className="h-48">
               {expenseChartData.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height={180}>
                   <RechartsPieChart>
                     <Pie
                       data={expenseChartData}
@@ -394,7 +379,7 @@ const DashboardPage: React.FC = () => {
 
             {/* Monthly Trend Bar Chart */}
             <div className="h-48">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height={180}>
                 <BarChart data={monthlyExpenseData}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="month" axisLine={false} tickLine={false} />
@@ -621,7 +606,7 @@ const DashboardPage: React.FC = () => {
                     whileTap={{ scale: 0.9 }}
                     onClick={(e) => {
                       e.stopPropagation();
-                      useAppStore.getState().toggleTask(task.id);
+                      toggleTask(task.id);
                     }}
                   >
                     {task.completed && (
