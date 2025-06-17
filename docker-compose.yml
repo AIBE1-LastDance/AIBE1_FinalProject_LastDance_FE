@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  woori-zip:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    networks:
+      - woori-zip-network
+
+  # 필요시 데이터베이스나 다른 서비스를 여기에 추가할 수 있습니다
+  # postgres:
+  #   image: postgres:15-alpine
+  #   environment:
+  #     POSTGRES_USER: woori
+  #     POSTGRES_PASSWORD: password
+  #     POSTGRES_DB: woori_zip
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   ports:
+  #     - "5432:5432"
+  #   networks:
+  #     - woori-zip-network
+
+  # redis:
+  #   image: redis:7-alpine
+  #   ports:
+  #     - "6379:6379"
+  #   networks:
+  #     - woori-zip-network
+
+networks:
+  woori-zip-network:
+    driver: bridge
+
+# volumes:
+#   postgres_data:
