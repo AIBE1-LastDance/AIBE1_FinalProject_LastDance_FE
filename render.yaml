@@ -2,6 +2,9 @@ services:
   - type: web
     name: lastdance-frontend
     env: docker
+    # Docker Hub 이미지 사용 (나중에 설정)
+    # image:
+    #   url: your-dockerhub-username/lastdance-frontend:latest
     dockerfilePath: ./Dockerfile
     region: singapore
     plan: free
