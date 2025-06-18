@@ -13,6 +13,7 @@ interface AppState {
   events: Event[];
   expenses: Expense[];
   posts: Post[];
+  savedAnalyses: any[]; // AI 분석 결과 저장
   currentDate: Date;
   currentView: 'year' | 'month' | 'week' | 'day';
   version?: number; // 버전 관리용
@@ -51,6 +52,10 @@ interface AppState {
   addPost: (post: Omit<Post, 'id' | 'createdAt'>) => void;
   updatePost: (id: string, updates: Partial<Post>) => void;
   deletePost: (id: string) => void;
+
+  // Analysis actions
+  saveAnalysis: (analysis: any) => void;
+  deleteAnalysis: (id: string) => void;
 }
 
 const generateId = () => Math.random().toString(36).substr(2, 9);
@@ -241,9 +246,12 @@ const sampleGroups: Group[] = [
   {
     id: 'group1',
     name: '우리 가족',
+    description: '가족 공동 관리',
     code: 'FAM123',
     createdBy: 'user1', // 현재 로그인한 사용자로 변경
     createdAt: new Date('2024-01-01'),
+    maxMembers: 10,
+    monthlyBudget: 1000000, // 100만원
     members: [
       { id: 'google_user_123', name: '김우리', email: 'woori@gmail.com' },
       { id: 'user1', name: '김아빠', email: 'dad@family.com' },
@@ -254,9 +262,12 @@ const sampleGroups: Group[] = [
   {
     id: 'group2',
     name: '우리집 하우스메이트',
+    description: '룸메이트 공동 관리',
     code: 'HOUSE2024',
     createdBy: 'google_user_123',
     createdAt: new Date('2024-02-01'),
+    maxMembers: 6,
+    monthlyBudget: 500000, // 50만원
     members: [
       { id: 'google_user_123', name: '김우리', email: 'woori@gmail.com' },
       { id: 'user4', name: '이룸메', email: 'roommate1@example.com' },
@@ -275,6 +286,7 @@ export const useAppStore = create<AppState>()(
       events: [],
       expenses: [],
       posts: samplePosts,
+      savedAnalyses: [],
       currentDate: new Date(),
       currentView: 'month',
       version: STORE_VERSION,
@@ -329,9 +341,12 @@ export const useAppStore = create<AppState>()(
         const mockGroup: Group = {
           id: generateId(),
           name: '새로운 그룹',
+          description: '새로 가입한 그룹',
           code: groupCode,
           createdBy: 'other_user',
           createdAt: new Date(),
+          maxMembers: 10,
+          monthlyBudget: 300000, // 기본 30만원
           members: [
             { id: 'other_user', name: '그룹장', email: 'leader@group.com' },
             { id: 'current_user', name: '나', email: 'me@example.com' }
@@ -506,6 +521,19 @@ export const useAppStore = create<AppState>()(
           posts: state.posts.filter(post => post.id !== id)
         }));
       },
+
+      // Analysis actions
+      saveAnalysis: (analysis) => {
+        set((state) => ({
+          savedAnalyses: [analysis, ...state.savedAnalyses]
+        }));
+      },
+
+      deleteAnalysis: (id) => {
+        set((state) => ({
+          savedAnalyses: state.savedAnalyses.filter(analysis => analysis.id !== id)
+        }));
+      },
     }),
     {
       name: 'app-storage-v4', // 키 이름 변경으로 강제 리셋
@@ -517,6 +545,7 @@ export const useAppStore = create<AppState>()(
         events: state.events,
         expenses: state.expenses,
         posts: state.posts,
+        savedAnalyses: state.savedAnalyses,
         currentDate: state.currentDate,
         currentView: state.currentView,
         version: state.version,
@@ -564,6 +593,10 @@ export const useAppStore = create<AppState>()(
                   createdAt: expense.createdAt ? new Date(expense.createdAt) : new Date(),
                   date: expense.date ? new Date(expense.date) : new Date(),
                 })) || [],
+                savedAnalyses: parsed.state.savedAnalyses?.map((analysis: any) => ({
+                  ...analysis,
+                  date: analysis.date ? new Date(analysis.date) : new Date(),
+                })) || [],
                 posts: parsed.state.posts?.map((post: any) => ({
                   ...post,
                   createdAt: post.createdAt ? new Date(post.createdAt) : new Date(),
@@ -604,6 +637,10 @@ export const useAppStore = create<AppState>()(
                 ...expense,
                 createdAt: expense.createdAt?.toISOString(),
                 date: expense.date?.toISOString(),
+              })),
+              savedAnalyses: value.state.savedAnalyses?.map((analysis: any) => ({
+                ...analysis,
+                date: analysis.date?.toISOString(),
               })),
               posts: value.state.posts?.map((post: Post) => ({
                 ...post,

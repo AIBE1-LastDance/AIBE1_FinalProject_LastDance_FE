@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
 import {motion, AnimatePresence} from 'framer-motion';
-import {Plus, PieChart, BarChart3, TrendingUp, Receipt, Calendar, Filter, Search, Bot, Sparkles, AlertTriangle, CheckCircle, TrendingDown} from 'lucide-react';
+import {Plus, PieChart, BarChart3, TrendingUp, Receipt, Calendar, Filter, Search, Bot, Sparkles, AlertTriangle, CheckCircle, TrendingDown, ChevronLeft, ChevronRight, Share2} from 'lucide-react';
 import {
     PieChart as RechartsPieChart,
     Pie,
@@ -20,15 +20,18 @@ import {ko} from 'date-fns/locale';
 import ExpenseModal from './ExpenseModal';
 
 const ExpensesPage: React.FC = () => {
-    const {expenses, mode, currentGroup} = useAppStore();
+    const {expenses, mode, currentGroup, savedAnalyses, saveAnalysis} = useAppStore();
     const {user} = useAuthStore();
     const [showExpenseModal, setShowExpenseModal] = useState(false);
     const [selectedExpense, setSelectedExpense] = useState(null);
-    const [currentMonth] = useState(new Date());
+    const [currentMonth, setCurrentMonth] = useState(new Date());
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState<string>('all');
     const [showAnalysis, setShowAnalysis] = useState(false);
     const [analysisLoading, setAnalysisLoading] = useState(false);
+    const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+    const [activeTab, setActiveTab] = useState<'expenses' | 'analyses'>('expenses');
+    const [selectedAnalysis, setSelectedAnalysis] = useState(null);
 
     const filteredExpenses = expenses.filter(expense => {
         const isModeMatch = mode === 'personal' ? !expense.groupId : expense.groupId;
@@ -188,6 +191,7 @@ const ExpensesPage: React.FC = () => {
     // AI 분석 생성 함수
     const generateAIAnalysis = () => {
         setAnalysisLoading(true);
+        setSelectedAnalysis(null); // 새로운 분석이므로 선택된 분석 초기화
         
         // 실제로는 LLM API를 호출하지만, 여기서는 시뮬레이션
         setTimeout(() => {
@@ -196,8 +200,48 @@ const ExpensesPage: React.FC = () => {
         }, 2000);
     };
 
-    // AI 분석 데이터 생성
+    // 분석 저장 함수
+    const saveAnalysisResult = () => {
+        const analysis = getAIAnalysis();
+        const savedAnalysis = {
+            id: Date.now().toString(),
+            month: format(currentMonth, 'yyyy년 M월', {locale: ko}),
+            date: new Date(),
+            data: analysis,
+            totalAmount,
+            categoryBreakdown: analytics.categoryBreakdown
+        };
+        
+        saveAnalysis(savedAnalysis);
+        setShowAnalysis(false);
+        alert('분석 결과를 저장했습니다!');
+    };
+
+    // 이전/다음 달 이동
+    const handlePreviousMonth = () => {
+        setCurrentMonth(prev => subMonths(prev, 1));
+    };
+
+    const handleNextMonth = () => {
+        setCurrentMonth(prev => {
+            const nextMonth = new Date(prev.getFullYear(), prev.getMonth() + 1, 1);
+            const today = new Date();
+            // 미래 월로는 이동하지 않음
+            if (nextMonth <= today) {
+                return nextMonth;
+            }
+            return prev;
+        });
+    };
+
+    // AI 분석 데이터 생성 (현재 또는 선택된 분석)
     const getAIAnalysis = () => {
+        // 선택된 분석이 있으면 그것을 반환
+        if (selectedAnalysis) {
+            return selectedAnalysis.data;
+        }
+        
+        // 새로운 분석 생성
         const totalBudget = 2000000; // 200만원 예산 가정
         const spendingRate = (totalAmount / totalBudget) * 100;
         const previousMonthAmount = totalAmount * 0.85; // 이전 달 대비 가정
@@ -304,12 +348,34 @@ const ExpensesPage: React.FC = () => {
             {/* Header */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900">
-                        {mode === 'personal' ? '내 가계부' : '공동 가계부'}
-                    </h1>
-                    <p className="text-gray-600 mt-1">
-                        {format(currentMonth, 'yyyy년 M월', {locale: ko})} 지출 현황
-                    </p>
+                    <div className="flex items-center space-x-4">
+                        <h1 className="text-3xl font-bold text-gray-900">
+                            {mode === 'personal' ? '내 가계부' : '공동 가계부'}
+                        </h1>
+                        
+                        <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={handlePreviousMonth}
+                            className="p-2 rounded-lg hover:bg-gray-100"
+                        >
+                            <ChevronLeft className="w-5 h-5" />
+                        </motion.button>
+                        
+                        <p className="text-gray-600">
+                            {format(currentMonth, 'yyyy년 M월', {locale: ko})} 지출 현황
+                        </p>
+
+                        <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={handleNextMonth}
+                            className="p-2 rounded-lg hover:bg-gray-100"
+                            disabled={new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1) > new Date()}
+                        >
+                            <ChevronRight className="w-5 h-5" />
+                        </motion.button>
+                    </div>
                 </div>
 
                 <div className="flex items-center space-x-4">
@@ -319,45 +385,116 @@ const ExpensesPage: React.FC = () => {
                         <input
                             type="text"
                             placeholder="지출 검색..."
-                            className="pl-10 pr-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                            className="pl-10 pr-4 py-3 border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white hover:bg-gray-50 transition-colors font-medium text-gray-700 placeholder-gray-400 shadow-sm"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
 
-                    {/* Category Filter */}
+                    {/* Category Filter - Custom Dropdown */}
                     <div className="relative">
-                        <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4"/>
-                        <select
-                            className="pl-10 pr-8 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent appearance-none bg-white"
-                            value={categoryFilter}
-                            onChange={(e) => setCategoryFilter(e.target.value)}
+                        <motion.button
+                            className="flex items-center space-x-3 pl-3 pr-4 py-3 border border-gray-200 rounded-2xl text-sm bg-white hover:bg-gray-50 transition-colors font-medium text-gray-700 cursor-pointer shadow-sm min-w-[140px]"
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
                         >
-                            {categories.map(cat => (
-                                <option key={cat.value} value={cat.value}>{cat.label}</option>
-                            ))}
-                        </select>
+                            <Filter className="w-4 h-4 text-gray-400"/>
+                            <span className="flex-1 text-left">
+                                {categories.find(cat => cat.value === categoryFilter)?.label}
+                            </span>
+                            <motion.svg 
+                                className="w-4 h-4 text-gray-400" 
+                                fill="none" 
+                                stroke="currentColor" 
+                                viewBox="0 0 24 24"
+                                animate={{ rotate: showCategoryDropdown ? 180 : 0 }}
+                                transition={{ duration: 0.2 }}
+                            >
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </motion.svg>
+                        </motion.button>
+
+                        {/* Custom Dropdown Menu */}
+                        <AnimatePresence>
+                            {showCategoryDropdown && (
+                                <>
+                                    {/* Backdrop */}
+                                    <div 
+                                        className="fixed inset-0 z-10" 
+                                        onClick={() => setShowCategoryDropdown(false)}
+                                    />
+                                    
+                                    {/* Dropdown */}
+                                    <motion.div
+                                        initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                                        transition={{ duration: 0.2 }}
+                                        className="absolute top-full mt-2 left-0 right-0 bg-white rounded-2xl shadow-lg border border-gray-200 py-2 z-20"
+                                    >
+                                        {categories.map((cat, index) => (
+                                            <motion.button
+                                                key={cat.value}
+                                                className={`w-full text-left px-4 py-3 text-sm hover:bg-gray-50 transition-colors flex items-center space-x-3 ${
+                                                    categoryFilter === cat.value ? 'bg-primary-50 text-primary-600 font-medium' : 'text-gray-700'
+                                                }`}
+                                                whileHover={{ x: 4 }}
+                                                onClick={() => {
+                                                    setCategoryFilter(cat.value);
+                                                    setShowCategoryDropdown(false);
+                                                }}
+                                            >
+                                                <div className={`w-2 h-2 rounded-full ${
+                                                    cat.value === 'all' ? 'bg-gray-400' : 
+                                                    cat.value === 'food' ? 'bg-red-400' :
+                                                    cat.value === 'utilities' ? 'bg-teal-400' :
+                                                    cat.value === 'transport' ? 'bg-blue-400' :
+                                                    cat.value === 'shopping' ? 'bg-green-400' :
+                                                    cat.value === 'entertainment' ? 'bg-yellow-400' :
+                                                    'bg-purple-400'
+                                                }`} />
+                                                <span>{cat.label}</span>
+                                                {categoryFilter === cat.value && (
+                                                    <motion.div
+                                                        initial={{ scale: 0 }}
+                                                        animate={{ scale: 1 }}
+                                                        className="ml-auto"
+                                                    >
+                                                        <svg className="w-4 h-4 text-primary-600" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                        </svg>
+                                                    </motion.div>
+                                                )}
+                                            </motion.button>
+                                        ))}
+                                    </motion.div>
+                                </>
+                            )}
+                        </AnimatePresence>
                     </div>
 
-                    {/* AI Analysis Button */}
-                    <motion.button
-                        className="flex items-center space-x-2 px-4 py-2 bg-primary-500 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors"
-                        whileHover={{scale: 1.05}}
-                        whileTap={{scale: 0.95}}
-                        onClick={generateAIAnalysis}
-                        disabled={analysisLoading}
-                    >
-                        {analysisLoading ? (
-                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                            <Bot className="w-5 h-5"/>
-                        )}
-                        <span>{analysisLoading ? '분석 중...' : 'AI 분석'}</span>
-                    </motion.button>
+                    {/* AI Analysis Button - 개인 모드에서만 표시 */}
+                    {mode === 'personal' && (
+                        <motion.button
+                            className="flex items-center space-x-2 px-6 py-3 bg-primary-500 text-white rounded-2xl font-medium hover:bg-primary-700 transition-colors shadow-md hover:shadow-lg"
+                            whileHover={{scale: 1.05}}
+                            whileTap={{scale: 0.95}}
+                            onClick={generateAIAnalysis}
+                            disabled={analysisLoading}
+                        >
+                            {analysisLoading ? (
+                                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            ) : (
+                                <Bot className="w-5 h-5"/>
+                            )}
+                            <span>{analysisLoading ? '분석 중...' : 'AI 분석'}</span>
+                        </motion.button>
+                    )}
 
                     {/* Add Expense Button */}
                     <motion.button
-                        className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors"
+                        className="flex items-center space-x-2 px-6 py-3 bg-primary-600 text-white rounded-2xl font-medium hover:bg-primary-700 transition-colors shadow-md hover:shadow-lg"
                         whileHover={{scale: 1.05}}
                         whileTap={{scale: 0.95}}
                         onClick={() => {
@@ -646,84 +783,174 @@ const ExpensesPage: React.FC = () => {
                 </motion.div>
             )}
 
-            {/* Expenses List */}
+            {/* Expenses List with Tabs */}
             <motion.div
                 className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden"
                 initial={{opacity: 0, y: 20}}
                 animate={{opacity: 1, y: 0}}
                 transition={{duration: 0.5, delay: 0.2}}
             >
-                <div className="p-6 border-b border-gray-200">
-                    <h3 className="text-lg font-semibold text-gray-900">지출 내역</h3>
+                <div className="border-b border-gray-200">
+                    <div className="flex">
+                        <button
+                            className={`flex-1 px-6 py-4 text-sm font-medium transition-colors ${
+                                activeTab === 'expenses'
+                                    ? 'text-primary-600 border-b-2 border-primary-600 bg-primary-50'
+                                    : 'text-gray-500 hover:text-gray-700'
+                            }`}
+                            onClick={() => setActiveTab('expenses')}
+                        >
+                            지출 내역
+                        </button>
+                        {mode === 'personal' && (
+                            <button
+                                className={`flex-1 px-6 py-4 text-sm font-medium transition-colors ${
+                                    activeTab === 'analyses'
+                                        ? 'text-primary-600 border-b-2 border-primary-600 bg-primary-50'
+                                        : 'text-gray-500 hover:text-gray-700'
+                                }`}
+                                onClick={() => setActiveTab('analyses')}
+                            >
+                                AI 분석 내역 {savedAnalyses.length > 0 && (
+                                    <span className="ml-2 px-2 py-1 bg-primary-100 text-primary-600 rounded-full text-xs">
+                                        {savedAnalyses.length}
+                                    </span>
+                                )}
+                            </button>
+                        )}
+                    </div>
                 </div>
 
-                <div className="divide-y divide-gray-100">
-                    {filteredExpenses.length > 0 ? (
-                        filteredExpenses.map((expense) => (
-                            <motion.div
-                                key={expense.id}
-                                className="p-6 hover:bg-gray-50 transition-all duration-200 cursor-pointer group"
-                                whileHover={{x: 5}}
-                                onClick={() => handleExpenseClick(expense)}
-                            >
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center space-x-4">
-                                        <div
-                                            className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all group-hover:scale-110`}
-                                            style={{
-                                                backgroundColor: categoryData.find(cat => cat.category === expense.category)?.color + '20'
-                                            }}
-                                        >
-                                            <Receipt
-                                                className="w-6 h-6"
+                {activeTab === 'expenses' ? (
+                    <div className="divide-y divide-gray-100">
+                        {filteredExpenses.length > 0 ? (
+                            filteredExpenses.map((expense) => (
+                                <motion.div
+                                    key={expense.id}
+                                    className="p-6 hover:bg-gray-50 transition-all duration-200 cursor-pointer group"
+                                    whileHover={{x: 5}}
+                                    onClick={() => handleExpenseClick(expense)}
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center space-x-4">
+                                            <div
+                                                className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all group-hover:scale-110`}
                                                 style={{
-                                                    color: categoryData.find(cat => cat.category === expense.category)?.color || '#df6d14'
+                                                    backgroundColor: categoryData.find(cat => cat.category === expense.category)?.color + '20'
                                                 }}
-                                            />
-                                        </div>
-                                        <div>
-                                            <h4 className="font-semibold text-gray-900 group-hover:text-[#df6d14] transition-colors">{expense.title}</h4>
-                                            <div className="flex items-center space-x-3 text-sm text-gray-500">
-                                                <span>{categoryData.find(cat => cat.category === expense.category)?.label}</span>
-                                                <span>•</span>
-                                                <div className="flex items-center space-x-1">
-                                                    <Calendar className="w-3 h-3"/>
-                                                    <span>{format(new Date(expense.date), 'M월 d일 HH:mm', {locale: ko})}</span>
+                                            >
+                                                <Receipt
+                                                    className="w-6 h-6"
+                                                    style={{
+                                                        color: categoryData.find(cat => cat.category === expense.category)?.color || '#df6d14'
+                                                    }}
+                                                />
+                                            </div>
+                                            <div>
+                                                <h4 className="font-semibold text-gray-900 group-hover:text-[#df6d14] transition-colors">{expense.title}</h4>
+                                                <div className="flex items-center space-x-3 text-sm text-gray-500">
+                                                    <span>{categoryData.find(cat => cat.category === expense.category)?.label}</span>
+                                                    <span>•</span>
+                                                    <div className="flex items-center space-x-1">
+                                                        <Calendar className="w-3 h-3"/>
+                                                        <span>{format(new Date(expense.date), 'M월 d일 HH:mm', {locale: ko})}</span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-lg font-bold text-gray-900">{formatCurrency(expense.amount)}</p>
-                                        {expense.memo && (
-                                            <p className="text-sm text-gray-500 truncate max-w-32">{expense.memo}</p>
-                                        )}
-                                        <div className="text-xs text-[#df6d14] mt-1">
-                                            전체의 {((expense.amount / (allCategoryExpenses.reduce((sum, e) => sum + e.amount, 0) || 1)) * 100).toFixed(1)}%
+                                        <div className="text-right">
+                                            <p className="text-lg font-bold text-gray-900">{formatCurrency(expense.amount)}</p>
+                                            {expense.memo && (
+                                                <p className="text-sm text-gray-500 truncate max-w-32">{expense.memo}</p>
+                                            )}
+                                            <div className="text-xs text-[#df6d14] mt-1">
+                                                전체의 {((expense.amount / (allCategoryExpenses.reduce((sum, e) => sum + e.amount, 0) || 1)) * 100).toFixed(1)}%
+                                            </div>
                                         </div>
                                     </div>
+                                </motion.div>
+                            ))
+                        ) : (
+                            <div className="text-center py-16">
+                                <div
+                                    className="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                                    <Receipt className="w-10 h-10 text-gray-400"/>
                                 </div>
-                            </motion.div>
-                        ))
-                    ) : (
-                        <div className="text-center py-16">
-                            <div
-                                className="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                                <Receipt className="w-10 h-10 text-gray-400"/>
+                                <h3 className="text-xl font-semibold text-gray-900 mb-2">지출 내역이 없습니다</h3>
+                                <p className="text-gray-600 mb-6">새로운 지출을 추가해보세요!</p>
+                                <motion.button
+                                    className="px-6 py-3 bg-[#df6d14] text-white rounded-xl font-medium hover:bg-[#df6d14]/90 transition-colors"
+                                    whileHover={{scale: 1.05}}
+                                    whileTap={{scale: 0.95}}
+                                    onClick={() => setShowExpenseModal(true)}
+                                >
+                                    첫 지출 추가하기
+                                </motion.button>
                             </div>
-                            <h3 className="text-xl font-semibold text-gray-900 mb-2">지출 내역이 없습니다</h3>
-                            <p className="text-gray-600 mb-6">새로운 지출을 추가해보세요!</p>
-                            <motion.button
-                                className="px-6 py-3 bg-[#df6d14] text-white rounded-xl font-medium hover:bg-[#df6d14]/90 transition-colors"
-                                whileHover={{scale: 1.05}}
-                                whileTap={{scale: 0.95}}
-                                onClick={() => setShowExpenseModal(true)}
-                            >
-                                첫 지출 추가하기
-                            </motion.button>
-                        </div>
-                    )}
-                </div>
+                        )}
+                    </div>
+                ) : (
+                    <div className="divide-y divide-gray-100">
+                        {savedAnalyses.length > 0 ? (
+                            savedAnalyses.map((analysis) => (
+                                <motion.div
+                                    key={analysis.id}
+                                    className="p-6 hover:bg-gray-50 transition-all duration-200 cursor-pointer group"
+                                    whileHover={{x: 5}}
+                                    onClick={() => {
+                                        // 저장된 분석 결과를 모달로 표시
+                                        setSelectedAnalysis(analysis);
+                                        setShowAnalysis(true);
+                                    }}
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center space-x-4">
+                                            <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center transition-all group-hover:scale-110">
+                                                <Sparkles className="w-6 h-6 text-purple-600" />
+                                            </div>
+                                            <div>
+                                                <h4 className="font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
+                                                    {analysis.month} AI 분석
+                                                </h4>
+                                                <div className="flex items-center space-x-3 text-sm text-gray-500">
+                                                    <span>{format(analysis.date, 'M월 d일 분석', {locale: ko})}</span>
+                                                    <span>•</span>
+                                                    <span>총 {formatCurrency(analysis.totalAmount)}</span>
+                                                    <span>•</span>
+                                                    <span>{analysis.categoryBreakdown.length}개 카테고리</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-lg font-bold text-purple-600">
+                                                {analysis.data.summary.spendingRate.toFixed(1)}% 사용
+                                            </p>
+                                            <div className="text-xs text-gray-500 mt-1">
+                                                예산 대비
+                                            </div>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            ))
+                        ) : (
+                            <div className="text-center py-16">
+                                <div className="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                                    <Bot className="w-10 h-10 text-gray-400"/>
+                                </div>
+                                <h3 className="text-xl font-semibold text-gray-900 mb-2">AI 분석 내역이 없습니다</h3>
+                                <p className="text-gray-600 mb-6">AI 분석을 실행하고 결과를 저장해보세요!</p>
+                                <motion.button
+                                    className="px-6 py-3 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 transition-colors"
+                                    whileHover={{scale: 1.05}}
+                                    whileTap={{scale: 0.95}}
+                                    onClick={generateAIAnalysis}
+                                >
+                                    첫 AI 분석 실행하기
+                                </motion.button>
+                            </div>
+                        )}
+                    </div>
+                )}
             </motion.div>
 
             {/* AI Analysis Modal */}
@@ -734,25 +961,28 @@ const ExpensesPage: React.FC = () => {
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.95 }}
-                            className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden"
+                            className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full h-[85vh] flex flex-col"
                         >
                             {/* Modal Header */}
-                            <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6">
+                            <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6 flex-shrink-0 rounded-t-3xl">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center space-x-3">
-                                        <div className="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                                        <div className="w-12 h-12 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center">
                                             <Sparkles className="w-6 h-6" />
                                         </div>
                                         <div>
                                             <h2 className="text-xl font-bold">AI 가계부 분석</h2>
                                             <p className="text-purple-100">
-                                                {format(currentMonth, 'yyyy년 M월', {locale: ko})} 지출 패턴 분석 결과
+                                                {selectedAnalysis 
+                                                    ? `${selectedAnalysis.month} 지출 패턴 분석 결과`
+                                                    : `${format(currentMonth, 'yyyy년 M월', {locale: ko})} 지출 패턴 분석 결과`
+                                                }
                                             </p>
                                         </div>
                                     </div>
                                     <button
                                         onClick={() => setShowAnalysis(false)}
-                                        className="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center hover:bg-opacity-30 transition-colors"
+                                        className="w-10 h-10 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center hover:bg-opacity-30 transition-colors"
                                     >
                                         ×
                                     </button>
@@ -760,7 +990,7 @@ const ExpensesPage: React.FC = () => {
                             </div>
 
                             {/* Modal Content */}
-                            <div className="p-6 overflow-y-auto max-h-[calc(90vh-100px)]">
+                            <div className="p-6 overflow-y-auto flex-1">
                                 {/* Summary Cards */}
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                                     <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4">
@@ -931,27 +1161,41 @@ const ExpensesPage: React.FC = () => {
                             </div>
 
                             {/* Modal Footer */}
-                            <div className="bg-gray-50 p-6 border-t border-gray-200">
+                            <div className="bg-gray-50 p-6 border-t border-gray-200 flex-shrink-0 rounded-b-3xl">
                                 <div className="flex items-center justify-between">
                                     <div className="text-xs text-gray-500">
                                         * 이 분석은 AI가 생성한 것으로 참고용입니다.
                                     </div>
                                     <div className="flex space-x-3">
                                         <button
-                                            onClick={() => setShowAnalysis(false)}
-                                            className="px-6 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                                            onClick={() => {
+                                                setShowAnalysis(false);
+                                                setSelectedAnalysis(null);
+                                            }}
+                                            className="px-6 py-3 text-gray-700 bg-white border border-gray-300 rounded-2xl hover:bg-gray-50 transition-colors"
                                         >
                                             닫기
                                         </button>
-                                        <button
-                                            onClick={() => {
-                                                // 분석 결과를 PDF로 저장하거나 다른 액션
-                                                alert('분석 결과를 저장했습니다!');
-                                            }}
-                                            className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-                                        >
-                                            결과 저장
-                                        </button>
+                                        {!selectedAnalysis && (
+                                            <button
+                                                onClick={saveAnalysisResult}
+                                                className="px-6 py-3 bg-primary-600 text-white rounded-2xl hover:bg-primary-700 transition-colors"
+                                            >
+                                                결과 저장
+                                            </button>
+                                        )}
+                                        {selectedAnalysis && (
+                                            <button
+                                                onClick={() => {
+                                                    // 공유 기능 구현
+                                                    alert('분석 결과를 공유했습니다!');
+                                                }}
+                                                className="px-6 py-3 bg-primary-600 text-white rounded-2xl hover:bg-primary-700 transition-colors flex items-center space-x-2"
+                                            >
+                                                <Share2 className="w-4 h-4" />
+                                                <span>공유</span>
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             </div>

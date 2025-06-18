@@ -32,13 +32,13 @@ const GamesPage: React.FC = () => {
         {
             id: 'yatzy',
             title: 'YATZY (주사위)',
-            description: '주사위 5개로 운명을 결정하는 게임',
+            description: '최고의 주사위 조합을 만드는 전략형 점수 게임',
             icon: Dice6,
             color: 'bg-gradient-to-br from-orange-300 to-orange-400',
             path: '/games/yatzy',
-            players: '1-6명',
-            duration: '2분',
-            difficulty: 'Easy'
+            players: '1~6명',
+            duration: '5~15분',
+            difficulty: 'Normal'
         }
     ];
 
@@ -172,7 +172,7 @@ const GamesPage: React.FC = () => {
                             <div>
                                 <h4 className="font-medium text-gray-800">YATZY (주사위)</h4>
                                 <p className="text-sm text-gray-600">
-                                    주사위 5개를 굴려서 랜덤하게 결과를 정하는 간단한 운빨 게임입니다.
+                                    5개의 주사위를 최대 3번까지 굴려 조합을 완성하고 점수를 채우는 전략형 주사위 게임입니다.
                                 </p>
                             </div>
                         </div>
