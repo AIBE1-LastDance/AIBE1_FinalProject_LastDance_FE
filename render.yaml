@@ -2,9 +2,7 @@ services:
   - type: web
     name: lastdance-frontend
     env: docker
-    # ECR 이미지 사용
-    image:
-      url: 495264909330.dkr.ecr.ap-northeast-2.amazonaws.com/lastdance-frontend:latest
+    dockerfilePath: ./Dockerfile
     region: singapore
     plan: free
     healthCheckPath: /
@@ -13,9 +11,3 @@ services:
         value: production
       - key: PORT
         value: 80
-      - key: AWS_ACCESS_KEY_ID
-        fromService: # Render 대시보드에서 설정
-      - key: AWS_SECRET_ACCESS_KEY  
-        fromService: # Render 대시보드에서 설정
-      - key: AWS_DEFAULT_REGION
-        value: ap-northeast-2
