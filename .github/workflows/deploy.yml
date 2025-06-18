@@ -33,6 +33,12 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
 
+    - name: Generate ECR token for Render (temporary)
+      run: |
+        echo "🔑 ECR Token for Render Credential:"
+        aws ecr get-login-password --region ${{ env.AWS_REGION }}
+        echo "⬆️ Copy this token to Render Credential settings"
+
     - name: Login to Amazon ECR
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v2
