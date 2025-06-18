@@ -13,16 +13,25 @@ RUN npm ci
 COPY . .
 
 # Build the application with build time environment variable
-RUN VITE_BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%S.000Z") npm run build:prod
+RUN VITE_BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%S.000Z") npm run build
+
+# Debug: List build output
+RUN ls -la /app/dist/
 
 # Production stage
 FROM nginx:alpine
+
+# Remove default nginx website
+RUN rm -rf /usr/share/nginx/html/*
 
 # Copy built assets from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf
+
+# Debug: List copied files
+RUN ls -la /usr/share/nginx/html/
 
 # Expose port 80
 EXPOSE 80
