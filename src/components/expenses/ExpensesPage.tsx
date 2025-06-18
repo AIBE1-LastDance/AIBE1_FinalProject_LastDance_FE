@@ -1,6 +1,23 @@
 import React, {useState} from 'react';
 import {motion, AnimatePresence} from 'framer-motion';
-import {Plus, PieChart, BarChart3, TrendingUp, Receipt, Calendar, Filter, Search, Bot, Sparkles, AlertTriangle, CheckCircle, TrendingDown, ChevronLeft, ChevronRight, Share2} from 'lucide-react';
+import {
+    Plus,
+    PieChart,
+    BarChart3,
+    TrendingUp,
+    Receipt,
+    Calendar,
+    Filter,
+    Search,
+    Bot,
+    Sparkles,
+    AlertTriangle,
+    CheckCircle,
+    TrendingDown,
+    ChevronLeft,
+    ChevronRight,
+    Share2
+} from 'lucide-react';
 import {
     PieChart as RechartsPieChart,
     Pie,
@@ -91,8 +108,8 @@ const ExpensesPage: React.FC = () => {
             return expenseDate >= monthStart && expenseDate <= monthEnd && isModeMatch;
         });
 
-        const monthData = { month: format(monthDate, 'M월') };
-        
+        const monthData = {month: format(monthDate, 'M월')};
+
         if (categoryFilter === 'all') {
             // 전체 카테고리별로 분리
             categoryData.forEach(cat => {
@@ -192,7 +209,7 @@ const ExpensesPage: React.FC = () => {
     const generateAIAnalysis = () => {
         setAnalysisLoading(true);
         setSelectedAnalysis(null); // 새로운 분석이므로 선택된 분석 초기화
-        
+
         // 실제로는 LLM API를 호출하지만, 여기서는 시뮬레이션
         setTimeout(() => {
             setAnalysisLoading(false);
@@ -211,7 +228,7 @@ const ExpensesPage: React.FC = () => {
             totalAmount,
             categoryBreakdown: analytics.categoryBreakdown
         };
-        
+
         saveAnalysis(savedAnalysis);
         setShowAnalysis(false);
         alert('분석 결과를 저장했습니다!');
@@ -240,13 +257,13 @@ const ExpensesPage: React.FC = () => {
         if (selectedAnalysis) {
             return selectedAnalysis.data;
         }
-        
+
         // 새로운 분석 생성
         const totalBudget = 2000000; // 200만원 예산 가정
         const spendingRate = (totalAmount / totalBudget) * 100;
         const previousMonthAmount = totalAmount * 0.85; // 이전 달 대비 가정
         const changeRate = ((totalAmount - previousMonthAmount) / previousMonthAmount) * 100;
-        
+
         const insights = [];
         const recommendations = [];
         const warnings = [];
@@ -352,28 +369,28 @@ const ExpensesPage: React.FC = () => {
                         <h1 className="text-3xl font-bold text-gray-900">
                             {mode === 'personal' ? '내 가계부' : '공동 가계부'}
                         </h1>
-                        
+
                         <motion.button
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
+                            whileHover={{scale: 1.1}}
+                            whileTap={{scale: 0.9}}
                             onClick={handlePreviousMonth}
                             className="p-2 rounded-lg hover:bg-gray-100"
                         >
-                            <ChevronLeft className="w-5 h-5" />
+                            <ChevronLeft className="w-5 h-5"/>
                         </motion.button>
-                        
+
                         <p className="text-gray-600">
                             {format(currentMonth, 'yyyy년 M월', {locale: ko})} 지출 현황
                         </p>
 
                         <motion.button
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
+                            whileHover={{scale: 1.1}}
+                            whileTap={{scale: 0.9}}
                             onClick={handleNextMonth}
                             className="p-2 rounded-lg hover:bg-gray-100"
                             disabled={new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1) > new Date()}
                         >
-                            <ChevronRight className="w-5 h-5" />
+                            <ChevronRight className="w-5 h-5"/>
                         </motion.button>
                     </div>
                 </div>
@@ -395,23 +412,23 @@ const ExpensesPage: React.FC = () => {
                     <div className="relative">
                         <motion.button
                             className="flex items-center space-x-3 pl-3 pr-4 py-3 border border-gray-200 rounded-2xl text-sm bg-white hover:bg-gray-50 transition-colors font-medium text-gray-700 cursor-pointer shadow-sm min-w-[140px]"
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
+                            whileHover={{scale: 1.02}}
+                            whileTap={{scale: 0.98}}
                             onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
                         >
                             <Filter className="w-4 h-4 text-gray-400"/>
                             <span className="flex-1 text-left">
                                 {categories.find(cat => cat.value === categoryFilter)?.label}
                             </span>
-                            <motion.svg 
-                                className="w-4 h-4 text-gray-400" 
-                                fill="none" 
-                                stroke="currentColor" 
+                            <motion.svg
+                                className="w-4 h-4 text-gray-400"
+                                fill="none"
+                                stroke="currentColor"
                                 viewBox="0 0 24 24"
-                                animate={{ rotate: showCategoryDropdown ? 180 : 0 }}
-                                transition={{ duration: 0.2 }}
+                                animate={{rotate: showCategoryDropdown ? 180 : 0}}
+                                transition={{duration: 0.2}}
                             >
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/>
                             </motion.svg>
                         </motion.button>
 
@@ -420,17 +437,17 @@ const ExpensesPage: React.FC = () => {
                             {showCategoryDropdown && (
                                 <>
                                     {/* Backdrop */}
-                                    <div 
-                                        className="fixed inset-0 z-10" 
+                                    <div
+                                        className="fixed inset-0 z-10"
                                         onClick={() => setShowCategoryDropdown(false)}
                                     />
-                                    
+
                                     {/* Dropdown */}
                                     <motion.div
-                                        initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                                        exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                                        transition={{ duration: 0.2 }}
+                                        initial={{opacity: 0, y: -10, scale: 0.95}}
+                                        animate={{opacity: 1, y: 0, scale: 1}}
+                                        exit={{opacity: 0, y: -10, scale: 0.95}}
+                                        transition={{duration: 0.2}}
                                         className="absolute top-full mt-2 left-0 right-0 bg-white rounded-2xl shadow-lg border border-gray-200 py-2 z-20"
                                     >
                                         {categories.map((cat, index) => (
@@ -439,30 +456,33 @@ const ExpensesPage: React.FC = () => {
                                                 className={`w-full text-left px-4 py-3 text-sm hover:bg-gray-50 transition-colors flex items-center space-x-3 ${
                                                     categoryFilter === cat.value ? 'bg-primary-50 text-primary-600 font-medium' : 'text-gray-700'
                                                 }`}
-                                                whileHover={{ x: 4 }}
+                                                whileHover={{x: 4}}
                                                 onClick={() => {
                                                     setCategoryFilter(cat.value);
                                                     setShowCategoryDropdown(false);
                                                 }}
                                             >
                                                 <div className={`w-2 h-2 rounded-full ${
-                                                    cat.value === 'all' ? 'bg-gray-400' : 
-                                                    cat.value === 'food' ? 'bg-red-400' :
-                                                    cat.value === 'utilities' ? 'bg-teal-400' :
-                                                    cat.value === 'transport' ? 'bg-blue-400' :
-                                                    cat.value === 'shopping' ? 'bg-green-400' :
-                                                    cat.value === 'entertainment' ? 'bg-yellow-400' :
-                                                    'bg-purple-400'
-                                                }`} />
+                                                    cat.value === 'all' ? 'bg-gray-400' :
+                                                        cat.value === 'food' ? 'bg-red-400' :
+                                                            cat.value === 'utilities' ? 'bg-teal-400' :
+                                                                cat.value === 'transport' ? 'bg-blue-400' :
+                                                                    cat.value === 'shopping' ? 'bg-green-400' :
+                                                                        cat.value === 'entertainment' ? 'bg-yellow-400' :
+                                                                            'bg-purple-400'
+                                                }`}/>
                                                 <span>{cat.label}</span>
                                                 {categoryFilter === cat.value && (
                                                     <motion.div
-                                                        initial={{ scale: 0 }}
-                                                        animate={{ scale: 1 }}
+                                                        initial={{scale: 0}}
+                                                        animate={{scale: 1}}
                                                         className="ml-auto"
                                                     >
-                                                        <svg className="w-4 h-4 text-primary-600" fill="currentColor" viewBox="0 0 20 20">
-                                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                        <svg className="w-4 h-4 text-primary-600" fill="currentColor"
+                                                             viewBox="0 0 20 20">
+                                                            <path fillRule="evenodd"
+                                                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                                                  clipRule="evenodd"/>
                                                         </svg>
                                                     </motion.div>
                                                 )}
@@ -484,7 +504,8 @@ const ExpensesPage: React.FC = () => {
                             disabled={analysisLoading}
                         >
                             {analysisLoading ? (
-                                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                <div
+                                    className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"/>
                             ) : (
                                 <Bot className="w-5 h-5"/>
                             )}
@@ -522,7 +543,27 @@ const ExpensesPage: React.FC = () => {
                         <div className="text-lg font-bold text-gray-900">{analytics.totalCount}건</div>
                     </div>
                     <div className="text-xs font-medium text-gray-700 mb-1">총 지출</div>
-                    <div className="text-lg font-bold text-gray-900">{formatCurrency(analytics.totalAmount)}</div>
+                    <div className="flex items-center justify-between">
+                        <div className="text-lg font-bold text-gray-900">{formatCurrency(analytics.totalAmount)}</div>
+
+                        {/* 한 달 예산 표시 - 총 지출과 같은 라인에 */}
+                        {(() => {
+                            const budget = mode === 'personal' ? user?.monthlyBudget : currentGroup?.monthlyBudget;
+                            if (budget) {
+                                const isOverBudget = analytics.totalAmount > budget;
+                                return (
+                                    <div className={`text-xs font-medium px-2 py-1 rounded-full ${
+                                        isOverBudget
+                                            ? 'text-red-600 bg-red-50 border border-red-200'
+                                            : 'text-blue-600 bg-blue-50 border border-blue-200'
+                                    }`}>
+                                        예산: {formatCurrency(budget)}
+                                    </div>
+                                );
+                            }
+                            return null;
+                        })()}
+                    </div>
                 </motion.div>
 
                 <motion.div
@@ -534,7 +575,7 @@ const ExpensesPage: React.FC = () => {
                             className="w-8 h-8 rounded-lg bg-primary-100 flex items-center justify-center text-primary-600">
                             <BarChart3 className="w-4 h-4"/>
                         </div>
-                        <TrendingUp className="w-3 h-3 text-green-500" />
+                        <TrendingUp className="w-3 h-3 text-green-500"/>
                     </div>
                     <div className="text-xs font-medium text-gray-700 mb-1">평균 지출</div>
                     <div className="text-lg font-bold text-gray-900">{formatCurrency(analytics.avgAmount)}</div>
@@ -640,7 +681,7 @@ const ExpensesPage: React.FC = () => {
                     transition={{duration: 0.5, delay: 0.1}}
                 >
                     <h3 className="text-lg font-semibold text-gray-900 mb-6">
-                        월별 지출 추이 
+                        월별 지출 추이
                         {categoryFilter !== 'all' && (
                             <span className="text-sm font-normal text-gray-500">
                                 ({categories.find(c => c.value === categoryFilter)?.label})
@@ -649,7 +690,7 @@ const ExpensesPage: React.FC = () => {
                     </h3>
                     <div className="h-80">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={monthlyData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                            <BarChart data={monthlyData} margin={{top: 20, right: 30, left: 20, bottom: 5}}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false}/>
                                 <XAxis dataKey="month" axisLine={false} tickLine={false}/>
                                 <YAxis
@@ -658,15 +699,17 @@ const ExpensesPage: React.FC = () => {
                                     tickFormatter={(value) => `${value / 10000}만`}
                                 />
                                 <Tooltip
-                                    content={({ active, payload, label }) => {
+                                    content={({active, payload, label}) => {
                                         if (active && payload && payload.length > 0) {
                                             return (
-                                                <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+                                                <div
+                                                    className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
                                                     <p className="font-medium">{label}</p>
                                                     {payload.map((entry, index) => {
                                                         const categoryInfo = categoryData.find(cat => cat.category === entry.dataKey);
                                                         return (
-                                                            <p key={index} className="text-sm" style={{ color: entry.color }}>
+                                                            <p key={index} className="text-sm"
+                                                               style={{color: entry.color}}>
                                                                 {categoryInfo?.label || '기타'}: {formatCurrency(entry.value)}
                                                             </p>
                                                         );
@@ -696,14 +739,14 @@ const ExpensesPage: React.FC = () => {
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
-                    
+
                     {/* Legend */}
                     <div className="flex flex-wrap gap-4 justify-center">
                         {(categoryFilter === 'all' ? categoryData : categoryData.filter(cat => cat.category === categoryFilter)).map((cat) => (
                             <div key={cat.category} className="flex items-center space-x-2">
-                                <div 
+                                <div
                                     className="w-3 h-3 rounded-full"
-                                    style={{ backgroundColor: cat.color }}
+                                    style={{backgroundColor: cat.color}}
                                 />
                                 <span className="text-sm text-gray-600">{cat.label}</span>
                             </div>
@@ -730,7 +773,8 @@ const ExpensesPage: React.FC = () => {
                     <div className="p-6">
                         <div className="mb-6">
                             <div className="text-2xl font-bold text-primary-600">
-                                총 분담금: {formatCurrency(personalShares.reduce((sum, share) => sum + share.personalAmount, 0))}
+                                총
+                                분담금: {formatCurrency(personalShares.reduce((sum, share) => sum + share.personalAmount, 0))}
                             </div>
                             <div className="text-sm text-gray-500 mt-1">
                                 {personalShares.length}건의 그룹 지출
@@ -739,7 +783,8 @@ const ExpensesPage: React.FC = () => {
 
                         <div className="space-y-4">
                             {personalShares.map((share) => (
-                                <div key={share.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                                <div key={share.id}
+                                     className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                                     <div className="flex items-center space-x-3">
                                         <div
                                             className="w-10 h-10 rounded-lg flex items-center justify-center"
@@ -762,8 +807,8 @@ const ExpensesPage: React.FC = () => {
                                                 <span>전체: {formatCurrency(share.amount)}</span>
                                                 <span>•</span>
                                                 <span>
-                                                    {share.splitType === 'equal' ? '균등분할' : 
-                                                     share.splitType === 'specific' ? '지정분할' : '사용자정의'}
+                                                    {share.splitType === 'equal' ? '균등분할' :
+                                                        share.splitType === 'specific' ? '지정분할' : '사용자정의'}
                                                 </span>
                                             </div>
                                         </div>
@@ -812,10 +857,10 @@ const ExpensesPage: React.FC = () => {
                                 onClick={() => setActiveTab('analyses')}
                             >
                                 AI 분석 내역 {savedAnalyses.length > 0 && (
-                                    <span className="ml-2 px-2 py-1 bg-primary-100 text-primary-600 rounded-full text-xs">
+                                <span className="ml-2 px-2 py-1 bg-primary-100 text-primary-600 rounded-full text-xs">
                                         {savedAnalyses.length}
                                     </span>
-                                )}
+                            )}
                             </button>
                         )}
                     </div>
@@ -905,8 +950,9 @@ const ExpensesPage: React.FC = () => {
                                 >
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center space-x-4">
-                                            <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center transition-all group-hover:scale-110">
-                                                <Sparkles className="w-6 h-6 text-purple-600" />
+                                            <div
+                                                className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center transition-all group-hover:scale-110">
+                                                <Sparkles className="w-6 h-6 text-purple-600"/>
                                             </div>
                                             <div>
                                                 <h4 className="font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
@@ -934,7 +980,8 @@ const ExpensesPage: React.FC = () => {
                             ))
                         ) : (
                             <div className="text-center py-16">
-                                <div className="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                                <div
+                                    className="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
                                     <Bot className="w-10 h-10 text-gray-400"/>
                                 </div>
                                 <h3 className="text-xl font-semibold text-gray-900 mb-2">AI 분석 내역이 없습니다</h3>
@@ -958,22 +1005,24 @@ const ExpensesPage: React.FC = () => {
                 {showAnalysis && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
                         <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
+                            initial={{opacity: 0, scale: 0.95}}
+                            animate={{opacity: 1, scale: 1}}
+                            exit={{opacity: 0, scale: 0.95}}
                             className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full h-[85vh] flex flex-col"
                         >
                             {/* Modal Header */}
-                            <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6 flex-shrink-0 rounded-t-3xl">
+                            <div
+                                className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6 flex-shrink-0 rounded-t-3xl">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center space-x-3">
-                                        <div className="w-12 h-12 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center">
-                                            <Sparkles className="w-6 h-6" />
+                                        <div
+                                            className="w-12 h-12 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center">
+                                            <Sparkles className="w-6 h-6"/>
                                         </div>
                                         <div>
                                             <h2 className="text-xl font-bold">AI 가계부 분석</h2>
                                             <p className="text-purple-100">
-                                                {selectedAnalysis 
+                                                {selectedAnalysis
                                                     ? `${selectedAnalysis.month} 지출 패턴 분석 결과`
                                                     : `${format(currentMonth, 'yyyy년 M월', {locale: ko})} 지출 패턴 분석 결과`
                                                 }
@@ -996,7 +1045,7 @@ const ExpensesPage: React.FC = () => {
                                     <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4">
                                         <div className="flex items-center justify-between mb-2">
                                             <span className="text-blue-600 font-medium">예산 사용률</span>
-                                            <TrendingUp className="w-5 h-5 text-blue-600" />
+                                            <TrendingUp className="w-5 h-5 text-blue-600"/>
                                         </div>
                                         <div className="text-2xl font-bold text-blue-800">
                                             {aiAnalysis.summary.spendingRate.toFixed(1)}%
@@ -1009,7 +1058,7 @@ const ExpensesPage: React.FC = () => {
                                     <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4">
                                         <div className="flex items-center justify-between mb-2">
                                             <span className="text-green-600 font-medium">일평균 지출</span>
-                                            <Calendar className="w-5 h-5 text-green-600" />
+                                            <Calendar className="w-5 h-5 text-green-600"/>
                                         </div>
                                         <div className="text-2xl font-bold text-green-800">
                                             {formatCurrency(aiAnalysis.summary.avgDaily)}
@@ -1022,7 +1071,7 @@ const ExpensesPage: React.FC = () => {
                                     <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4">
                                         <div className="flex items-center justify-between mb-2">
                                             <span className="text-purple-600 font-medium">월말 예상</span>
-                                            <BarChart3 className="w-5 h-5 text-purple-600" />
+                                            <BarChart3 className="w-5 h-5 text-purple-600"/>
                                         </div>
                                         <div className="text-2xl font-bold text-purple-800">
                                             {formatCurrency(aiAnalysis.summary.prediction)}
@@ -1037,7 +1086,7 @@ const ExpensesPage: React.FC = () => {
                                 {aiAnalysis.warnings.length > 0 && (
                                     <div className="mb-6">
                                         <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
-                                            <AlertTriangle className="w-5 h-5 text-orange-500 mr-2" />
+                                            <AlertTriangle className="w-5 h-5 text-orange-500 mr-2"/>
                                             주의사항
                                         </h3>
                                         <div className="space-y-3">
@@ -1045,8 +1094,8 @@ const ExpensesPage: React.FC = () => {
                                                 <div
                                                     key={index}
                                                     className={`p-4 rounded-xl border-l-4 ${
-                                                        warning.severity === 'high' 
-                                                            ? 'bg-red-50 border-red-500' 
+                                                        warning.severity === 'high'
+                                                            ? 'bg-red-50 border-red-500'
                                                             : 'bg-orange-50 border-orange-500'
                                                     }`}
                                                 >
@@ -1069,13 +1118,14 @@ const ExpensesPage: React.FC = () => {
                                 {/* Insights */}
                                 <div className="mb-6">
                                     <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
-                                        <Bot className="w-5 h-5 text-blue-500 mr-2" />
+                                        <Bot className="w-5 h-5 text-blue-500 mr-2"/>
                                         분석 결과
                                     </h3>
                                     <div className="space-y-3">
                                         {aiAnalysis.insights.map((insight, index) => (
-                                            <div key={index} className="flex items-start space-x-3 p-4 bg-gray-50 rounded-xl">
-                                                <insight.icon className={`w-5 h-5 mt-0.5 ${insight.color}`} />
+                                            <div key={index}
+                                                 className="flex items-start space-x-3 p-4 bg-gray-50 rounded-xl">
+                                                <insight.icon className={`w-5 h-5 mt-0.5 ${insight.color}`}/>
                                                 <div>
                                                     <h4 className="font-medium text-gray-900">{insight.title}</h4>
                                                     <p className="text-sm text-gray-600 mt-1">{insight.message}</p>
@@ -1088,28 +1138,31 @@ const ExpensesPage: React.FC = () => {
                                 {/* Recommendations */}
                                 <div className="mb-6">
                                     <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
-                                        <CheckCircle className="w-5 h-5 text-green-500 mr-2" />
+                                        <CheckCircle className="w-5 h-5 text-green-500 mr-2"/>
                                         개선 제안
                                     </h3>
                                     <div className="space-y-4">
                                         {aiAnalysis.recommendations.map((rec, index) => (
-                                            <div key={index} className="p-4 bg-green-50 rounded-xl border border-green-200">
+                                            <div key={index}
+                                                 className="p-4 bg-green-50 rounded-xl border border-green-200">
                                                 <div className="flex items-start justify-between">
                                                     <div className="flex-1">
                                                         <h4 className="font-semibold text-green-800 mb-2">{rec.title}</h4>
                                                         <p className="text-sm text-green-700 mb-3">{rec.message}</p>
                                                         <div className="flex items-center space-x-4 text-xs">
                                                             <div className="flex items-center space-x-1">
-                                                                <span className="text-green-600 font-medium">예상 효과:</span>
+                                                                <span
+                                                                    className="text-green-600 font-medium">예상 효과:</span>
                                                                 <span className="text-green-800">{rec.impact}</span>
                                                             </div>
                                                             <div className="flex items-center space-x-1">
                                                                 <span className="text-green-600 font-medium">난이도:</span>
-                                                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                                                    rec.difficulty === '쉬움' ? 'bg-green-100 text-green-700' :
-                                                                    rec.difficulty === '보통' ? 'bg-yellow-100 text-yellow-700' :
-                                                                    'bg-red-100 text-red-700'
-                                                                }`}>
+                                                                <span
+                                                                    className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                                                        rec.difficulty === '쉬움' ? 'bg-green-100 text-green-700' :
+                                                                            rec.difficulty === '보통' ? 'bg-yellow-100 text-yellow-700' :
+                                                                                'bg-red-100 text-red-700'
+                                                                    }`}>
                                                                     {rec.difficulty}
                                                                 </span>
                                                             </div>
@@ -1129,9 +1182,9 @@ const ExpensesPage: React.FC = () => {
                                             <div key={cat.category} className="p-4 border border-gray-200 rounded-xl">
                                                 <div className="flex items-center justify-between mb-2">
                                                     <div className="flex items-center space-x-2">
-                                                        <div 
-                                                            className="w-4 h-4 rounded-full" 
-                                                            style={{ backgroundColor: cat.color }}
+                                                        <div
+                                                            className="w-4 h-4 rounded-full"
+                                                            style={{backgroundColor: cat.color}}
                                                         />
                                                         <span className="font-medium text-gray-900">{cat.label}</span>
                                                     </div>
@@ -1146,9 +1199,9 @@ const ExpensesPage: React.FC = () => {
                                                     {cat.count}건의 지출
                                                 </div>
                                                 <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                                                    <div 
+                                                    <div
                                                         className="h-2 rounded-full transition-all duration-500"
-                                                        style={{ 
+                                                        style={{
                                                             backgroundColor: cat.color,
                                                             width: `${cat.percentage}%`
                                                         }}
@@ -1192,7 +1245,7 @@ const ExpensesPage: React.FC = () => {
                                                 }}
                                                 className="px-6 py-3 bg-primary-600 text-white rounded-2xl hover:bg-primary-700 transition-colors flex items-center space-x-2"
                                             >
-                                                <Share2 className="w-4 h-4" />
+                                                <Share2 className="w-4 h-4"/>
                                                 <span>공유</span>
                                             </button>
                                         )}
