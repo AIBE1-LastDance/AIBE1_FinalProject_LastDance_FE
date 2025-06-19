@@ -7,55 +7,162 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
 
-# Editor directories and files
+# Dependencies
+node_modules
+.pnp
+.pnp.js
+
+# Build outputs
+dist
+build
+dist-ssr
+.next
+out
+
+# Testing
+/coverage
+.nyc_output
+*.lcov
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
+
+# IDE and Editor files
 .vscode/*
 !.vscode/extensions.json
-.idea
-.DS_Store
+.idea/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
-.env
-
-### IntelliJ IDEA ###
 *.iws
 *.iml
 *.ipr
-out/
-!**/src/main/**/out/
-!**/src/test/**/out/
 
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.js
+# Temporary files
+*.tmp
+*.temp
+.cache
+.parcel-cache
+.sass-cache
 
-# testing
-/coverage
+# Package manager files
+package-lock.json.bak
+yarn.lock.bak
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
 
-# production
-/build
+# Docker
+.dockerignore.bak
+docker-compose.override.yml
 
-# misc
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+# Deployment
+.vercel
+.netlify
 
-# Environment files
-# .env.development와 .env.production은 Git에 포함 (민감한 정보 없음)
-# 로컬 개발용 환경변수는 제외
-.env.*.local
+# Storybook
+storybook-static
 
-/.idea/
+# TypeScript
+*.tsbuildinfo
 
+# ESLint
+.eslintcache
 
+# Optional REPL history
+.node_repl_history
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional stylelint cache
+.stylelintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# dotenv environment variables file (sensitive)
+# Note: .env files with secrets should never be committed
+.env.secret
+.env.private
+
+# Backup files
+*.backup
+*.bak
+*.orig
+
+# Runtime files
+*.pid
+*.seed
+*.pid.lock
+
+# Local development
+.local
+
+# Webpack
+.webpack/
+
+# Rollup
+.rollup/
+
+# Serverless directories
+.serverless/
+
+# FuseBox cache
+.fusebox/
+
+# DynamoDB Local files
+.dynamodb/
+
+# TernJS port file
+.tern-port
+
+# Stores VSCode versions used for testing VSCode extensions
+.vscode-test
+
+# yarn v2
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
