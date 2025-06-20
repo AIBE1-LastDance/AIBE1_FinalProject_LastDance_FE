@@ -61,6 +61,7 @@ const EventModal: React.FC<EventModalProps> = ({ selectedDate, onClose, event })
     { value: 'daily', label: '매일' },
     { value: 'weekly', label: '매주' },
     { value: 'monthly', label: '매월' },
+    { value: 'yearly', label: '매년' },
   ];
 
   const handleSubmit = (e: React.FormEvent) => {
