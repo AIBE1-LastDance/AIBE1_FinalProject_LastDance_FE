@@ -7,48 +7,19 @@ import { useAuthStore } from '../../store/authStore';
 import { useNavigate } from 'react-router-dom';
 import { User } from '../../types';
 import toast from 'react-hot-toast';
+import { useAuth } from '../../hooks/useAuth';
 
 const LoginPage: React.FC = () => {
   const { login } = useAuthStore();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState<string | null>(null);
+  const { getSocialLoginUrl } = useAuth();
 
   const handleSocialLogin = async (provider: 'google' | 'kakao' | 'naver') => {
     setIsLoading(provider);
-    
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    const mockUsers = {
-      google: {
-        id: 'google_user_123',
-        name: '김우리',
-        email: 'woori@gmail.com',
-        provider: 'google' as const,
-        avatar: undefined,
-      },
-      kakao: {
-        id: 'kakao_user_456',
-        name: '박집사',
-        email: 'jipsa@kakao.com',
-        provider: 'kakao' as const,
-        avatar: undefined,
-      },
-      naver: {
-        id: 'naver_user_789',
-        name: '이하우스',
-        email: 'house@naver.com',
-        provider: 'naver' as const,
-        avatar: undefined,
-      }
-    };
 
-    const mockUser: User = mockUsers[provider];
-    
-    login(mockUser);
-    toast.success(`${provider.toUpperCase()}로 로그인되었습니다!`);
-    setIsLoading(null);
-    navigate('/');
+    const loginUrl = getSocialLoginUrl(provider);
+    window.location.href = loginUrl;
   };
 
   const features = [
