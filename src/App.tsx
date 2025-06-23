@@ -18,16 +18,46 @@ import AIAssistantPage from './components/ai/AIAssistantPage';
 import CommunityPage from './components/community/CommunityPage';
 import PostDetailPage from './components/community/PostDetailPage';
 import SettingsPage from './components/settings/SettingsPage';
+import {useAuth} from './hooks/useAuth';
+import {useEffect, useState} from "react";
 import AdminLoginPage from './components/admin/AdminLoginPage';
 import AdminRouter from './components/admin/AdminRouter';
 
 function App() {
     const {isAuthenticated} = useAuthStore();
+    const { getCurrentUser } = useAuth();
+    const [ isInitialized, setIsInitialized ] = useState(false);
 
     console.log('App component rendered, isAuthenticated:', isAuthenticated);
 
+    useEffect(() => {
+        // 앱 시작시 쿠키 확인해서 사용자 정보 가져오기
+        const initAuth = async () => {
+            try {
+                setIsInitialized(false);
+                console.log('인증 상태 초기화 중...');
+                const user = await getCurrentUser();
+                
+                if (!user) {
+                    // 유저 정보가 없으면 로컬 스토리지 정리
+                    console.log('유효한 사용자 정보가 없습니다. 로컬 스토리지 정리');
+                    localStorage.removeItem('auth-storage');
+                    localStorage.removeItem('app-storage-v4');
+                }
+            } catch (error) {
+                // 쿠키 없음 또는 오류 발생
+                console.error('인증 초기화 실패:', error);
+                localStorage.removeItem('auth-storage');
+                localStorage.removeItem('app-storage-v4');
+            } finally {
+                setIsInitialized(true);
+            }
+        };
+        initAuth();
+    }, []);
+
     return (
-        <Router 
+        <Router
             future={{
                 v7_startTransition: true,
                 v7_relativeSplatPath: true

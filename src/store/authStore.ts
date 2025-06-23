@@ -10,15 +10,6 @@ interface AuthState {
     updateUser: (userData: Partial<User>) => void;
 }
 
-// Sample user for testing
-const sampleUser: User = {
-    id: 'google_user_123',
-    name: '김우리',
-    email: 'woori@gmail.com',
-    provider: 'google',
-    monthlyBudget: 200000 // 기본 20만원
-};
-
 export const useAuthStore = create<AuthState>()(
     persist(
         (set) => ({
@@ -35,30 +26,46 @@ export const useAuthStore = create<AuthState>()(
             name: 'auth-storage',
             storage: {
                 getItem: (name) => {
-                    const str = localStorage.getItem(name);
-                    if (!str) return null;
+                    try {
+                        const str = localStorage.getItem(name);
+                        if (!str) return null;
 
-                    // Parse the JSON string and convert date strings back to Date objects
-                    return JSON.parse(str, (key, value) => {
-                        // Check if the value is a date string (ISO format)
-                        if (typeof value === 'string' &&
-                            /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/.test(value)) {
-                            return new Date(value);
-                        }
-                        return value;
-                    });
+                        // Parse the JSON string and convert date strings back to Date objects
+                        return JSON.parse(str, (_, value) => {
+                            // Check if the value is a date string (ISO format)
+                            if (typeof value === 'string' &&
+                                /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/.test(value)) {
+                                return new Date(value);
+                            }
+                            return value;
+                        });
+                    } catch (error) {
+                        console.error('Auth storage parse error:', error);
+                        localStorage.removeItem(name);
+                        return null;
+                    }
                 },
                 setItem: (name, value) => {
-                    // Stringify the state and convert Date objects to ISO strings
-                    const str = JSON.stringify(value, (key, value) => {
-                        if (value instanceof Date) {
-                            return value.toISOString();
-                        }
-                        return value;
-                    });
-                    localStorage.setItem(name, str);
+                    try {
+                        // Stringify the state and convert Date objects to ISO strings
+                        const str = JSON.stringify(value, (_, value) => {
+                            if (value instanceof Date) {
+                                return value.toISOString();
+                            }
+                            return value;
+                        });
+                        localStorage.setItem(name, str);
+                    } catch (error) {
+                        console.error('Auth storage save error:', error);
+                    }
                 },
-                removeItem: (name) => localStorage.removeItem(name)
+                removeItem: (name) => {
+                    try {
+                        localStorage.removeItem(name);
+                    } catch (error) {
+                        console.error('Auth storage remove error:', error);
+                    }
+                }
             }
         }
     )
