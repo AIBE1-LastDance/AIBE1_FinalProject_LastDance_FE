@@ -18,6 +18,8 @@ import AIAssistantPage from './components/ai/AIAssistantPage';
 import CommunityPage from './components/community/CommunityPage';
 import PostDetailPage from './components/community/PostDetailPage';
 import SettingsPage from './components/settings/SettingsPage';
+import AdminLoginPage from './components/admin/AdminLoginPage';
+import AdminRouter from './components/admin/AdminRouter';
 
 function App() {
     const {isAuthenticated} = useAuthStore();
@@ -174,6 +176,15 @@ function App() {
                             </Layout>
                         </ProtectedRoute>
                     }
+                />
+                {/* Admin Routes */}
+                <Route
+                    path="/admin-login"
+                    element={<AdminLoginPage />}
+                />
+                <Route
+                    path="/admin/*"
+                    element={<AdminRouter />}
                 />
             </Routes>
         </Router>

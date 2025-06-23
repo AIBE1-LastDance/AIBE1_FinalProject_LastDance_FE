@@ -42,6 +42,8 @@ interface AppState {
   addEvent: (event: Omit<Event, 'id'>) => void;
   updateEvent: (id: string, updates: Partial<Event>) => void;
   deleteEvent: (id: string) => void;
+  deleteEventSeries: (eventId: string) => void;
+  deleteFutureEvents: (eventId: string) => void;
   
   // Expense actions
   addExpense: (expense: Omit<Expense, 'id' | 'createdAt'>) => void;
@@ -241,6 +243,52 @@ const samplePosts: Post[] = [
   }
 ];
 
+// 임시 이벤트 데이터
+const sampleEvents: Event[] = [
+  {
+    id: 'event1',
+    title: '매주 청소하기',
+    description: '집 전체 청소하는 날',
+    date: new Date('2024-12-20'), // 금요일
+    endDate: new Date('2024-12-20'),
+    startTime: '10:00',
+    endTime: '12:00',
+    isAllDay: false,
+    category: 'cleaning',
+    color: 'bg-green-100 text-green-800',
+    userId: 'google_user_123',
+    repeat: 'weekly',
+    repeatEndDate: new Date('2025-03-31'), // 3개월 후까지
+  },
+  {
+    id: 'event2',
+    title: '매월 관리비 납부',
+    description: '아파트 관리비 납부일',
+    date: new Date('2024-12-25'), // 25일
+    endDate: new Date('2024-12-25'),
+    isAllDay: true,
+    category: 'bill',
+    color: 'bg-red-100 text-red-800',
+    userId: 'google_user_123',
+    repeat: 'monthly',
+    repeatEndDate: new Date('2025-12-31'), // 1년 후까지
+  },
+  {
+    id: 'event3',
+    title: '개인 약속',
+    description: '친구와 만나기',
+    date: new Date('2024-12-22'), // 일요일
+    endDate: new Date('2024-12-22'),
+    startTime: '14:00',
+    endTime: '17:00',
+    isAllDay: false,
+    category: 'appointment',
+    color: 'bg-purple-100 text-purple-800',
+    userId: 'google_user_123',
+    repeat: 'none',
+  }
+];
+
 // 임시 그룹 데이터
 const sampleGroups: Group[] = [
   {
@@ -283,7 +331,7 @@ export const useAppStore = create<AppState>()(
       currentGroup: null,
       joinedGroups: sampleGroups,
       tasks: [],
-      events: [],
+      events: sampleEvents,
       expenses: [],
       posts: samplePosts,
       savedAnalyses: [],
@@ -468,6 +516,46 @@ export const useAppStore = create<AppState>()(
         }));
       },
 
+      deleteEventSeries: (eventId) => {
+        set((state) => {
+          const event = state.events.find(e => e.id === eventId);
+          if (!event) return state;
+
+          // 원본 이벤트 ID를 찾기
+          const originalId = event.originalEventId || eventId;
+          
+          // 같은 시리즈의 모든 이벤트 삭제
+          return {
+            events: state.events.filter(e => 
+              e.id !== originalId && 
+              e.originalEventId !== originalId &&
+              e.id !== eventId
+            )
+          };
+        });
+      },
+
+      deleteFutureEvents: (eventId) => {
+        set((state) => {
+          const event = state.events.find(e => e.id === eventId);
+          if (!event) return state;
+
+          const eventDate = new Date(event.date);
+          const originalId = event.originalEventId || eventId;
+          
+          // 해당 날짜 이후의 반복 이벤트들만 삭제
+          return {
+            events: state.events.filter(e => {
+              if (e.id === originalId || e.originalEventId === originalId) {
+                const compareDate = new Date(e.date);
+                return compareDate < eventDate;
+              }
+              return e.id !== eventId;
+            })
+          };
+        });
+      },
+
       // Expense actions
       addExpense: (expenseData) => {
         const newExpense: Expense = {
@@ -566,6 +654,7 @@ export const useAppStore = create<AppState>()(
               parsed.state.joinedGroups = sampleGroups;
               parsed.state.currentGroup = null; // 현재 그룹 초기화
               parsed.state.posts = samplePosts; // 새로운 샘플 포스트 데이터 적용
+              parsed.state.events = sampleEvents; // 새로운 샘플 이벤트 데이터 적용
               parsed.state.version = STORE_VERSION;
             }
             
@@ -587,7 +676,8 @@ export const useAppStore = create<AppState>()(
                   ...event,
                   date: event.date ? new Date(event.date) : new Date(),
                   endDate: event.endDate ? new Date(event.endDate) : undefined,
-                })) || [],
+                  repeatEndDate: event.repeatEndDate ? new Date(event.repeatEndDate) : undefined,
+                })) || sampleEvents,
                 expenses: parsed.state.expenses?.map((expense: any) => ({
                   ...expense,
                   createdAt: expense.createdAt ? new Date(expense.createdAt) : new Date(),
@@ -632,6 +722,7 @@ export const useAppStore = create<AppState>()(
                 ...event,
                 date: event.date?.toISOString(),
                 endDate: event.endDate?.toISOString(),
+                repeatEndDate: event.repeatEndDate?.toISOString(),
               })),
               expenses: value.state.expenses?.map((expense: Expense) => ({
                 ...expense,

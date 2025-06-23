@@ -32,7 +32,7 @@ export interface Event {
     color: string;
     groupId?: string;
     userId: string;
-    repeat?: 'none' | 'daily' | 'weekly' | 'monthly';
+    repeat?: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
     repeatEndDate?: Date;
     originalEventId?: string; // 반복 일정의 원본 이벤트 ID
     isRepeated?: boolean; // 반복 생성된 일정인지 표시

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Plus, Grid, List, Calendar as CalendarIcon, BarChart3 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Grid, List, Calendar as CalendarIcon, BarChart3, Repeat } from 'lucide-react';
 import { 
   format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths,
   startOfWeek, endOfWeek, addWeeks, subWeeks, addDays, subDays, addYears, subYears, startOfYear, endOfYear,
@@ -130,19 +130,7 @@ const CalendarPage: React.FC = () => {
     const targetDate = new Date(safeDate.getFullYear(), safeDate.getMonth(), safeDate.getDate());
 
     const filteredEvents = events.filter(event => {
-      // Ensure event.date is a valid Date object
-      const eventStartDate = event.date instanceof Date ? new Date(event.date) : new Date();
-      const eventStart = new Date(eventStartDate.getFullYear(), eventStartDate.getMonth(), eventStartDate.getDate());
-
-      // Ensure event.endDate is a valid Date object if it exists
-      const eventEndDate = event.endDate instanceof Date ? new Date(event.endDate) : 
-                          (event.endDate ? new Date(event.endDate) : eventStartDate);
-      const eventEnd = new Date(eventEndDate.getFullYear(), eventEndDate.getMonth(), eventEndDate.getDate());
-
-      // 일정 기간 확인 (시작일 <= 조회날짜 <= 종료일)
-      const isInDateRange = targetDate >= eventStart && targetDate <= eventEnd;
-
-      // 모드에 따른 필터링 수정
+      // 모드에 따른 필터링
       let modeFilter = false;
       if (mode === 'personal') {
         // 개인모드: groupId가 없는 일정만 표시
@@ -152,18 +140,118 @@ const CalendarPage: React.FC = () => {
         modeFilter = !!event.groupId;
       }
 
-      console.log(`Event ${event.title}:`, {
-        eventStart,
-        eventEnd,
-        targetDate,
-        isInDateRange,
-        modeFilter,
-        groupId: event.groupId,
-        mode,
-        finalResult: isInDateRange && modeFilter
-      });
+      // 모드 필터를 먼저 확인
+      if (!modeFilter) {
+        return false;
+      }
 
-      return isInDateRange && modeFilter;
+      // Ensure event.date is a valid Date object
+      const eventStartDate = event.date instanceof Date ? new Date(event.date) : new Date(event.date);
+      const eventStart = new Date(eventStartDate.getFullYear(), eventStartDate.getMonth(), eventStartDate.getDate());
+
+      // Ensure event.endDate is a valid Date object if it exists
+      const eventEndDate = event.endDate ? 
+        (event.endDate instanceof Date ? new Date(event.endDate) : new Date(event.endDate)) : 
+        eventStartDate;
+      const eventEnd = new Date(eventEndDate.getFullYear(), eventEndDate.getMonth(), eventEndDate.getDate());
+
+      // 반복 설정이 없는 경우 기본 날짜 범위 확인
+      if (!event.repeat || event.repeat === 'none') {
+        const isInDateRange = targetDate >= eventStart && targetDate <= eventEnd;
+        console.log(`Non-repeat event ${event.title}:`, {
+          eventStart,
+          eventEnd,
+          targetDate,
+          isInDateRange
+        });
+        return isInDateRange;
+      }
+
+      // 반복 일정 처리
+      if (event.repeat && event.repeat !== 'none') {
+        // 일정 시작일보다 이전 날짜는 제외
+        if (targetDate < eventStart) {
+          return false;
+        }
+
+        // 반복 종료일 확인
+        let repeatEndDate = null;
+        if (event.repeatEndDate) {
+          const endDateObj = event.repeatEndDate instanceof Date ? 
+            event.repeatEndDate : 
+            new Date(event.repeatEndDate);
+          repeatEndDate = new Date(endDateObj.getFullYear(), endDateObj.getMonth(), endDateObj.getDate());
+        }
+
+        // 반복 종료일이 있고 조회 날짜가 그 이후라면 제외
+        if (repeatEndDate && targetDate > repeatEndDate) {
+          console.log(`Repeat event ${event.title} excluded: after end date`, {
+            targetDate,
+            repeatEndDate
+          });
+          return false;
+        }
+
+        // 반복 패턴에 따른 확인
+        let isRepeatMatch = false;
+        
+        switch (event.repeat) {
+          case 'daily':
+            // 매일 반복: 시작일 이후 모든 날
+            isRepeatMatch = true;
+            break;
+            
+          case 'weekly':
+            // 매주 반복: 같은 요일
+            const startDayOfWeek = eventStart.getDay();
+            const targetDayOfWeek = targetDate.getDay();
+            isRepeatMatch = startDayOfWeek === targetDayOfWeek;
+            break;
+            
+          case 'monthly':
+            // 매월 반복: 같은 날짜
+            const startDay = eventStart.getDate();
+            const targetDay = targetDate.getDate();
+            
+            // 월말 날짜 처리 (예: 31일이 없는 달의 경우)
+            const targetMonthForMonthly = targetDate.getMonth();
+            const targetYearForMonthly = targetDate.getFullYear();
+            const lastDayOfTargetMonth = new Date(targetYearForMonthly, targetMonthForMonthly + 1, 0).getDate();
+            
+            // 원래 날짜가 현재 월의 마지막 날보다 크면 현재 월의 마지막 날과 비교
+            const adjustedStartDay = startDay > lastDayOfTargetMonth ? lastDayOfTargetMonth : startDay;
+            isRepeatMatch = targetDay === adjustedStartDay;
+            break;
+            
+          case 'yearly':
+            // 매년 반복: 같은 월, 같은 날
+            const startMonth = eventStart.getMonth();
+            const startDayYearly = eventStart.getDate();
+            const targetMonthForYearly = targetDate.getMonth();
+            const targetDayYearly = targetDate.getDate();
+            isRepeatMatch = startMonth === targetMonthForYearly && startDayYearly === targetDayYearly;
+            break;
+            
+          default:
+            isRepeatMatch = false;
+        }
+
+        console.log(`Repeat event ${event.title}:`, {
+          repeat: event.repeat,
+          eventStart,
+          targetDate,
+          repeatEndDate,
+          isRepeatMatch,
+          startDayOfWeek: event.repeat === 'weekly' ? eventStart.getDay() : undefined,
+          targetDayOfWeek: event.repeat === 'weekly' ? targetDate.getDay() : undefined,
+          startDay: event.repeat === 'monthly' ? eventStart.getDate() : undefined,
+          targetDay: event.repeat === 'monthly' ? targetDate.getDate() : undefined
+        });
+
+        return isRepeatMatch;
+      }
+
+      return false;
     });
 
     console.log('Filtered events for date:', filteredEvents);
@@ -414,7 +502,12 @@ const MonthView: React.FC<{
                     whileHover={{ scale: 1.02 }}
                     onClick={(e) => onEventClick(event, e)}
                   >
-                    <div className="font-medium truncate">{event.title}</div>
+                    <div className="font-medium truncate flex items-center space-x-1">
+                      {event.repeat !== 'none' && (
+                        <Repeat className="w-3 h-3 opacity-60" />
+                      )}
+                      <span>{event.title}</span>
+                    </div>
                     {event.isAllDay ? (
                       <div className="text-xs opacity-75">하루 종일</div>
                     ) : (
@@ -510,7 +603,12 @@ const WeekView: React.FC<{
                     whileHover={{ scale: 1.02 }}
                     onClick={(e) => onEventClick(event, e)}
                   >
-                    <div className="font-medium">{event.title}</div>
+                    <div className="font-medium flex items-center space-x-1">
+                      {event.repeat !== 'none' && (
+                        <Repeat className="w-3 h-3 opacity-60" />
+                      )}
+                      <span>{event.title}</span>
+                    </div>
                     {!event.isAllDay && (
                       <div className="text-xs opacity-75">
                         {event.startTime} - {event.endTime}
@@ -577,7 +675,12 @@ const DayView: React.FC<{
             >
               <div className="flex justify-between items-start">
                 <div>
-                  <h4 className="font-semibold text-gray-800">{event.title}</h4>
+                  <div className="flex items-center space-x-2">
+                    <h4 className="font-semibold text-gray-800">{event.title}</h4>
+                    {event.repeat !== 'none' && (
+                      <Repeat className="w-4 h-4 opacity-60" />
+                    )}
+                  </div>
                   {event.description && (
                     <p className="text-sm text-gray-600 mt-1">{event.description}</p>
                   )}
