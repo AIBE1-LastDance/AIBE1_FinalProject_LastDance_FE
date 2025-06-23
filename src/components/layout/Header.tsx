@@ -9,9 +9,11 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import CreateGroupModal from '../groups/CreateGroupModal';
 import JoinGroupModal from '../groups/JoinGroupModal';
 import GroupSettingsModal from '../groups/GroupSettingsModal';
+import {useAuth} from "../../hooks/useAuth.ts";
 
 const Header: React.FC = () => {
-  const { user, logout } = useAuthStore();
+  const { user, logout: storeLogout } = useAuthStore();
+  const { logout } = useAuth();
   const { mode, setMode, currentGroup, joinedGroups, setCurrentGroup } = useAppStore();
   const navigate = useNavigate();
   const location = useLocation();
@@ -339,7 +341,7 @@ const Header: React.FC = () => {
                           {getProviderIcon(user?.provider || '')}
                         </div>
                         <div>
-                          <div className="text-sm font-medium text-gray-900">{user?.name}</div>
+                          <div className="text-sm font-medium text-gray-900">{user?.username || user?.nickname}</div>
                           <div className="text-xs text-gray-500">{user?.email}</div>
                         </div>
                       </div>

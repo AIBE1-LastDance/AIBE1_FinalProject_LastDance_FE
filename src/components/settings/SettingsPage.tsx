@@ -2,16 +2,14 @@ import React, {useState} from 'react';
 import {motion} from 'framer-motion';
 import {Settings, User, Bell, Save, Camera, Trash2, Upload} from 'lucide-react';
 import {useAuthStore} from '../../store/authStore';
-import {useAppStore} from '../../store/appStore';
 import toast from 'react-hot-toast';
 
 const SettingsPage: React.FC = () => {
     const {user} = useAuthStore();
-    const {mode} = useAppStore();
     const [activeTab, setActiveTab] = useState('profile');
     const [profileData, setProfileData] = useState({
-        name: user?.name || '',
-        nickname: user?.name || '',
+        name: user?.username || '',
+        nickname: user?.nickname || '',
         avatar: user?.avatar || '',
         monthlyBudget: user?.monthlyBudget || 0
     });
@@ -63,7 +61,7 @@ const SettingsPage: React.FC = () => {
         // 사용자 정보 업데이트
         const {updateUser} = useAuthStore.getState();
         updateUser({
-            name: profileData.name,
+            nickname: profileData.nickname,
             monthlyBudget: profileData.monthlyBudget
         });
 
@@ -122,11 +120,14 @@ const SettingsPage: React.FC = () => {
                         <label className="block text-sm font-medium text-gray-700 mb-2">이름</label>
                         <input
                             type="text"
-                            value={profileData.name}
-                            onChange={(e) => handleProfileChange('name', e.target.value)}
+                            // value={profileData.name}
+                            value={user?.username || ''}
+                            // onChange={(e) => handleProfileChange('name', e.target.value)}
+                            disabled
                             className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                             placeholder="실명을 입력하세요"
                         />
+                        <p className="text-xs text-gray-500 mt-1">이름은 변경할 수 없습니다</p>
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">닉네임</label>
