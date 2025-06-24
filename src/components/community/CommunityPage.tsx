@@ -20,7 +20,7 @@ import { useAuthStore } from "../../store/authStore";
 import PostCard from "./PostCard";
 import CreatePostModal from "./CreatePostModal";
 import { Post } from "../../types";
-import { fetchAllPosts } from "../../api/community";
+import { fetchAllPosts } from "../../api/community/community";
 
 const CommunityPage: React.FC = () => {
   const { user } = useAuthStore();
@@ -40,9 +40,29 @@ const CommunityPage: React.FC = () => {
   // 게시글 불러오기
   useEffect(() => {
     fetchAllPosts()
-      .then((data) => {
-        console.log("[✅ 게시글 불러옴]", data);
-        setPosts(data);
+      .then((data: any[]) => {
+        // 🔧 혹은 정확한 타입을 지정하려면 아래 참고
+        const mappedPosts: Post[] = data.map((item) => ({
+          id: item.postId,
+          title: item.title,
+          content: item.content,
+          category: item.category, // 변환 필요 시 convertCategory(item.category)
+          userId: item.userId,
+          createdAt: new Date(item.createdAt),
+          updatedAt: new Date(item.updatedAt ?? item.createdAt),
+          likes: item.likeCount,
+          likedBy: [],
+          bookmarkedBy: [],
+          comments: [],
+          author: {
+            id: item.userId,
+            username: item.username,
+            nickname: item.username,
+            email: "",
+            provider: "google",
+          },
+        }));
+        setPosts(mappedPosts);
       })
       .catch((err) => console.error("[❌ 게시글 로딩 실패]", err));
   }, []);
@@ -50,25 +70,35 @@ const CommunityPage: React.FC = () => {
   const categories = [
     { id: "all", name: "전체", icon: Filter, color: "text-gray-600" },
     {
-      id: "roommate",
-      name: "메이트 구하기",
+      id: "FIND_MATE",
+      name: "메이트구하기",
       icon: Users,
       color: "text-blue-600",
     },
-    { id: "tip", name: "생활팁", icon: Lightbulb, color: "text-yellow-600" },
     {
-      id: "free",
+      id: "LIFE_TIPS",
+      name: "생활팁",
+      icon: Lightbulb,
+      color: "text-yellow-600",
+    },
+    {
+      id: "FREE_BOARD",
       name: "자유게시판",
       icon: MessageSquare,
       color: "text-purple-600",
     },
     {
-      id: "question",
-      name: "질문/답변",
+      id: "QNA",
+      name: "질문답변",
       icon: HelpCircle,
       color: "text-red-600",
     },
-    { id: "policy", name: "정책", icon: FileText, color: "text-green-600" },
+    {
+      id: "POLICY",
+      name: "정책게시판",
+      icon: FileText,
+      color: "text-green-600",
+    },
   ];
 
   const filteredPosts = posts.filter((post) => {

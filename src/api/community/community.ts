@@ -1,16 +1,18 @@
-import { Post } from "../../types";
-
 // 전체 게시글 목록 가져오기
 export const fetchAllPosts = async (): Promise<Post[]> => {
-  const res = await fetch("/api/v1/community");
+  const res = await fetch("/api/v1/community", {
+    credentials: "include", // ✅ 쿠키 포함
+  });
   const json = await res.json();
   if (!res.ok) throw new Error(json.message || "게시글 목록 불러오기 실패");
-  return json.data; // 백엔드 응답은 ApiResponse<T> 형태
+  return json.data;
 };
 
 // 게시글 상세 가져오기
 export const fetchPostById = async (postId: string): Promise<Post> => {
-  const res = await fetch(`/api/v1/community/${postId}`);
+  const res = await fetch(`/api/v1/community/${postId}`, {
+    credentials: "include", // ✅
+  });
   const json = await res.json();
   if (!res.ok) throw new Error(json.message || "게시글 조회 실패");
   return json.data;
@@ -26,8 +28,8 @@ export const createPost = async (data: {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("token")}`, // 인증 필요 시
     },
+    credentials: "include", // ✅ 쿠키 포함
     body: JSON.stringify(data),
   });
   const json = await res.json();
@@ -48,8 +50,8 @@ export const updatePost = async (
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
     },
+    credentials: "include", // ✅
     body: JSON.stringify(data),
   });
   const json = await res.json();
@@ -61,9 +63,7 @@ export const updatePost = async (
 export const deletePost = async (postId: string): Promise<void> => {
   const res = await fetch(`/api/v1/community/${postId}`, {
     method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
-    },
+    credentials: "include", // ✅
   });
   const json = await res.json();
   if (!res.ok) throw new Error(json.message || "게시글 삭제 실패");

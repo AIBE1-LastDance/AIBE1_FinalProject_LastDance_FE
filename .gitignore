@@ -168,4 +168,3 @@ storybook-static
 .pnp.*
 .env
 
-vite.config.ts
