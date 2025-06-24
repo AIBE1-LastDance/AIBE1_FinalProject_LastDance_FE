@@ -9,6 +9,7 @@ export const useAuth = () => {
 
     // 공통 인증 상태 정리 함수
     const clearAuthState = () => {
+        console.log('인증 상태 정리 시작')
         // 먼저 스토어의 로그아웃 함수 실행
         storeLogout();
 
@@ -26,14 +27,21 @@ export const useAuth = () => {
         console.log('모든 인증 관련 스토리지가 정리되었습니다.');
     }
 
-    const getSocialLoginUrl = (provider: 'google | kakao | naver') => {
-        return `${import.meta.env.VITE_API_BASE_URL}/oauth2/authorization/${provider}`;
+    const getSocialLoginUrl = (provider: 'google' | 'kakao' | 'naver') => {
+        // 개발환경에서는 프록시를 통해 OAuth 요청
+        const baseUrl = import.meta.env.DEV 
+            ? ''  // 개발환경: 프록시 사용 (상대경로)
+            : (import.meta.env.VITE_API_BASE_URL || 'https://api.lastdance.store'); // 운영환경
+        
+        return `${baseUrl}/oauth2/authorization/${provider}`;
     };
 
     const getCurrentUser = async (): Promise<User | null> => {
         try {
             setIsLoading(true);
+            console.log('사용자 정보 요청 시작')
             const response = await apiClient.get('/api/v1/auth/me');
+            console.log('/me 응답: ', response.status, response.data);
             const userData = response.data;
             // HTML 응답인지 확인
             if (typeof userData === 'string') {
@@ -65,6 +73,8 @@ export const useAuth = () => {
             }
         } catch (error) {
             console.error('사용자 정보 가져오기 실패: ', error);
+            console.log('오류 상세: ', error.response?.data);
+            console.log('오류 상태: ', error.response?.status)
             clearAuthState(); // 토큰 만료, 쿠키 없음시 자동 정리
             return null;
         } finally {

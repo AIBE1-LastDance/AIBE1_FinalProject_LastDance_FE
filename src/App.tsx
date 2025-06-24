@@ -5,6 +5,7 @@ import Layout from './components/layout/Layout';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import ScrollToTop from './components/common/ScrollToTop';
 import LoginPage from './components/auth/LoginPage';
+import OAuthCallback from './components/auth/OAuthCallback';
 import HomePage from './components/home/HomePage';
 import DashboardPage from './components/dashboard/DashboardPage';
 import CalendarPage from './components/calendar/CalendarPage';
@@ -29,10 +30,14 @@ function App() {
     console.log('App component rendered, isAuthenticated:', isAuthenticated);
 
     useEffect(() => {
+        // 이미 초기화되었거나 실행 중이면 스킵
+        if (isInitialized) {
+            return;
+        }
+
         // 앱 시작시 쿠키 확인해서 사용자 정보 가져오기
         const initAuth = async () => {
             try {
-                setIsInitialized(false);
                 console.log('인증 상태 초기화 중...');
                 const user = await getCurrentUser();
                 
@@ -51,8 +56,9 @@ function App() {
                 setIsInitialized(true);
             }
         };
+
         initAuth();
-    }, []);
+    }, [isInitialized]);
 
     return (
         <Router
@@ -84,6 +90,22 @@ function App() {
                 <Route
                     path="/"
                     element={isAuthenticated ? <Navigate to="/dashboard" replace/> : <HomePage/>}
+                />
+                <Route
+                    path="/oauth2/authorization/*"
+                    element={<OAuthCallback />}
+                />
+                <Route
+                    path="/login/oauth2/code/*"
+                    element={<OAuthCallback />}
+                />
+                <Route
+                    path="/oauth2/code/*"
+                    element={<OAuthCallback />}
+                />
+                <Route
+                    path="/auth/callback/*"
+                    element={<OAuthCallback />}
                 />
                 <Route
                     path="/dashboard"
