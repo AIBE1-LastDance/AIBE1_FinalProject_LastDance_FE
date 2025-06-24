@@ -1,5 +1,14 @@
-import { apiClient, ApiResponse } from './client';
+import { apiClient } from '../utils/api.ts';
+import { AxiosResponse } from 'axios';
 import { Event } from '../types';
+
+// Axios 기반 API Response 타입
+export interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  message?: string;
+}
 
 // 백엔드 실제 Calendar 응답 타입에 맞게 수정
 export interface CalendarResponseDTO {
@@ -82,21 +91,6 @@ export class CalendarApi {
   }
 
   /**
-   * Date를 백엔드 LocalDateTime 형식으로 변환
-   */
-  private formatDateTimeForBackend(date: Date): string {
-    // 로컬 시간을 YYYY-MM-DDTHH:mm:ss 형식으로 변환 (시간대 정보 없이)
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const seconds = date.getSeconds().toString().padStart(2, '0');
-    
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-  }
-
-  /**
    * Event를 백엔드 요청으로 변환
    */
   private eventToCalendarRequest(event: Partial<Event>): CreateCalendarRequestDTO | UpdateCalendarRequestDTO {
@@ -142,55 +136,6 @@ export class CalendarApi {
   }
 
   /**
-   * Date를 백엔드 LocalDateTime 형식으로 변환
-   */
-  private formatDateTimeForBackend(date: Date): string {
-    // 로컬 시간을 YYYY-MM-DDTHH:mm:ss 형식으로 변환 (시간대 정보 없이)
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const seconds = date.getSeconds().toString().padStart(2, '0');
-    
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-  }
-
-  /**
-   * 날짜에서 시간을 안전하게 추출 (로컬 시간대 기준)
-   */
-  private extractTimeFromDate(date: Date): string {
-    // 백엔드에서 LocalDateTime으로 오는 데이터를 로컬 시간으로 처리
-    // 예: "2025-06-23T09:00:00" → "09:00"
-    
-    if (date instanceof Date) {
-      const hours = date.getHours();
-      const minutes = date.getMinutes();
-      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-    }
-    
-    // Date가 아닌 경우 (문자열 등) ISO 문자열에서 추출
-    const dateStr = date.toString();
-    const timeMatch = dateStr.match(/T(\d{2}:\d{2})/);
-    return timeMatch ? timeMatch[1] : '00:00';
-  }
-
-  /**
-   * Date를 백엔드 LocalDateTime 형식으로 변환
-   */
-  private formatDateTimeForBackend(date: Date): string {
-    // 로컬 시간을 YYYY-MM-DDTHH:mm:ss 형식으로 변환 (시간대 정보 없이)
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const seconds = date.getSeconds().toString().padStart(2, '0');
-    
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-  }
-
-  /**
    * 백엔드 응답을 Event로 안전하게 변환
    */
   private calendarToEvent(calendar: any): Event {
@@ -233,55 +178,6 @@ export class CalendarApi {
   }
 
   /**
-   * Date를 백엔드 LocalDateTime 형식으로 변환
-   */
-  private formatDateTimeForBackend(date: Date): string {
-    // 로컬 시간을 YYYY-MM-DDTHH:mm:ss 형식으로 변환 (시간대 정보 없이)
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const seconds = date.getSeconds().toString().padStart(2, '0');
-    
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-  }
-
-  /**
-   * 날짜에서 시간을 안전하게 추출 (로컬 시간대 기준)
-   */
-  private extractTimeFromDate(date: Date): string {
-    // 백엔드에서 LocalDateTime으로 오는 데이터를 로컬 시간으로 처리
-    // 예: "2025-06-23T09:00:00" → "09:00"
-    
-    if (date instanceof Date) {
-      const hours = date.getHours();
-      const minutes = date.getMinutes();
-      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-    }
-    
-    // Date가 아닌 경우 (문자열 등) ISO 문자열에서 추출
-    const dateStr = date.toString();
-    const timeMatch = dateStr.match(/T(\d{2}:\d{2})/);
-    return timeMatch ? timeMatch[1] : '00:00';
-  }
-
-  /**
-   * Date를 백엔드 LocalDateTime 형식으로 변환
-   */
-  private formatDateTimeForBackend(date: Date): string {
-    // 로컬 시간을 YYYY-MM-DDTHH:mm:ss 형식으로 변환 (시간대 정보 없이)
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const seconds = date.getSeconds().toString().padStart(2, '0');
-    
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-  }
-
-  /**
    * 프론트엔드 카테고리를 백엔드 Enum으로 변환
    */
   private mapCategoryToBackend(category: string): string {
@@ -296,55 +192,6 @@ export class CalendarApi {
       'travel': 'TRAVEL',
     };
     return categoryMap[category] || 'general';
-  }
-
-  /**
-   * Date를 백엔드 LocalDateTime 형식으로 변환
-   */
-  private formatDateTimeForBackend(date: Date): string {
-    // 로컬 시간을 YYYY-MM-DDTHH:mm:ss 형식으로 변환 (시간대 정보 없이)
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const seconds = date.getSeconds().toString().padStart(2, '0');
-    
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-  }
-
-  /**
-   * 날짜에서 시간을 안전하게 추출 (로컬 시간대 기준)
-   */
-  private extractTimeFromDate(date: Date): string {
-    // 백엔드에서 LocalDateTime으로 오는 데이터를 로컬 시간으로 처리
-    // 예: "2025-06-23T09:00:00" → "09:00"
-    
-    if (date instanceof Date) {
-      const hours = date.getHours();
-      const minutes = date.getMinutes();
-      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-    }
-    
-    // Date가 아닌 경우 (문자열 등) ISO 문자열에서 추출
-    const dateStr = date.toString();
-    const timeMatch = dateStr.match(/T(\d{2}:\d{2})/);
-    return timeMatch ? timeMatch[1] : '00:00';
-  }
-
-  /**
-   * Date를 백엔드 LocalDateTime 형식으로 변환
-   */
-  private formatDateTimeForBackend(date: Date): string {
-    // 로컬 시간을 YYYY-MM-DDTHH:mm:ss 형식으로 변환 (시간대 정보 없이)
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const seconds = date.getSeconds().toString().padStart(2, '0');
-    
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
   }
 
   /**
@@ -367,55 +214,6 @@ export class CalendarApi {
   }
 
   /**
-   * Date를 백엔드 LocalDateTime 형식으로 변환
-   */
-  private formatDateTimeForBackend(date: Date): string {
-    // 로컬 시간을 YYYY-MM-DDTHH:mm:ss 형식으로 변환 (시간대 정보 없이)
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const seconds = date.getSeconds().toString().padStart(2, '0');
-    
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-  }
-
-  /**
-   * 날짜에서 시간을 안전하게 추출 (로컬 시간대 기준)
-   */
-  private extractTimeFromDate(date: Date): string {
-    // 백엔드에서 LocalDateTime으로 오는 데이터를 로컬 시간으로 처리
-    // 예: "2025-06-23T09:00:00" → "09:00"
-    
-    if (date instanceof Date) {
-      const hours = date.getHours();
-      const minutes = date.getMinutes();
-      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-    }
-    
-    // Date가 아닌 경우 (문자열 등) ISO 문자열에서 추출
-    const dateStr = date.toString();
-    const timeMatch = dateStr.match(/T(\d{2}:\d{2})/);
-    return timeMatch ? timeMatch[1] : '00:00';
-  }
-
-  /**
-   * Date를 백엔드 LocalDateTime 형식으로 변환
-   */
-  private formatDateTimeForBackend(date: Date): string {
-    // 로컬 시간을 YYYY-MM-DDTHH:mm:ss 형식으로 변환 (시간대 정보 없이)
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const seconds = date.getSeconds().toString().padStart(2, '0');
-    
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-  }
-
-  /**
    * 프론트엔드 repeat 타입을 백엔드 repeatType으로 변환
    */
   private mapRepeatType(repeat?: string): string {
@@ -426,55 +224,6 @@ export class CalendarApi {
       case 'yearly': return 'YEARLY';
       default: return 'NONE';
     }
-  }
-
-  /**
-   * Date를 백엔드 LocalDateTime 형식으로 변환
-   */
-  private formatDateTimeForBackend(date: Date): string {
-    // 로컬 시간을 YYYY-MM-DDTHH:mm:ss 형식으로 변환 (시간대 정보 없이)
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const seconds = date.getSeconds().toString().padStart(2, '0');
-    
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-  }
-
-  /**
-   * 날짜에서 시간을 안전하게 추출 (로컬 시간대 기준)
-   */
-  private extractTimeFromDate(date: Date): string {
-    // 백엔드에서 LocalDateTime으로 오는 데이터를 로컬 시간으로 처리
-    // 예: "2025-06-23T09:00:00" → "09:00"
-    
-    if (date instanceof Date) {
-      const hours = date.getHours();
-      const minutes = date.getMinutes();
-      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-    }
-    
-    // Date가 아닌 경우 (문자열 등) ISO 문자열에서 추출
-    const dateStr = date.toString();
-    const timeMatch = dateStr.match(/T(\d{2}:\d{2})/);
-    return timeMatch ? timeMatch[1] : '00:00';
-  }
-
-  /**
-   * Date를 백엔드 LocalDateTime 형식으로 변환
-   */
-  private formatDateTimeForBackend(date: Date): string {
-    // 로컬 시간을 YYYY-MM-DDTHH:mm:ss 형식으로 변환 (시간대 정보 없이)
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const seconds = date.getSeconds().toString().padStart(2, '0');
-    
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
   }
 
   /**
@@ -493,55 +242,6 @@ export class CalendarApi {
   }
 
   /**
-   * Date를 백엔드 LocalDateTime 형식으로 변환
-   */
-  private formatDateTimeForBackend(date: Date): string {
-    // 로컬 시간을 YYYY-MM-DDTHH:mm:ss 형식으로 변환 (시간대 정보 없이)
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const seconds = date.getSeconds().toString().padStart(2, '0');
-    
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-  }
-
-  /**
-   * 날짜에서 시간을 안전하게 추출 (로컬 시간대 기준)
-   */
-  private extractTimeFromDate(date: Date): string {
-    // 백엔드에서 LocalDateTime으로 오는 데이터를 로컬 시간으로 처리
-    // 예: "2025-06-23T09:00:00" → "09:00"
-    
-    if (date instanceof Date) {
-      const hours = date.getHours();
-      const minutes = date.getMinutes();
-      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-    }
-    
-    // Date가 아닌 경우 (문자열 등) ISO 문자열에서 추출
-    const dateStr = date.toString();
-    const timeMatch = dateStr.match(/T(\d{2}:\d{2})/);
-    return timeMatch ? timeMatch[1] : '00:00';
-  }
-
-  /**
-   * Date를 백엔드 LocalDateTime 형식으로 변환
-   */
-  private formatDateTimeForBackend(date: Date): string {
-    // 로컬 시간을 YYYY-MM-DDTHH:mm:ss 형식으로 변환 (시간대 정보 없이)
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const seconds = date.getSeconds().toString().padStart(2, '0');
-    
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-  }
-
-  /**
    * 카테고리에 따른 색상 반환
    */
   private getCategoryColor(category: string): string {
@@ -555,55 +255,6 @@ export class CalendarApi {
       travel: 'bg-indigo-100 text-indigo-800',
     };
     return colorMap[category] || 'bg-gray-100 text-gray-800';
-  }
-
-  /**
-   * Date를 백엔드 LocalDateTime 형식으로 변환
-   */
-  private formatDateTimeForBackend(date: Date): string {
-    // 로컬 시간을 YYYY-MM-DDTHH:mm:ss 형식으로 변환 (시간대 정보 없이)
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const seconds = date.getSeconds().toString().padStart(2, '0');
-    
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-  }
-
-  /**
-   * 날짜에서 시간을 안전하게 추출 (로컬 시간대 기준)
-   */
-  private extractTimeFromDate(date: Date): string {
-    // 백엔드에서 LocalDateTime으로 오는 데이터를 로컬 시간으로 처리
-    // 예: "2025-06-23T09:00:00" → "09:00"
-    
-    if (date instanceof Date) {
-      const hours = date.getHours();
-      const minutes = date.getMinutes();
-      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-    }
-    
-    // Date가 아닌 경우 (문자열 등) ISO 문자열에서 추출
-    const dateStr = date.toString();
-    const timeMatch = dateStr.match(/T(\d{2}:\d{2})/);
-    return timeMatch ? timeMatch[1] : '00:00';
-  }
-
-  /**
-   * Date를 백엔드 LocalDateTime 형식으로 변환
-   */
-  private formatDateTimeForBackend(date: Date): string {
-    // 로컬 시간을 YYYY-MM-DDTHH:mm:ss 형식으로 변환 (시간대 정보 없이)
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const seconds = date.getSeconds().toString().padStart(2, '0');
-    
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
   }
 
   /**
@@ -641,55 +292,6 @@ export class CalendarApi {
   }
 
   /**
-   * Date를 백엔드 LocalDateTime 형식으로 변환
-   */
-  private formatDateTimeForBackend(date: Date): string {
-    // 로컬 시간을 YYYY-MM-DDTHH:mm:ss 형식으로 변환 (시간대 정보 없이)
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const seconds = date.getSeconds().toString().padStart(2, '0');
-    
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-  }
-
-  /**
-   * 날짜에서 시간을 안전하게 추출 (로컬 시간대 기준)
-   */
-  private extractTimeFromDate(date: Date): string {
-    // 백엔드에서 LocalDateTime으로 오는 데이터를 로컬 시간으로 처리
-    // 예: "2025-06-23T09:00:00" → "09:00"
-    
-    if (date instanceof Date) {
-      const hours = date.getHours();
-      const minutes = date.getMinutes();
-      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-    }
-    
-    // Date가 아닌 경우 (문자열 등) ISO 문자열에서 추출
-    const dateStr = date.toString();
-    const timeMatch = dateStr.match(/T(\d{2}:\d{2})/);
-    return timeMatch ? timeMatch[1] : '00:00';
-  }
-
-  /**
-   * Date를 백엔드 LocalDateTime 형식으로 변환
-   */
-  private formatDateTimeForBackend(date: Date): string {
-    // 로컬 시간을 YYYY-MM-DDTHH:mm:ss 형식으로 변환 (시간대 정보 없이)
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const seconds = date.getSeconds().toString().padStart(2, '0');
-    
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-  }
-
-  /**
    * 내 일정 목록 조회
    */
   async getMyCalendars(query: CalendarsQuery = {}): Promise<ApiResponse<Event[]>> {
@@ -714,13 +316,13 @@ export class CalendarApi {
     console.log('[CalendarApi] Calling:', endpoint);
 
     try {
-      const response = await apiClient.get<any>(endpoint);
+      const response = await apiClient.get(endpoint);
 
       console.log('[CalendarApi] Raw response:', response);
 
-      if (response.success && response.data !== undefined) {
+      if (response.data) {
         // 안전한 배열 처리
-        const dataArray = this.ensureArray<CalendarResponseDTO>(response.data);
+        const dataArray = this.ensureArray<CalendarResponseDTO>(response.data.data || response.data);
         console.log('[CalendarApi] Processed data array:', dataArray);
 
         const events = dataArray.map(calendar => this.calendarToEvent(calendar));
@@ -729,73 +331,23 @@ export class CalendarApi {
         return {
           success: true,
           data: events,
-          message: response.message
+          message: response.data.message
         };
       }
 
-      // 실패한 경우 빈 배열 반환
       return {
         success: false,
         data: [],
-        error: response.error || 'Unknown error'
+        error: 'No data received'
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('[CalendarApi] Exception in getMyCalendars:', error);
       return {
         success: false,
         data: [],
-        error: error instanceof Error ? error.message : 'Network error'
+        error: error.response?.data?.message || error.message || 'Network error'
       };
     }
-  }
-
-  /**
-   * Date를 백엔드 LocalDateTime 형식으로 변환
-   */
-  private formatDateTimeForBackend(date: Date): string {
-    // 로컬 시간을 YYYY-MM-DDTHH:mm:ss 형식으로 변환 (시간대 정보 없이)
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const seconds = date.getSeconds().toString().padStart(2, '0');
-    
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-  }
-
-  /**
-   * 날짜에서 시간을 안전하게 추출 (로컬 시간대 기준)
-   */
-  private extractTimeFromDate(date: Date): string {
-    // 백엔드에서 LocalDateTime으로 오는 데이터를 로컬 시간으로 처리
-    // 예: "2025-06-23T09:00:00" → "09:00"
-    
-    if (date instanceof Date) {
-      const hours = date.getHours();
-      const minutes = date.getMinutes();
-      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-    }
-    
-    // Date가 아닌 경우 (문자열 등) ISO 문자열에서 추출
-    const dateStr = date.toString();
-    const timeMatch = dateStr.match(/T(\d{2}:\d{2})/);
-    return timeMatch ? timeMatch[1] : '00:00';
-  }
-
-  /**
-   * Date를 백엔드 LocalDateTime 형식으로 변환
-   */
-  private formatDateTimeForBackend(date: Date): string {
-    // 로컬 시간을 YYYY-MM-DDTHH:mm:ss 형식으로 변환 (시간대 정보 없이)
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const seconds = date.getSeconds().toString().padStart(2, '0');
-    
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
   }
 
   /**
@@ -803,72 +355,31 @@ export class CalendarApi {
    */
   async getCalendar(calendarId: string): Promise<ApiResponse<Event>> {
     try {
-      const response = await apiClient.get<any>(`/api/v1/calendars/${calendarId}`);
+      const response = await apiClient.get(`/api/v1/calendars/${calendarId}`);
 
       console.log('[CalendarApi] Get calendar response:', response);
 
-      if (response.success && response.data) {
-        const event = this.calendarToEvent(response.data);
-        return { ...response, data: event };
+      if (response.data) {
+        const responseData = response.data.data || response.data;
+        const event = this.calendarToEvent(responseData);
+        return { 
+          success: true, 
+          data: event, 
+          message: response.data.message 
+        };
       }
 
-      return response as ApiResponse<Event>;
-    } catch (error) {
+      return {
+        success: false,
+        error: 'No data received'
+      };
+    } catch (error: any) {
       console.error('[CalendarApi] Exception in getCalendar:', error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Network error'
+        error: error.response?.data?.message || error.message || 'Network error'
       };
     }
-  }
-
-  /**
-   * Date를 백엔드 LocalDateTime 형식으로 변환
-   */
-  private formatDateTimeForBackend(date: Date): string {
-    // 로컬 시간을 YYYY-MM-DDTHH:mm:ss 형식으로 변환 (시간대 정보 없이)
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const seconds = date.getSeconds().toString().padStart(2, '0');
-    
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-  }
-
-  /**
-   * 날짜에서 시간을 안전하게 추출 (로컬 시간대 기준)
-   */
-  private extractTimeFromDate(date: Date): string {
-    // 백엔드에서 LocalDateTime으로 오는 데이터를 로컬 시간으로 처리
-    // 예: "2025-06-23T09:00:00" → "09:00"
-    
-    if (date instanceof Date) {
-      const hours = date.getHours();
-      const minutes = date.getMinutes();
-      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-    }
-    
-    // Date가 아닌 경우 (문자열 등) ISO 문자열에서 추출
-    const dateStr = date.toString();
-    const timeMatch = dateStr.match(/T(\d{2}:\d{2})/);
-    return timeMatch ? timeMatch[1] : '00:00';
-  }
-
-  /**
-   * Date를 백엔드 LocalDateTime 형식으로 변환
-   */
-  private formatDateTimeForBackend(date: Date): string {
-    // 로컬 시간을 YYYY-MM-DDTHH:mm:ss 형식으로 변환 (시간대 정보 없이)
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const seconds = date.getSeconds().toString().padStart(2, '0');
-    
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
   }
 
   /**
@@ -879,84 +390,40 @@ export class CalendarApi {
       const requestData = this.eventToCalendarRequest(eventData);
       console.log('[CalendarApi] Creating calendar with data:', requestData);
 
-      const response = await apiClient.post<any>('/api/v1/calendars', requestData);
+      const response = await apiClient.post('/api/v1/calendars', requestData);
       console.log('[CalendarApi] Create calendar raw response:', response);
 
-      if (response.success && response.data) {
+      if (response.data) {
+        const responseData = response.data.data || response.data;
+        
         // 응답 데이터 유효성 검사
-        if (!response.data.calendarId) {
-          console.warn('[CalendarApi] Response data missing calendarId field:', response.data);
+        if (!responseData.calendarId) {
+          console.warn('[CalendarApi] Response data missing calendarId field:', responseData);
           // 임시 ID 할당
-          response.data.calendarId = Date.now();
+          responseData.calendarId = Date.now();
         }
 
-        const event = this.calendarToEvent(response.data);
+        const event = this.calendarToEvent(responseData);
         console.log('[CalendarApi] Converted created event:', event);
 
         return {
           success: true,
           data: event,
-          message: response.message
+          message: response.data.message
         };
       }
 
-      return response as ApiResponse<Event>;
-    } catch (error) {
+      return {
+        success: false,
+        error: 'No data received'
+      };
+    } catch (error: any) {
       console.error('[CalendarApi] Exception in createCalendar:', error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Network error'
+        error: error.response?.data?.message || error.message || 'Network error'
       };
     }
-  }
-
-  /**
-   * Date를 백엔드 LocalDateTime 형식으로 변환
-   */
-  private formatDateTimeForBackend(date: Date): string {
-    // 로컬 시간을 YYYY-MM-DDTHH:mm:ss 형식으로 변환 (시간대 정보 없이)
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const seconds = date.getSeconds().toString().padStart(2, '0');
-    
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-  }
-
-  /**
-   * 날짜에서 시간을 안전하게 추출 (로컬 시간대 기준)
-   */
-  private extractTimeFromDate(date: Date): string {
-    // 백엔드에서 LocalDateTime으로 오는 데이터를 로컬 시간으로 처리
-    // 예: "2025-06-23T09:00:00" → "09:00"
-    
-    if (date instanceof Date) {
-      const hours = date.getHours();
-      const minutes = date.getMinutes();
-      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-    }
-    
-    // Date가 아닌 경우 (문자열 등) ISO 문자열에서 추출
-    const dateStr = date.toString();
-    const timeMatch = dateStr.match(/T(\d{2}:\d{2})/);
-    return timeMatch ? timeMatch[1] : '00:00';
-  }
-
-  /**
-   * Date를 백엔드 LocalDateTime 형식으로 변환
-   */
-  private formatDateTimeForBackend(date: Date): string {
-    // 로컬 시간을 YYYY-MM-DDTHH:mm:ss 형식으로 변환 (시간대 정보 없이)
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const seconds = date.getSeconds().toString().padStart(2, '0');
-    
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
   }
 
   /**
@@ -967,70 +434,29 @@ export class CalendarApi {
       const requestData = this.eventToCalendarRequest(eventData);
       console.log('[CalendarApi] Updating calendar with data:', requestData);
 
-      const response = await apiClient.patch<any>(`/api/v1/calendars/${calendarId}`, requestData);
+      const response = await apiClient.patch(`/api/v1/calendars/${calendarId}`, requestData);
 
-      if (response.success && response.data) {
-        const event = this.calendarToEvent(response.data);
-        return { ...response, data: event };
+      if (response.data) {
+        const responseData = response.data.data || response.data;
+        const event = this.calendarToEvent(responseData);
+        return { 
+          success: true, 
+          data: event, 
+          message: response.data.message 
+        };
       }
 
-      return response as ApiResponse<Event>;
-    } catch (error) {
+      return {
+        success: false,
+        error: 'No data received'
+      };
+    } catch (error: any) {
       console.error('[CalendarApi] Exception in updateCalendar:', error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Network error'
+        error: error.response?.data?.message || error.message || 'Network error'
       };
     }
-  }
-
-  /**
-   * Date를 백엔드 LocalDateTime 형식으로 변환
-   */
-  private formatDateTimeForBackend(date: Date): string {
-    // 로컬 시간을 YYYY-MM-DDTHH:mm:ss 형식으로 변환 (시간대 정보 없이)
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const seconds = date.getSeconds().toString().padStart(2, '0');
-    
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-  }
-
-  /**
-   * 날짜에서 시간을 안전하게 추출 (로컬 시간대 기준)
-   */
-  private extractTimeFromDate(date: Date): string {
-    // 백엔드에서 LocalDateTime으로 오는 데이터를 로컬 시간으로 처리
-    // 예: "2025-06-23T09:00:00" → "09:00"
-    
-    if (date instanceof Date) {
-      const hours = date.getHours();
-      const minutes = date.getMinutes();
-      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-    }
-    
-    // Date가 아닌 경우 (문자열 등) ISO 문자열에서 추출
-    const dateStr = date.toString();
-    const timeMatch = dateStr.match(/T(\d{2}:\d{2})/);
-    return timeMatch ? timeMatch[1] : '00:00';
-  }
-
-  /**
-   * Date를 백엔드 LocalDateTime 형식으로 변환
-   */
-  private formatDateTimeForBackend(date: Date): string {
-    // 로컬 시간을 YYYY-MM-DDTHH:mm:ss 형식으로 변환 (시간대 정보 없이)
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const seconds = date.getSeconds().toString().padStart(2, '0');
-    
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
   }
 
   /**
@@ -1054,63 +480,19 @@ export class CalendarApi {
       const endpoint = `/api/v1/calendars/${calendarId}${params.toString() ? `?${params.toString()}` : ''}`;
       console.log('[CalendarApi] Deleting calendar:', endpoint);
 
-      return await apiClient.delete<void>(endpoint);
-    } catch (error) {
+      const response = await apiClient.delete(endpoint);
+      
+      return {
+        success: true,
+        message: response.data?.message || 'Calendar deleted successfully'
+      };
+    } catch (error: any) {
       console.error('[CalendarApi] Exception in deleteCalendar:', error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Network error'
+        error: error.response?.data?.message || error.message || 'Network error'
       };
     }
-  }
-
-  /**
-   * Date를 백엔드 LocalDateTime 형식으로 변환
-   */
-  private formatDateTimeForBackend(date: Date): string {
-    // 로컬 시간을 YYYY-MM-DDTHH:mm:ss 형식으로 변환 (시간대 정보 없이)
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const seconds = date.getSeconds().toString().padStart(2, '0');
-    
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-  }
-
-  /**
-   * 날짜에서 시간을 안전하게 추출 (로컬 시간대 기준)
-   */
-  private extractTimeFromDate(date: Date): string {
-    // 백엔드에서 LocalDateTime으로 오는 데이터를 로컬 시간으로 처리
-    // 예: "2025-06-23T09:00:00" → "09:00"
-    
-    if (date instanceof Date) {
-      const hours = date.getHours();
-      const minutes = date.getMinutes();
-      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-    }
-    
-    // Date가 아닌 경우 (문자열 등) ISO 문자열에서 추출
-    const dateStr = date.toString();
-    const timeMatch = dateStr.match(/T(\d{2}:\d{2})/);
-    return timeMatch ? timeMatch[1] : '00:00';
-  }
-
-  /**
-   * Date를 백엔드 LocalDateTime 형식으로 변환
-   */
-  private formatDateTimeForBackend(date: Date): string {
-    // 로컬 시간을 YYYY-MM-DDTHH:mm:ss 형식으로 변환 (시간대 정보 없이)
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const seconds = date.getSeconds().toString().padStart(2, '0');
-    
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
   }
 
   /**
@@ -1136,80 +518,31 @@ export class CalendarApi {
     const endpoint = `/api/v1/calendars/groups/${groupId}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
 
     try {
-      const response = await apiClient.get<any>(endpoint);
+      const response = await apiClient.get(endpoint);
 
-      if (response.success && response.data !== undefined) {
-        const dataArray = this.ensureArray<CalendarResponseDTO>(response.data);
+      if (response.data) {
+        const dataArray = this.ensureArray<CalendarResponseDTO>(response.data.data || response.data);
         const events = dataArray.map(calendar => this.calendarToEvent(calendar));
         return {
           success: true,
           data: events,
-          message: response.message
+          message: response.data.message
         };
       }
 
       return {
         success: false,
         data: [],
-        error: response.error || 'Unknown error'
+        error: 'No data received'
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('[CalendarApi] Exception in getGroupCalendars:', error);
       return {
         success: false,
         data: [],
-        error: error instanceof Error ? error.message : 'Network error'
+        error: error.response?.data?.message || error.message || 'Network error'
       };
     }
-  }
-
-  /**
-   * Date를 백엔드 LocalDateTime 형식으로 변환
-   */
-  private formatDateTimeForBackend(date: Date): string {
-    // 로컬 시간을 YYYY-MM-DDTHH:mm:ss 형식으로 변환 (시간대 정보 없이)
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const seconds = date.getSeconds().toString().padStart(2, '0');
-    
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-  }
-
-  /**
-   * 날짜에서 시간을 안전하게 추출 (로컬 시간대 기준)
-   */
-  private extractTimeFromDate(date: Date): string {
-    // 백엔드에서 LocalDateTime으로 오는 데이터를 로컬 시간으로 처리
-    // 예: "2025-06-23T09:00:00" → "09:00"
-    
-    if (date instanceof Date) {
-      const hours = date.getHours();
-      const minutes = date.getMinutes();
-      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-    }
-    
-    // Date가 아닌 경우 (문자열 등) ISO 문자열에서 추출
-    const dateStr = date.toString();
-    const timeMatch = dateStr.match(/T(\d{2}:\d{2})/);
-    return timeMatch ? timeMatch[1] : '00:00';
-  }
-
-  /**
-   * Date를 백엔드 LocalDateTime 형식으로 변환
-   */
-  private formatDateTimeForBackend(date: Date): string {
-    // 로컬 시간을 YYYY-MM-DDTHH:mm:ss 형식으로 변환 (시간대 정보 없이)
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const seconds = date.getSeconds().toString().padStart(2, '0');
-    
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
   }
 
   /**
@@ -1230,55 +563,6 @@ export class CalendarApi {
   }
 
   /**
-   * Date를 백엔드 LocalDateTime 형식으로 변환
-   */
-  private formatDateTimeForBackend(date: Date): string {
-    // 로컬 시간을 YYYY-MM-DDTHH:mm:ss 형식으로 변환 (시간대 정보 없이)
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const seconds = date.getSeconds().toString().padStart(2, '0');
-    
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-  }
-
-  /**
-   * 날짜에서 시간을 안전하게 추출 (로컬 시간대 기준)
-   */
-  private extractTimeFromDate(date: Date): string {
-    // 백엔드에서 LocalDateTime으로 오는 데이터를 로컬 시간으로 처리
-    // 예: "2025-06-23T09:00:00" → "09:00"
-    
-    if (date instanceof Date) {
-      const hours = date.getHours();
-      const minutes = date.getMinutes();
-      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-    }
-    
-    // Date가 아닌 경우 (문자열 등) ISO 문자열에서 추출
-    const dateStr = date.toString();
-    const timeMatch = dateStr.match(/T(\d{2}:\d{2})/);
-    return timeMatch ? timeMatch[1] : '00:00';
-  }
-
-  /**
-   * Date를 백엔드 LocalDateTime 형식으로 변환
-   */
-  private formatDateTimeForBackend(date: Date): string {
-    // 로컬 시간을 YYYY-MM-DDTHH:mm:ss 형식으로 변환 (시간대 정보 없이)
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const seconds = date.getSeconds().toString().padStart(2, '0');
-    
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-  }
-
-  /**
    * 주간 일정 조회 (편의 메서드)
    */
   async getWeeklyCalendars(date: Date, groupId?: string): Promise<ApiResponse<Event[]>> {
@@ -1292,55 +576,6 @@ export class CalendarApi {
     } else {
       return this.getMyCalendars(query);
     }
-  }
-
-  /**
-   * Date를 백엔드 LocalDateTime 형식으로 변환
-   */
-  private formatDateTimeForBackend(date: Date): string {
-    // 로컬 시간을 YYYY-MM-DDTHH:mm:ss 형식으로 변환 (시간대 정보 없이)
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const seconds = date.getSeconds().toString().padStart(2, '0');
-    
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-  }
-
-  /**
-   * 날짜에서 시간을 안전하게 추출 (로컬 시간대 기준)
-   */
-  private extractTimeFromDate(date: Date): string {
-    // 백엔드에서 LocalDateTime으로 오는 데이터를 로컬 시간으로 처리
-    // 예: "2025-06-23T09:00:00" → "09:00"
-    
-    if (date instanceof Date) {
-      const hours = date.getHours();
-      const minutes = date.getMinutes();
-      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-    }
-    
-    // Date가 아닌 경우 (문자열 등) ISO 문자열에서 추출
-    const dateStr = date.toString();
-    const timeMatch = dateStr.match(/T(\d{2}:\d{2})/);
-    return timeMatch ? timeMatch[1] : '00:00';
-  }
-
-  /**
-   * Date를 백엔드 LocalDateTime 형식으로 변환
-   */
-  private formatDateTimeForBackend(date: Date): string {
-    // 로컬 시간을 YYYY-MM-DDTHH:mm:ss 형식으로 변환 (시간대 정보 없이)
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const seconds = date.getSeconds().toString().padStart(2, '0');
-    
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
   }
 
   /**
@@ -1360,55 +595,6 @@ export class CalendarApi {
   }
 
   /**
-   * Date를 백엔드 LocalDateTime 형식으로 변환
-   */
-  private formatDateTimeForBackend(date: Date): string {
-    // 로컬 시간을 YYYY-MM-DDTHH:mm:ss 형식으로 변환 (시간대 정보 없이)
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const seconds = date.getSeconds().toString().padStart(2, '0');
-    
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-  }
-
-  /**
-   * 날짜에서 시간을 안전하게 추출 (로컬 시간대 기준)
-   */
-  private extractTimeFromDate(date: Date): string {
-    // 백엔드에서 LocalDateTime으로 오는 데이터를 로컬 시간으로 처리
-    // 예: "2025-06-23T09:00:00" → "09:00"
-    
-    if (date instanceof Date) {
-      const hours = date.getHours();
-      const minutes = date.getMinutes();
-      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-    }
-    
-    // Date가 아닌 경우 (문자열 등) ISO 문자열에서 추출
-    const dateStr = date.toString();
-    const timeMatch = dateStr.match(/T(\d{2}:\d{2})/);
-    return timeMatch ? timeMatch[1] : '00:00';
-  }
-
-  /**
-   * Date를 백엔드 LocalDateTime 형식으로 변환
-   */
-  private formatDateTimeForBackend(date: Date): string {
-    // 로컬 시간을 YYYY-MM-DDTHH:mm:ss 형식으로 변환 (시간대 정보 없이)
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const seconds = date.getSeconds().toString().padStart(2, '0');
-    
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-  }
-
-  /**
    * 특정 날짜의 일정 조회
    */
   async getCalendarsByDate(date: Date, groupId?: string): Promise<ApiResponse<Event[]>> {
@@ -1416,65 +602,20 @@ export class CalendarApi {
   }
 
   /**
-   * Date를 백엔드 LocalDateTime 형식으로 변환
-   */
-  private formatDateTimeForBackend(date: Date): string {
-    // 로컬 시간을 YYYY-MM-DDTHH:mm:ss 형식으로 변환 (시간대 정보 없이)
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const seconds = date.getSeconds().toString().padStart(2, '0');
-    
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-  }
-
-  /**
-   * 날짜에서 시간을 안전하게 추출 (로컬 시간대 기준)
-   */
-  private extractTimeFromDate(date: Date): string {
-    // 백엔드에서 LocalDateTime으로 오는 데이터를 로컬 시간으로 처리
-    // 예: "2025-06-23T09:00:00" → "09:00"
-    
-    if (date instanceof Date) {
-      const hours = date.getHours();
-      const minutes = date.getMinutes();
-      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-    }
-    
-    // Date가 아닌 경우 (문자열 등) ISO 문자열에서 추출
-    const dateStr = date.toString();
-    const timeMatch = dateStr.match(/T(\d{2}:\d{2})/);
-    return timeMatch ? timeMatch[1] : '00:00';
-  }
-
-  /**
-   * Date를 백엔드 LocalDateTime 형식으로 변환
-   */
-  private formatDateTimeForBackend(date: Date): string {
-    // 로컬 시간을 YYYY-MM-DDTHH:mm:ss 형식으로 변환 (시간대 정보 없이)
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const seconds = date.getSeconds().toString().padStart(2, '0');
-    
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-  }
-
-  /**
    * API 상태 확인 (디버깅용)
    */
   async healthCheck(): Promise<ApiResponse<any>> {
     try {
-      return await apiClient.get('/api/health');
-    } catch (error) {
+      const response = await apiClient.get('/api/health');
+      return {
+        success: true,
+        data: response.data
+      };
+    } catch (error: any) {
       console.error('[CalendarApi] Health check failed:', error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Health check failed'
+        error: error.response?.data?.message || error.message || 'Health check failed'
       };
     }
   }
