@@ -16,13 +16,23 @@ body {
   z-index: 1 !important;
 }
 
-/* 확장 프로그램이 삽입하는 요소들 숨기기 */
-[class*="extension"], 
-[id*="extension"], 
-[class*="translate"], 
+/* 확장 프로그램이 삽입하는 요소들 숨기기 - react-hot-toast 제외 */
+[class*="extension"],
+[id*="extension"],
+[class*="translate"],
 [id*="translate"],
-div[style*="position: fixed"][style*="z-index"] {
+div[style*="position: fixed"][style*="z-index"]:not([data-react-hot-toast]):not([data-react-hot-toast-container]):not(.go2072408551) {
   display: none !important;
+}
+
+/* react-hot-toast 보호 */
+[data-react-hot-toast],
+[data-react-hot-toast-container],
+.go2072408551,
+#_rht_toaster {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 /* 3D Transform utilities */
