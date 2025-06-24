@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Plus, Grid, List, Calendar as CalendarIcon, BarChart3, Repeat } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Grid, List, Calendar as CalendarIcon, BarChart3, Repeat, Users, User } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, startOfWeek, endOfWeek, addDays, startOfYear, endOfYear, eachMonthOfInterval } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { useCalendar } from '../../hooks/useCalendar';
@@ -75,11 +75,56 @@ const CalendarPage: React.FC = () => {
     const allEvents = getEventsForDate(date);
     return allEvents.filter(event => {
       if (mode === 'personal') {
-        return true;  // "내 캘린더" 탭: 모든 일정 표시 (개인 + 그룹)
+        return true; // 개인 모드: 모든 일정 표시 (개인 + 그룹)
       } else {
-        return !!event.groupId;  // "공유 캘린더" 탭: 그룹 일정만 표시
+        return !!event.groupId; // 그룹 모드: 그룹 일정만 표시
       }
     });
+  };
+
+  // 일정 타입별 스타일 가져오기
+  const getEventStyle = (event: any) => {
+    const baseStyles = {
+      bill: 'bg-red-100 text-red-800 border-red-200',
+      cleaning: 'bg-green-100 text-green-800 border-green-200',
+      meeting: 'bg-blue-100 text-blue-800 border-blue-200',
+      appointment: 'bg-purple-100 text-purple-800 border-purple-200',
+      health: 'bg-pink-100 text-pink-800 border-pink-200',
+      shopping: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+      travel: 'bg-indigo-100 text-indigo-800 border-indigo-200',
+    };
+    
+    const categoryStyle = baseStyles[event.category as keyof typeof baseStyles] || 'bg-gray-100 text-gray-800 border-gray-200';
+    
+    // 그룹 일정인 경우 보더 추가
+    if (event.groupId) {
+      return `${categoryStyle} border-l-4 border-l-blue-500`;
+    }
+    
+    return categoryStyle;
+  };
+
+  // 일정 아이콘 렌더링
+  const renderEventIcon = (event: any) => {
+    if (event.groupId) {
+      return <Users className="w-3 h-3 text-blue-600" />;
+    } else {
+      return <User className="w-3 h-3 text-gray-600" />;
+    }
+  };
+
+  // 일정 라벨 렌더링
+  const renderEventLabel = (event: any) => {
+    if (event.groupId) {
+      return (
+        <div className="text-[10px] text-blue-600 font-medium">
+          <span>{event.groupName || '그룹'}</span>
+        </div>
+      );
+    } else {
+      // 개인 일정은 라벨 표시하지 않음
+      return null;
+    }
   };
 
   // 이벤트 저장 핸들러
@@ -221,6 +266,9 @@ const CalendarPage: React.FC = () => {
                   onDateClick={handleDateClick}
                   onEventClick={handleEventClick}
                   getEventsForDate={getFilteredEventsForDate}
+                  getEventStyle={getEventStyle}
+                  renderEventIcon={renderEventIcon}
+                  renderEventLabel={renderEventLabel}
               />
           )}
           {currentView === 'week' && (
@@ -229,6 +277,9 @@ const CalendarPage: React.FC = () => {
                   onDateClick={handleDateClick}
                   onEventClick={handleEventClick}
                   getEventsForDate={getFilteredEventsForDate}
+                  getEventStyle={getEventStyle}
+                  renderEventIcon={renderEventIcon}
+                  renderEventLabel={renderEventLabel}
               />
           )}
           {currentView === 'day' && (
@@ -237,6 +288,9 @@ const CalendarPage: React.FC = () => {
                   onDateClick={handleDateClick}
                   onEventClick={handleEventClick}
                   getEventsForDate={getFilteredEventsForDate}
+                  getEventStyle={getEventStyle}
+                  renderEventIcon={renderEventIcon}
+                  renderEventLabel={renderEventLabel}
               />
           )}
         </motion.div>
@@ -319,7 +373,10 @@ const MonthView: React.FC<{
   onDateClick: (date: Date) => void;
   onEventClick: (event: any, e: React.MouseEvent) => void;
   getEventsForDate: (date: Date) => any[];
-}> = ({ currentDate, onDateClick, onEventClick, getEventsForDate }) => {
+  getEventStyle: (event: any) => string;
+  renderEventIcon: (event: any) => React.ReactNode;
+  renderEventLabel: (event: any) => React.ReactNode;
+}> = ({ currentDate, onDateClick, onEventClick, getEventsForDate, getEventStyle, renderEventIcon, renderEventLabel }) => {
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   const calendarStart = startOfWeek(monthStart, { weekStartsOn: 0 });
@@ -369,32 +426,30 @@ const MonthView: React.FC<{
                     {dayEvents.slice(0, 3).map((event) => (
                         <motion.div
                             key={event.id}
-                            className={`text-xs px-2 py-1 rounded truncate cursor-pointer hover:opacity-80 transition-opacity ${
-                                event.category === 'bill' ? 'bg-red-100 text-red-800' :
-                                    event.category === 'cleaning' ? 'bg-green-100 text-green-800' :
-                                        event.category === 'meeting' ? 'bg-blue-100 text-blue-800' :
-                                            event.category === 'appointment' ? 'bg-purple-100 text-purple-800' :
-                                                event.category === 'health' ? 'bg-pink-100 text-pink-800' :
-                                                    event.category === 'shopping' ? 'bg-yellow-100 text-yellow-800' :
-                                                        event.category === 'travel' ? 'bg-indigo-100 text-indigo-800' :
-                                                            'bg-gray-100 text-gray-800'
-                            }`}
+                            className={`text-xs px-2 py-1 rounded cursor-pointer hover:opacity-80 transition-all border ${getEventStyle(event)}`}
                             whileHover={{ scale: 1.02 }}
                             onClick={(e) => onEventClick(event, e)}
                         >
-                          <div className="font-medium truncate flex items-center space-x-1">
-                            {event.repeat !== 'none' && (
-                                <Repeat className="w-3 h-3 opacity-60" />
-                            )}
-                            <span>{event.title}</span>
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="font-medium truncate flex items-center space-x-1">
+                              {renderEventIcon(event)}
+                              {event.repeat !== 'none' && (
+                                  <Repeat className="w-3 h-3 opacity-60" />
+                              )}
+                              <span className="truncate">{event.title}</span>
+                            </div>
                           </div>
-                          {event.isAllDay ? (
-                              <div className="text-xs opacity-75">하루 종일</div>
-                          ) : (
-                              <div className="text-xs opacity-75">
-                                {event.startTime} - {event.endTime}
-                              </div>
-                          )}
+                          
+                          <div className="flex items-center justify-between">
+                            {renderEventLabel(event)}
+                            {event.isAllDay ? (
+                                <div className="text-xs opacity-75">하루 종일</div>
+                            ) : (
+                                <div className="text-xs opacity-75">
+                                  {event.startTime}
+                                </div>
+                            )}
+                          </div>
                         </motion.div>
                     ))}
                     {dayEvents.length > 3 && (
@@ -417,7 +472,10 @@ const WeekView: React.FC<{
   onDateClick: (date: Date) => void;
   onEventClick: (event: any, e: React.MouseEvent) => void;
   getEventsForDate: (date: Date) => any[];
-}> = ({ currentDate, onDateClick, onEventClick, getEventsForDate }) => {
+  getEventStyle: (event: any) => string;
+  renderEventIcon: (event: any) => React.ReactNode;
+  renderEventLabel: (event: any) => React.ReactNode;
+}> = ({ currentDate, onDateClick, onEventClick, getEventsForDate, getEventStyle, renderEventIcon, renderEventLabel }) => {
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
@@ -458,30 +516,26 @@ const WeekView: React.FC<{
                     {dayEvents.map((event) => (
                         <motion.div
                             key={event.id}
-                            className={`text-xs px-2 py-1 rounded cursor-pointer hover:opacity-80 transition-opacity ${
-                                event.category === 'bill' ? 'bg-red-100 text-red-800' :
-                                    event.category === 'cleaning' ? 'bg-green-100 text-green-800' :
-                                        event.category === 'meeting' ? 'bg-blue-100 text-blue-800' :
-                                            event.category === 'appointment' ? 'bg-purple-100 text-purple-800' :
-                                                event.category === 'health' ? 'bg-pink-100 text-pink-800' :
-                                                    event.category === 'shopping' ? 'bg-yellow-100 text-yellow-800' :
-                                                        event.category === 'travel' ? 'bg-indigo-100 text-indigo-800' :
-                                                            'bg-gray-100 text-gray-800'
-                            }`}
+                            className={`text-xs px-2 py-1 rounded cursor-pointer hover:opacity-80 transition-all border ${getEventStyle(event)}`}
                             whileHover={{ scale: 1.02 }}
                             onClick={(e) => onEventClick(event, e)}
                         >
-                          <div className="font-medium flex items-center space-x-1">
+                          <div className="font-medium flex items-center space-x-1 mb-1">
+                            {renderEventIcon(event)}
                             {event.repeat !== 'none' && (
                                 <Repeat className="w-3 h-3 opacity-60" />
                             )}
-                            <span>{event.title}</span>
+                            <span className="truncate">{event.title}</span>
                           </div>
-                          {!event.isAllDay && (
-                              <div className="text-xs opacity-75">
-                                {event.startTime} - {event.endTime}
-                              </div>
-                          )}
+                          
+                          <div className="flex items-center justify-between">
+                            {renderEventLabel(event)}
+                            {!event.isAllDay && (
+                                <div className="text-xs opacity-75">
+                                  {event.startTime}
+                                </div>
+                            )}
+                          </div>
                         </motion.div>
                     ))}
                   </div>
@@ -499,7 +553,10 @@ const DayView: React.FC<{
   onDateClick: (date: Date) => void;
   onEventClick: (event: any, e: React.MouseEvent) => void;
   getEventsForDate: (date: Date) => any[];
-}> = ({ currentDate, onDateClick, onEventClick, getEventsForDate }) => {
+  getEventStyle: (event: any) => string;
+  renderEventIcon: (event: any) => React.ReactNode;
+  renderEventLabel: (event: any) => React.ReactNode;
+}> = ({ currentDate, onDateClick, onEventClick, getEventsForDate, getEventStyle, renderEventIcon, renderEventLabel }) => {
   const dayEvents = getEventsForDate(currentDate);
   const isToday = isSameDay(currentDate, new Date());
 
@@ -521,38 +578,35 @@ const DayView: React.FC<{
               dayEvents.map((event) => (
                   <motion.div
                       key={event.id}
-                      className={`p-4 rounded-lg cursor-pointer hover:shadow-md transition-all ${
-                          event.category === 'bill' ? 'bg-red-50 border border-red-200' :
-                              event.category === 'cleaning' ? 'bg-green-50 border border-green-200' :
-                                  event.category === 'meeting' ? 'bg-blue-50 border border-blue-200' :
-                                      event.category === 'appointment' ? 'bg-purple-50 border border-purple-200' :
-                                          event.category === 'health' ? 'bg-pink-50 border border-pink-200' :
-                                              event.category === 'shopping' ? 'bg-yellow-50 border border-yellow-200' :
-                                                  event.category === 'travel' ? 'bg-indigo-50 border border-indigo-200' :
-                                                      'bg-gray-50 border border-gray-200'
-                      }`}
+                      className={`p-4 rounded-lg cursor-pointer hover:shadow-md transition-all border-2 ${getEventStyle(event)}`}
                       whileHover={{ scale: 1.02 }}
                       onClick={(e) => onEventClick(event, e)}
                   >
                     <div className="flex justify-between items-start">
-                      <div>
-                        <div className="flex items-center space-x-2">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-2">
+                          {renderEventIcon(event)}
                           <h4 className="font-semibold text-gray-800">{event.title}</h4>
                           {event.repeat !== 'none' && (
                               <Repeat className="w-4 h-4 opacity-60" />
                           )}
                         </div>
+                        
+                        <div className="flex items-center justify-between mb-2">
+                          {renderEventLabel(event)}
+                          <div className="text-right">
+                            {event.isAllDay ? (
+                                <span className="text-sm text-gray-500">하루 종일</span>
+                            ) : (
+                                <span className="text-sm text-gray-500">
+                                  {event.startTime} - {event.endTime}
+                                </span>
+                            )}
+                          </div>
+                        </div>
+                        
                         {event.description && (
                             <p className="text-sm text-gray-600 mt-1">{event.description}</p>
-                        )}
-                      </div>
-                      <div className="text-right">
-                        {event.isAllDay ? (
-                            <span className="text-sm text-gray-500">하루 종일</span>
-                        ) : (
-                            <span className="text-sm text-gray-500">
-                      {event.startTime} - {event.endTime}
-                    </span>
                         )}
                       </div>
                     </div>

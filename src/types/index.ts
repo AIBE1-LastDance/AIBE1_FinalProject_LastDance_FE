@@ -32,6 +32,7 @@ export interface Event {
     category: 'bill' | 'cleaning' | 'meeting' | 'appointment' | 'health' | 'shopping' | 'travel' | 'other';
     color: string;
     groupId?: string;
+    groupName?: string; // 그룹 이름 추가
     userId: string;
     repeat?: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
     repeatEndDate?: Date;

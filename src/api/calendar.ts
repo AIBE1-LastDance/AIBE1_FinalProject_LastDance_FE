@@ -24,6 +24,7 @@ export interface CalendarResponseDTO {
   repeatEndDate?: string;
   userId: string; // UUID가 string으로 변환됨
   groupId?: string; // UUID가 string으로 변환됨
+  groupName?: string; // 그룹 이름 추가
   createdAt: string;
   // startTime, endTime, updatedAt는 백엔드에 없음
 }
@@ -170,6 +171,7 @@ export class CalendarApi {
       repeatEndDate: calendar?.repeatEndDate ? new Date(calendar.repeatEndDate) : undefined,
       userId: safeUserId,
       groupId: calendar?.groupId,
+      groupName: calendar?.groupName, // 그룹 이름 추가
       color: this.getCategoryColor(safeCategory),
     };
 
