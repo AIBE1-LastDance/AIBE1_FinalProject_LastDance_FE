@@ -75,9 +75,9 @@ const CalendarPage: React.FC = () => {
     const allEvents = getEventsForDate(date);
     return allEvents.filter(event => {
       if (mode === 'personal') {
-        return !event.groupId;
+        return true;  // "내 캘린더" 탭: 모든 일정 표시 (개인 + 그룹)
       } else {
-        return !!event.groupId;
+        return !!event.groupId;  // "공유 캘린더" 탭: 그룹 일정만 표시
       }
     });
   };
