@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { toast } from 'react-hot-toast';
 
 const OAuthCallback: React.FC = () => {
     const navigate = useNavigate();
@@ -17,6 +18,13 @@ const OAuthCallback: React.FC = () => {
                 
                 if (error) {
                     console.error('OAuth 에러:', error);
+
+                    if (error === 'user_inactive') {
+                        alert('비활성화된 계정입니다. 관리자에게 문의하세요.')
+                        navigate('/login');
+                        return;
+                    }
+
                     alert('로그인에 실패했습니다: ' + error);
                     navigate('/login');
                     return;

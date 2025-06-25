@@ -55,6 +55,12 @@ export const profileApi = {
         const response = await apiClient.get(`/api/v1/users//nickname/check?nickname=${nickname}`);
         return response.data;
     },
+
+    // 계정 삭제 (비활성화)
+    deleteAccount: async () => {
+        const response = await apiClient.delete('/api/v1/users/me');
+        return response.data;
+    }
 }
 
 apiClient.interceptors.response.use(

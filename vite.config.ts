@@ -16,11 +16,7 @@ export default defineConfig({
         changeOrigin: true,
         secure: false
       },
-      '/login': {
-        target: 'http://localhost:8080',
-        changeOrigin: true,
-        secure: false
-      }
+
     }
   },
   // 빌드 시에는 프록시 설정 무시됨 (운영환경에서는 실제 도메인 사용)

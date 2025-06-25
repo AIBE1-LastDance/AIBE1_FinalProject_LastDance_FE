@@ -177,11 +177,22 @@ const SettingsPage: React.FC = () => {
         }
     };
 
-    const handleDeleteAccount = () => {
+    const handleDeleteAccount = async () => {
         if (showDeleteConfirm) {
-            // 실제 계정 삭제 로직
-            toast.success('계정이 삭제되었습니다.');
-            // 로그아웃 처리 등
+            try {
+                await profileApi.deleteAccount();
+                toast.success('계정이 삭제되었습니다.');
+
+                // 로그아웃 처리
+                const {logout} = useAuthStore.getState();
+                logout();
+
+                // 리다이렉트
+                window.location.href = '/';
+            } catch (error) {
+                toast.error('계정 삭제에 실패했습니다.');
+                console.error('Profile delete error: ', error);
+            }
         } else {
             setShowDeleteConfirm(true);
             setTimeout(() => setShowDeleteConfirm(false), 5000); // 5초 후 자동으로 확인 상태 해제
