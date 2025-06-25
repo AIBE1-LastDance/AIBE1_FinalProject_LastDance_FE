@@ -383,7 +383,7 @@ const Header: React.FC = () => {
                                                     {renderAvatar()}
                                                     <div>
                                                         <div
-                                                            className="text-sm font-medium text-gray-900">{user?.username || user?.nickname}</div>
+                                                            className="text-sm font-medium text-gray-900">{user?.nickname}</div>
                                                         <div className="text-xs text-gray-500">{user?.email}</div>
                                                     </div>
                                                 </div>
