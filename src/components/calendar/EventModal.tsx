@@ -171,7 +171,21 @@ const EventModal: React.FC<EventModalProps> = ({
                     value={formData.title}
                     onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    placeholder="일정 설명을 입력하세요"
+                    placeholder="일정 제목을 입력하세요"
+                    disabled={isSubmitting}
+                />
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  설명
+                </label>
+                <textarea
+                    value={formData.description}
+                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+                    placeholder="일정에 대한 상세 설명을 입력하세요"
                     rows={3}
                     disabled={isSubmitting}
                 />
