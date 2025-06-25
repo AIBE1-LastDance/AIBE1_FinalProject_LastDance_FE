@@ -11,7 +11,7 @@ interface EventModalProps {
   currentGroup?: Group | null;
   onClose: () => void;
   onSave: (eventId: string, eventData: Partial<Event>) => Promise<Event | null>;
-  onDelete: (eventId: string, deleteType?: 'single' | 'future' | 'all') => Promise<boolean>;
+  onDelete: (eventId: string, deleteType?: 'single' | 'future' | 'all', instanceDate?: string) => Promise<boolean>;
 }
 
 const EventModal: React.FC<EventModalProps> = ({
@@ -112,7 +112,37 @@ const EventModal: React.FC<EventModalProps> = ({
     setIsSubmitting(true);
 
     try {
-      const success = await onDelete(event.id, deleteType);
+      let instanceDate: string | undefined;
+      
+      // deleteType이 'single' 또는 'future'인 경우 instanceDate 필요
+      if (deleteType === 'single' || deleteType === 'future') {
+        if (selectedDate) {
+          // ✅ 중요: selectedDate (사용자가 클릭한 날짜)를 기준으로 instanceDate 생성
+          const clickedDate = selectedDate instanceof Date ? selectedDate : new Date(selectedDate);
+          const baseDate = format(clickedDate, 'yyyy-MM-dd');
+          
+          // 원본 이벤트의 시간 정보 추출
+          let eventTime = '09:00:00';
+          if (event.startTime) {
+            eventTime = event.startTime.length === 5 ? `${event.startTime}:00` : event.startTime;
+          } else if (event.date) {
+            // startTime이 없으면 event.date에서 시간 추출
+            const originalDate = event.date instanceof Date ? event.date : new Date(event.date);
+            eventTime = format(originalDate, 'HH:mm:ss');
+          }
+          
+          instanceDate = `${baseDate}T${eventTime}`;
+          console.log('[EventModal] instanceDate 생성:', instanceDate, '(클릭한 날짜:', baseDate, ', 시간:', eventTime, ')');
+        } else {
+          // selectedDate가 없으면 이벤트의 원본 날짜 사용 (fallback)
+          const eventDate = event.date instanceof Date ? event.date : new Date(event.date);
+          instanceDate = eventDate.toISOString().slice(0, 19);
+          console.log('[EventModal] instanceDate fallback:', instanceDate);
+        }
+      }
+
+      console.log('[EventModal] 삭제 요청:', { eventId: event.id, deleteType, instanceDate });
+      const success = await onDelete(event.id, deleteType, instanceDate);
       if (success) {
         onClose();
       }

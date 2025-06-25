@@ -22,7 +22,7 @@ interface UseCalendarReturn {
     loadEvents: (query?: CalendarsQuery) => Promise<void>;
     createEvent: (eventData: Partial<Event>) => Promise<Event | null>;
     updateEvent: (eventId: string, eventData: Partial<Event>) => Promise<Event | null>;
-    deleteEvent: (eventId: string, deleteType?: 'single' | 'future' | 'all') => Promise<boolean>;
+    deleteEvent: (eventId: string, deleteType?: 'single' | 'future' | 'all', instanceDate?: string) => Promise<boolean>;
     refreshEvents: () => Promise<void>;
 
     // 네비게이션
@@ -210,14 +210,14 @@ export const useCalendar = (options: UseCalendarOptions = {}): UseCalendarReturn
     }, [loading]);
 
     // 이벤트 삭제
-    const deleteEvent = useCallback(async (eventId: string, deleteType?: 'single' | 'future' | 'all'): Promise<boolean> => {
+    const deleteEvent = useCallback(async (eventId: string, deleteType?: 'single' | 'future' | 'all', instanceDate?: string): Promise<boolean> => {
         if (loading) return false;
         
         setLoading(true);
         setError(null);
 
         try {
-            const response = await calendarApi.deleteCalendar(eventId, deleteType);
+            const response = await calendarApi.deleteCalendar(eventId, deleteType, instanceDate);
 
             if (response.success) {
                 setEvents(prev => prev.filter(event => event.id !== eventId));

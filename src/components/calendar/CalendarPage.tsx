@@ -62,10 +62,17 @@ const CalendarPage: React.FC = () => {
     setShowEventModal(true);
   };
 
-  const handleEventClick = (event: any, e: React.MouseEvent) => {
+  const handleEventClick = (event: any, e: React.MouseEvent, clickedDate?: Date) => {
     e.stopPropagation();
     setSelectedEvent(event);
-    setSelectedDate(new Date(event.date));
+    
+    // ✅ 중요: 사용자가 실제로 클릭한 날짜를 selectedDate로 설정
+    if (clickedDate) {
+      setSelectedDate(clickedDate); // 14일 (클릭한 날짜)
+    } else {
+      setSelectedDate(new Date(event.date)); // 11일 (원본 날짜) - fallback
+    }
+    
     setShowEventModal(true);
   };
 
@@ -138,8 +145,8 @@ const CalendarPage: React.FC = () => {
   };
 
   // 이벤트 삭제 핸들러
-  const handleDeleteEvent = async (eventId: string, deleteType?: 'single' | 'future' | 'all') => {
-    return await deleteEvent(eventId, deleteType);
+  const handleDeleteEvent = async (eventId: string, deleteType?: 'single' | 'future' | 'all', instanceDate?: string) => {
+    return await deleteEvent(eventId, deleteType, instanceDate);
   };
 
   const viewOptions = [
@@ -372,7 +379,7 @@ const YearView: React.FC<{
 const MonthView: React.FC<{
   currentDate: Date;
   onDateClick: (date: Date) => void;
-  onEventClick: (event: any, e: React.MouseEvent) => void;
+  onEventClick: (event: any, e: React.MouseEvent, clickedDate?: Date) => void;
   getEventsForDate: (date: Date) => any[];
   getEventStyle: (event: any) => string;
   renderEventIcon: (event: any) => React.ReactNode;
@@ -429,7 +436,7 @@ const MonthView: React.FC<{
                             key={event.id}
                             className={`text-xs px-2 py-1 rounded cursor-pointer hover:opacity-80 transition-all border ${getEventStyle(event)}`}
                             whileHover={{ scale: 1.02 }}
-                            onClick={(e) => onEventClick(event, e)}
+                            onClick={(e) => onEventClick(event, e, day)} // ✅ day 파라미터 추가
                         >
                           <div className="flex items-center justify-between mb-1">
                             <div className="font-medium truncate flex items-center space-x-1">
@@ -471,7 +478,7 @@ const MonthView: React.FC<{
 const WeekView: React.FC<{
   currentDate: Date;
   onDateClick: (date: Date) => void;
-  onEventClick: (event: any, e: React.MouseEvent) => void;
+  onEventClick: (event: any, e: React.MouseEvent, clickedDate?: Date) => void;
   getEventsForDate: (date: Date) => any[];
   getEventStyle: (event: any) => string;
   renderEventIcon: (event: any) => React.ReactNode;
@@ -519,7 +526,7 @@ const WeekView: React.FC<{
                             key={event.id}
                             className={`text-xs px-2 py-1 rounded cursor-pointer hover:opacity-80 transition-all border ${getEventStyle(event)}`}
                             whileHover={{ scale: 1.02 }}
-                            onClick={(e) => onEventClick(event, e)}
+                            onClick={(e) => onEventClick(event, e, day)} // ✅ day 파라미터 추가
                         >
                           <div className="font-medium flex items-center space-x-1 mb-1">
                             {renderEventIcon(event)}
@@ -552,7 +559,7 @@ const WeekView: React.FC<{
 const DayView: React.FC<{
   currentDate: Date;
   onDateClick: (date: Date) => void;
-  onEventClick: (event: any, e: React.MouseEvent) => void;
+  onEventClick: (event: any, e: React.MouseEvent, clickedDate?: Date) => void;
   getEventsForDate: (date: Date) => any[];
   getEventStyle: (event: any) => string;
   renderEventIcon: (event: any) => React.ReactNode;
@@ -581,7 +588,7 @@ const DayView: React.FC<{
                       key={event.id}
                       className={`p-4 rounded-lg cursor-pointer hover:shadow-md transition-all border-2 ${getEventStyle(event)}`}
                       whileHover={{ scale: 1.02 }}
-                      onClick={(e) => onEventClick(event, e)}
+                      onClick={(e) => onEventClick(event, e, currentDate)} // ✅ currentDate 파라미터 추가
                   >
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
