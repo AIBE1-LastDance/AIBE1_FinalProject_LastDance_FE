@@ -41,7 +41,7 @@ export const useAuth = () => {
             setIsLoading(true);
             console.log('사용자 정보 요청 시작')
             const response = await apiClient.get('/api/v1/auth/me');
-            console.log('/me 응답: ', response.status, response.data);
+            // console.log('/me 응답: ', response.status, response.data);
             const userData = response.data;
             // HTML 응답인지 확인
             if (typeof userData === 'string') {
@@ -58,7 +58,7 @@ export const useAuth = () => {
                     username: userData.username,
                     nickname: userData.nickname,
                     email: userData.email,
-                    avatar: userData.avatar,
+                    avatar: userData.profileImageUrl,
                     provider: userData.provider.toLowerCase(), // 'GOOGLE' -> 'google'
                     monthlyBudget: userData.monthlyBudget
                 };
