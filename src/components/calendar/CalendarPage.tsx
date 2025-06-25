@@ -51,7 +51,7 @@ const CalendarPage: React.FC = () => {
           return format(currentDate, 'yyyy년 M월', { locale: ko });
       }
     } catch (error) {
-      console.error('Date formatting error:', error);
+
       return '날짜 오류';
     }
   };
@@ -79,6 +79,7 @@ const CalendarPage: React.FC = () => {
   // 모드에 따른 이벤트 필터링
   const getFilteredEventsForDate = (date: Date) => {
     const allEvents = getEventsForDate(date);
+    
     return allEvents.filter(event => {
       if (mode === 'personal') {
         return true; // 개인 모드: 모든 일정 표시 (개인 + 그룹)

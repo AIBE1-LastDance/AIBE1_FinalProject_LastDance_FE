@@ -131,7 +131,6 @@ export class CalendarApi {
       groupId: event.groupId,
     };
 
-    console.log('[CalendarApi] Converted event to request:', request);
     return request;
   }
 
@@ -139,8 +138,6 @@ export class CalendarApi {
    * 백엔드 응답을 Event로 안전하게 변환
    */
   private calendarToEvent(calendar: any): Event {
-    console.log('[CalendarApi] Converting calendar to event:', calendar);
-
     // 안전한 필드 접근
     const safeId = calendar?.calendarId?.toString() || `temp-${Date.now()}`;
     const safeTitle = calendar?.title || '제목 없음';
@@ -156,6 +153,18 @@ export class CalendarApi {
         : this.extractTimeFromDate(new Date(safeStartDate.getTime() + 60 * 60 * 1000))
     );
 
+    // exceptionDates 처리
+    let processedExceptionDates: string[] = [];
+    if (calendar?.exceptionDates && Array.isArray(calendar.exceptionDates)) {
+      processedExceptionDates = calendar.exceptionDates.map((date: any) => {
+        if (typeof date === 'string') {
+          return date;
+        } else {
+          return new Date(date).toISOString();
+        }
+      });
+    }
+
     const event: Event = {
       id: safeId,
       title: safeTitle,
@@ -168,15 +177,15 @@ export class CalendarApi {
       category: safeCategory,
       repeat: this.mapRepeatTypeFromBackend(calendar?.repeatType),
       repeatEndDate: calendar?.repeatEndDate ? new Date(calendar.repeatEndDate) : undefined,
+      exceptionDates: processedExceptionDates,
       userId: safeUserId,
       groupId: calendar?.groupId,
-      groupName: calendar?.groupName, // 그룹 이름 추가
+      groupName: calendar?.groupName,
       color: this.getCategoryColor(safeCategory),
-      originalEventId: calendar?.originalEventId, // 반복 일정의 원본 이벤트 ID
-      isRepeated: calendar?.isRepeated || false, // 반복 생성된 일정인지 표시
+      originalEventId: calendar?.originalEventId,
+      isRepeated: calendar?.isRepeated || false,
     };
 
-    console.log('[CalendarApi] Converted to event:', event);
     return event;
   }
 
@@ -201,7 +210,6 @@ export class CalendarApi {
    * 백엔드 Enum을 프론트엔드 카테고리로 변환
    */
   private mapCategoryFromBackend(category?: string): string {
-    
     const categoryMap: Record<string, string> = {
       'GENERAL': 'general',
       'MEETING': 'meeting',
@@ -264,33 +272,26 @@ export class CalendarApi {
    * 안전한 배열 처리 함수
    */
   private ensureArray<T>(data: any): T[] {
-    console.log('[CalendarApi] Processing data for array conversion:', data);
-
     if (Array.isArray(data)) {
-      console.log('[CalendarApi] Data is already an array:', data.length, 'items');
       return data;
     }
 
     if (data && typeof data === 'object') {
       // 백엔드에서 페이징된 응답을 보내는 경우
       if (data.content && Array.isArray(data.content)) {
-        console.log('[CalendarApi] Found paginated response with content array');
         return data.content;
       }
 
       // 백엔드에서 data 필드에 배열을 감싸서 보내는 경우
       if (data.data && Array.isArray(data.data)) {
-        console.log('[CalendarApi] Found wrapped data array');
         return data.data;
       }
 
       // 단일 객체인 경우 배열로 감싸기
-      console.log('[CalendarApi] Converting single object to array');
       return [data];
     }
 
     // null, undefined, 기타 값인 경우 빈 배열 반환
-    console.log('[CalendarApi] Data is null/undefined, returning empty array');
     return [];
   }
 
@@ -316,20 +317,13 @@ export class CalendarApi {
 
     const endpoint = `/api/v1/calendars/me${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
 
-    console.log('[CalendarApi] Calling:', endpoint);
-
     try {
       const response = await apiClient.get(endpoint);
-
-      console.log('[CalendarApi] Raw response:', response);
 
       if (response.data) {
         // 안전한 배열 처리
         const dataArray = this.ensureArray<CalendarResponseDTO>(response.data.data || response.data);
-        console.log('[CalendarApi] Processed data array:', dataArray);
-
         const events = dataArray.map(calendar => this.calendarToEvent(calendar));
-        console.log('[CalendarApi] Converted events:', events);
 
         return {
           success: true,
@@ -360,8 +354,6 @@ export class CalendarApi {
     try {
       const response = await apiClient.get(`/api/v1/calendars/${calendarId}`);
 
-      console.log('[CalendarApi] Get calendar response:', response);
-
       if (response.data) {
         const responseData = response.data.data || response.data;
         const event = this.calendarToEvent(responseData);
@@ -377,7 +369,6 @@ export class CalendarApi {
         error: 'No data received'
       };
     } catch (error: any) {
-      console.error('[CalendarApi] Exception in getCalendar:', error);
       return {
         success: false,
         error: error.response?.data?.message || error.message || 'Network error'
@@ -391,23 +382,19 @@ export class CalendarApi {
   async createCalendar(eventData: Partial<Event>): Promise<ApiResponse<Event>> {
     try {
       const requestData = this.eventToCalendarRequest(eventData);
-      console.log('[CalendarApi] Creating calendar with data:', requestData);
 
       const response = await apiClient.post('/api/v1/calendars', requestData);
-      console.log('[CalendarApi] Create calendar raw response:', response);
 
       if (response.data) {
         const responseData = response.data.data || response.data;
         
         // 응답 데이터 유효성 검사
         if (!responseData.calendarId) {
-          console.warn('[CalendarApi] Response data missing calendarId field:', responseData);
           // 임시 ID 할당
           responseData.calendarId = Date.now();
         }
 
         const event = this.calendarToEvent(responseData);
-        console.log('[CalendarApi] Converted created event:', event);
 
         return {
           success: true,
@@ -421,7 +408,6 @@ export class CalendarApi {
         error: 'No data received'
       };
     } catch (error: any) {
-      console.error('[CalendarApi] Exception in createCalendar:', error);
       return {
         success: false,
         error: error.response?.data?.message || error.message || 'Network error'

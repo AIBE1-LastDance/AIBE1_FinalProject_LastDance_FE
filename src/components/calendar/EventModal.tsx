@@ -97,7 +97,6 @@ const EventModal: React.FC<EventModalProps> = ({
         onClose();
       }
     } catch (error) {
-      console.error('Error saving event:', error);
       alert('저장 중 오류가 발생했습니다.');
     } finally {
       setIsSubmitting(false);
@@ -132,22 +131,17 @@ const EventModal: React.FC<EventModalProps> = ({
           }
           
           instanceDate = `${baseDate}T${eventTime}`;
-          console.log('[EventModal] instanceDate 생성:', instanceDate, '(클릭한 날짜:', baseDate, ', 시간:', eventTime, ')');
         } else {
           // selectedDate가 없으면 이벤트의 원본 날짜 사용 (fallback)
           const eventDate = event.date instanceof Date ? event.date : new Date(event.date);
           instanceDate = eventDate.toISOString().slice(0, 19);
-          console.log('[EventModal] instanceDate fallback:', instanceDate);
         }
       }
-
-      console.log('[EventModal] 삭제 요청:', { eventId: event.id, deleteType, instanceDate });
       const success = await onDelete(event.id, deleteType, instanceDate);
       if (success) {
         onClose();
       }
     } catch (error) {
-      console.error('Error deleting event:', error);
       alert('삭제 중 오류가 발생했습니다.');
     } finally {
       setIsSubmitting(false);
