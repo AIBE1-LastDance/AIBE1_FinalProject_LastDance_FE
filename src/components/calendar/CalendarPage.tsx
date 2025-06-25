@@ -8,7 +8,7 @@ import { useAppStore } from '../../store/appStore';
 import EventModal from './EventModal';
 
 const CalendarPage: React.FC = () => {
-  const { mode } = useAppStore();
+  const { mode, currentGroup } = useAppStore();
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [showEventModal, setShowEventModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
@@ -23,7 +23,6 @@ const CalendarPage: React.FC = () => {
     createEvent,
     updateEvent,
     deleteEvent,
-    setCurrentDate,
     setCurrentView,
     goToPrevious,
     goToNext,
@@ -300,6 +299,8 @@ const CalendarPage: React.FC = () => {
             <EventModal
                 selectedDate={selectedDate}
                 event={selectedEvent}
+                mode={mode}
+                currentGroup={currentGroup}
                 onClose={() => {
                   setShowEventModal(false);
                   setSelectedDate(null);

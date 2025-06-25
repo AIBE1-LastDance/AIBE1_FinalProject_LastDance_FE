@@ -1,5 +1,4 @@
 import { apiClient } from '../utils/api.ts';
-import { AxiosResponse } from 'axios';
 import { Event } from '../types';
 
 // Axios 기반 API Response 타입
@@ -46,7 +45,7 @@ export interface CreateCalendarRequestDTO {
 export interface UpdateCalendarRequestDTO extends Partial<CreateCalendarRequestDTO> {}
 
 export interface CalendarsQuery {
-  viewType?: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'NONE';
+  viewType?: 'YEARLY' | 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'NONE';
   dateTime?: string; // LocalDateTime as ISO string
   type?: string;
   category?: string;
@@ -75,7 +74,7 @@ export class CalendarApi {
   /**
    * 날짜에서 시간을 안전하게 추출 (로컬 시간대 기준)
    */
-  private extractTimeFromDate(date: Date): string {
+  private extractTimeFromDate(date: Date | string): string {
     // 백엔드에서 LocalDateTime으로 오는 데이터를 로컬 시간으로 처리
     // 예: "2025-06-23T09:00:00" → "09:00"
     
@@ -86,7 +85,7 @@ export class CalendarApi {
     }
     
     // Date가 아닌 경우 (문자열 등) ISO 문자열에서 추출
-    const dateStr = date.toString();
+    const dateStr = String(date);
     const timeMatch = dateStr.match(/T(\d{2}:\d{2})/);
     return timeMatch ? timeMatch[1] : '00:00';
   }
@@ -146,7 +145,7 @@ export class CalendarApi {
     const safeId = calendar?.calendarId?.toString() || `temp-${Date.now()}`;
     const safeTitle = calendar?.title || '제목 없음';
     const safeStartDate = calendar?.startDate ? new Date(calendar.startDate) : new Date();
-    const safeCategory = this.mapCategoryFromBackend(calendar?.category) || 'general';
+    const safeCategory = this.mapCategoryFromBackend(calendar?.category) as Event['category'];
     const safeUserId = calendar?.userId || 'unknown';
 
     // startDate에서 시간 추출 (시간대 보정)
@@ -157,7 +156,7 @@ export class CalendarApi {
         : this.extractTimeFromDate(new Date(safeStartDate.getTime() + 60 * 60 * 1000))
     );
 
-    const event = {
+    const event: Event = {
       id: safeId,
       title: safeTitle,
       description: calendar?.description || '',
@@ -173,6 +172,8 @@ export class CalendarApi {
       groupId: calendar?.groupId,
       groupName: calendar?.groupName, // 그룹 이름 추가
       color: this.getCategoryColor(safeCategory),
+      originalEventId: calendar?.originalEventId, // 반복 일정의 원본 이벤트 ID
+      isRepeated: calendar?.isRepeated || false, // 반복 생성된 일정인지 표시
     };
 
     console.log('[CalendarApi] Converted to event:', event);

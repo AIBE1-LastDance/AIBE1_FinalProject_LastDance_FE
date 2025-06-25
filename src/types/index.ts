@@ -29,7 +29,7 @@ export interface Event {
     startTime?: string;
     endTime?: string;
     isAllDay?: boolean;
-    category: 'bill' | 'cleaning' | 'meeting' | 'appointment' | 'health' | 'shopping' | 'travel' | 'other';
+    category: 'general' | 'bill' | 'cleaning' | 'meeting' | 'appointment' | 'health' | 'shopping' | 'travel' | 'other';
     color: string;
     groupId?: string;
     groupName?: string; // 그룹 이름 추가

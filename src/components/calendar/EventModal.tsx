@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Calendar, Clock, Repeat, Trash2, Save } from 'lucide-react';
 import { format } from 'date-fns';
-import { ko } from 'date-fns/locale';
-import { Event } from '../../types';
+import {Event, Group} from '../../types';
 
 interface EventModalProps {
   selectedDate: Date | null;
   event?: Event | null;
+  mode?: 'personal' | 'group';
+  currentGroup?: Group | null;
   onClose: () => void;
   onSave: (eventId: string, eventData: Partial<Event>) => Promise<Event | null>;
   onDelete: (eventId: string, deleteType?: 'single' | 'future' | 'all') => Promise<boolean>;
@@ -16,6 +17,8 @@ interface EventModalProps {
 const EventModal: React.FC<EventModalProps> = ({
                                                  selectedDate,
                                                  event,
+                                                 mode,
+                                                 currentGroup,
                                                  onClose,
                                                  onSave,
                                                  onDelete
@@ -28,9 +31,10 @@ const EventModal: React.FC<EventModalProps> = ({
     startTime: '09:00',
     endTime: '10:00',
     isAllDay: false,
-    category: 'general',
+    category: 'general' as const,
     repeat: 'none',
     repeatEndDate: undefined,
+    groupId: mode === 'group' && currentGroup ? currentGroup.id : undefined,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteType, setDeleteType] = useState<'single' | 'future' | 'all'>('single');
@@ -47,8 +51,8 @@ const EventModal: React.FC<EventModalProps> = ({
         startTime: event.startTime || '09:00',
         endTime: event.endTime || '10:00',
         isAllDay: event.isAllDay || false,
-        category: event.category || 'general',
-        repeat: event.repeat || 'none',
+        category: event.category || 'general' as const,
+        repeat: event.repeat || 'none' as const,
         repeatEndDate: event.repeatEndDate,
       });
     } else if (selectedDate) {
@@ -58,6 +62,16 @@ const EventModal: React.FC<EventModalProps> = ({
       }));
     }
   }, [event, selectedDate]);
+
+  // 모드나 그룹이 변경될 때 groupId 업데이트
+  useEffect(() => {
+    if (!event) { // 새 일정 생성 모드일 때만
+      setFormData(prev => ({
+        ...prev,
+        groupId: mode === 'group' && currentGroup ? currentGroup.id : undefined,
+      }));
+    }
+  }, [mode, currentGroup, event]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -279,7 +293,7 @@ const EventModal: React.FC<EventModalProps> = ({
                 </label>
                 <select
                     value={formData.category}
-                    onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
+                    onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value as Event['category'] }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     disabled={isSubmitting}
                 >
@@ -299,7 +313,7 @@ const EventModal: React.FC<EventModalProps> = ({
                 </label>
                 <select
                     value={formData.repeat}
-                    onChange={(e) => setFormData(prev => ({ ...prev, repeat: e.target.value as any }))}
+                    onChange={(e) => setFormData(prev => ({ ...prev, repeat: e.target.value as Event['repeat'] }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     disabled={isSubmitting}
                 >
