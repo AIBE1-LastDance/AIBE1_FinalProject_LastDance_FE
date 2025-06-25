@@ -2,20 +2,23 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Calendar, Clock, Repeat, Trash2, Save } from 'lucide-react';
 import { format } from 'date-fns';
-import { ko } from 'date-fns/locale';
-import { Event } from '../../types';
+import {Event, Group} from '../../types';
 
 interface EventModalProps {
   selectedDate: Date | null;
   event?: Event | null;
+  mode?: 'personal' | 'group';
+  currentGroup?: Group | null;
   onClose: () => void;
   onSave: (eventId: string, eventData: Partial<Event>) => Promise<Event | null>;
-  onDelete: (eventId: string, deleteType?: 'single' | 'future' | 'all') => Promise<boolean>;
+  onDelete: (eventId: string, deleteType?: 'single' | 'future' | 'all', instanceDate?: string) => Promise<boolean>;
 }
 
 const EventModal: React.FC<EventModalProps> = ({
                                                  selectedDate,
                                                  event,
+                                                 mode,
+                                                 currentGroup,
                                                  onClose,
                                                  onSave,
                                                  onDelete
@@ -28,9 +31,10 @@ const EventModal: React.FC<EventModalProps> = ({
     startTime: '09:00',
     endTime: '10:00',
     isAllDay: false,
-    category: 'general',
+    category: 'general' as const,
     repeat: 'none',
     repeatEndDate: undefined,
+    groupId: mode === 'group' && currentGroup ? currentGroup.id : undefined,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteType, setDeleteType] = useState<'single' | 'future' | 'all'>('single');
@@ -47,8 +51,8 @@ const EventModal: React.FC<EventModalProps> = ({
         startTime: event.startTime || '09:00',
         endTime: event.endTime || '10:00',
         isAllDay: event.isAllDay || false,
-        category: event.category || 'general',
-        repeat: event.repeat || 'none',
+        category: event.category || 'general' as const,
+        repeat: event.repeat || 'none' as const,
         repeatEndDate: event.repeatEndDate,
       });
     } else if (selectedDate) {
@@ -58,6 +62,16 @@ const EventModal: React.FC<EventModalProps> = ({
       }));
     }
   }, [event, selectedDate]);
+
+  // 모드나 그룹이 변경될 때 groupId 업데이트
+  useEffect(() => {
+    if (!event) { // 새 일정 생성 모드일 때만
+      setFormData(prev => ({
+        ...prev,
+        groupId: mode === 'group' && currentGroup ? currentGroup.id : undefined,
+      }));
+    }
+  }, [mode, currentGroup, event]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,7 +97,6 @@ const EventModal: React.FC<EventModalProps> = ({
         onClose();
       }
     } catch (error) {
-      console.error('Error saving event:', error);
       alert('저장 중 오류가 발생했습니다.');
     } finally {
       setIsSubmitting(false);
@@ -98,12 +111,37 @@ const EventModal: React.FC<EventModalProps> = ({
     setIsSubmitting(true);
 
     try {
-      const success = await onDelete(event.id, deleteType);
+      let instanceDate: string | undefined;
+      
+      // deleteType이 'single' 또는 'future'인 경우 instanceDate 필요
+      if (deleteType === 'single' || deleteType === 'future') {
+        if (selectedDate) {
+          // ✅ 중요: selectedDate (사용자가 클릭한 날짜)를 기준으로 instanceDate 생성
+          const clickedDate = selectedDate instanceof Date ? selectedDate : new Date(selectedDate);
+          const baseDate = format(clickedDate, 'yyyy-MM-dd');
+          
+          // 원본 이벤트의 시간 정보 추출
+          let eventTime = '09:00:00';
+          if (event.startTime) {
+            eventTime = event.startTime.length === 5 ? `${event.startTime}:00` : event.startTime;
+          } else if (event.date) {
+            // startTime이 없으면 event.date에서 시간 추출
+            const originalDate = event.date instanceof Date ? event.date : new Date(event.date);
+            eventTime = format(originalDate, 'HH:mm:ss');
+          }
+          
+          instanceDate = `${baseDate}T${eventTime}`;
+        } else {
+          // selectedDate가 없으면 이벤트의 원본 날짜 사용 (fallback)
+          const eventDate = event.date instanceof Date ? event.date : new Date(event.date);
+          instanceDate = eventDate.toISOString().slice(0, 19);
+        }
+      }
+      const success = await onDelete(event.id, deleteType, instanceDate);
       if (success) {
         onClose();
       }
     } catch (error) {
-      console.error('Error deleting event:', error);
       alert('삭제 중 오류가 발생했습니다.');
     } finally {
       setIsSubmitting(false);
@@ -171,7 +209,21 @@ const EventModal: React.FC<EventModalProps> = ({
                     value={formData.title}
                     onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    placeholder="일정 설명을 입력하세요"
+                    placeholder="일정 제목을 입력하세요"
+                    disabled={isSubmitting}
+                />
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  설명
+                </label>
+                <textarea
+                    value={formData.description}
+                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+                    placeholder="일정에 대한 상세 설명을 입력하세요"
                     rows={3}
                     disabled={isSubmitting}
                 />
@@ -265,7 +317,7 @@ const EventModal: React.FC<EventModalProps> = ({
                 </label>
                 <select
                     value={formData.category}
-                    onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
+                    onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value as Event['category'] }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     disabled={isSubmitting}
                 >
@@ -285,7 +337,7 @@ const EventModal: React.FC<EventModalProps> = ({
                 </label>
                 <select
                     value={formData.repeat}
-                    onChange={(e) => setFormData(prev => ({ ...prev, repeat: e.target.value as any }))}
+                    onChange={(e) => setFormData(prev => ({ ...prev, repeat: e.target.value as Event['repeat'] }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     disabled={isSubmitting}
                 >
