@@ -21,6 +21,8 @@ import PostDetailPage from './components/community/PostDetailPage';
 import SettingsPage from './components/settings/SettingsPage';
 import {useAuth} from './hooks/useAuth';
 import {useEffect, useState} from "react";
+import AdminLoginPage from './components/admin/AdminLoginPage';
+import AdminRouter from './components/admin/AdminRouter';
 
 function App() {
     const {isAuthenticated, } = useAuthStore();
@@ -238,6 +240,15 @@ function App() {
                             </Layout>
                         </ProtectedRoute>
                     }
+                />
+                {/* Admin Routes */}
+                <Route
+                    path="/admin-login"
+                    element={<AdminLoginPage />}
+                />
+                <Route
+                    path="/admin/*"
+                    element={<AdminRouter />}
                 />
             </Routes>
         </Router>
