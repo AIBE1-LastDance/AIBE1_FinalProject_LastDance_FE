@@ -29,12 +29,14 @@ export interface Event {
     startTime?: string;
     endTime?: string;
     isAllDay?: boolean;
-    category: 'bill' | 'cleaning' | 'meeting' | 'appointment' | 'health' | 'shopping' | 'travel' | 'other';
+    category: 'general' | 'bill' | 'cleaning' | 'meeting' | 'appointment' | 'health' | 'shopping' | 'travel' | 'other';
     color: string;
     groupId?: string;
+    groupName?: string; // 그룹 이름 추가
     userId: string;
     repeat?: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
     repeatEndDate?: Date;
+    exceptionDates?: string[] | Date[]; // 반복 일정에서 제외할 날짜들
     originalEventId?: string; // 반복 일정의 원본 이벤트 ID
     isRepeated?: boolean; // 반복 생성된 일정인지 표시
 }
