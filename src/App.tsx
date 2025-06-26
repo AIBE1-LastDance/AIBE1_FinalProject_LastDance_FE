@@ -5,6 +5,7 @@ import Layout from './components/layout/Layout';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import ScrollToTop from './components/common/ScrollToTop';
 import LoginPage from './components/auth/LoginPage';
+import OAuthCallback from './components/auth/OAuthCallback';
 import HomePage from './components/home/HomePage';
 import DashboardPage from './components/dashboard/DashboardPage';
 import CalendarPage from './components/calendar/CalendarPage';
@@ -24,17 +25,21 @@ import AdminLoginPage from './components/admin/AdminLoginPage';
 import AdminRouter from './components/admin/AdminRouter';
 
 function App() {
-    const {isAuthenticated} = useAuthStore();
+    const {isAuthenticated, } = useAuthStore();
     const { getCurrentUser } = useAuth();
     const [ isInitialized, setIsInitialized ] = useState(false);
 
     console.log('App component rendered, isAuthenticated:', isAuthenticated);
 
     useEffect(() => {
+        // 이미 초기화되었거나 실행 중이면 스킵
+        if (isInitialized) {
+            return;
+        }
+
         // 앱 시작시 쿠키 확인해서 사용자 정보 가져오기
         const initAuth = async () => {
             try {
-                setIsInitialized(false);
                 console.log('인증 상태 초기화 중...');
                 const user = await getCurrentUser();
                 
@@ -53,8 +58,21 @@ function App() {
                 setIsInitialized(true);
             }
         };
+
         initAuth();
-    }, []);
+    }, [isInitialized]);
+
+    // 초기화 완료되기 전에는 로딩 표시
+    if (!isInitialized) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-100 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-primary-600 font-medium">로딩 중...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <Router
@@ -86,6 +104,22 @@ function App() {
                 <Route
                     path="/"
                     element={isAuthenticated ? <Navigate to="/dashboard" replace/> : <HomePage/>}
+                />
+                <Route
+                    path="/oauth2/authorization/*"
+                    element={<OAuthCallback />}
+                />
+                <Route
+                    path="/login/oauth2/code/*"
+                    element={<OAuthCallback />}
+                />
+                <Route
+                    path="/oauth2/code/*"
+                    element={<OAuthCallback />}
+                />
+                <Route
+                    path="/auth/callback/*"
+                    element={<OAuthCallback />}
                 />
                 <Route
                     path="/dashboard"

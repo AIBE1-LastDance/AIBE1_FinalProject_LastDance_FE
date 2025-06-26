@@ -4,23 +4,32 @@ import react from "@vitejs/plugin-react";
 export default defineConfig({
   plugins: [react()],
   server: {
-    port: 3000, // ✅ 프론트 포트를 3000으로 명시
-    proxy: {
-      "/api": {
-        target: "http://localhost:8080",
+    // port: 3000,
+      proxy: {
+      '/api': {
+        target: 'http://localhost:8080',
         changeOrigin: true,
+        secure: false
       },
-    },
+      '/oauth2': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false
+      },
+
+    }
   },
+  // 빌드 시에는 프록시 설정 무시됨 (운영환경에서는 실제 도메인 사용)
   optimizeDeps: {
-    exclude: ["lucide-react"],
+    exclude: ['lucide-react'],
   },
   build: {
+    // Ensure assets have content hash in filename for cache busting
     rollupOptions: {
       output: {
-        entryFileNames: "assets/[name].[hash].js",
-        chunkFileNames: "assets/[name].[hash].js",
-        assetFileNames: "assets/[name].[hash].[ext]",
+        entryFileNames: 'assets/[name].[hash].js',
+        chunkFileNames: 'assets/[name].[hash].js',
+        assetFileNames: 'assets/[name].[hash].[ext]',
       },
     },
     assetsInlineLimit: 0,
