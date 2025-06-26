@@ -1,14 +1,30 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { 
-  Heart, MessageCircle, Share2, Bookmark, Clock, User, Tag, MoreVertical, Edit, Trash2,
-  Lightbulb, ChefHat, Sparkles, ShoppingCart, MessageSquare, HelpCircle, Star, FileText
-} from 'lucide-react';
-import { Post } from '../../types';
-import { useAuthStore } from '../../store/authStore';
-import { useAppStore } from '../../store/appStore';
-import { formatDistanceToNow } from 'date-fns';
-import { ko } from 'date-fns/locale';
+import React, { useState } from "react";
+import { motion } from "framer-motion";
+import {
+  Heart,
+  MessageCircle,
+  Share2,
+  Bookmark,
+  Clock,
+  User,
+  Tag,
+  MoreVertical,
+  Edit,
+  Trash2,
+  Lightbulb,
+  ChefHat,
+  Sparkles,
+  ShoppingCart,
+  MessageSquare,
+  HelpCircle,
+  Star,
+  FileText,
+} from "lucide-react";
+import { Post } from "../../types";
+import { useAuthStore } from "../../store/authStore";
+import { useAppStore } from "../../store/appStore";
+import { formatDistanceToNow } from "date-fns";
+import { ko } from "date-fns/locale";
 
 interface PostCardProps {
   post: Post;
@@ -17,22 +33,64 @@ interface PostCardProps {
   onDelete?: (postId: string) => void;
 }
 
-const PostCard: React.FC<PostCardProps> = ({ post, onClick, onEdit, onDelete }) => {
+const PostCard: React.FC<PostCardProps> = ({
+  post,
+  onClick,
+  onEdit,
+  onDelete,
+}) => {
   const { user } = useAuthStore();
   const { updatePost, deletePost } = useAppStore();
   const [showMenu, setShowMenu] = useState(false);
 
   const getCategoryInfo = (category: string) => {
-    const categories: Record<string, { name: string; icon: any; color: string }> = {
-      tip: { name: '생활팁', icon: Lightbulb, color: 'bg-yellow-100 text-yellow-800' },
-      recipe: { name: '레시피', icon: ChefHat, color: 'bg-orange-100 text-orange-800' },
-      cleaning: { name: '청소팁', icon: Sparkles, color: 'bg-green-100 text-green-800' },
-      shopping: { name: '쇼핑정보', icon: ShoppingCart, color: 'bg-blue-100 text-blue-800' },
-      free: { name: '자유게시판', icon: MessageSquare, color: 'bg-purple-100 text-purple-800' },
-      question: { name: '질문/답변', icon: HelpCircle, color: 'bg-red-100 text-red-800' },
-      review: { name: '후기/리뷰', icon: Star, color: 'bg-indigo-100 text-indigo-800' },
+    const categories: Record<
+      string,
+      { name: string; icon: any; color: string }
+    > = {
+      tip: {
+        name: "생활팁",
+        icon: Lightbulb,
+        color: "bg-yellow-100 text-yellow-800",
+      },
+      recipe: {
+        name: "레시피",
+        icon: ChefHat,
+        color: "bg-orange-100 text-orange-800",
+      },
+      cleaning: {
+        name: "청소팁",
+        icon: Sparkles,
+        color: "bg-green-100 text-green-800",
+      },
+      shopping: {
+        name: "쇼핑정보",
+        icon: ShoppingCart,
+        color: "bg-blue-100 text-blue-800",
+      },
+      free: {
+        name: "자유게시판",
+        icon: MessageSquare,
+        color: "bg-purple-100 text-purple-800",
+      },
+      question: {
+        name: "질문/답변",
+        icon: HelpCircle,
+        color: "bg-red-100 text-red-800",
+      },
+      review: {
+        name: "후기/리뷰",
+        icon: Star,
+        color: "bg-indigo-100 text-indigo-800",
+      },
     };
-    return categories[category] || { name: '기타', icon: FileText, color: 'bg-gray-100 text-gray-800' };
+    return (
+      categories[category] || {
+        name: "기타",
+        icon: FileText,
+        color: "bg-gray-100 text-gray-800",
+      }
+    );
   };
 
   const handleLike = (e: React.MouseEvent) => {
@@ -40,11 +98,9 @@ const PostCard: React.FC<PostCardProps> = ({ post, onClick, onEdit, onDelete }) 
     if (!user) return;
 
     const isLiked = post.likedBy?.includes(user.id) || false;
-    const newLikes = isLiked 
-      ? (post.likes || 0) - 1 
-      : (post.likes || 0) + 1;
+    const newLikes = isLiked ? (post.likes || 0) - 1 : (post.likes || 0) + 1;
     const newLikedBy = isLiked
-      ? post.likedBy?.filter(id => id !== user.id) || []
+      ? post.likedBy?.filter((id) => id !== user.id) || []
       : [...(post.likedBy || []), user.id];
 
     updatePost(post.id, {
@@ -59,7 +115,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onClick, onEdit, onDelete }) 
 
     const isBookmarked = post.bookmarkedBy?.includes(user.id) || false;
     const newBookmarkedBy = isBookmarked
-      ? post.bookmarkedBy?.filter(id => id !== user.id) || []
+      ? post.bookmarkedBy?.filter((id) => id !== user.id) || []
       : [...(post.bookmarkedBy || []), user.id];
 
     updatePost(post.id, {
@@ -69,7 +125,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onClick, onEdit, onDelete }) 
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (window.confirm('정말로 이 게시글을 삭제하시겠습니까?')) {
+    if (window.confirm("정말로 이 게시글을 삭제하시겠습니까?")) {
       deletePost(post.id);
       if (onDelete) onDelete(post.id);
     }
@@ -83,8 +139,8 @@ const PostCard: React.FC<PostCardProps> = ({ post, onClick, onEdit, onDelete }) 
   };
 
   const categoryInfo = getCategoryInfo(post.category);
-  const isLiked = post.likedBy?.includes(user?.id || '') || false;
-  const isBookmarked = post.bookmarkedBy?.includes(user?.id || '') || false;
+  const isLiked = post.likedBy?.includes(user?.id || "") || false;
+  const isBookmarked = post.bookmarkedBy?.includes(user?.id || "") || false;
   const isAuthor = user?.id === post.userId;
 
   return (
@@ -99,13 +155,13 @@ const PostCard: React.FC<PostCardProps> = ({ post, onClick, onEdit, onDelete }) 
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
             <span className="text-white font-medium text-sm">
-              {post.author?.name?.charAt(0) || 'U'}
+              {post.author?.username?.charAt(0) || "U"}
             </span>
           </div>
           <div>
             <div className="flex items-center space-x-2">
               <span className="font-medium text-gray-900">
-                {post.author?.name || '익명'}
+                {post.author?.username || "익명"}
               </span>
               {post.groupId && (
                 <span className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full">
@@ -115,16 +171,23 @@ const PostCard: React.FC<PostCardProps> = ({ post, onClick, onEdit, onDelete }) 
             </div>
             <div className="flex items-center space-x-2 text-sm text-gray-500">
               <Clock className="w-4 h-4" />
-              <span>{formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: ko })}</span>
+              <span>
+                {formatDistanceToNow(new Date(post.createdAt), {
+                  addSuffix: true,
+                  locale: ko,
+                })}
+              </span>
             </div>
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          <div className={`flex items-center space-x-1 px-3 py-1 rounded-full text-xs font-medium ${categoryInfo.color}`}>
+          <div
+            className={`flex items-center space-x-1 px-3 py-1 rounded-full text-xs font-medium ${categoryInfo.color}`}
+          >
             <categoryInfo.icon className="w-3 h-3" />
             <span>{categoryInfo.name}</span>
           </div>
-          
+
           {/* 작성자만 보이는 메뉴 */}
           {isAuthor && (
             <div className="relative">
@@ -139,7 +202,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onClick, onEdit, onDelete }) 
               >
                 <MoreVertical className="w-4 h-4 text-gray-500" />
               </motion.button>
-              
+
               {showMenu && (
                 <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[120px]">
                   <button
@@ -226,16 +289,18 @@ const PostCard: React.FC<PostCardProps> = ({ post, onClick, onEdit, onDelete }) 
             whileTap={{ scale: 0.9 }}
             onClick={handleLike}
             className={`flex items-center space-x-2 ${
-              isLiked ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
+              isLiked ? "text-red-500" : "text-gray-500 hover:text-red-500"
             } transition-colors`}
           >
-            <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
+            <Heart className={`w-5 h-5 ${isLiked ? "fill-current" : ""}`} />
             <span className="text-sm font-medium">{post.likes || 0}</span>
           </motion.button>
 
           <div className="flex items-center space-x-2 text-gray-500">
             <MessageCircle className="w-5 h-5" />
-            <span className="text-sm font-medium">{post.comments?.length || 0}</span>
+            <span className="text-sm font-medium">
+              {post.comments?.length || 0}
+            </span>
           </div>
 
           <button className="flex items-center space-x-2 text-gray-500 hover:text-blue-500 transition-colors">
@@ -249,10 +314,14 @@ const PostCard: React.FC<PostCardProps> = ({ post, onClick, onEdit, onDelete }) 
           whileTap={{ scale: 0.9 }}
           onClick={handleBookmark}
           className={`${
-            isBookmarked ? 'text-yellow-500' : 'text-gray-400 hover:text-yellow-500'
+            isBookmarked
+              ? "text-yellow-500"
+              : "text-gray-400 hover:text-yellow-500"
           } transition-colors`}
         >
-          <Bookmark className={`w-5 h-5 ${isBookmarked ? 'fill-current' : ''}`} />
+          <Bookmark
+            className={`w-5 h-5 ${isBookmarked ? "fill-current" : ""}`}
+          />
         </motion.button>
       </div>
     </motion.div>
