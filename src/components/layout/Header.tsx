@@ -1,15 +1,31 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, CheckSquare, CreditCard, Users, Settings, LogOut, User, ChevronDown, Gamepad2, Bot, BarChart3, ToggleLeft, ToggleRight, Bell } from 'lucide-react';
-import { FaGoogle, FaComment } from 'react-icons/fa';
-import { SiNaver } from 'react-icons/si';
-import { useAuthStore } from '../../store/authStore';
-import { useAppStore } from '../../store/appStore';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, {useState, useEffect, useRef} from 'react';
+import {motion, AnimatePresence} from 'framer-motion';
+import {
+    Calendar,
+    CheckSquare,
+    CreditCard,
+    Users,
+    Settings,
+    LogOut,
+    User,
+    ChevronDown,
+    Gamepad2,
+    Bot,
+    BarChart3,
+    ToggleLeft,
+    ToggleRight,
+    Bell
+} from 'lucide-react';
+import {FaGoogle, FaComment} from 'react-icons/fa';
+import {SiNaver} from 'react-icons/si';
+import {useAuthStore} from '../../store/authStore';
+import {useAppStore} from '../../store/appStore';
+import {useNavigate, useLocation} from 'react-router-dom';
 import CreateGroupModal from '../groups/CreateGroupModal';
 import JoinGroupModal from '../groups/JoinGroupModal';
 import GroupSettingsModal from '../groups/GroupSettingsModal';
 import {useAuth} from "../../hooks/useAuth.ts";
+import Avatar from '../common/Avatar'
 
 const Header: React.FC = () => {
     const {user, logout: storeLogout} = useAuthStore();
@@ -152,39 +168,6 @@ const Header: React.FC = () => {
             default:
                 return <User className="w-4 h-4"/>;
         }
-    };
-
-    // 프로필 이미지 렌더링 함수
-    const renderAvatar = (size: 'sm' | 'md' = 'md') => {
-        const sizeClasses = size === 'sm' ? 'w-8 h-8' : 'w-8 h-8 sm:w-10 sm:h-10';
-
-        if (user?.avatar) {
-            // 상대 경로를 전체 URL로 변환
-            const avatarUrl = user.avatar.startsWith('http') ? user.avatar : `${import.meta.env.VITE_API_BASE_URL}${user.avatar}`;
-            return (
-                <img
-                    src={avatarUrl}
-                    alt="프로필"
-                    className={`${sizeClasses} rounded-full object-cover`}
-                    onError={(e) => {
-                        console.log('Image load failed for:', avatarUrl);
-                        // 이미지 로드 실패시 기본 provider 아이콘으로 교체
-                        const target = e.target as HTMLImageElement;
-                        const parent = target.parentElement;
-                        if (parent) {
-                            parent.innerHTML = `<div class="${sizeClasses} bg-gradient-to-r from-[#df6d14] to-[#df6d14]/80 rounded-full flex items-center justify-center"></div>`;
-                        }
-                    }}
-                />
-            );
-        }
-
-        // 아바타가 없으면 기본 provider 아이콘 표시
-        return (
-            <div className={`${sizeClasses} bg-gradient-to-r from-[#df6d14] to-[#df6d14]/80 rounded-full flex items-center justify-center`}>
-                {getProviderIcon(user?.provider || '')}
-            </div>
-        );
     };
 
     return (
@@ -357,7 +340,7 @@ const Header: React.FC = () => {
                                 whileTap={{scale: 0.95}}
                                 onClick={() => setShowUserMenu(!showUserMenu)}
                             >
-                                {renderAvatar()}
+                                {user && <Avatar user={user} size={"md"}/>}
                                 <ChevronDown
                                     className={`w-3 h-3 sm:w-4 sm:h-4 text-gray-400 transition-transform ml-1 sm:ml-2 ${showUserMenu ? 'rotate-180' : ''}`}/>
                             </motion.button>
@@ -380,7 +363,7 @@ const Header: React.FC = () => {
                                             {/* User Info */}
                                             <div className="px-4 py-3 border-b border-gray-100">
                                                 <div className="flex items-center space-x-3">
-                                                    {renderAvatar()}
+                                                    {user && <Avatar user={user} size={"md"}/>}
                                                     <div>
                                                         <div
                                                             className="text-sm font-medium text-gray-900">{user?.nickname}</div>
