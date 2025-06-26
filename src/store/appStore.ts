@@ -327,17 +327,22 @@ const sampleGroups: Group[] = [
 export const useAppStore = create<AppState>()(
   persist(
     (set, get) => ({
+      // ==== UI 상태만 유지 ====
       mode: 'personal',
       currentGroup: null,
-      joinedGroups: sampleGroups,
-      tasks: [],
-      events: sampleEvents,
-      expenses: [],
-      posts: samplePosts,
-      savedAnalyses: [],
       currentDate: new Date(),
       currentView: 'month',
       version: STORE_VERSION,
+
+      // ==== 추후 제거 예정 ====
+      joinedGroups: sampleGroups,    // ❌ API 연동 후 제거
+      events: sampleEvents,          // ❌ API 연동 후 제거
+      posts: samplePosts,           // ❌ API 연동 후 제거
+      tasks: [],                    // ❌ API 연동 후 제거
+      expenses: [],                 // ❌ API 연동 후 제거
+
+      // ==== 계속 유지 ====
+      savedAnalyses: [],           // ✅ 로컬 저장 데이터 - 유지 필요!
 
       setMode: (mode) => {
         set({ mode });

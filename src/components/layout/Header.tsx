@@ -201,11 +201,11 @@ const Header: React.FC = () => {
                     </motion.div>
 
                     {/* Desktop Navigation */}
-                    <nav className="hidden lg:flex items-center space-x-2">
+                    <nav className="hidden md:flex items-center space-x-2">
                         {navigationItems.map((item) => (
                             <motion.button
                                 key={item.path}
-                                className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all duration-200 ${
+                                className={`flex items-center space-x-1 px-3 py-2 rounded-xl transition-all duration-200 ${
                                     location.pathname === item.path
                                         ? 'text-[#df6d14] bg-[#df6d14]/10 shadow-sm'
                                         : 'text-gray-600 hover:text-[#df6d14] hover:bg-gray-50'
@@ -215,7 +215,7 @@ const Header: React.FC = () => {
                                 onClick={() => navigate(item.path)}
                             >
                                 <item.icon className="w-5 h-5"/>
-                                <span className="font-medium">{item.label}</span>
+                                <span className="font-medium hidden lg:block whitespace-nowrap">{item.label}</span>
                             </motion.button>
                         ))}
                     </nav>
