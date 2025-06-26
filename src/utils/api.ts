@@ -51,7 +51,8 @@ export const profileApi = {
 
     // 닉네임 중복 확인
     checkNickname: async (nickname: string) => {
-        const response = await apiClient.get(`/api/v1/users/nickname/check?nickname=${nickname}`);
+        const encodedNickname = encodeURIComponent(nickname);
+        const response = await apiClient.get(`/api/v1/users/nickname/check?nickname=${encodedNickname}`);
         return response.data;
     },
 
