@@ -1,4 +1,5 @@
 import axios from 'axios';
+import {useAuthStore} from '../store/authStore';
 
 const getApiBaseUrl = () => {
     const envUrl = import.meta.env.VITE_API_BASE_URL;
@@ -85,7 +86,9 @@ const handleUnauthorized = () => {
 apiClient.interceptors.response.use(
     (response) => response,
     async (error) => {
+        const {isProcessingAccountDeletion} = useAuthStore();
         const status = error.response?.status;
+        const url = error.config?.url;
         console.log('API 오류 발생: ', status, error.response?.data);
 
         // 401 Unauthorized 에러 처리
@@ -96,7 +99,11 @@ apiClient.interceptors.response.use(
                 currentPath.includes('/oauth2') ||
                 currentPath.includes('/auth/callback');
 
-            if (!isAuthPage) {
+            // 계정삭제 401은 정상적인 응답
+            const isAccountDeletion = url?.includes('/api/v1/users/me') && error.config?.method === 'delete';
+
+
+            if (!isAuthPage && !isAccountDeletion && !isProcessingAccountDeletion) {
                 handleUnauthorized();
             }
         }

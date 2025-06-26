@@ -5,9 +5,11 @@ import {User} from '../types';
 interface AuthState {
     user: User | null;
     isAuthenticated: boolean;
+    isProcessingAccountDeletion: boolean;
     login: (user: User) => void;
     logout: () => void;
     updateUser: (userData: Partial<User>) => void;
+    setProcessingAccountDeletion: (processing: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -15,12 +17,15 @@ export const useAuthStore = create<AuthState>()(
         (set) => ({
             user: null,
             isAuthenticated: false,
+            isProcessingAccountDeletion: false,
             login: (user) => set({user, isAuthenticated: true}),
             logout: () => set({user: null, isAuthenticated: false}),
             updateUser: (userData) =>
                 set((state) => ({
                     user: state.user ? {...state.user, ...userData} : null,
                 })),
+            setProcessingAccountDeletion: (processing) =>
+                set({isProcessingAccountDeletion: processing}),
         }),
         {
             name: 'auth-storage',

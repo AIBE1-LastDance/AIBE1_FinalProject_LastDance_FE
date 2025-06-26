@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import {profileApi} from "../../utils/api";
 
 const SettingsPage: React.FC = () => {
-    const {user} = useAuthStore();
+    const {user, setProcessingAccountDeletion} = useAuthStore();
     const [activeTab, setActiveTab] = useState('profile');
     const [profileData, setProfileData] = useState({
         name: user?.username || '',
@@ -17,6 +17,7 @@ const SettingsPage: React.FC = () => {
     const [previewImage, setPreviewImage] = useState<string | null>(null);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [hasImageChange, setHasImageChange] = useState<boolean>(false);
+
 
     // user가 변경될 때마다 profileData 업데이트
     useEffect(() => {
@@ -173,18 +174,20 @@ const SettingsPage: React.FC = () => {
     const handleDeleteAccount = async () => {
         if (showDeleteConfirm) {
             try {
-                await profileApi.deleteAccount();
-                toast.success('계정이 삭제되었습니다.');
+                setProcessingAccountDeletion(true);
 
-                // 로그아웃 처리
+                await profileApi.deleteAccount(); // 200응답
+
+                // 로그아웃 처리 후 이동
                 const {logout} = useAuthStore.getState();
+                toast.success('계정이 삭제되었습니다.');
                 logout();
-
-                // 리다이렉트
                 window.location.href = '/';
+
             } catch (error) {
-                toast.error('계정 삭제에 실패했습니다.');
-                console.error('Profile delete error: ', error);
+                toast.error('계정 삭제에 실패했습니다');
+            } finally {
+                setProcessingAccountDeletion(false);
             }
         } else {
             setShowDeleteConfirm(true);
