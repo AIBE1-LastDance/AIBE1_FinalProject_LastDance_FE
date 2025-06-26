@@ -3,7 +3,8 @@ import {motion} from 'framer-motion';
 import {Settings, User, Bell, Save, Camera, Trash2} from 'lucide-react';
 import {useAuthStore} from '../../store/authStore';
 import toast from 'react-hot-toast';
-import {profileApi} from "../../utils/api";
+import {profileApi} from "../../api/profile";
+import Avatar from "../common/Avatar";
 
 const SettingsPage: React.FC = () => {
     const {user, setProcessingAccountDeletion} = useAuthStore();
@@ -265,26 +266,17 @@ const SettingsPage: React.FC = () => {
                 {/* 프로필 사진 */}
                 <div className="flex items-center space-x-6 mb-6">
                     <div className="relative">
-                        <div
-                            className="w-24 h-24 rounded-full overflow-hidden bg-gradient-to-r from-primary-500 to-primary-600 flex items-center justify-center">
-                            {previewImage ? (
-                                <img src={previewImage} alt="미리보기" className="w-full h-full object-cover"/>
-                            ) : profileData.avatar ? (
-                                <img
-                                    src={profileData.avatar.startsWith('http')
-                                        ? `${profileData.avatar}?t=${Date.now()}`
-                                        : `${import.meta.env.VITE_API_BASE_URL}${profileData.avatar}?t=${Date.now()}`
-                                    }
-                                    alt="프로필"
-                                    className="w-full h-full object-cover"
-                                    onError={(error) => {
-                                        console.error('Profile image load failed with error: ', error);
-                                    }}
-                                />
-                            ) : (
-                                <span className="text-2xl font-bold text-white">{profileData.name?.[0] || 'U'}</span>
-                            )}
-                        </div>
+                        {user && (
+                            <Avatar
+                                user={{
+                                    avatar: previewImage || profileData.avatar,
+                                    username: profileData.name,
+                                    nickname: profileData.nickname,
+                                    provider: user.provider
+                                }}
+                                size="lg"
+                            />
+                        )}
                         <label
                             className="absolute bottom-0 right-0 w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center cursor-pointer hover:bg-primary-700 transition-colors">
                             <Camera className="w-4 h-4 text-white"/>
