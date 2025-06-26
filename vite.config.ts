@@ -1,11 +1,11 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
 
-// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
   server: {
-    proxy: {
+    // port: 3000,
+      proxy: {
       '/api': {
         target: 'http://localhost:8080',
         changeOrigin: true,
@@ -32,7 +32,6 @@ export default defineConfig({
         assetFileNames: 'assets/[name].[hash].[ext]',
       },
     },
-    // Disable asset inlining to ensure all assets have their own files with hashed names
     assetsInlineLimit: 0,
   },
 });
