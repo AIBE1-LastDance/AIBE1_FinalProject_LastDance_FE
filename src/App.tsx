@@ -60,6 +60,18 @@ function App() {
         initAuth();
     }, [isInitialized]);
 
+    // 초기화 완료되기 전에는 로딩 표시
+    if (!isInitialized) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-100 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-primary-600 font-medium">로딩 중...</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <Router
             future={{
