@@ -23,7 +23,7 @@ import {useAuth} from './hooks/useAuth';
 import {useEffect, useState} from "react";
 
 function App() {
-    const {isAuthenticated} = useAuthStore();
+    const {isAuthenticated, } = useAuthStore();
     const { getCurrentUser } = useAuth();
     const [ isInitialized, setIsInitialized ] = useState(false);
 

@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import { toast } from 'react-hot-toast';
 
 const OAuthCallback: React.FC = () => {
     const navigate = useNavigate();
@@ -30,17 +29,18 @@ const OAuthCallback: React.FC = () => {
                     return;
                 }
 
-                // 잠시 기다린 후 사용자 정보 확인
-                setTimeout(async () => {
-                    const user = await getCurrentUser();
-                    if (user) {
-                        console.log('OAuth 로그인 성공:', user);
-                        navigate('/dashboard');
-                    } else {
-                        console.log('사용자 정보 확인 실패');
-                        navigate('/login');
-                    }
-                }, 1000); // 1초 대기 (서버에서 쿠키 설정이 완료될 시간)
+                // 쿠키 설정을 위해 잠시 대기
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                // 사용자 정보 확인
+                const user = await getCurrentUser();
+                if (user) {
+                    console.log('OAuth 로그인 성공:', user);
+                    navigate('/dashboard', {replace: true});
+                } else {
+                    console.log('사용자 정보 확인 실패');
+                    navigate('/login');
+                }
                 
             } catch (error) {
                 console.error('OAuth 콜백 처리 실패:', error);
@@ -49,7 +49,7 @@ const OAuthCallback: React.FC = () => {
         };
 
         handleOAuthCallback();
-    }, [navigate]);
+    }, [navigate, getCurrentUser]);
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-primary-100">

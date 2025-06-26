@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Home, Calendar, CheckSquare, CreditCard, Users, Settings, LogOut, User, ChevronDown, Gamepad2, Bot, BarChart3, ToggleLeft, ToggleRight, Bell } from 'lucide-react';
+import { Calendar, CheckSquare, CreditCard, Users, Settings, LogOut, User, ChevronDown, Gamepad2, Bot, BarChart3, ToggleLeft, ToggleRight, Bell } from 'lucide-react';
 import { FaGoogle, FaComment } from 'react-icons/fa';
 import { SiNaver } from 'react-icons/si';
 import { useAuthStore } from '../../store/authStore';

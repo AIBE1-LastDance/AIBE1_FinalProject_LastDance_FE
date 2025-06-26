@@ -1,5 +1,4 @@
 import axios from 'axios';
-import {useAuthStore} from "../store/authStore.ts";
 
 const getApiBaseUrl = () => {
     const envUrl = import.meta.env.VITE_API_BASE_URL;
@@ -52,7 +51,7 @@ export const profileApi = {
 
     // 닉네임 중복 확인
     checkNickname: async (nickname: string) => {
-        const response = await apiClient.get(`/api/v1/users//nickname/check?nickname=${nickname}`);
+        const response = await apiClient.get(`/api/v1/users/nickname/check?nickname=${nickname}`);
         return response.data;
     },
 
@@ -63,10 +62,44 @@ export const profileApi = {
     }
 }
 
+// 401 에러 처리 함수
+const handleUnauthorized = () => {
+    console.log('인증 만료 감지, 로그아웃 처리');
+
+    // 로컬스토리지 정리
+    localStorage.removeItem('auth-storage');
+    localStorage.removeItem('app-storage-v4');
+
+    // 추가적으로 다른 모든 auth 관련 스토리지도 확인하여 제거
+    Object.keys(localStorage).forEach(key => {
+        if (key.includes('auth') || key.includes('app-storage')) {
+            localStorage.removeItem(key);
+        }
+    });
+
+    // 로그인 페이지로 리다이렉트
+    window.location.href = '/login?expired=true';
+};
+
 apiClient.interceptors.response.use(
     (response) => response,
     async (error) => {
-        console.log('API 오류 발생: ', error.response?.status, error.response?.data);
+        const status = error.response?.status;
+        console.log('API 오류 발생: ', status, error.response?.data);
+
+        // 401 Unauthorized 에러 처리
+        if (status === 401) {
+            // 로그인 페이지나 OAuth 콜백 페이지가 아닌 경우에만 로그아웃 처리
+            const currentPath = window.location.pathname;
+            const isAuthPage = currentPath.includes('/login') ||
+                currentPath.includes('/oauth2') ||
+                currentPath.includes('/auth/callback');
+
+            if (!isAuthPage) {
+                handleUnauthorized();
+            }
+        }
+
         return Promise.reject(error);
     }
-)
+);
