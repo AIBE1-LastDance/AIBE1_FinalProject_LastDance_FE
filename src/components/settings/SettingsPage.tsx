@@ -3,7 +3,7 @@ import {motion} from 'framer-motion';
 import {Settings, User, Bell, Save, Camera, Trash2} from 'lucide-react';
 import {useAuthStore} from '../../store/authStore';
 import toast from 'react-hot-toast';
-import {profileApi} from "../../utils/api";
+import {profileApi} from "../../api/profile";
 
 const SettingsPage: React.FC = () => {
     const {user, setProcessingAccountDeletion} = useAuthStore();

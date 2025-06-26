@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { Group, Task, Event, Expense, User, Post } from '../types';
+import { Group, Task, Event, Expense, Post } from '../types';
 import toast from 'react-hot-toast';
 
 type AppMode = 'personal' | 'group';
