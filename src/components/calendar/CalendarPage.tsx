@@ -158,7 +158,7 @@ const CalendarPage: React.FC = () => {
   ];
 
   return (
-      <div className="space-y-6">
+      <div className="min-h-screen px-2 sm:px-4 lg:px-6 py-4 space-y-4 sm:space-y-6">
         {/* Error Display */}
         {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
@@ -181,9 +181,9 @@ const CalendarPage: React.FC = () => {
         )}
 
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <h1 className="text-2xl font-bold text-gray-800">
+        <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+          <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-800">
               {mode === 'personal' ? '내 캘린더' : '공유 캘린더'}
             </h1>
             <div className="flex items-center space-x-2">
@@ -194,9 +194,9 @@ const CalendarPage: React.FC = () => {
                   className="p-2 rounded-lg hover:bg-gray-100"
                   disabled={loading}
               >
-                <ChevronLeft className="w-5 h-5" />
+                <ChevronLeft className="w-4 sm:w-5 h-4 sm:h-5" />
               </motion.button>
-              <h2 className="text-lg font-medium text-gray-700 min-w-[200px] text-center">
+              <h2 className="text-sm sm:text-lg font-medium text-gray-700 min-w-[160px] sm:min-w-[200px] text-center px-2">
                 {getViewTitle()}
               </h2>
               <motion.button
@@ -206,18 +206,18 @@ const CalendarPage: React.FC = () => {
                   className="p-2 rounded-lg hover:bg-gray-100"
                   disabled={loading}
               >
-                <ChevronRight className="w-5 h-5" />
+                <ChevronRight className="w-4 sm:w-5 h-4 sm:h-5" />
               </motion.button>
             </div>
           </div>
 
           <div className="flex items-center space-x-4">
             {/* View Selector */}
-            <div className="flex bg-gray-100 rounded-lg p-1">
+            <div className="flex bg-gray-100 rounded-lg p-1 overflow-x-auto">
               {viewOptions.map((option) => (
                   <motion.button
                       key={option.value}
-                      className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                      className={`flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${
                           currentView === option.value
                               ? 'bg-white text-primary-600 shadow-sm'
                               : 'text-gray-600 hover:text-gray-800'
@@ -228,7 +228,7 @@ const CalendarPage: React.FC = () => {
                       disabled={loading}
                   >
                     <option.icon className="w-4 h-4" />
-                    <span>{option.label}</span>
+                    <span className="hidden sm:inline">{option.label}</span>
                   </motion.button>
               ))}
             </div>
@@ -246,7 +246,8 @@ const CalendarPage: React.FC = () => {
                 disabled={loading}
             >
               <Plus className="w-4 h-4" />
-              <span>일정 추가</span>
+              <span className="hidden sm:inline">일정 추가</span>
+              <span className="sm:hidden">추가</span>
             </motion.button>
           </div>
         </div>
@@ -345,8 +346,8 @@ const YearView: React.FC<{
   };
 
   return (
-      <div className="p-6">
-        <div className="grid grid-cols-3 md:grid-cols-4 gap-4">
+      <div className="p-3 sm:p-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
           {months.map((month) => {
             const eventCount = getMonthEventCount(month);
             const isCurrentMonth = isSameMonth(month, new Date());
@@ -354,7 +355,7 @@ const YearView: React.FC<{
             return (
                 <motion.div
                     key={month.toString()}
-                    className={`p-4 rounded-lg border cursor-pointer transition-colors ${
+                    className={`p-3 sm:p-4 rounded-lg border cursor-pointer transition-colors ${
                         isCurrentMonth ? 'bg-primary-50 border-primary-200' : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
                     }`}
                     whileHover={{ scale: 1.02 }}
@@ -393,18 +394,18 @@ const MonthView: React.FC<{
   const calendarDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
   return (
-      <>
+      <div className="overflow-x-auto">
         {/* Week Headers */}
-        <div className="grid grid-cols-7 border-b border-gray-200">
+        <div className="grid grid-cols-7 border-b border-gray-200 min-w-[700px]">
           {['일', '월', '화', '수', '목', '금', '토'].map((day) => (
-              <div key={day} className="p-4 text-center font-medium text-gray-600 bg-gray-50">
+              <div key={day} className="p-2 sm:p-4 text-center font-medium text-gray-600 bg-gray-50 text-sm">
                 {day}
               </div>
           ))}
         </div>
 
         {/* Calendar Days */}
-        <div className="grid grid-cols-7">
+        <div className="grid grid-cols-7 min-w-[700px]">
           {calendarDays.map((day, index) => {
             const dayEvents = getEventsForDate(day);
             const isToday = isSameDay(day, new Date());
@@ -416,7 +417,7 @@ const MonthView: React.FC<{
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.3, delay: index * 0.01 }}
-                    className={`min-h-[120px] p-2 border-b border-r border-gray-200 cursor-pointer transition-colors ${
+                    className={`min-h-[100px] sm:min-h-[120px] p-1 sm:p-2 border-b border-r border-gray-200 cursor-pointer transition-colors ${
                         isCurrentMonth
                             ? 'bg-white hover:bg-gray-50'
                             : 'bg-gray-50 text-gray-400'
@@ -435,13 +436,13 @@ const MonthView: React.FC<{
                     {dayEvents.slice(0, 3).map((event) => (
                         <motion.div
                             key={event.id}
-                            className={`text-xs px-2 py-1 rounded cursor-pointer hover:opacity-80 transition-all border ${getEventStyle(event)}`}
+                            className={`text-[10px] sm:text-xs px-1 sm:px-2 py-1 rounded cursor-pointer hover:opacity-80 transition-all border ${getEventStyle(event)}`}
                             whileHover={{ scale: 1.02 }}
                             onClick={(e) => onEventClick(event, e, day)} // ✅ day 파라미터 추가
                         >
                           <div className="flex items-center justify-between mb-1">
                             <div className="font-medium truncate flex items-center space-x-1">
-                              {renderEventIcon(event)}
+                              <span className="hidden sm:inline">{renderEventIcon(event)}</span>
                               {event.repeat !== 'none' && (
                                   <Repeat className="w-3 h-3 opacity-60" />
                               )}
@@ -463,7 +464,7 @@ const MonthView: React.FC<{
                     ))}
                     {dayEvents.length > 3 && (
                         <div className="text-xs text-gray-500 px-2">
-                          +{dayEvents.length - 3}개 더
+                          +{dayEvents.length - 3}개
                         </div>
                     )}
                   </div>
@@ -471,7 +472,7 @@ const MonthView: React.FC<{
             );
           })}
         </div>
-      </>
+      </div>
   );
 };
 
@@ -489,17 +490,17 @@ const WeekView: React.FC<{
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
   return (
-      <>
+      <div className="overflow-x-auto">
         {/* Week Headers */}
-        <div className="grid grid-cols-7 border-b border-gray-200">
+        <div className="grid grid-cols-7 border-b border-gray-200 min-w-[700px]">
           {weekDays.map((day) => {
             const isToday = isSameDay(day, new Date());
             return (
-                <div key={day.toString()} className={`p-4 text-center font-medium ${
+                <div key={day.toString()} className={`p-2 sm:p-4 text-center font-medium ${
                     isToday ? 'bg-primary-100 text-primary-600' : 'bg-gray-50 text-gray-600'
                 }`}>
                   <div>{format(day, 'E', { locale: ko })}</div>
-                  <div className={`text-lg ${isToday ? 'font-bold' : ''}`}>
+                  <div className={`text-sm sm:text-lg ${isToday ? 'font-bold' : ''}`}>
                     {format(day, 'd')}
                   </div>
                 </div>
@@ -508,7 +509,7 @@ const WeekView: React.FC<{
         </div>
 
         {/* Week Days */}
-        <div className="grid grid-cols-7">
+        <div className="grid grid-cols-7 min-w-[700px]">
           {weekDays.map((day) => {
             const dayEvents = getEventsForDate(day);
             const isToday = isSameDay(day, new Date());
@@ -516,7 +517,7 @@ const WeekView: React.FC<{
             return (
                 <div
                     key={day.toString()}
-                    className={`min-h-[400px] p-2 border-r border-gray-200 cursor-pointer transition-colors ${
+                    className={`min-h-[300px] sm:min-h-[400px] p-1 sm:p-2 border-r border-gray-200 cursor-pointer transition-colors ${
                         isToday ? 'bg-primary-50' : 'bg-white hover:bg-gray-50'
                     }`}
                     onClick={() => onDateClick(day)}
@@ -525,12 +526,12 @@ const WeekView: React.FC<{
                     {dayEvents.map((event) => (
                         <motion.div
                             key={event.id}
-                            className={`text-xs px-2 py-1 rounded cursor-pointer hover:opacity-80 transition-all border ${getEventStyle(event)}`}
+                            className={`text-[10px] sm:text-xs px-1 sm:px-2 py-1 rounded cursor-pointer hover:opacity-80 transition-all border ${getEventStyle(event)}`}
                             whileHover={{ scale: 1.02 }}
                             onClick={(e) => onEventClick(event, e, day)} // ✅ day 파라미터 추가
                         >
                           <div className="font-medium flex items-center space-x-1 mb-1">
-                            {renderEventIcon(event)}
+                            <span className="hidden sm:inline">{renderEventIcon(event)}</span>
                             {event.repeat !== 'none' && (
                                 <Repeat className="w-3 h-3 opacity-60" />
                             )}
@@ -552,7 +553,7 @@ const WeekView: React.FC<{
             );
           })}
         </div>
-      </>
+      </div>
   );
 };
 
@@ -570,11 +571,11 @@ const DayView: React.FC<{
   const isToday = isSameDay(currentDate, new Date());
 
   return (
-      <div className="p-6">
+      <div className="p-3 sm:p-6">
         <div className={`text-center mb-6 p-4 rounded-lg ${
             isToday ? 'bg-primary-50 border border-primary-200' : 'bg-gray-50'
         }`}>
-          <h3 className={`text-2xl font-bold ${isToday ? 'text-primary-600' : 'text-gray-800'}`}>
+          <h3 className={`text-xl sm:text-2xl font-bold ${isToday ? 'text-primary-600' : 'text-gray-800'}`}>
             {format(currentDate, 'd')}
           </h3>
           <p className="text-gray-600">
@@ -587,14 +588,14 @@ const DayView: React.FC<{
               dayEvents.map((event) => (
                   <motion.div
                       key={event.id}
-                      className={`p-4 rounded-lg cursor-pointer hover:shadow-md transition-all border-2 ${getEventStyle(event)}`}
+                      className={`p-3 sm:p-4 rounded-lg cursor-pointer hover:shadow-md transition-all border-2 ${getEventStyle(event)}`}
                       whileHover={{ scale: 1.02 }}
                       onClick={(e) => onEventClick(event, e, currentDate)} // ✅ currentDate 파라미터 추가
                   >
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
                         <div className="flex items-center space-x-2 mb-2">
-                          {renderEventIcon(event)}
+                          <span className="hidden sm:inline">{renderEventIcon(event)}</span>
                           <h4 className="font-semibold text-gray-800">{event.title}</h4>
                           {event.repeat !== 'none' && (
                               <Repeat className="w-4 h-4 opacity-60" />
