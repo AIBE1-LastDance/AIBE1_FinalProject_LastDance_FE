@@ -3,33 +3,25 @@ import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Home, 
   Users, 
-  MessageSquare, 
-  FileText, 
   AlertTriangle, 
   Brain, 
-  BarChart3, 
-  Settings, 
-  Shield,
   Menu,
   X,
   LogOut
 } from 'lucide-react';
+import { useAdminAuth } from '../../hooks/useAdmin';
 
 const AdminLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { adminInfo } = useAdminAuth();
 
   const menuItems = [
     { id: 'dashboard', label: '대시보드', icon: Home, path: '/admin' },
     { id: 'users', label: '사용자 관리', icon: Users, path: '/admin/users' },
-    { id: 'groups', label: '그룹 관리', icon: MessageSquare, path: '/admin/groups' },
-    { id: 'content', label: '콘텐츠 관리', icon: FileText, path: '/admin/content' },
     { id: 'reports', label: '신고 관리', icon: AlertTriangle, path: '/admin/reports' },
     { id: 'ai', label: 'AI 시스템', icon: Brain, path: '/admin/ai' },
-    { id: 'analytics', label: '통계 분석', icon: BarChart3, path: '/admin/analytics' },
-    { id: 'system', label: '시스템 관리', icon: Settings, path: '/admin/system' },
-    { id: 'admins', label: '관리자 계정', icon: Shield, path: '/admin/admins' },
   ];
 
   const isActive = (path: string) => {
@@ -117,10 +109,14 @@ const AdminLayout: React.FC = () => {
             <div className="flex items-center space-x-4">
               <div className="relative">
                 <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                  <span className="text-sm font-medium text-white">관</span>
+                  <span className="text-sm font-medium text-white">
+                    {adminInfo?.nickname?.charAt(0) || '관'}
+                  </span>
                 </div>
               </div>
-              <span className="text-sm font-medium text-gray-700">관리자</span>
+              <span className="text-sm font-medium text-gray-700">
+                {adminInfo?.nickname || '관리자'}
+              </span>
             </div>
           </div>
         </header>

@@ -5,6 +5,7 @@ export interface User {
     email: string;
     avatar?: string;
     provider: 'google' | 'kakao' | 'naver';
+    role?: 'USER' | 'ADMIN';
     monthlyBudget?: number; // 개인 한 달 예산
 }
 
