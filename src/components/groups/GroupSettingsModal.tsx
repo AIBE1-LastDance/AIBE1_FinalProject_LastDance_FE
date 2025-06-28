@@ -10,6 +10,7 @@ import {useAppStore} from '../../store/appStore';
 import {useAuthStore} from '../../store/authStore';
 import {Group, User, ApplicationResponse} from '../../types';
 import {groupsAPI} from '../../api/groups';
+import Avatar from '../common/Avatar';
 
 interface GroupSettingsModalProps {
     isOpen: boolean;
@@ -501,12 +502,14 @@ const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({isOpen, onClose,
                         <div key={member.userId}
                              className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
                             <div className="flex items-center space-x-3">
-                                <div
-                                    className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-                  <span className="text-white font-medium text-sm">
-                    {member.nickname?.[0] || 'U'}
-                  </span>
-                                </div>
+                                <Avatar 
+                                    user={{
+                                        avatar: member.profileImagePath,
+                                        nickname: member.nickname,
+                                        username: member.nickname
+                                    }}
+                                    size="md"
+                                />
                                 <div>
                                     <div className="flex items-center space-x-2">
                                         <span className="font-medium text-gray-900">{member.nickname}</span>
@@ -632,12 +635,14 @@ const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({isOpen, onClose,
                     <div key={request.userId}
                          className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
                         <div className="flex items-center space-x-3">
-                            <div
-                                className="w-10 h-10 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center">
-                <span className="text-white font-medium text-sm">
-                  {request.nickname[0]}
-                </span>
-                            </div>
+                            <Avatar 
+                                user={{
+                                    avatar: request.profileImagePath,
+                                    nickname: request.nickname,
+                                    username: request.nickname
+                                }}
+                                size="md"
+                            />
                             <div>
                                 <div className="flex items-center space-x-2">
                                     <span className="font-medium text-gray-900">{request.nickname}</span>
