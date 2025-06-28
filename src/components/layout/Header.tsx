@@ -30,7 +30,7 @@ import Avatar from '../common/Avatar'
 const Header: React.FC = () => {
     const {user, logout: storeLogout} = useAuthStore();
     const {logout} = useAuth();
-    const {mode, setMode, currentGroup, joinedGroups, setCurrentGroup} = useAppStore();
+    const {mode, setMode, currentGroup, joinedGroups, setCurrentGroup, loadMyGroups} = useAppStore();
     const navigate = useNavigate();
     const location = useLocation();
     const [showUserMenu, setShowUserMenu] = useState(false);
@@ -44,6 +44,13 @@ const Header: React.FC = () => {
 
     // 로그인 상태 확인
     const isAuthenticated = !!user;
+
+    // 사용자가 로그인되어 있을 때 그룹 목록 로드
+    useEffect(() => {
+        if (isAuthenticated && joinedGroups.length === 0) {
+            loadMyGroups();
+        }
+    }, [isAuthenticated, loadMyGroups, joinedGroups.length]);
 
     // 임시 알림 데이터
     const [notifications] = useState([
@@ -515,6 +522,7 @@ const Header: React.FC = () => {
                     isOpen={showGroupSettingsModal}
                     onClose={() => setShowGroupSettingsModal(false)}
                     group={currentGroup}
+                    onGroupUpdate={loadMyGroups}
                 />
             )}
         </header>
