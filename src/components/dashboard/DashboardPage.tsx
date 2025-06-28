@@ -130,7 +130,7 @@ const DashboardPage: React.FC = () => {
       // 마감일이 빠른 순으로 정렬
       return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
     })
-    .slice(0, 5); // Show only first 5 tasks
+    .slice(0, 2); // Show only first 2 tasks
 
   const getPriorityColor = (priority: string) => {
     switch (priority?.toLowerCase()) {
@@ -705,7 +705,7 @@ const DashboardPage: React.FC = () => {
             )}
           </div>
 
-          {checklists.length > 5 && (
+          {checklists.length > 2 && (
             <motion.button
               className="w-full mt-4 py-2 text-sm text-primary-600 hover:text-primary-700 font-medium"
               whileHover={{ scale: 1.02 }}
