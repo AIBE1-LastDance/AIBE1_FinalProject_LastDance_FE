@@ -14,11 +14,66 @@ export interface Group {
     name: string;
     description: string;
     code: string;
-    members: User[];
+    members: GroupMember[];
     createdBy: string;
     createdAt: Date;
     maxMembers: number;
     monthlyBudget?: number; // 그룹 한 달 예산
+}
+
+// Group API를 위한 타입들
+export interface GroupMember {
+    userId: string;
+    nickname: string;
+    profileImagePath?: string;
+    role: 'OWNER' | 'MEMBER';
+}
+
+export interface GroupResponse {
+    groupId: string;
+    groupName: string;
+    inviteCode: string;
+    maxMembers: number;
+    groupBudget: number;
+    ownerId: string;
+    members: GroupMember[];
+}
+
+export interface CreateGroupRequest {
+    groupName: string;
+    maxMembers: number;
+    groupBudget: number;
+}
+
+export interface UpdateGroupRequest {
+    groupName: string;     // 필수로 변경
+    maxMembers: number;    // 필수로 변경
+    groupBudget: number;   // 필수로 변경
+}
+
+export interface JoinGroupRequest {
+    inviteCode: string;
+}
+
+export interface ApplicationResponse {
+    userId: string;
+    groupId: string;
+    nickname: string;
+    email: string;
+    profileImagePath?: string;
+    updatedAt: string; // ISO 8601 형식
+}
+
+export interface AcceptRejectApplicationRequest {
+    groupId: string;
+    userId: string;
+}
+
+export interface ApiResponse<T> {
+    success: boolean;
+    data: T;
+    message: string;
+    errorCode: string | null;
 }
 
 export interface Event {
