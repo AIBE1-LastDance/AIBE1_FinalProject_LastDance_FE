@@ -3,25 +3,29 @@ import { motion } from 'framer-motion';
 import { X, Calendar, User, Flag } from 'lucide-react';
 import { useAppStore } from '../../store/appStore';
 import { useAuthStore } from '../../store/authStore';
-import { Task } from '../../types';
+import { ChecklistResponseDTO, ChecklistRequestDTO } from '../../types/checklist';
+import { ChecklistService } from '../../api/checklist';
 import toast from 'react-hot-toast';
 
 interface TaskModalProps {
-  task: Task | null;
+  task: ChecklistResponseDTO | null;
   onClose: () => void;
+  onSave?: () => void; // 저장 후 콜백
 }
 
-const TaskModal: React.FC<TaskModalProps> = ({ task, onClose }) => {
-  const { addTask, updateTask, deleteTask, mode, currentGroup } = useAppStore();
+const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onSave }) => {
+  const { mode, currentGroup } = useAppStore();
   const { user } = useAuthStore();
   
   const [formData, setFormData] = useState({
     title: task?.title || '',
     description: task?.description || '',
     dueDate: task?.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '',
-    priority: task?.priority || 'medium',
-    assignedTo: task?.assignedTo || '',
+    priority: task?.priority?.toLowerCase() || 'medium',
+    assigneeId: task?.assignee?.userId || '',
   });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const priorityOptions = [
     { value: 'low', label: '낮음', color: 'bg-green-100 text-green-800' },
@@ -29,7 +33,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, onClose }) => {
     { value: 'high', label: '높음', color: 'bg-red-100 text-red-800' },
   ];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.title.trim()) {
@@ -37,38 +41,78 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, onClose }) => {
       return;
     }
 
-    if (!user) return;
-
-    const taskData: Task = {
-      id: task?.id || Math.random().toString(36).substr(2, 9),
-      title: formData.title,
-      description: formData.description,
-      completed: task?.completed || false,
-      dueDate: formData.dueDate ? new Date(formData.dueDate) : undefined,
-      priority: formData.priority as any,
-      assignedTo: formData.assignedTo || undefined,
-      groupId: mode === 'group' && currentGroup ? currentGroup.id : undefined,
-      userId: user.id,
-      category: mode === 'group' ? 'group' : 'personal',
-      createdAt: task?.createdAt || new Date(),
-    };
-
-    if (task) {
-      updateTask(task.id, taskData);
-      toast.success('할일이 수정되었습니다.');
-    } else {
-      addTask(taskData);
-      toast.success('할일이 추가되었습니다.');
+    if (!user) {
+      toast.error('로그인이 필요합니다.');
+      return;
     }
 
-    onClose();
+    // 그룹 모드인데 그룹이 없는 경우
+    if (mode === 'group' && !currentGroup) {
+      toast.error('그룹을 선택해주세요.');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // API 요청 데이터 준비
+      const requestData: ChecklistRequestDTO = {
+        title: formData.title.trim(),
+        description: formData.description.trim() || undefined,
+        priority: formData.priority.toUpperCase() as "HIGH" | "MEDIUM" | "LOW",
+        dueDate: formData.dueDate ? new Date(formData.dueDate + 'T23:59:59.000Z').toISOString() : undefined,
+        assigneeId: mode === 'group' && formData.assigneeId ? formData.assigneeId : undefined,
+      };
+
+      if (task) {
+        // 수정
+        if (mode === 'personal') {
+          await ChecklistService.updatePersonalChecklist(task.checklistId, requestData);
+        } else if (mode === 'group' && currentGroup) {
+          await ChecklistService.updateGroupChecklist(currentGroup.id, task.checklistId, requestData);
+        }
+        toast.success('할일이 수정되었습니다.');
+      } else {
+        // 생성
+        if (mode === 'personal') {
+          await ChecklistService.createPersonalChecklist(requestData);
+        } else if (mode === 'group' && currentGroup) {
+          await ChecklistService.createGroupChecklist(currentGroup.id, requestData);
+        }
+        toast.success('할일이 추가되었습니다.');
+      }
+
+      // 성공 후 처리
+      onSave?.(); // 부모 컴포넌트에서 목록 새로고침
+      onClose();
+
+    } catch (error: any) {
+      console.error('체크리스트 저장 오류:', error);
+      toast.error(error.message || '할일 저장에 실패했습니다.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleDelete = () => {
-    if (task && window.confirm('정말로 이 할일을 삭제하시겠습니까?')) {
-      deleteTask(task.id);
+  const handleDelete = async () => {
+    if (!task) return;
+
+    if (!window.confirm('정말로 이 할일을 삭제하시겠습니까?')) {
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      await ChecklistService.deleteChecklist(task.checklistId);
       toast.success('할일이 삭제되었습니다.');
+      onSave?.(); // 부모 컴포넌트에서 목록 새로고침
       onClose();
+    } catch (error: any) {
+      console.error('체크리스트 삭제 오류:', error);
+      toast.error(error.message || '할일 삭제에 실패했습니다.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -91,6 +135,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, onClose }) => {
             whileTap={{ scale: 0.9 }}
             onClick={onClose}
             className="p-2 rounded-full hover:bg-gray-100"
+            disabled={isSubmitting}
           >
             <X className="w-5 h-5" />
           </motion.button>
@@ -109,6 +154,8 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, onClose }) => {
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="할일 제목을 입력하세요"
+              disabled={isSubmitting}
+              maxLength={100}
             />
           </div>
 
@@ -123,6 +170,8 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, onClose }) => {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="할일 설명을 입력하세요"
               rows={3}
+              disabled={isSubmitting}
+              maxLength={500}
             />
           </div>
 
@@ -137,6 +186,8 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, onClose }) => {
               value={formData.dueDate}
               onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              disabled={isSubmitting}
+              min={new Date().toISOString().split('T')[0]} // 오늘 이후만 선택 가능
             />
           </div>
 
@@ -144,7 +195,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, onClose }) => {
           <div>
             <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
               <Flag className="w-4 h-4" />
-              <span>우선순위</span>
+              <span>우선순위 *</span>
             </label>
             <div className="grid grid-cols-3 gap-2">
               {priorityOptions.map((priority) => (
@@ -159,6 +210,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, onClose }) => {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => setFormData({ ...formData, priority: priority.value })}
+                  disabled={isSubmitting}
                 >
                   <div className={`text-xs px-2 py-1 rounded ${priority.color}`}>
                     {priority.label}
@@ -176,14 +228,15 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, onClose }) => {
                 <span>담당자</span>
               </label>
               <select
-                value={formData.assignedTo}
-                onChange={(e) => setFormData({ ...formData, assignedTo: e.target.value })}
+                value={formData.assigneeId}
+                onChange={(e) => setFormData({ ...formData, assigneeId: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                disabled={isSubmitting}
               >
-                <option value="">담당자를 선택하세요</option>
+                <option value="">담당자를 선택하세요 (선택사항)</option>
                 {currentGroup.members.map((member) => (
-                  <option key={member.id} value={member.id}>
-                    {member.name}
+                  <option key={member.userId} value={member.userId}>
+                    {member.nickname}
                   </option>
                 ))}
               </select>
@@ -195,30 +248,33 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, onClose }) => {
             {task && (
               <motion.button
                 type="button"
-                className="px-4 py-2 border border-red-300 text-red-700 rounded-lg font-medium hover:bg-red-50 transition-colors"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                className="px-4 py-2 border border-red-300 text-red-700 rounded-lg font-medium hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
+                whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
                 onClick={handleDelete}
+                disabled={isSubmitting}
               >
-                삭제
+                {isSubmitting ? '삭제 중...' : '삭제'}
               </motion.button>
             )}
             <motion.button
               type="button"
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
+              whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
               onClick={onClose}
+              disabled={isSubmitting}
             >
               취소
             </motion.button>
             <motion.button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
+              whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
+              disabled={isSubmitting}
             >
-              {task ? '수정' : '추가'}
+              {isSubmitting ? (task ? '수정 중...' : '추가 중...') : (task ? '수정' : '추가')}
             </motion.button>
           </div>
         </form>
