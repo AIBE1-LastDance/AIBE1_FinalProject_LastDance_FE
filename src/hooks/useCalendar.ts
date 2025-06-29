@@ -71,23 +71,13 @@ export const useCalendar = (options: UseCalendarOptions = {}): UseCalendarReturn
         try {
             let response;
 
-            // 디버깅 로그 추가
-            console.log('=== useCalendar loadEvents 디버그 ===');
-            console.log('groupId:', groupId);
-            console.log('query:', query);
-
             if (groupId) {
-                console.log('그룹 일정 API 호출:', groupId);
                 response = await calendarApi.getGroupCalendars(groupId, query);
             } else {
-                console.log('개인 일정 API 호출 (내가 속한 모든 그룹 포함)');
                 response = await calendarApi.getMyCalendars(query);
             }
 
-            console.log('API 응답:', response);
-
             if (response.success && response.data) {
-                console.log('로드된 이벤트들:', response.data);
                 setEvents(response.data);
             } else {
                 const errorMsg = response.error || 'Failed to load events';
