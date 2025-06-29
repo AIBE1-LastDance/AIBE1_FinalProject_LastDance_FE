@@ -4,6 +4,7 @@ import {Settings, User, Bell, Save, Camera, Trash2} from 'lucide-react';
 import {useAuthStore} from '../../store/authStore';
 import toast from 'react-hot-toast';
 import {profileApi} from "../../api/profile";
+import {notificationApi, NotificationSettingRequest} from "../../api/notifications";
 import Avatar from "../common/Avatar";
 
 const SettingsPage: React.FC = () => {
@@ -30,7 +31,45 @@ const SettingsPage: React.FC = () => {
                 monthlyBudget: user.monthlyBudget || 0
             });
         }
-    }, [user])
+    }, [user]);
+
+    // 알림 설정 로드
+    useEffect(() => {
+        const loadNotificationSettings = async () => {
+            try {
+                setNotificationLoading(true);
+                console.log('Loading started, notificationLoading:', true);
+                
+                const data = await notificationApi.getMySettings();
+                console.log('API Response:', data);
+                
+                setNotifications({
+                    emailEnabled: data.emailEnabled || false,
+                    scheduleReminder: data.scheduleReminder || false,
+                    paymentReminder: data.paymentReminder || false,
+                    checklistReminder: data.checklistReminder || false,
+                });
+                
+                console.log('Notifications set, setting loading to false');
+            } catch (error) {
+                console.error('Failed to load notification settings:', error);
+                // 에러 시 기본값 유지
+                setNotifications({
+                    emailEnabled: false,
+                    scheduleReminder: false,
+                    paymentReminder: false,
+                    checklistReminder: false,
+                });
+            } finally {
+                setNotificationLoading(false);
+                console.log('Loading finished, notificationLoading:', false);
+            }
+        };
+
+        if (user) {
+            loadNotificationSettings();
+        }
+    }, [user]);
 
     // 닉네임 상태
     const [nicknameState, setNicknameState] = useState<{
@@ -107,10 +146,12 @@ const SettingsPage: React.FC = () => {
     }, [profileData.nickname, user?.nickname]);
 
     const [notifications, setNotifications] = useState({
-        expenses: true,
-        tasks: true,
-        events: true,
+        emailEnabled: true,
+        scheduleReminder: true,
+        paymentReminder: true,
+        checklistReminder: true,
     });
+    const [notificationLoading, setNotificationLoading] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
     const tabs = [
@@ -220,6 +261,14 @@ const SettingsPage: React.FC = () => {
                 monthlyBudget: profileData.monthlyBudget
             });
 
+            // 알림 설정 업데이트
+            await notificationApi.updateMySettings({
+                emailEnabled: notifications.emailEnabled,
+                scheduleReminder: notifications.scheduleReminder,
+                paymentReminder: notifications.paymentReminder,
+                checklistReminder: notifications.checklistReminder,
+            });
+
             // 전역상태 업데이트
             const {updateUser} = useAuthStore.getState();
             updateUser({
@@ -256,6 +305,22 @@ const SettingsPage: React.FC = () => {
     };
     const parseNumber = (str: string): number => {
         return parseInt(str.replace(/,/g, '')) || 0;
+    };
+
+    // 알림 설정만 저장
+    const handleNotificationSave = async () => {
+        try {
+            await notificationApi.updateMySettings({
+                emailEnabled: notifications.emailEnabled,
+                scheduleReminder: notifications.scheduleReminder,
+                paymentReminder: notifications.paymentReminder,
+                checklistReminder: notifications.checklistReminder,
+            });
+            toast.success('알림 설정이 저장되었습니다.');
+        } catch (error) {
+            toast.error('알림 설정 저장에 실패했습니다.');
+            console.error('Notification settings update error:', error);
+        }
     };
 
     const renderProfileSettings = () => (
@@ -443,75 +508,105 @@ const SettingsPage: React.FC = () => {
         </div>
     );
 
-    const renderNotificationSettings = () => (
-        <div className="space-y-6">
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
-                <h3 className="text-xl font-bold text-gray-900 mb-6">알림 설정</h3>
-                <div className="space-y-4">
-                    {Object.entries(notifications).map(([key, value]) => {
-                        const settings = {
-                            expenses: {
-                                label: '지출 정산 알림',
-                                description: '지출 정산 요청이나 완료 시 알림을 받습니다'
-                            },
-                            tasks: {
-                                label: '할일 알림',
-                                description: '새로운 할일이나 마감일 알림을 받습니다'
-                            },
-                            events: {
-                                label: '일정 알림',
-                                description: '일정 시작 15분 전에 알림을 받습니다'
-                            }
-                        };
-
-                        const setting = settings[key as keyof typeof settings];
-
-                        return (
-                            <div key={key} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                                <div>
-                                    <h4 className="font-medium text-gray-900">{setting.label}</h4>
-                                    <p className="text-sm text-gray-600">{setting.description}</p>
-                                </div>
-                                <label className="relative inline-flex items-center cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        checked={value}
-                                        onChange={(e) => setNotifications(prev => ({...prev, [key]: e.target.checked}))}
-                                        className="sr-only peer"
-                                    />
-                                    <div
-                                        className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
-                                </label>
-                            </div>
-                        );
-                    })}
-                </div>
-
-                <div className="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
-                    <h4 className="font-medium text-blue-900 mb-2">알림 권한 설정</h4>
-                    <p className="text-sm text-blue-700 mb-3">
-                        브라우저에서 알림을 받으려면 알림 권한을 허용해야 합니다.
-                    </p>
-                    <button
-                        onClick={() => {
-                            if ('Notification' in window) {
-                                Notification.requestPermission().then(permission => {
-                                    if (permission === 'granted') {
-                                        toast.success('알림 권한이 허용되었습니다.');
-                                    } else {
-                                        toast.error('알림 권한이 거부되었습니다.');
+    const renderNotificationSettings = () => {
+        console.log('Rendering notification settings, loading:', notificationLoading);
+        console.log('Current notifications state:', notifications);
+        
+        return (
+            <div className="space-y-6">
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+                    <h3 className="text-xl font-bold text-gray-900 mb-6">알림 설정</h3>
+                    
+                    {notificationLoading ? (
+                        <div className="flex items-center justify-center py-8">
+                            <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+                            <span className="ml-2">로딩 중...</span>
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            {Object.entries(notifications).map(([key, value]) => {
+                                const settings = {
+                                    emailEnabled: {
+                                        label: '이메일 알림',
+                                        description: '이메일로 알림을 받습니다'
+                                    },
+                                    scheduleReminder: {
+                                        label: '일정 알림',
+                                        description: '일정 시작 15분 전에 알림을 받습니다'
+                                    },
+                                    paymentReminder: {
+                                        label: '납부일 알림',
+                                        description: '납부일이나 지출 관련 알림을 받습니다'
+                                    },
+                                    checklistReminder: {
+                                        label: '할일 알림',
+                                        description: '새로운 할일이나 마감일 알림을 받습니다'
                                     }
-                                });
-                            }
-                        }}
-                        className="text-sm bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                        알림 권한 요청
-                    </button>
+                                };
+
+                                const setting = settings[key as keyof typeof settings];
+
+                                return (
+                                    <div key={key} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                                        <div>
+                                            <h4 className="font-medium text-gray-900">{setting.label}</h4>
+                                            <p className="text-sm text-gray-600">{setting.description}</p>
+                                        </div>
+                                        
+                                        {/* 임시로 일반 체크박스 사용 */}
+                                        <div className="flex items-center space-x-2">
+                                            <input
+                                                type="checkbox"
+                                                checked={value}
+                                                onChange={(e) => setNotifications(prev => ({...prev, [key]: e.target.checked}))}
+                                                disabled={notificationLoading}
+                                                className="w-5 h-5 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                                            />
+                                            <span className="text-sm text-gray-600">
+                                                {value ? '켜짐' : '꺼짐'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+
+                    <div className="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
+                        <h4 className="font-medium text-blue-900 mb-2">알림 권한 설정</h4>
+                        <p className="text-sm text-blue-700 mb-3">
+                            브라우저에서 알림을 받으려면 알림 권한을 허용해야 합니다.
+                        </p>
+                        <div className="flex items-center space-x-3">
+                            <button
+                                onClick={() => {
+                                    if ('Notification' in window) {
+                                        Notification.requestPermission().then(permission => {
+                                            if (permission === 'granted') {
+                                                toast.success('알림 권한이 허용되었습니다.');
+                                            } else {
+                                                toast.error('알림 권한이 거부되었습니다.');
+                                            }
+                                        });
+                                    }
+                                }}
+                                className="text-sm bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                            >
+                                알림 권한 요청
+                            </button>
+                            <button
+                                onClick={handleNotificationSave}
+                                disabled={notificationLoading}
+                                className="text-sm bg-primary-600 text-white px-3 py-2 rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                알림 설정 저장
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-    );
+        );
+    };
 
     const renderContent = () => {
         switch (activeTab) {
