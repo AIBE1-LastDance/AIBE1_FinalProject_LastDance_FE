@@ -113,9 +113,9 @@ const Header: React.FC = () => {
         };
     }, []);
 
-    const handleLogout = () => {
-        logout();
-        navigate('/login');
+    const handleLogout = async () => {
+        await logout();
+        // navigate('/login');
         setShowUserMenu(false);
     };
 
