@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { Group, Task, Event, Expense, Post } from '../types';
+import { Group, Task, Event, Expense, Post, GroupResponse, GroupMember } from '../types';
+import { groupsAPI } from '../api/groups';
 import toast from 'react-hot-toast';
 
 type AppMode = 'personal' | 'group';
@@ -26,6 +27,10 @@ interface AppState {
   joinGroup: (groupCode: string) => void;
   leaveGroup: (groupId: string) => void;
   deleteGroup: (groupId: string) => void;
+  
+  // Group API actions
+  loadMyGroups: () => Promise<void>;
+  refreshCurrentGroup: () => Promise<void>; // 추가
   
   // Calendar actions
   setCurrentDate: (date: Date) => void;
@@ -334,12 +339,12 @@ export const useAppStore = create<AppState>()(
       currentView: 'month',
       version: STORE_VERSION,
 
-      // ==== 추후 제거 예정 ====
-      joinedGroups: sampleGroups,    // ❌ API 연동 후 제거
-      events: sampleEvents,          // ❌ API 연동 후 제거
-      posts: samplePosts,           // ❌ API 연동 후 제거
-      tasks: [],                    // ❌ API 연동 후 제거
-      expenses: [],                 // ❌ API 연동 후 제거
+      // ==== 실제 데이터 ====
+      joinedGroups: [],             // ✅ API에서 로드
+      events: sampleEvents,         // ❌ 추후 API 연동 예정
+      posts: samplePosts,          // ❌ 추후 API 연동 예정
+      tasks: [],                   // ❌ 추후 API 연동 예정
+      expenses: [],                // ❌ 추후 API 연동 예정
 
       // ==== 계속 유지 ====
       savedAnalyses: [],           // ✅ 로컬 저장 데이터 - 유지 필요!
@@ -443,6 +448,79 @@ export const useAppStore = create<AppState>()(
         });
         
         toast.success('그룹이 삭제되었습니다.');
+      },
+
+      // Group API actions
+      loadMyGroups: async () => {
+        try {
+          const groupResponses = await groupsAPI.getMyGroups();
+          
+          // API 응답을 Group 타입으로 변환
+          const groups: Group[] = groupResponses.map((response: GroupResponse) => ({
+            id: response.groupId,
+            name: response.groupName,
+            description: '', // API에 없으므로 빈 문자열
+            code: response.inviteCode,
+            members: response.members, // 이미 GroupMember[] 타입이므로 직접 사용
+            createdBy: response.ownerId,
+            createdAt: new Date(), // API에 없으므로 현재 시간
+            maxMembers: response.maxMembers,
+            monthlyBudget: response.groupBudget,
+          }));
+
+          set({ joinedGroups: groups });
+          
+          // 현재 그룹이 없거나, 현재 그룹이 업데이트된 목록에 없으면 첫 번째 그룹을 설정
+          const { currentGroup } = get();
+          if (!currentGroup || !groups.find(g => g.id === currentGroup.id)) {
+            if (groups.length > 0) {
+              set({ currentGroup: groups[0] });
+            }
+          } else {
+            // 현재 그룹이 있으면 업데이트된 정보로 교체
+            const updatedCurrentGroup = groups.find(g => g.id === currentGroup.id);
+            if (updatedCurrentGroup) {
+              set({ currentGroup: updatedCurrentGroup });
+            }
+          }
+        } catch (error: any) {
+          console.error('그룹 목록 로드 오류:', error);
+          toast.error('그룹 목록을 불러오는데 실패했습니다.');
+        }
+      },
+
+      refreshCurrentGroup: async () => {
+        const { currentGroup } = get();
+        if (!currentGroup) return;
+
+        try {
+          const groupResponse = await groupsAPI.getGroup(currentGroup.id);
+          
+          // API 응답을 Group 타입으로 변환
+          const updatedGroup: Group = {
+            id: groupResponse.groupId,
+            name: groupResponse.groupName,
+            description: currentGroup.description, // 기존 설명 유지
+            code: groupResponse.inviteCode,
+            members: groupResponse.members,
+            createdBy: groupResponse.ownerId,
+            createdAt: currentGroup.createdAt, // 기존 생성일 유지
+            maxMembers: groupResponse.maxMembers,
+            monthlyBudget: groupResponse.groupBudget,
+          };
+
+          // 현재 그룹과 그룹 목록 모두 업데이트
+          set((state) => ({
+            currentGroup: updatedGroup,
+            joinedGroups: state.joinedGroups.map(group => 
+              group.id === updatedGroup.id ? updatedGroup : group
+            )
+          }));
+
+        } catch (error: any) {
+          console.error('현재 그룹 새로고침 오류:', error);
+          toast.error('그룹 정보를 새로고침하는데 실패했습니다.');
+        }
       },
 
       // Task actions

@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Calendar, CheckSquare, CreditCard, TrendingUp, Clock, Target, BarChart3, Activity, PieChart, ChevronLeft, ChevronRight, Circle, Flag, Users, Plus } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useAppStore } from '../../store/appStore';
+import { useChecklist } from '../../hooks/useChecklist';
 import { useNavigate } from 'react-router-dom';
 import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPieChart, Pie, Cell, BarChart, Bar } from 'recharts';
 import { format, startOfMonth, endOfMonth, subMonths, eachDayOfInterval, isSameMonth, isSameDay, addMonths, isToday } from 'date-fns';
@@ -10,7 +11,8 @@ import { ko } from 'date-fns/locale';
 
 const DashboardPage: React.FC = () => {
   const { user } = useAuthStore();
-  const { mode, currentGroup, tasks, expenses, events, toggleTask } = useAppStore();
+  const { mode, currentGroup, expenses, events } = useAppStore();
+  const { checklists, toggleChecklist } = useChecklist(); // toggleChecklist 추가
   const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [calendarDate, setCalendarDate] = useState(new Date());
@@ -117,13 +119,21 @@ const DashboardPage: React.FC = () => {
 
   const selectedDateEvents = React.useMemo(() => getEventsForDate(selectedDate), [getEventsForDate, selectedDate]);
 
-  // Filter tasks for current mode
-  const filteredTasks = tasks.filter(task => 
-    mode === 'personal' ? !task.groupId : task.groupId
-  ).slice(0, 5); // Show only first 5 tasks
+  // Filter tasks for current mode (API 체크리스트 사용) - 마감일 순 정렬
+  const filteredTasks = checklists
+    .sort((a, b) => {
+      // 마감일이 없는 것은 맨 아래로
+      if (!a.dueDate && !b.dueDate) return 0;
+      if (!a.dueDate) return 1;
+      if (!b.dueDate) return -1;
+      
+      // 마감일이 빠른 순으로 정렬
+      return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+    })
+    .slice(0, 2); // Show only first 2 tasks
 
   const getPriorityColor = (priority: string) => {
-    switch (priority) {
+    switch (priority?.toLowerCase()) {
       case 'high': return 'text-red-600';
       case 'medium': return 'text-yellow-600';
       case 'low': return 'text-green-600';
@@ -146,7 +156,7 @@ const DashboardPage: React.FC = () => {
       description: '개인 할 일 관리',
       color: 'from-green-500 to-green-600',
       path: '/tasks',
-      count: tasks.filter(t => !t.groupId && !t.completed).length,
+      count: checklists.filter(t => !t.isCompleted).length, // API 체크리스트 사용
     },
     {
       icon: CreditCard,
@@ -162,24 +172,56 @@ const DashboardPage: React.FC = () => {
 
   const features = mode === 'personal' ? personalFeatures : groupFeatures;
 
-  // Calculate stats
-  const completedTasks = tasks.filter(t => t.completed && (mode === 'personal' ? !t.groupId : t.groupId)).length;
-  const totalTasks = tasks.filter(t => mode === 'personal' ? !t.groupId : t.groupId).length;
+  // Calculate stats (API 체크리스트 사용)
+  const completedTasks = checklists.filter(t => t.isCompleted).length;
+  const totalTasks = checklists.length;
+  const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
   const monthlyExpenses = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
   const upcomingEvents = events
     .filter(e => mode === 'personal' ? !e.groupId : e.groupId)
     .filter(e => new Date(e.date) >= new Date()).length;
 
-  // Chart data
-  const activityData = [
-    { day: '월', tasks: 5, expenses: 45000 },
-    { day: '화', tasks: 8, expenses: 32000 },
-    { day: '수', tasks: 6, expenses: 28000 },
-    { day: '목', tasks: 9, expenses: 55000 },
-    { day: '금', tasks: 7, expenses: 43000 },
-    { day: '토', tasks: 4, expenses: 67000 },
-    { day: '일', tasks: 3, expenses: 21000 },
-  ];
+  // Chart data - 실제 체크리스트 완료 데이터 기반으로 계산
+  const activityData = React.useMemo(() => {
+    const today = new Date();
+    const weeklyData = [];
+    
+    // 지난 7일간의 데이터 생성
+    for (let i = 6; i >= 0; i--) {
+      const targetDate = new Date();
+      targetDate.setDate(today.getDate() - i);
+      
+      // 해당 날짜에 완료된 체크리스트 개수 계산
+      const completedTasks = checklists.filter(checklist => {
+        if (!checklist.isCompleted || !checklist.completedAt) return false;
+        
+        const completedDate = new Date(checklist.completedAt);
+        return (
+          completedDate.getFullYear() === targetDate.getFullYear() &&
+          completedDate.getMonth() === targetDate.getMonth() &&
+          completedDate.getDate() === targetDate.getDate()
+        );
+      }).length;
+      
+      // 해당 날짜의 지출 계산 (기존 로직 유지)
+      const dayExpenses = filteredExpenses.filter(expense => {
+        const expenseDate = new Date(expense.date);
+        return (
+          expenseDate.getFullYear() === targetDate.getFullYear() &&
+          expenseDate.getMonth() === targetDate.getMonth() &&
+          expenseDate.getDate() === targetDate.getDate()
+        );
+      }).reduce((sum, expense) => sum + expense.amount, 0);
+      
+      weeklyData.push({
+        day: format(targetDate, 'E', { locale: ko }), // 요일명 (월, 화, 수...)
+        tasks: completedTasks,
+        expenses: dayExpenses,
+      });
+    }
+    
+    return weeklyData;
+  }, [checklists, filteredExpenses]);
 
   return (
     <div className="space-y-8">
@@ -287,9 +329,14 @@ const DashboardPage: React.FC = () => {
             <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center">
               <Target className="w-4 h-4 text-primary-600" />
             </div>
-            <div className="text-green-500 text-xs font-medium">+12%</div>
+            <div className={`text-xs font-medium ${
+              completionRate >= 80 ? 'text-green-500' : 
+              completionRate >= 60 ? 'text-yellow-500' : 'text-red-500'
+            }`}>
+              {completionRate >= 80 ? '🎉' : completionRate >= 60 ? '📈' : '📊'}
+            </div>
           </div>
-          <div className="text-lg font-bold text-gray-900 mb-1">85%</div>
+          <div className="text-lg font-bold text-gray-900 mb-1">{completionRate}%</div>
           <div className="text-xs text-gray-500">목표 달성률</div>
         </motion.div>
       </div>
@@ -307,7 +354,7 @@ const DashboardPage: React.FC = () => {
           onClick={() => navigate('/tasks')}
         >
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold text-gray-900">주간 활동</h3>
+            <h3 className="text-lg font-bold text-gray-900">주간 완료 현황</h3>
             <Activity className="w-5 h-5 text-primary-600" />
           </div>
           <div className="flex-1 min-h-[200px]">
@@ -590,15 +637,15 @@ const DashboardPage: React.FC = () => {
 
           <div className="space-y-3 max-h-80 overflow-y-auto">
             {filteredTasks.length > 0 ? (
-              filteredTasks.map((task) => (
+              filteredTasks.map((checklist) => (
                 <motion.div
-                  key={task.id}
+                  key={checklist.checklistId}
                   className="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
                   whileHover={{ x: 4 }}
                 >
                   <motion.button
                     className={`w-4 h-4 mt-0.5 rounded-sm border-2 flex items-center justify-center transition-all ${
-                      task.completed 
+                      checklist.isCompleted 
                         ? 'bg-green-600 border-green-600 text-white' 
                         : 'bg-white border-gray-300 hover:border-green-500'
                     }`}
@@ -606,10 +653,10 @@ const DashboardPage: React.FC = () => {
                     whileTap={{ scale: 0.9 }}
                     onClick={(e) => {
                       e.stopPropagation();
-                      toggleTask(task.id);
+                      toggleChecklist(checklist.checklistId, checklist.isCompleted);
                     }}
                   >
-                    {task.completed && (
+                    {checklist.isCompleted && (
                       <motion.svg 
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
@@ -628,20 +675,21 @@ const DashboardPage: React.FC = () => {
                       navigate('/tasks');
                     }}
                   >
-                    <div className={`text-sm font-medium transition-all ${task.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
-                      {task.title}
+                    <div className={`text-sm font-medium transition-all ${checklist.isCompleted ? 'line-through text-gray-500' : 'text-gray-900'}`}>
+                      {checklist.title}
                     </div>
                     <div className="flex items-center space-x-2 mt-1">
-                      <Flag className={`w-3 h-3 ${getPriorityColor(task.priority)}`} />
-                      <span className={`text-xs ${getPriorityColor(task.priority)}`}>
-                        {task.priority === 'high' ? '높음' : task.priority === 'medium' ? '보통' : '낮음'}
+                      <Flag className={`w-3 h-3 ${getPriorityColor(checklist.priority)}`} />
+                      <span className={`text-xs ${getPriorityColor(checklist.priority)}`}>
+                        {checklist.priority?.toLowerCase() === 'high' ? '높음' : 
+                         checklist.priority?.toLowerCase() === 'medium' ? '보통' : '낮음'}
                       </span>
-                      {task.dueDate && (
+                      {checklist.dueDate && (
                         <>
                           <span className="text-gray-300">•</span>
                           <Clock className="w-3 h-3 text-gray-400" />
                           <span className="text-xs text-gray-500">
-                            {format(new Date(task.dueDate), 'M월 d일', { locale: ko })}
+                            {format(new Date(checklist.dueDate), 'M월 d일', { locale: ko })}
                           </span>
                         </>
                       )}
@@ -657,7 +705,7 @@ const DashboardPage: React.FC = () => {
             )}
           </div>
 
-          {filteredTasks.length > 5 && (
+          {checklists.length > 2 && (
             <motion.button
               className="w-full mt-4 py-2 text-sm text-primary-600 hover:text-primary-700 font-medium"
               whileHover={{ scale: 1.02 }}

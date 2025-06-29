@@ -60,6 +60,7 @@ export const useAuth = () => {
                     email: userData.email,
                     avatar: userData.profileImageUrl,
                     provider: userData.provider.toLowerCase(), // 'GOOGLE' -> 'google'
+                    role: userData.role, // 역할 정보 추가
                     monthlyBudget: userData.monthlyBudget
                 };
 

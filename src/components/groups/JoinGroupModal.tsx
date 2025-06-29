@@ -4,6 +4,7 @@ import { X, Users, Hash, UserPlus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAppStore } from '../../store/appStore';
 import { useAuthStore } from '../../store/authStore';
+import { groupsAPI } from '../../api/groups';
 
 interface JoinGroupModalProps {
   isOpen: boolean;
@@ -30,9 +31,6 @@ const JoinGroupModal: React.FC<JoinGroupModalProps> = ({ isOpen, onClose }) => {
     setIsJoining(true);
 
     try {
-      // 실제로는 서버에서 그룹 코드를 확인하고 참여 처리
-      // 여기서는 시뮬레이션
-      
       const cleanCode = groupCode.trim().toUpperCase();
       
       // 기존에 참여한 그룹인지 확인
@@ -42,42 +40,25 @@ const JoinGroupModal: React.FC<JoinGroupModalProps> = ({ isOpen, onClose }) => {
         return;
       }
 
-      // 시뮬레이션: 잘못된 코드 체크
-      if (cleanCode.length !== 6) {
-        toast.error('유효하지 않은 참여 코드입니다.');
-        return;
-      }
-
-      // 시뮬레이션: 그룹 찾기 및 참여
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // 예시 그룹 데이터 (실제로는 서버에서 받아옴)
-      const mockGroup = {
-        id: Date.now().toString(),
-        name: `그룹 ${cleanCode}`,
-        description: '코드로 참여한 그룹',
-        code: cleanCode,
-        members: [
-          user,
-          // 기존 멤버들 (시뮬레이션)
-          { id: '1', name: '멤버1', email: 'member1@example.com', provider: 'google' as const },
-          { id: '2', name: '멤버2', email: 'member2@example.com', provider: 'kakao' as const },
-        ],
-        createdBy: '1',
-        createdAt: new Date(),
-        maxMembers: 4,
-      };
-
-      // 실제로는 useAppStore의 joinGroup 메서드를 사용
-      // addGroup(mockGroup); // 이 부분은 실제 구현에서는 서버 응답으로 처리
-      setCurrentGroup(mockGroup);
-      setMode('group');
+      // API를 통해 그룹 참여 신청
+      await groupsAPI.applyToGroup(cleanCode);
       
-      toast.success(`그룹 "${mockGroup.name}"에 참여했습니다!`);
+      toast.success('그룹 참여 신청이 완료되었습니다. 그룹 오너의 승인을 기다려주세요.');
       onClose();
       resetForm();
-    } catch (error) {
-      toast.error('그룹 참여 중 오류가 발생했습니다.');
+    } catch (error: any) {
+      console.error('그룹 참여 오류:', error);
+      
+      // 에러 메시지에 따른 적절한 토스트 메시지
+      if (error.message.includes('찾을 수 없음') || error.message.includes('not found')) {
+        toast.error('유효하지 않은 참여 코드입니다.');
+      } else if (error.message.includes('가득') || error.message.includes('full')) {
+        toast.error('해당 그룹이 가득 찼습니다.');
+      } else if (error.message.includes('이미') || error.message.includes('already')) {
+        toast.error('이미 참여한 그룹이거나 신청한 그룹입니다.');
+      } else {
+        toast.error(error.message || '그룹 참여 중 오류가 발생했습니다.');
+      }
     } finally {
       setIsJoining(false);
     }
