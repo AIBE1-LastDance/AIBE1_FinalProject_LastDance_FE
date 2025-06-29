@@ -13,7 +13,7 @@ const CalendarPage: React.FC = () => {
   const [showEventModal, setShowEventModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
 
-  // useCalendar 훅 사용
+  // useCalendar 훅 사용 - 그룹 모드일 때 currentGroup.id 전달
   const {
     events,
     loading,
@@ -31,6 +31,7 @@ const CalendarPage: React.FC = () => {
   } = useCalendar({
     autoLoad: true,
     initialView: 'month',
+    groupId: mode === 'group' && currentGroup ? currentGroup.id : undefined, // 그룹 ID 전달
   });
 
   // 뷰에 따른 제목 표시
@@ -80,13 +81,27 @@ const CalendarPage: React.FC = () => {
   const getFilteredEventsForDate = (date: Date) => {
     const allEvents = getEventsForDate(date);
     
-    return allEvents.filter(event => {
+    // 디버깅 로그 추가
+    console.log('=== 캘린더 필터링 디버그 ===');
+    console.log('mode:', mode);
+    console.log('currentGroup:', currentGroup);
+    console.log('allEvents:', allEvents);
+    
+    const filteredEvents = allEvents.filter(event => {
       if (mode === 'personal') {
         return true; // 개인 모드: 모든 일정 표시 (개인 + 그룹)
       } else {
-        return !!event.groupId; // 그룹 모드: 그룹 일정만 표시
+        // 그룹 모드: 현재 선택된 그룹의 일정만 표시
+        const result = event.groupId === currentGroup?.id;
+        console.log(`event ${event.title}: groupId=${event.groupId}, currentGroup.id=${currentGroup?.id}, 표시여부=${result}`);
+        return result;
       }
     });
+    
+    console.log('filteredEvents:', filteredEvents);
+    console.log('==========================');
+    
+    return filteredEvents;
   };
 
   // 일정 타입별 스타일 가져오기
