@@ -71,13 +71,23 @@ export const useCalendar = (options: UseCalendarOptions = {}): UseCalendarReturn
         try {
             let response;
 
+            // 디버깅 로그 추가
+            console.log('=== useCalendar loadEvents 디버그 ===');
+            console.log('groupId:', groupId);
+            console.log('query:', query);
+
             if (groupId) {
+                console.log('그룹 일정 API 호출:', groupId);
                 response = await calendarApi.getGroupCalendars(groupId, query);
             } else {
+                console.log('개인 일정 API 호출 (내가 속한 모든 그룹 포함)');
                 response = await calendarApi.getMyCalendars(query);
             }
 
+            console.log('API 응답:', response);
+
             if (response.success && response.data) {
+                console.log('로드된 이벤트들:', response.data);
                 setEvents(response.data);
             } else {
                 const errorMsg = response.error || 'Failed to load events';
@@ -364,7 +374,7 @@ export const useCalendar = (options: UseCalendarOptions = {}): UseCalendarReturn
         });
     }, [events]);
 
-    // 자동 로드 - 한 번만 실행
+    // 자동 로드 - groupId, currentDate, currentView 변경 시 실행
     useEffect(() => {
         if (autoLoad) {
             const query: CalendarsQuery = {
@@ -388,33 +398,7 @@ export const useCalendar = (options: UseCalendarOptions = {}): UseCalendarReturn
 
             loadEvents(query);
         }
-    }, []); // 컴포넌트 마운트 시에만 실행
-
-    // 날짜나 뷰 변경 시 이벤트 새로고침
-    useEffect(() => {
-        if (autoLoad) {
-            const query: CalendarsQuery = {
-                dateTime: currentDate.toISOString(),
-            };
-
-            switch (currentView) {
-                case 'year':
-                    query.viewType = 'YEARLY';
-                    break;
-                case 'month':
-                    query.viewType = 'MONTHLY';
-                    break;
-                case 'week':
-                    query.viewType = 'WEEKLY';
-                    break;
-                case 'day':
-                    query.viewType = 'DAILY';
-                    break;
-            }
-
-            loadEvents(query);
-        }
-    }, [currentDate, currentView]); // loadEvents, autoLoad 의존성 제거
+    }, [groupId, currentDate, currentView, autoLoad, loadEvents]); // 모든 관련 의존성 추가
 
     return {
         // 상태
