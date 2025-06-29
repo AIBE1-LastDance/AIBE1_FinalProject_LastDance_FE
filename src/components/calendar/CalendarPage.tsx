@@ -158,7 +158,7 @@ const CalendarPage: React.FC = () => {
   ];
 
   return (
-      <div className="min-h-screen px-2 sm:px-4 lg:px-6 py-4 space-y-4 sm:space-y-6">
+      <div className="min-h-screen px-2 sm:px-4 lg:px-6 py-4 space-y-2 sm:space-y-4">
         {/* Error Display */}
         {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
@@ -181,37 +181,39 @@ const CalendarPage: React.FC = () => {
         )}
 
         {/* Header */}
-        <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
-          <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4">
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-800">
+        <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+          <div className="flex flex-row items-center space-x-4">
+            <h1 className="hidden sm:block text-xl sm:text-2xl font-bold text-gray-800">
               {mode === 'personal' ? '내 캘린더' : '공유 캘린더'}
             </h1>
-            <div className="flex items-center space-x-2">
-              <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={goToPrevious}
-                  className="p-2 rounded-lg hover:bg-gray-100"
-                  disabled={loading}
-              >
-                <ChevronLeft className="w-4 sm:w-5 h-4 sm:h-5" />
-              </motion.button>
-              <h2 className="text-sm sm:text-lg font-medium text-gray-700 min-w-[160px] sm:min-w-[200px] text-center px-2">
-                {getViewTitle()}
-              </h2>
-              <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={goToNext}
-                  className="p-2 rounded-lg hover:bg-gray-100"
-                  disabled={loading}
-              >
-                <ChevronRight className="w-4 sm:w-5 h-4 sm:h-5" />
-              </motion.button>
-            </div>
           </div>
 
-          <div className="flex items-center space-x-4">
+          {/* Center - Date Navigation */}
+          <div className="flex items-center justify-center space-x-2">
+            <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={goToPrevious}
+                className="p-2 rounded-lg hover:bg-gray-100"
+                disabled={loading}
+            >
+              <ChevronLeft className="w-4 sm:w-5 h-4 sm:h-5" />
+            </motion.button>
+            <h2 className="text-sm sm:text-lg font-medium text-gray-700 min-w-[160px] sm:min-w-[200px] text-center px-2">
+              {getViewTitle()}
+            </h2>
+            <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={goToNext}
+                className="p-2 rounded-lg hover:bg-gray-100"
+                disabled={loading}
+            >
+              <ChevronRight className="w-4 sm:w-5 h-4 sm:h-5" />
+            </motion.button>
+          </div>
+
+          <div className="flex items-center justify-end space-x-4">
             {/* View Selector */}
             <div className="flex bg-gray-100 rounded-lg p-1 overflow-x-auto">
               {viewOptions.map((option) => (
