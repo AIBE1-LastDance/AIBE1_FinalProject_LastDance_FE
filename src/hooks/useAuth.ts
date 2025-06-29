@@ -86,7 +86,7 @@ export const useAuth = () => {
     const logout = async () => {
         try {
             setIsLoading(true);
-            await apiClient.post('/api/v1/auth/logout');
+            await apiClient.post('/api/v1/auth/logout', {}, { timeout: 5000 });
             console.log('서버 로그아웃 요청 성공');
         } catch (error) {
             console.error('로그아웃 실패: ', error);
