@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Group, Task, Event, Expense, Post, GroupResponse, GroupMember } from '../types';
 import { groupsAPI } from '../api/groups';
+import { expenseAPI } from "../api/expense";
 import toast from 'react-hot-toast';
 
 type AppMode = 'personal' | 'group';
@@ -51,9 +52,10 @@ interface AppState {
   deleteFutureEvents: (eventId: string) => void;
   
   // Expense actions
-  addExpense: (expense: Omit<Expense, 'id' | 'createdAt'>) => void;
-  updateExpense: (id: string, updates: Partial<Expense>) => void;
-  deleteExpense: (id: string) => void;
+  loadExpenses: (params: any) => Promise<void>;
+  addExpense: (expense: Omit<Expense, 'id' | 'createdAt'>) => Promise<Expense>;
+  updateExpense: (id: number, updates: Partial<Expense>) => Promise<void>;
+  deleteExpense: (id: number) => Promise<void>;
   
   // Post actions
   addPost: (post: Omit<Post, 'id' | 'createdAt'>) => void;
@@ -640,30 +642,146 @@ export const useAppStore = create<AppState>()(
       },
 
       // Expense actions
-      addExpense: (expenseData) => {
-        const newExpense: Expense = {
-          ...expenseData,
-          id: generateId(),
-          createdAt: new Date(),
-        };
-        
-        set((state) => ({
-          expenses: [...state.expenses, newExpense]
-        }));
+      loadExpenses: async (params) => {
+        try {
+          console.log('🔍 지출 조회 요청 파라미터:', params);
+
+          const response = await expenseAPI.getList(params);
+          console.log('📡 백엔드 응답:', response);
+          console.log('📊 응답 데이터 개수:', response.data.length);
+          console.log('📋 응답 데이터 상세:', response.data);
+
+          // 각 지출 항목의 splitType과 splitData 확인
+          response.data.forEach((expense: any, index: number) => {
+            console.log(`지출 ${index + 1}:`, {
+              title: expense.title,
+              splitType: expense.splitType,
+              splitData: expense.splitData,
+              expenseType: expense.expenseType
+            });
+          });
+
+          const expenses = response.data.map((expense: any) => ({
+            id: expense.expenseId,
+            title: expense.title,
+            amount: expense.amount,
+            category: expense.category,
+            date: expense.date,
+            memo: expense.memo,
+            groupId: expense.groupId,
+            userId: expense.userId,
+            splitType: expense.splitType,
+            splitData: expense.splitData,
+            expenseType: expense.expenseType,
+            createdAt: expense.createdAt
+          }));
+          console.log('🔄 변환된 지출 데이터:', expenses);
+
+          // 중복 데이터 체크
+          const duplicates = expenses.filter((expense, index, arr) =>
+              arr.findIndex(e => e.id === expense.id && e.title === expense.title) !== index
+          );
+          if (duplicates.length > 0) {
+            console.warn('⚠️ 중복 데이터 발견:', duplicates);
+          }
+
+          set({ expenses });
+        } catch (error: any) {
+          console.error('지출 목록 로드 실패:', error);
+          toast.error('지출 목록을 불러오는데 실패했습니다.');
+        }
       },
 
-      updateExpense: (id, updates) => {
-        set((state) => ({
-          expenses: state.expenses.map(expense =>
-            expense.id === id ? { ...expense, ...updates } : expense
-          )
-        }));
+      addExpense: async (expenseData) => {
+        try {
+          const expenseRequest = {
+            title: expenseData.title,
+            amount: expenseData.amount,
+            category: expenseData.category,
+            date: expenseData.date,
+            memo: expenseData.memo,
+            groupId: expenseData.groupId || null,
+            splitType: expenseData.splitType,
+            splitData: expenseData.splitData && Object.keys(expenseData.splitData).length > 0
+                ? Object.entries(expenseData.splitData).map(([userId, amount]) => ({
+                  userId: userId,
+                  amount: Number(amount)
+                }))
+                : undefined
+          };
+
+          // 디버깅 코드 여기에 추가!
+          console.log('전송할 전체 데이터:', JSON.stringify(expenseRequest, null, 2));
+          console.log('splitData 타입:', typeof expenseRequest.splitData);
+          console.log('splitData 내용:', expenseRequest.splitData);
+          console.log('splitType:', expenseRequest.splitType);
+
+
+          const response = await expenseAPI.create(expenseRequest);
+          const newExpense = {
+            id: response.data.expenseId,
+            title: response.data.title,
+            amount: response.data.amount,
+            category: response.data.category,
+            date: response.data.date,
+            memo: response.data.memo,
+            groupId: response.data.groupId,
+            userId: response.data.userId,
+            splitType: response.data.splitType,
+            splitData: response.data.splitData,
+            expenseType: response.data.expenseType,
+            createdAt: response.data.createdAt
+          };
+
+          set((state) => ({
+            expenses: [...state.expenses, newExpense]
+          }));
+
+          toast.success('지출이 추가되었습니다!');
+          return newExpense;
+        } catch (error: any) {
+          console.error('지출 추가 실패:', error);
+          toast.error('지출 추가에 실패했습니다.');
+          throw error;
+        }
       },
 
-      deleteExpense: (id) => {
-        set((state) => ({
-          expenses: state.expenses.filter(expense => expense.id !== id)
-        }));
+      updateExpense: async (id, updates) => {
+        try {
+          const response = await expenseAPI.update(id, updates);
+
+          set((state) => ({
+            expenses: state.expenses.map(expense =>
+                expense.id === id ? {
+                  ...expense,
+                  ...response.data,
+                  id: response.data.expenseId
+                } : expense
+            )
+          }));
+
+          toast.success('지출이 수정되었습니다!');
+        } catch (error: any) {
+          console.error('지출 수정 실패:', error);
+          toast.error('지출 수정에 실패했습니다.');
+          throw error;
+        }
+      },
+
+      deleteExpense: async (id) => {
+        try {
+          await expenseAPI.delete(id);
+
+          set((state) => ({
+            expenses: state.expenses.filter(expense => expense.id !== id)
+          }));
+
+          toast.success('지출이 삭제되었습니다!');
+        } catch (error: any) {
+          console.error('지출 삭제 실패:', error);
+          toast.error('지출 삭제에 실패했습니다.');
+          throw error;
+        }
       },
 
       // Post actions
@@ -809,8 +927,8 @@ export const useAppStore = create<AppState>()(
               })),
               expenses: value.state.expenses?.map((expense: Expense) => ({
                 ...expense,
-                createdAt: expense.createdAt?.toISOString(),
-                date: expense.date?.toISOString(),
+                createdAt: expense.createdAt,
+                date: expense.date,
               })),
               savedAnalyses: value.state.savedAnalyses?.map((analysis: any) => ({
                 ...analysis,
