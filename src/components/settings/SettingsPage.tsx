@@ -553,19 +553,34 @@ const SettingsPage: React.FC = () => {
                                             <p className="text-sm text-gray-600">{setting.description}</p>
                                         </div>
                                         
-                                        {/* 임시로 일반 체크박스 사용 */}
-                                        <div className="flex items-center space-x-2">
+                                        {/* 우리집 앱 색상의 모던 iOS 토글 스위치 */}
+<label className="relative inline-flex items-center cursor-pointer group">
                                             <input
                                                 type="checkbox"
                                                 checked={value}
                                                 onChange={(e) => setNotifications(prev => ({...prev, [key]: e.target.checked}))}
                                                 disabled={notificationLoading}
-                                                className="w-5 h-5 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                                                className="sr-only peer"
                                             />
-                                            <span className="text-sm text-gray-600">
-                                                {value ? '켜짐' : '꺼짐'}
-                                            </span>
-                                        </div>
+                                            <div className={`
+                                                relative w-14 h-8 transition-all duration-300 ease-in-out rounded-full
+                                                ${value 
+                                                    ? 'bg-gradient-to-r from-primary-500 to-primary-600' 
+                                                    : 'bg-gray-300 hover:bg-gray-400'
+                                                }
+                                                ${notificationLoading ? 'opacity-50 cursor-not-allowed' : ''}
+                                                peer-focus:ring-2 peer-focus:ring-primary-500/30
+                                            `}>
+                                                <div className={`
+                                                    absolute top-1 w-6 h-6 bg-white rounded-full 
+                                                    shadow-sm transition-all duration-300 ease-in-out
+                                                    ${value 
+                                                        ? 'right-1' 
+                                                        : 'left-1'
+                                                    }
+                                                `} />
+                                            </div>
+                                        </label>
                                     </div>
                                 );
                             })}
