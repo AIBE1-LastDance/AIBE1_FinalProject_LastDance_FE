@@ -449,24 +449,11 @@ export class CalendarApi {
   }
 
   /**
-   * 일정 삭제
+   * 일정 삭제 (모든 반복 일정 삭제)
    */
-  async deleteCalendar(
-      calendarId: string,
-      deleteType?: 'single' | 'future' | 'all',
-      instanceDate?: string
-  ): Promise<ApiResponse<void>> {
+  async deleteCalendar(calendarId: string): Promise<ApiResponse<void>> {
     try {
-      const params = new URLSearchParams();
-
-      if (deleteType) {
-        params.append('deleteType', deleteType);
-      }
-      if (instanceDate) {
-        params.append('instanceDate', instanceDate);
-      }
-
-      const endpoint = `/api/v1/calendars/${calendarId}${params.toString() ? `?${params.toString()}` : ''}`;
+      const endpoint = `/api/v1/calendars/${calendarId}`;
       console.log('[CalendarApi] Deleting calendar:', endpoint);
 
       const response = await apiClient.delete(endpoint);
