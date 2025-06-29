@@ -11,7 +11,7 @@ interface EventModalProps {
   currentGroup?: Group | null;
   onClose: () => void;
   onSave: (eventId: string, eventData: Partial<Event>) => Promise<Event | null>;
-  onDelete: (eventId: string, deleteType?: 'single' | 'future' | 'all', instanceDate?: string) => Promise<boolean>;
+  onDelete: (eventId: string) => Promise<boolean>;
 }
 
 const EventModal: React.FC<EventModalProps> = ({
@@ -37,8 +37,6 @@ const EventModal: React.FC<EventModalProps> = ({
     groupId: mode === 'group' && currentGroup ? currentGroup.id : undefined,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [deleteType, setDeleteType] = useState<'single' | 'future' | 'all'>('single');
-  const [showDeleteOptions, setShowDeleteOptions] = useState(false);
 
   // 이벤트 편집 모드일 때 폼 데이터 설정
   useEffect(() => {
@@ -106,38 +104,17 @@ const EventModal: React.FC<EventModalProps> = ({
   const handleDelete = async () => {
     if (!event) return;
 
-    if (!confirm('정말 삭제하시겠습니까?')) return;
+    // 반복 일정인 경우 모든 반복 일정이 삭제된다는 것을 명확히 안내
+    const confirmMessage = event.repeat && event.repeat !== 'none' 
+      ? '모든 반복 일정이 삭제됩니다. 정말 삭제하시겠습니까?' 
+      : '정말 삭제하시겠습니까?';
+
+    if (!confirm(confirmMessage)) return;
 
     setIsSubmitting(true);
 
     try {
-      let instanceDate: string | undefined;
-      
-      // deleteType이 'single' 또는 'future'인 경우 instanceDate 필요
-      if (deleteType === 'single' || deleteType === 'future') {
-        if (selectedDate) {
-          // ✅ 중요: selectedDate (사용자가 클릭한 날짜)를 기준으로 instanceDate 생성
-          const clickedDate = selectedDate instanceof Date ? selectedDate : new Date(selectedDate);
-          const baseDate = format(clickedDate, 'yyyy-MM-dd');
-          
-          // 원본 이벤트의 시간 정보 추출
-          let eventTime = '09:00:00';
-          if (event.startTime) {
-            eventTime = event.startTime.length === 5 ? `${event.startTime}:00` : event.startTime;
-          } else if (event.date) {
-            // startTime이 없으면 event.date에서 시간 추출
-            const originalDate = event.date instanceof Date ? event.date : new Date(event.date);
-            eventTime = format(originalDate, 'HH:mm:ss');
-          }
-          
-          instanceDate = `${baseDate}T${eventTime}`;
-        } else {
-          // selectedDate가 없으면 이벤트의 원본 날짜 사용 (fallback)
-          const eventDate = event.date instanceof Date ? event.date : new Date(event.date);
-          instanceDate = eventDate.toISOString().slice(0, 19);
-        }
-      }
-      const success = await onDelete(event.id, deleteType, instanceDate);
+      const success = await onDelete(event.id);
       if (success) {
         onClose();
       }
@@ -368,69 +345,21 @@ const EventModal: React.FC<EventModalProps> = ({
                   </div>
               )}
 
-              {/* Delete Options (for repeating events) */}
-              {event && event.repeat && event.repeat !== 'none' && showDeleteOptions && (
-                  <div className="border border-red-200 rounded-lg p-4 bg-red-50">
-                    <h4 className="font-medium text-red-800 mb-2">삭제 옵션</h4>
-                    <div className="space-y-2">
-                      <label className="flex items-center">
-                        <input
-                            type="radio"
-                            value="single"
-                            checked={deleteType === 'single'}
-                            onChange={(e) => setDeleteType(e.target.value as any)}
-                            className="mr-2"
-                        />
-                        <span className="text-sm text-red-700">이 일정만 삭제</span>
-                      </label>
-                      <label className="flex items-center">
-                        <input
-                            type="radio"
-                            value="future"
-                            checked={deleteType === 'future'}
-                            onChange={(e) => setDeleteType(e.target.value as any)}
-                            className="mr-2"
-                        />
-                        <span className="text-sm text-red-700">이 일정과 이후 모든 반복 일정 삭제</span>
-                      </label>
-                      <label className="flex items-center">
-                        <input
-                            type="radio"
-                            value="all"
-                            checked={deleteType === 'all'}
-                            onChange={(e) => setDeleteType(e.target.value as any)}
-                            className="mr-2"
-                        />
-                        <span className="text-sm text-red-700">모든 반복 일정 삭제</span>
-                      </label>
-                    </div>
-                  </div>
-              )}
+              {/* Delete Options - 제거됨 (모든 반복 일정 삭제만 지원) */}
 
               {/* Action Buttons */}
               <div className="flex justify-between pt-4">
                 {event && (
                     <motion.button
                         type="button"
-                        onClick={() => {
-                          if (event.repeat && event.repeat !== 'none') {
-                            setShowDeleteOptions(!showDeleteOptions);
-                            if (!showDeleteOptions) return;
-                          }
-                          handleDelete();
-                        }}
+                        onClick={handleDelete}
                         className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         disabled={isSubmitting}
                     >
                       <Trash2 className="w-4 h-4" />
-                      <span>
-                    {event.repeat && event.repeat !== 'none' && !showDeleteOptions
-                        ? '삭제 옵션'
-                        : '삭제'
-                    }
-                  </span>
+                      <span>삭제</span>
                     </motion.button>
                 )}
 

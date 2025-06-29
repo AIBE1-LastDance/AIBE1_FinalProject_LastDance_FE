@@ -145,9 +145,9 @@ const CalendarPage: React.FC = () => {
     }
   };
 
-  // 이벤트 삭제 핸들러
-  const handleDeleteEvent = async (eventId: string, deleteType?: 'single' | 'future' | 'all', instanceDate?: string) => {
-    return await deleteEvent(eventId, deleteType, instanceDate);
+  // 이벤트 삭제 핸들러 (모든 반복 일정 삭제)
+  const handleDeleteEvent = async (eventId: string) => {
+    return await deleteEvent(eventId);
   };
 
   const viewOptions = [
