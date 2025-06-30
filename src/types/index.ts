@@ -121,26 +121,22 @@ export interface Task {
 }
 
 export interface Expense {
-  id: number; // string → number 변경
-  title: string;
-  amount: number;
-  category:
-    | "FOOD"
-    | "UTILITIES"
-    | "TRANSPORT"
-    | "SHOPPING"
-    | "ENTERTAINMENT"
-    | "OTHER"; // 대문자로 변경
-  date: string; // Date → string 변경 (YYYY-MM-DD 형식)
-  receipt?: string;
-  memo?: string;
-  groupId?: string;
-  userId: string;
-  splitType?: "EQUAL" | "CUSTOM" | "SPECIFIC";
-  splitData?: { [userId: string]: number };
-  // 백엔드 응답에 포함되는 추가 필드들
-  expenseType?: "PERSONAL" | "GROUP";
-  createdAt?: string;
+    id: number; // string → number 변경
+    title: string;
+    amount: number;
+    category: 'FOOD' | 'UTILITIES' | 'TRANSPORT' | 'SHOPPING' | 'ENTERTAINMENT' | 'OTHER'; // 대문자로 변경
+    date: string; // Date → string 변경 (YYYY-MM-DD 형식)
+    receipt?: string;
+    memo?: string;
+    groupId?: string;
+    userId: string;
+    splitType?: 'EQUAL' | 'CUSTOM' | 'SPECIFIC';
+    splitData?: { [userId: string]: number };
+    expenseType?: 'PERSONAL' | 'GROUP';
+    createdAt?: string;
+    isGroupShare?: boolean;
+    groupName?: string;
+    myShareAmount?: number;
 }
 
 export interface GameResult {
