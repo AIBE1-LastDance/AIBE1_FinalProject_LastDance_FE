@@ -390,7 +390,34 @@ export const useAppStore = create<AppState>()(
         try {
           console.log('🔍 지출 조회 요청 파라미터:', params);
 
-          const response = await expenseAPI.getList(params);
+          let response;
+
+          // mode에 따른 적절한 API 호출
+          if (params.mode === 'personal') {
+            response = await expenseAPI.getPersonalExpenses({
+              year: params.year,
+              month: params.month,
+              category: params.category,
+              search: params.search,
+            });
+          } else if(params.mode === 'group') {
+            // 특정 그룹 지출 조회
+            response = await expenseAPI.getGroupExpensesById(params.groupId, {
+              year: params.year,
+              month: params.month,
+              category: params.category,
+              search: params.search,
+            })
+          } else {
+            // 전체 그룹 지출 조회
+            response = await expenseAPI.getGroupExpenses({
+              year: params.year,
+              month: params.month,
+              category: params.category,
+              search: params.search,
+            })
+          }
+
           console.log('📡 백엔드 응답:', response);
           console.log('📊 응답 데이터 개수:', response.data.length);
           console.log('📋 응답 데이터 상세:', response.data);
@@ -422,11 +449,11 @@ export const useAppStore = create<AppState>()(
           console.log('🔄 변환된 지출 데이터:', expenses);
 
           // 중복 데이터 체크
-          const duplicates = expenses.filter((expense, index, arr) =>
-              arr.findIndex(e => e.id === expense.id && e.title === expense.title) !== index
+          const uniqueExpenses = expenses.filter((expense, index, arr) =>
+              arr.findIndex(e => e.id === expense.id) === index
           );
-          if (duplicates.length > 0) {
-            console.warn('⚠️ 중복 데이터 발견:', duplicates);
+          if (uniqueExpenses.length > 0) {
+            console.warn('⚠️ 중복 데이터 발견:', uniqueExpenses);
           }
 
           set({ expenses });

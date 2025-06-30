@@ -218,32 +218,19 @@ const ExpensesPage: React.FC = () => {
         return personalShares;
     };
 
-    // 개인 모드에서 통합 지출 목록 생성 (중복 제거)
     const combinedExpenses = mode === 'personal'
         ? (() => {
-            // 가입한 그룹들에서 groupName 정보 가져오기
-            const expensesWithGroupName = expenses.map(expense => {
-                if (expense.groupId) {
-                    const group = joinedGroups.find(g => g.id === expense.groupId);
-                    return {
-                        ...expense,
-                        groupName: group?.name || '알 수 없는 그룹'
-                    };
-                }
-                return expense;
-            });
-
-            // 중복 제거
-            const expenseIds = new Set(expenses.map(e => e.id));
-            const uniqueGroupShares = groupShares.filter(share => !expenseIds.has(share.id));
-
-            return [...expensesWithGroupName, ...uniqueGroupShares]
+            // groupShares는 이미 내 분담금만 포함하므로 그대로 사용
+            return [...expenses, ...groupShares]
                 .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         })()
         : expenses;
 
     const filteredExpenses = combinedExpenses.filter(expense => {
-        const isModeMatch = mode === 'personal' ? true : expense.groupId;
+        const isModeMatch = mode === 'personal'
+            ? (!expense.groupId || expense.isGroupShare)
+            : expense.groupId;
+
         const isCurrentMonth = isWithinInterval(new Date(expense.date), {
             start: startOfMonth(currentMonth),
             end: endOfMonth(currentMonth)
@@ -254,9 +241,11 @@ const ExpensesPage: React.FC = () => {
         return isModeMatch && isCurrentMonth && matchesSearch && matchesCategory;
     });
 
-    const totalAmount = filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+    const totalAmount = filteredExpenses.reduce((sum, expense) =>
+        sum + (expense.myShareAmount || expense.amount), 0
+    );
     const avgAmount = filteredExpenses.length > 0 ? totalAmount / filteredExpenses.length : 0;
-    const maxAmount = Math.max(...filteredExpenses.map(e => e.amount), 0);
+    const maxAmount = Math.max(...filteredExpenses.map(e => e.myShareAmount || e.amount), 0);
 
     // 그룹별 분담금 요약 계산
     const groupSummary: GroupSummary[] = mode === 'personal' ? (() => {
@@ -289,8 +278,12 @@ const ExpensesPage: React.FC = () => {
         maxAmount,
         totalCount: filteredExpenses.length,
         categoryBreakdown: categoryData.map(cat => {
-            const catExpenses = allCategoryExpenses.filter(e => e.category === cat.category);
-            const amount = catExpenses.reduce((sum, e) => sum + e.amount, 0);
+            const catExpenses = mode === 'personal'
+                ? filteredExpenses.filter(e => e.category === cat.category)
+                : allCategoryExpenses.filter(e => e.category === cat.category);
+            const amount = catExpenses.reduce((sum, e) =>
+                sum + (e.myShareAmount || e.amount), 0
+            );
             const totalAllAmount = allCategoryExpenses.reduce((sum, e) => sum + e.amount, 0);
             return {
                 category: cat.category,
@@ -505,7 +498,8 @@ const ExpensesPage: React.FC = () => {
                                 <div className="flex items-center space-x-2 lg:space-x-3 flex-wrap">
                                     <span className="whitespace-nowrap">공동 가계부</span>
                                     <span className="text-lg lg:text-xl text-primary-600">•</span>
-                                    <span className="text-lg lg:text-2xl text-primary-600 font-semibold whitespace-nowrap">
+                                    <span
+                                        className="text-lg lg:text-2xl text-primary-600 font-semibold whitespace-nowrap">
                             {currentGroup?.name || '그룹 선택 필요'}
                         </span>
                                 </div>
@@ -539,7 +533,8 @@ const ExpensesPage: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
+                <div
+                    className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
                     {/* Search */}
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4"/>
@@ -1208,7 +1203,7 @@ const ExpensesPage: React.FC = () => {
                                                     backgroundColor: categoryData.find(cat => cat.category === expense.category)?.color + '20'
                                                 }}
                                             >
-                                                {expense.groupId ? (
+                                                {mode === 'personal' && expense.groupId ? (
                                                     <Users className="w-6 h-6 text-blue-600"/>
                                                 ) : (
                                                     <Receipt
@@ -1225,7 +1220,7 @@ const ExpensesPage: React.FC = () => {
                                                 </h4>
                                                 <div className="flex items-center space-x-3 text-sm text-gray-500">
                                                     <span>{categoryData.find(cat => cat.category === expense.category)?.label}</span>
-                                                    {expense.groupId && expense.groupName && (
+                                                    {mode === 'personal' && expense.groupId && expense.groupName && (
                                                         <>
                                                             <span>•</span>
                                                             <span className="text-blue-600">👥 {expense.groupName}</span>
@@ -1241,9 +1236,9 @@ const ExpensesPage: React.FC = () => {
                                         </div>
                                         <div className="text-right">
                                             <p className="text-lg font-bold text-gray-900">
-                                                {formatCurrency(expense.amount)}
+                                                {formatCurrency(expense.myShareAmount || expense.amount)}
                                             </p>
-                                            {expense.groupId && (
+                                            {mode === 'personal' && expense.groupId && (
                                                 <p className="text-xs text-blue-600">그룹 지출</p>
                                             )}
                                             {expense.memo && (
