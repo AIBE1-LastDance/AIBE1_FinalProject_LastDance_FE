@@ -13,7 +13,7 @@ const CalendarPage: React.FC = () => {
   const [showEventModal, setShowEventModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
 
-  // useCalendar 훅 사용
+  // useCalendar 훅 사용 - 그룹 모드일 때 currentGroup.id 전달
   const {
     events,
     loading,
@@ -31,6 +31,7 @@ const CalendarPage: React.FC = () => {
   } = useCalendar({
     autoLoad: true,
     initialView: 'month',
+    groupId: mode === 'group' && currentGroup ? currentGroup.id : undefined, // 그룹 ID 전달
   });
 
   // 뷰에 따른 제목 표시
@@ -84,7 +85,8 @@ const CalendarPage: React.FC = () => {
       if (mode === 'personal') {
         return true; // 개인 모드: 모든 일정 표시 (개인 + 그룹)
       } else {
-        return !!event.groupId; // 그룹 모드: 그룹 일정만 표시
+        // 그룹 모드: 현재 선택된 그룹의 일정만 표시
+        return event.groupId === currentGroup?.id;
       }
     });
   };
@@ -145,9 +147,9 @@ const CalendarPage: React.FC = () => {
     }
   };
 
-  // 이벤트 삭제 핸들러
-  const handleDeleteEvent = async (eventId: string, deleteType?: 'single' | 'future' | 'all', instanceDate?: string) => {
-    return await deleteEvent(eventId, deleteType, instanceDate);
+  // 이벤트 삭제 핸들러 (모든 반복 일정 삭제)
+  const handleDeleteEvent = async (eventId: string) => {
+    return await deleteEvent(eventId);
   };
 
   const viewOptions = [
@@ -158,7 +160,7 @@ const CalendarPage: React.FC = () => {
   ];
 
   return (
-      <div className="min-h-screen px-2 sm:px-4 lg:px-6 py-4 space-y-4 sm:space-y-6">
+      <div className="min-h-screen px-2 sm:px-4 lg:px-6 py-4 space-y-2 sm:space-y-4">
         {/* Error Display */}
         {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
@@ -181,37 +183,39 @@ const CalendarPage: React.FC = () => {
         )}
 
         {/* Header */}
-        <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
-          <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4">
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-800">
+        <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+          <div className="flex flex-row items-center space-x-4">
+            <h1 className="hidden sm:block text-xl sm:text-2xl font-bold text-gray-800">
               {mode === 'personal' ? '내 캘린더' : '공유 캘린더'}
             </h1>
-            <div className="flex items-center space-x-2">
-              <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={goToPrevious}
-                  className="p-2 rounded-lg hover:bg-gray-100"
-                  disabled={loading}
-              >
-                <ChevronLeft className="w-4 sm:w-5 h-4 sm:h-5" />
-              </motion.button>
-              <h2 className="text-sm sm:text-lg font-medium text-gray-700 min-w-[160px] sm:min-w-[200px] text-center px-2">
-                {getViewTitle()}
-              </h2>
-              <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={goToNext}
-                  className="p-2 rounded-lg hover:bg-gray-100"
-                  disabled={loading}
-              >
-                <ChevronRight className="w-4 sm:w-5 h-4 sm:h-5" />
-              </motion.button>
-            </div>
           </div>
 
-          <div className="flex items-center space-x-4">
+          {/* Center - Date Navigation */}
+          <div className="flex items-center justify-center space-x-2">
+            <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={goToPrevious}
+                className="p-2 rounded-lg hover:bg-gray-100"
+                disabled={loading}
+            >
+              <ChevronLeft className="w-4 sm:w-5 h-4 sm:h-5" />
+            </motion.button>
+            <h2 className="text-sm sm:text-lg font-medium text-gray-700 min-w-[160px] sm:min-w-[200px] text-center px-2">
+              {getViewTitle()}
+            </h2>
+            <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={goToNext}
+                className="p-2 rounded-lg hover:bg-gray-100"
+                disabled={loading}
+            >
+              <ChevronRight className="w-4 sm:w-5 h-4 sm:h-5" />
+            </motion.button>
+          </div>
+
+          <div className="flex items-center justify-end space-x-4">
             {/* View Selector */}
             <div className="flex bg-gray-100 rounded-lg p-1 overflow-x-auto">
               {viewOptions.map((option) => (

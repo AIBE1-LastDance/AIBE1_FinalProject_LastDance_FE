@@ -14,13 +14,13 @@ import {
   HelpCircle,
   FileText,
   Clock,
-  ThumbsUp,
+  ThumbsUp, // 좋아요 아이콘
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/authStore";
 import PostCard from "./PostCard";
 import CreatePostModal from "./CreatePostModal";
-import { Post } from "../../types";
+import { Post } from "../../types/community/community"; // Assuming this points to src/types/community/community.ts
 import { fetchAllPosts } from "../../api/community/community";
 
 const CommunityPage: React.FC = () => {
@@ -37,36 +37,41 @@ const CommunityPage: React.FC = () => {
     "all"
   );
   const [editingPost, setEditingPost] = useState<Post | null>(null);
+  const [totalLikes, setTotalLikes] = useState<number>(0); // ✅ 좋아요 총 개수 상태 추가
 
   // 게시글 불러오기
   useEffect(() => {
     fetchAllPosts()
       .then((data: any[]) => {
-        // 🔧 혹은 정확한 타입을 지정하려면 아래 참고
         const mappedPosts: Post[] = data.map((item) => ({
-          id: item.postId,
+          postId: item.postId,
           title: item.title,
           content: item.content,
-          category: item.category, // 변환 필요 시 convertCategory(item.category)
+          category: item.category,
+          likeCount: item.likeCount,
+          reportCount: item.reportCount,
+          createdAt: item.createdAt,
+          updatedAt: item.updatedAt ?? item.createdAt,
           userId: item.userId,
-          createdAt: new Date(item.createdAt),
-          updatedAt: new Date(item.updatedAt ?? item.createdAt),
-          likes: item.likeCount,
-          likedBy: [],
-          bookmarkedBy: [],
-          comments: [],
-          author: {
-            id: item.userId,
-            username: item.username,
-            nickname: item.username,
-            email: "",
-            provider: "google",
-          },
+          authorNickname: item.authorNickname,
+          commentCount: item.commentCount,
+          comments: item.comments || [],
+          likedBy: item.likedBy || [],
+          bookmarkedBy: item.bookmarkedBy || [],
         }));
         setPosts(mappedPosts);
       })
       .catch((err) => console.error("[❌ 게시글 로딩 실패]", err));
   }, []);
+
+  // ✅ posts 상태가 업데이트될 때마다 totalLikes 계산
+  useEffect(() => {
+    const calculatedTotalLikes = posts.reduce(
+      (sum, post) => sum + (post.likeCount || 0),
+      0
+    );
+    setTotalLikes(calculatedTotalLikes);
+  }, [posts]); // posts 배열이 변경될 때마다 실행
 
   const categories = [
     { id: "all", name: "전체", icon: Filter, color: "text-gray-600" },
@@ -122,9 +127,9 @@ const CommunityPage: React.FC = () => {
   const sortedPosts = [...filteredPosts].sort((a, b) => {
     switch (sortBy) {
       case "likes":
-        return (b.likes || 0) - (a.likes || 0);
+        return (b.likeCount || 0) - (a.likeCount || 0);
       case "comments":
-        return (b.comments?.length || 0) - (a.comments?.length || 0);
+        return (b.commentCount || 0) - (a.commentCount || 0);
       case "latest":
       default:
         return (
@@ -140,10 +145,13 @@ const CommunityPage: React.FC = () => {
 
   const handlePostDelete = (postId: string) => {
     // 삭제 로직
+    console.log(`Deleting post with ID: ${postId}`);
+    // 실제 API 호출 및 상태 업데이트 로직 추가 필요
+    // 예: deletePost(postId).then(() => setPosts(prev => prev.filter(p => p.postId !== postId)));
   };
 
   const handlePostClick = (post: Post) => {
-    navigate(`/community/${post.id}`);
+    navigate(`/community/${post.postId}`);
   };
 
   return (
@@ -164,10 +172,20 @@ const CommunityPage: React.FC = () => {
               <p className="text-primary-100">
                 다양한 생활 정보를 공유하고 소통해보세요!
               </p>
+              {/* ✅ 총 좋아요 개수 표시 추가 */}
+              <div className="flex items-center mt-2 text-primary-50">
+                <ThumbsUp className="w-4 h-4 mr-1" />
+                <span className="text-sm font-medium">
+                  총 좋아요: {totalLikes}개
+                </span>
+              </div>
             </div>
           </div>
           <button
-            onClick={() => setIsCreateModalOpen(true)}
+            onClick={() => {
+              setEditingPost(null); // Ensure no post is being edited when opening for create
+              setIsCreateModalOpen(true);
+            }}
             className="flex items-center space-x-2 bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-xl transition-colors"
           >
             <Plus className="w-5 h-5" />
@@ -309,7 +327,10 @@ const CommunityPage: React.FC = () => {
                 : "첫 번째 게시글을 작성해보세요!"}
             </p>
             <button
-              onClick={() => setIsCreateModalOpen(true)}
+              onClick={() => {
+                setEditingPost(null); // Ensure no post is being edited when opening for create
+                setIsCreateModalOpen(true);
+              }}
               className="bg-primary-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-primary-700 transition-colors"
             >
               글쓰기
@@ -318,7 +339,7 @@ const CommunityPage: React.FC = () => {
         ) : (
           sortedPosts.map((post, index) => (
             <motion.div
-              key={post.id}
+              key={post.postId}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
@@ -341,6 +362,28 @@ const CommunityPage: React.FC = () => {
           onClose={() => {
             setIsCreateModalOpen(false);
             setEditingPost(null);
+            // 게시글 작성/수정 후 목록을 새로고침하려면 여기에서 fetchAllPosts를 다시 호출
+            fetchAllPosts()
+              .then((data: any[]) => {
+                const mappedPosts: Post[] = data.map((item) => ({
+                  postId: item.postId,
+                  title: item.title,
+                  content: item.content,
+                  category: item.category,
+                  likeCount: item.likeCount,
+                  reportCount: item.reportCount,
+                  createdAt: item.createdAt,
+                  updatedAt: item.updatedAt ?? item.createdAt,
+                  userId: item.userId,
+                  authorNickname: item.authorNickname,
+                  commentCount: item.commentCount,
+                  comments: item.comments || [],
+                  likedBy: item.likedBy || [],
+                  bookmarkedBy: item.bookmarkedBy || [],
+                }));
+                setPosts(mappedPosts);
+              })
+              .catch((err) => console.error("[❌ 게시글 로딩 실패]", err));
           }}
         />
       )}

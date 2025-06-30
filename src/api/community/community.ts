@@ -1,4 +1,6 @@
-// 전체 게시글 목록 가져오기
+import { Post } from "../../types/community/community"; // Comment 타입 임포트
+
+//전체 게시글 목록 가져오기
 export const fetchAllPosts = async (): Promise<Post[]> => {
   const res = await fetch("/api/v1/community", {
     credentials: "include", // ✅ 쿠키 포함
