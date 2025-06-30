@@ -20,7 +20,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/authStore";
 import PostCard from "./PostCard";
 import CreatePostModal from "./CreatePostModal";
-import { Post } from "../../types"; // Assuming this points to src/types/community/community.ts
+import { Post } from "../../types/community/community"; // Assuming this points to src/types/community/community.ts
 import { fetchAllPosts } from "../../api/community/community";
 
 const CommunityPage: React.FC = () => {

@@ -21,7 +21,7 @@ import {
   Star,
   FileText,
 } from "lucide-react";
-import { Post } from "../../types"; // Post 타입 임포트
+import { Post } from "../../types/community/community"; // Post 타입 임포트
 import { useAuthStore } from "../../store/authStore";
 import { useAppStore } from "../../store/appStore"; // 이 부분은 예시이므로 실제 프로젝트의 스토어에 따라 달라질 수 있습니다.
 import { formatDistanceToNow } from "date-fns";

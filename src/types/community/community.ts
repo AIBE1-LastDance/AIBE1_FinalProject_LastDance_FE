@@ -21,7 +21,7 @@ export interface Post {
   userId: string; // 작성자 UUID
   authorNickname: string; // ✅ 작성자 닉네임 (백엔드의 'authorNickname' 필드와 매핑)
   commentCount: number; // ✅ 댓글 수 (백엔드의 PostResponseDTO에 없으므로, 백엔드에서 추가하거나 frontend에서 임시 처리 필요)
-  // comments?: Comment[]; // 백엔드 PostResponseDTO에 comments 배열이 없으므로 주석 처리 또는 백엔드에서 추가 필요
+  comments?: Comment[]; // 백엔드 PostResponseDTO에 comments 배열이 없으므로 주석 처리 또는 백엔드에서 추가 필요
   likedBy?: string[]; // 좋아요 누른 사용자 ID 목록 (API 응답에 따라 추가)
   bookmarkedBy?: string[]; // 북마크한 사용자 ID 목록 (API 응답에 따라 추가)
   // images?: string[]; // PostResponseDTO에 없으므로, 백엔드에서 추가하거나 frontend에서 임시 처리 필요
