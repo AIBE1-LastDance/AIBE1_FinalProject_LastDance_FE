@@ -18,6 +18,7 @@ import {
     ChevronRight,
     Share2,
     RefreshCw,
+    Users
 } from 'lucide-react';
 import {
     PieChart as RechartsPieChart,
@@ -37,9 +38,26 @@ import {format, startOfMonth, endOfMonth, isWithinInterval, subMonths} from 'dat
 import {ko} from 'date-fns/locale';
 import ExpenseModal from './ExpenseModal';
 
+interface GroupSummary {
+    groupId: string;
+    groupName: string;
+    myShareAmount: number;
+    totalAmount: number;
+    expenseCount: number;
+}
 
 const ExpensesPage: React.FC = () => {
-    const {expenses, mode, currentGroup, savedAnalyses, saveAnalysis, loadExpenses} = useAppStore();
+    const {
+        expenses,
+        mode,
+        currentGroup,
+        savedAnalyses,
+        saveAnalysis,
+        loadExpenses,
+        groupShares,
+        loadGroupShares,
+        joinedGroups
+    } = useAppStore();
     const {user} = useAuthStore();
     const [showExpenseModal, setShowExpenseModal] = useState(false);
     const [selectedExpense, setSelectedExpense] = useState(null);
@@ -52,6 +70,7 @@ const ExpensesPage: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'expenses' | 'analyses'>('expenses');
     const [selectedAnalysis, setSelectedAnalysis] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [currentCardIndex, setCurrentCardIndex] = useState(0);
 
     useEffect(() => {
         const fetchExpenses = async () => {
@@ -64,6 +83,14 @@ const ExpensesPage: React.FC = () => {
                     groupId: mode === 'group' ? currentGroup?.id : null
                 };
                 await loadExpenses(params);
+
+                // 개인 모드일 때 그룹 분담금도 로드
+                if (mode === 'personal') {
+                    await loadGroupShares({
+                        year: currentMonth.getFullYear(),
+                        month: currentMonth.getMonth() + 1,
+                    });
+                }
             } catch (error) {
                 console.error('지출 로드 실패: ', error);
             } finally {
@@ -72,24 +99,7 @@ const ExpensesPage: React.FC = () => {
         };
 
         fetchExpenses();
-    }, [mode, currentMonth, currentGroup?.id, loadExpenses]);
-
-    const filteredExpenses = expenses.filter(expense => {
-        const isModeMatch = mode === 'personal' ? !expense.groupId : expense.groupId;
-        const isCurrentMonth = isWithinInterval(new Date(expense.date), {
-            start: startOfMonth(currentMonth),
-            end: endOfMonth(currentMonth)
-        });
-        const matchesSearch = expense.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            expense.memo?.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesCategory = categoryFilter === 'all' || expense.category === categoryFilter;
-
-        return isModeMatch && isCurrentMonth && matchesSearch && matchesCategory;
-    });
-
-    const totalAmount = filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0);
-    const avgAmount = filteredExpenses.length > 0 ? totalAmount / filteredExpenses.length : 0;
-    const maxAmount = Math.max(...filteredExpenses.map(e => e.amount), 0);
+    }, [mode, currentMonth, currentGroup?.id, loadExpenses, loadGroupShares]);
 
     const categoryData = [
         {category: 'FOOD', label: '식비', color: '#FF6B6B'},
@@ -132,7 +142,7 @@ const ExpensesPage: React.FC = () => {
             return expenseDate >= monthStart && expenseDate <= monthEnd && isModeMatch;
         });
 
-        const monthData = {month: format(monthDate, 'M월')};
+        const monthData: { [key: string]: any } = {month: format(monthDate, 'M월')};
 
         if (categoryFilter === 'all') {
             // 전체 카테고리별로 분리
@@ -165,6 +175,113 @@ const ExpensesPage: React.FC = () => {
         ...categoryData.map(cat => ({value: cat.category, label: cat.label}))
     ];
 
+    const handleExpenseClick = (expense) => {
+        setSelectedExpense(expense);
+        setShowExpenseModal(true);
+    };
+
+    // 그룹 모드에서 개인 분담금 계산
+    const calculatePersonalShare = () => {
+        if (mode !== 'group' || !currentGroup || !user) return null;
+
+        const groupExpenses = allCategoryExpenses.filter(expense => expense.groupId);
+        const personalShares = [];
+
+        groupExpenses.forEach(expense => {
+            let personalAmount = 0;
+
+            // EQUAL, CUSTOM으로 대문자 타입에 맞춰 수정
+            if (expense.splitType === 'EQUAL') {
+                personalAmount = expense.amount / currentGroup.members.length;
+                console.log('균등분할 계산:', personalAmount);
+            } else if (expense.splitType === 'CUSTOM' && expense.splitData && expense.splitData.length > 0) {
+                console.log('커스텀 분할 처리 중...');
+                const userSplit = expense.splitData.find(split => split.userId === user.id);
+                personalAmount = userSplit ? userSplit.amount : 0;
+            } else if (expense.splitType === 'SPECIFIC' && expense.splitData && expense.splitData.length > 0) {
+                console.log('지정 분할 처리 중...');
+                const userSplit = expense.splitData.find(split => split.userId === user.id);
+                personalAmount = userSplit ? userSplit.amount : 0;
+            } else {
+                personalAmount = expense.amount / currentGroup.members.length;
+            }
+
+            if (personalAmount > 0) {
+                personalShares.push({
+                    ...expense,
+                    personalAmount,
+                    percentage: (personalAmount / expense.amount) * 100
+                });
+            }
+        });
+
+        return personalShares;
+    };
+
+    // 개인 모드에서 통합 지출 목록 생성 (중복 제거)
+    const combinedExpenses = mode === 'personal'
+        ? (() => {
+            // 가입한 그룹들에서 groupName 정보 가져오기
+            const expensesWithGroupName = expenses.map(expense => {
+                if (expense.groupId) {
+                    const group = joinedGroups.find(g => g.id === expense.groupId);
+                    return {
+                        ...expense,
+                        groupName: group?.name || '알 수 없는 그룹'
+                    };
+                }
+                return expense;
+            });
+
+            // 중복 제거
+            const expenseIds = new Set(expenses.map(e => e.id));
+            const uniqueGroupShares = groupShares.filter(share => !expenseIds.has(share.id));
+
+            return [...expensesWithGroupName, ...uniqueGroupShares]
+                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        })()
+        : expenses;
+
+    const filteredExpenses = combinedExpenses.filter(expense => {
+        const isModeMatch = mode === 'personal' ? true : expense.groupId;
+        const isCurrentMonth = isWithinInterval(new Date(expense.date), {
+            start: startOfMonth(currentMonth),
+            end: endOfMonth(currentMonth)
+        });
+        const matchesSearch = expense.title.toLowerCase().includes(searchTerm.toLowerCase()) || expense.memo?.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesCategory = categoryFilter === 'all' || expense.category === categoryFilter
+
+        return isModeMatch && isCurrentMonth && matchesSearch && matchesCategory;
+    });
+
+    const totalAmount = filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+    const avgAmount = filteredExpenses.length > 0 ? totalAmount / filteredExpenses.length : 0;
+    const maxAmount = Math.max(...filteredExpenses.map(e => e.amount), 0);
+
+    // 그룹별 분담금 요약 계산
+    const groupSummary: GroupSummary[] = mode === 'personal' ? (() => {
+        const groups: { [key: string]: GroupSummary } = {};
+        groupShares.forEach((share: any) => {
+            if (!groups[share.groupId]) {
+                groups[share.groupId] = {
+                    groupId: share.groupId,
+                    groupName: share.groupName,
+                    myShareAmount: 0,
+                    totalAmount: 0,
+                    expenseCount: 0,
+                };
+            }
+            groups[share.groupId].myShareAmount += share.myShareAmount;
+            groups[share.groupId].totalAmount += share.amount;
+            groups[share.groupId].expenseCount += 1;
+        });
+        return Object.values(groups);
+    })() : [];
+
+    const totalGroupShares = groupSummary.reduce((sum, group) => sum + group.myShareAmount, 0);
+
+    const personalShares = calculatePersonalShare();
+
     // Analytics data (전체 카테고리 데이터 사용)
     const analytics = {
         totalAmount,
@@ -185,66 +302,6 @@ const ExpensesPage: React.FC = () => {
             };
         }).filter(item => item.amount > 0).sort((a, b) => b.amount - a.amount),
     };
-
-    const handleExpenseClick = (expense) => {
-        setSelectedExpense(expense);
-        setShowExpenseModal(true);
-    };
-
-    // 그룹 모드에서 개인 분담금 계산
-    const calculatePersonalShare = () => {
-        if (mode !== 'group' || !currentGroup || !user) return null;
-
-        const groupExpenses = allCategoryExpenses.filter(expense => expense.groupId);
-        const personalShares = [];
-
-        groupExpenses.forEach(expense => {
-            // 디버깅용 로그 추가
-            // console.log('=== 지출 분석 ===');
-            // console.log('제목:', expense.title);
-            // console.log('splitType:', expense.splitType);
-            // console.log('splitData:', expense.splitData);
-            // console.log('현재 사용자 ID:', user.id);
-
-            let personalAmount = 0;
-
-            // EQUAL, CUSTOM으로 대문자 타입에 맞춰 수정
-            if (expense.splitType === 'EQUAL') {
-                personalAmount = expense.amount / currentGroup.members.length;
-                console.log('균등분할 계산:', personalAmount);
-            } else if (expense.splitType === 'CUSTOM' && expense.splitData && expense.splitData.length > 0) {
-                console.log('커스텀 분할 처리 중...');
-                const userSplit = expense.splitData.find(split => split.userId === user.id);
-                personalAmount = userSplit ? userSplit.amount : 0;
-                // console.log('찾은 사용자 split:', userSplit);
-                // console.log('개인 부담금:', personalAmount);
-            } else if (expense.splitType === 'SPECIFIC' && expense.splitData && expense.splitData.length > 0) {
-                console.log('지정 분할 처리 중...');
-                const userSplit = expense.splitData.find(split => split.userId === user.id);
-                personalAmount = userSplit ? userSplit.amount : 0;
-                // console.log('찾은 사용자 split:', userSplit);
-                // console.log('개인 부담금:', personalAmount);
-            } else {
-                personalAmount = expense.amount / currentGroup.members.length;
-                // console.log('기본 균등분할:', personalAmount);
-            }
-
-            // console.log('최종 개인부담금:', personalAmount);
-            // console.log('==================');
-
-            if (personalAmount > 0) {
-                personalShares.push({
-                    ...expense,
-                    personalAmount,
-                    percentage: (personalAmount / expense.amount) * 100
-                });
-            }
-        });
-
-        return personalShares;
-    };
-
-    const personalShares = calculatePersonalShare();
 
     // AI 분석 생성 함수
     const generateAIAnalysis = () => {
@@ -429,7 +486,7 @@ const ExpensesPage: React.FC = () => {
             <div className="space-y-8">
                 <div className="flex items-center justify-center py-12">
                     <div className="flex items-center space-x-3">
-                        <RefreshCw className="w-6 h-6 animate-spin text-primary-600" />
+                        <RefreshCw className="w-6 h-6 animate-spin text-primary-600"/>
                         <span className="text-gray-600">지출 내역을 불러오는 중...</span>
                     </div>
                 </div>
@@ -615,24 +672,20 @@ const ExpensesPage: React.FC = () => {
             </div>
 
             {/* Analytics Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <motion.div
-                    className="bg-white rounded-2xl shadow-sm border border-gray-200 p-3"
-                    whileHover={{y: -5, transition: {duration: 0.2}}}
-                >
-                    <div className="flex items-center justify-between mb-2">
-                        <div
-                            className="w-8 h-8 rounded-lg bg-primary-100 flex items-center justify-center text-primary-600">
-                            <Receipt className="w-4 h-4"/>
-                        </div>
-                        <div className="text-lg font-bold text-gray-900">{analytics.totalCount}건</div>
-                    </div>
-                    <div className="text-xs font-medium text-gray-700 mb-1">총 지출</div>
-                    <div className="flex items-center justify-between">
-                        <div className="text-lg font-bold text-gray-900">{formatCurrency(analytics.totalAmount)}</div>
-
-                        {/* 한 달 예산 표시 - 총 지출과 같은 라인에 */}
-                        {(() => {
+            {/* Analytics Cards - 버튼식 슬라이더 */}
+            {/* Analytics Cards - 버튼식 슬라이더 */}
+            {(() => {
+                // 카드 데이터 준비 (동일)
+                const analyticsCards = [
+                    {
+                        id: 'total',
+                        icon: Receipt,
+                        bgColor: 'bg-primary-100',
+                        textColor: 'text-primary-600',
+                        badgeText: `${analytics.totalCount}건`,
+                        title: '총 지출',
+                        value: formatCurrency(analytics.totalAmount),
+                        extra: (() => {
                             const budget = mode === 'personal' ? user?.monthlyBudget : currentGroup?.monthlyBudget;
                             if (budget) {
                                 const isOverBudget = analytics.totalAmount > budget;
@@ -647,63 +700,162 @@ const ExpensesPage: React.FC = () => {
                                 );
                             }
                             return null;
-                        })()}
-                    </div>
-                </motion.div>
+                        })()
+                    },
+                    {
+                        id: 'average',
+                        icon: BarChart3,
+                        bgColor: 'bg-primary-100',
+                        textColor: 'text-primary-600',
+                        badgeIcon: TrendingUp,
+                        badgeIconColor: 'text-green-500',
+                        title: '평균 지출',
+                        value: formatCurrency(analytics.avgAmount)
+                    },
+                    {
+                        id: 'max',
+                        icon: TrendingUp,
+                        bgColor: 'bg-primary-100',
+                        textColor: 'text-primary-600',
+                        badgeText: '최고',
+                        badgeTextColor: 'text-green-500',
+                        title: '최대 지출',
+                        value: formatCurrency(analytics.maxAmount)
+                    },
+                    {
+                        id: 'category',
+                        icon: PieChart,
+                        bgColor: 'bg-primary-100',
+                        textColor: 'text-primary-600',
+                        badgeText: analytics.categoryBreakdown.length > 0 ? `${analytics.categoryBreakdown[0].percentage.toFixed(1)}%` : '0%',
+                        badgeTextColor: analytics.categoryBreakdown[0]?.color || 'text-gray-500',
+                        title: '주요 카테고리',
+                        value: analytics.categoryBreakdown.length > 0 ? analytics.categoryBreakdown[0].label : '데이터 없음'
+                    }
+                ];
 
-                <motion.div
-                    className="bg-white rounded-2xl shadow-sm border border-gray-200 p-3"
-                    whileHover={{y: -5, transition: {duration: 0.2}}}
-                >
-                    <div className="flex items-center justify-between mb-2">
-                        <div
-                            className="w-8 h-8 rounded-lg bg-primary-100 flex items-center justify-center text-primary-600">
-                            <BarChart3 className="w-4 h-4"/>
-                        </div>
-                        <TrendingUp className="w-3 h-3 text-green-500"/>
-                    </div>
-                    <div className="text-xs font-medium text-gray-700 mb-1">평균 지출</div>
-                    <div className="text-lg font-bold text-gray-900">{formatCurrency(analytics.avgAmount)}</div>
-                </motion.div>
+                // 그룹 분담금 카드 추가 (개인 모드)
+                if (mode === 'personal' && totalGroupShares > 0) {
+                    analyticsCards.push({
+                        id: 'groupShare',
+                        icon: Users,
+                        bgColor: 'bg-blue-100',
+                        textColor: 'text-blue-600',
+                        badgeText: `${groupSummary.length}개 그룹`,
+                        badgeTextColor: 'text-blue-500',
+                        title: '그룹 분담금',
+                        value: formatCurrency(totalGroupShares)
+                    });
+                }
 
-                <motion.div
-                    className="bg-white rounded-2xl shadow-sm border border-gray-200 p-3"
-                    whileHover={{y: -5, transition: {duration: 0.2}}}
-                >
-                    <div className="flex items-center justify-between mb-2">
-                        <div
-                            className="w-8 h-8 rounded-lg bg-primary-100 flex items-center justify-center text-primary-600">
-                            <TrendingUp className="w-4 h-4"/>
-                        </div>
-                        <div className="text-green-500 text-xs font-medium">최고</div>
-                    </div>
-                    <div className="text-xs font-medium text-gray-700 mb-1">최대 지출</div>
-                    <div className="text-lg font-bold text-gray-900">{formatCurrency(analytics.maxAmount)}</div>
-                </motion.div>
+                const cardsPerPage = 4;
+                const totalPages = Math.ceil(analyticsCards.length / cardsPerPage);
+                const canGoPrev = currentCardIndex > 0;
+                const canGoNext = currentCardIndex < totalPages - 1;
 
-                <motion.div
-                    className="bg-white rounded-2xl shadow-sm border border-gray-200 p-3"
-                    whileHover={{y: -5, transition: {duration: 0.2}}}
-                >
-                    <div className="flex items-center justify-between mb-2">
-                        <div
-                            className="w-8 h-8 rounded-lg bg-primary-100 flex items-center justify-center text-primary-600">
-                            <PieChart className="w-4 h-4"/>
+                const handlePrev = () => {
+                    if (canGoPrev) {
+                        setCurrentCardIndex(currentCardIndex - 1);
+                    }
+                };
+
+                const handleNext = () => {
+                    if (canGoNext) {
+                        setCurrentCardIndex(currentCardIndex + 1);
+                    }
+                };
+
+                const visibleCards = analyticsCards.slice(
+                    currentCardIndex * cardsPerPage,
+                    (currentCardIndex + 1) * cardsPerPage
+                );
+
+                return (
+                    <div className="relative">
+                        {/* 좌측 버튼 */}
+                        {canGoPrev && (
+                            <motion.button
+                                className="absolute -left-4 top-1/2 -translate-y-1/2 z-20 w-8 h-8 bg-white rounded-full shadow-md border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors"
+                                whileHover={{scale: 1.1}}
+                                whileTap={{scale: 0.9}}
+                                onClick={handlePrev}
+                            >
+                                <ChevronLeft className="w-4 h-4 text-gray-600"/>
+                            </motion.button>
+                        )}
+
+                        {/* 우측 버튼 */}
+                        {canGoNext && (
+                            <motion.button
+                                className="absolute -right-4 top-1/2 -translate-y-1/2 z-20 w-8 h-8 bg-white rounded-full shadow-md border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors"
+                                whileHover={{scale: 1.1}}
+                                whileTap={{scale: 0.9}}
+                                onClick={handleNext}
+                            >
+                                <ChevronRight className="w-4 h-4 text-gray-600"/>
+                            </motion.button>
+                        )}
+
+                        {/* 카드 컨테이너 */}
+                        <div>
+                            <motion.div
+                                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+                                key={currentCardIndex}
+                                initial={{opacity: 0, x: 50}}
+                                animate={{opacity: 1, x: 0}}
+                                transition={{duration: 0.3}}
+                            >
+                                {visibleCards.map((card, index) => (
+                                    <motion.div
+                                        key={card.id}
+                                        className="bg-white rounded-2xl shadow-sm border border-gray-200 p-3"
+                                        initial={{opacity: 0, y: 20}}
+                                        animate={{opacity: 1, y: 0}}
+                                        transition={{delay: index * 0.1, duration: 0.3}}
+                                        whileHover={{y: -5, transition: {duration: 0.2}}}
+                                    >
+                                        <div className="flex items-center justify-between mb-2">
+                                            <div className={`w-8 h-8 rounded-lg ${card.bgColor} flex items-center justify-center ${card.textColor}`}>
+                                                <card.icon className="w-4 h-4"/>
+                                            </div>
+                                            {card.badgeIcon ? (
+                                                <card.badgeIcon className={`w-3 h-3 ${card.badgeIconColor}`}/>
+                                            ) : card.badgeText ? (
+                                                <div
+                                                    className={`text-xs font-medium ${card.badgeTextColor || 'text-gray-900'}`}
+                                                    style={card.badgeTextColor?.startsWith('#') ? {color: card.badgeTextColor} : {}}
+                                                >
+                                                    {card.badgeText}
+                                                </div>
+                                            ) : null}
+                                        </div>
+                                        <div className="text-xs font-medium text-gray-700 mb-1">{card.title}</div>
+                                        <div className="flex items-center justify-between">
+                                            <div className="text-lg font-bold text-gray-900">{card.value}</div>
+                                            {card.extra}
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </motion.div>
                         </div>
-                        <div className="text-xs font-medium" style={{color: analytics.categoryBreakdown[0]?.color}}>
-                            {analytics.categoryBreakdown[0]?.percentage.toFixed(1)}%
-                        </div>
+
+                        {/* 페이지 인디케이터 (5개 이상일 때만) */}
+                        {totalPages > 1 && (
+                            <div className="flex justify-center space-x-2 mt-4">
+                                {Array.from({length: totalPages}).map((_, index) => (
+                                    <button
+                                        key={index}
+                                        className={`w-2 h-2 rounded-full transition-colors ${
+                                            index === currentCardIndex ? 'bg-primary-600' : 'bg-gray-300'
+                                        }`}
+                                        onClick={() => setCurrentCardIndex(index)}
+                                    />
+                                ))}
+                            </div>
+                        )}
                     </div>
-                    <div className="text-xs font-medium text-gray-700 mb-1">주요 카테고리</div>
-                    {analytics.categoryBreakdown.length > 0 ? (
-                        <div className="text-lg font-bold text-gray-900">
-                            {analytics.categoryBreakdown[0].label}
-                        </div>
-                    ) : (
-                        <div className="text-lg font-bold text-gray-900">데이터 없음</div>
-                    )}
-                </motion.div>
-            </div>
+                );
+            })()}
 
             {/* Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -793,12 +945,14 @@ const ExpensesPage: React.FC = () => {
                                     content={({active, payload, label}) => {
                                         if (active && payload && payload.length > 0) {
                                             return (
-                                                <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+                                                <div
+                                                    className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
                                                     <p className="font-medium">{label}</p>
                                                     {payload.map((entry, index) => {
                                                         const categoryInfo = categoryData.find(cat => cat.category === entry.dataKey);
                                                         return (
-                                                            <p key={index} className="text-sm" style={{color: entry.color}}>
+                                                            <p key={index} className="text-sm"
+                                                               style={{color: entry.color}}>
                                                                 {categoryInfo?.label || '기타'}: {new Intl.NumberFormat('ko-KR', {
                                                                 style: 'currency',
                                                                 currency: 'KRW'
@@ -846,6 +1000,84 @@ const ExpensesPage: React.FC = () => {
                     </div>
                 </motion.div>
             </div>
+
+            {mode === 'personal' && groupSummary.length > 0 && (
+                <motion.div
+                    className="bg-white rounded-2xl shadow-sm border border-gray-200"
+                    initial={{opacity: 0, y: 20}}
+                    animate={{opacity: 1, y: 0}}
+                    transition={{duration: 0.5, delay: 0.3}}
+                >
+                    <div className="p-6 border-b border-gray-200">
+                        <h3 className="text-lg font-semibold text-gray-900">그룹별 분담금 현황</h3>
+                        <p className="text-sm text-gray-600 mt-1">
+                            이번 달 참여 중인 그룹에서의 분담금입니다
+                        </p>
+                    </div>
+
+                    <div className="p-6">
+                        <div className="mb-6">
+                            <div className="text-2xl font-bold text-blue-600">
+                                총 분담금: {formatCurrency(totalGroupShares)}
+                            </div>
+                            <div className="text-sm text-gray-500 mt-1">
+                                {groupSummary.length}개
+                                그룹에서 {groupSummary.reduce((sum, group) => sum + group.expenseCount, 0)}건의 지출
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            {groupSummary.map((group) => (
+                                <div key={group.groupId}
+                                     className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                                    <div className="flex items-center space-x-3">
+                                        <div
+                                            className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                                            <Users className="w-5 h-5 text-blue-600"/>
+                                        </div>
+                                        <div>
+                                            <h4 className="font-medium text-gray-900">{group.groupName}</h4>
+                                            <div className="flex items-center space-x-2 text-sm text-gray-500">
+                                                <span>{group.expenseCount}건의 지출</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="text-lg font-bold text-blue-600">
+                                            {formatCurrency(group.myShareAmount)}
+                                        </div>
+                                        <div className="text-xs text-gray-500">
+                                            전체: {formatCurrency(group.totalAmount)}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="mt-6 pt-6 border-t border-gray-200">
+                            <h4 className="text-sm font-medium text-gray-700 mb-3">그룹별 분담 비율</h4>
+                            <div className="space-y-2">
+                                {groupSummary.map((group) => (
+                                    <div key={group.groupId} className="flex items-center justify-between">
+                                        <span className="text-sm text-gray-600">{group.groupName}</span>
+                                        <div className="flex items-center space-x-2">
+                                            <div className="w-20 bg-gray-200 rounded-full h-2">
+                                                <div
+                                                    className="bg-blue-500 h-2 rounded-full"
+                                                    style={{width: `${(group.myShareAmount / totalGroupShares) * 100}%`}}
+                                                />
+                                            </div>
+                                            <span className="text-sm text-gray-500">
+                  {((group.myShareAmount / totalGroupShares) * 100).toFixed(1)}%
+                </span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </motion.div>
+            )}
 
             {/* Personal Share in Group Mode */}
             {mode === 'group' && personalShares && personalShares.length > 0 && (
@@ -959,11 +1191,11 @@ const ExpensesPage: React.FC = () => {
                 </div>
 
                 {activeTab === 'expenses' ? (
-                    <div className="divide-y divide-gray-100">
-                        {filteredExpenses.length > 0 ? (
-                            filteredExpenses.map((expense) => (
+                    filteredExpenses.length > 0 ? (
+                        <div className="divide-y divide-gray-100">
+                            {filteredExpenses.map((expense) => (
                                 <motion.div
-                                    key={expense.id}
+                                    key={`${expense.id}-${expense.groupId ? 'group' : 'personal'}`}
                                     className="p-6 hover:bg-gray-50 transition-all duration-200 cursor-pointer group"
                                     whileHover={{x: 5}}
                                     onClick={() => handleExpenseClick(expense)}
@@ -976,17 +1208,29 @@ const ExpensesPage: React.FC = () => {
                                                     backgroundColor: categoryData.find(cat => cat.category === expense.category)?.color + '20'
                                                 }}
                                             >
-                                                <Receipt
-                                                    className="w-6 h-6"
-                                                    style={{
-                                                        color: categoryData.find(cat => cat.category === expense.category)?.color || '#df6d14'
-                                                    }}
-                                                />
+                                                {expense.groupId ? (
+                                                    <Users className="w-6 h-6 text-blue-600"/>
+                                                ) : (
+                                                    <Receipt
+                                                        className="w-6 h-6"
+                                                        style={{
+                                                            color: categoryData.find(cat => cat.category === expense.category)?.color || '#df6d14'
+                                                        }}
+                                                    />
+                                                )}
                                             </div>
                                             <div>
-                                                <h4 className="font-semibold text-gray-900 group-hover:text-[#df6d14] transition-colors">{expense.title}</h4>
+                                                <h4 className="font-semibold text-gray-900 group-hover:text-[#df6d14] transition-colors">
+                                                    {expense.title}
+                                                </h4>
                                                 <div className="flex items-center space-x-3 text-sm text-gray-500">
                                                     <span>{categoryData.find(cat => cat.category === expense.category)?.label}</span>
+                                                    {expense.groupId && expense.groupName && (
+                                                        <>
+                                                            <span>•</span>
+                                                            <span className="text-blue-600">👥 {expense.groupName}</span>
+                                                        </>
+                                                    )}
                                                     <span>•</span>
                                                     <div className="flex items-center space-x-1">
                                                         <Calendar className="w-3 h-3"/>
@@ -996,36 +1240,38 @@ const ExpensesPage: React.FC = () => {
                                             </div>
                                         </div>
                                         <div className="text-right">
-                                            <p className="text-lg font-bold text-gray-900">{formatCurrency(expense.amount)}</p>
+                                            <p className="text-lg font-bold text-gray-900">
+                                                {formatCurrency(expense.amount)}
+                                            </p>
+                                            {expense.groupId && (
+                                                <p className="text-xs text-blue-600">그룹 지출</p>
+                                            )}
                                             {expense.memo && (
                                                 <p className="text-sm text-gray-500 truncate max-w-32">{expense.memo}</p>
                                             )}
-                                            <div className="text-xs text-[#df6d14] mt-1">
-                                                전체의 {((expense.amount / (allCategoryExpenses.reduce((sum, e) => sum + e.amount, 0) || 1)) * 100).toFixed(1)}%
-                                            </div>
                                         </div>
                                     </div>
                                 </motion.div>
-                            ))
-                        ) : (
-                            <div className="text-center py-16">
-                                <div
-                                    className="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                                    <Receipt className="w-10 h-10 text-gray-400"/>
-                                </div>
-                                <h3 className="text-xl font-semibold text-gray-900 mb-2">지출 내역이 없습니다</h3>
-                                <p className="text-gray-600 mb-6">새로운 지출을 추가해보세요!</p>
-                                <motion.button
-                                    className="px-6 py-3 bg-[#df6d14] text-white rounded-xl font-medium hover:bg-[#df6d14]/90 transition-colors"
-                                    whileHover={{scale: 1.05}}
-                                    whileTap={{scale: 0.95}}
-                                    onClick={() => setShowExpenseModal(true)}
-                                >
-                                    첫 지출 추가하기
-                                </motion.button>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-16">
+                            <div
+                                className="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                                <Receipt className="w-10 h-10 text-gray-400"/>
                             </div>
-                        )}
-                    </div>
+                            <h3 className="text-xl font-semibold text-gray-900 mb-2">지출 내역이 없습니다</h3>
+                            <p className="text-gray-600 mb-6">새로운 지출을 추가해보세요!</p>
+                            <motion.button
+                                className="px-6 py-3 bg-[#df6d14] text-white rounded-xl font-medium hover:bg-[#df6d14]/90 transition-colors"
+                                whileHover={{scale: 1.05}}
+                                whileTap={{scale: 0.95}}
+                                onClick={() => setShowExpenseModal(true)}
+                            >
+                                첫 지출 추가하기
+                            </motion.button>
+                        </div>
+                    )
                 ) : (
                     <div className="divide-y divide-gray-100">
                         {savedAnalyses.length > 0 ? (
@@ -1035,7 +1281,6 @@ const ExpensesPage: React.FC = () => {
                                     className="p-6 hover:bg-gray-50 transition-all duration-200 cursor-pointer group"
                                     whileHover={{x: 5}}
                                     onClick={() => {
-                                        // 저장된 분석 결과를 모달로 표시
                                         setSelectedAnalysis(analysis);
                                         setShowAnalysis(true);
                                     }}
@@ -1243,8 +1488,7 @@ const ExpensesPage: React.FC = () => {
                                                         <p className="text-sm text-green-700 mb-3">{rec.message}</p>
                                                         <div className="flex items-center space-x-4 text-xs">
                                                             <div className="flex items-center space-x-1">
-                                                                <span
-                                                                    className="text-green-600 font-medium">예상 효과:</span>
+                                                                <span className="text-green-600 font-medium">예상 효과:</span>
                                                                 <span className="text-green-800">{rec.impact}</span>
                                                             </div>
                                                             <div className="flex items-center space-x-1">
@@ -1332,7 +1576,6 @@ const ExpensesPage: React.FC = () => {
                                         {selectedAnalysis && (
                                             <button
                                                 onClick={() => {
-                                                    // 공유 기능 구현
                                                     alert('분석 결과를 공유했습니다!');
                                                 }}
                                                 className="px-6 py-3 bg-primary-600 text-white rounded-2xl hover:bg-primary-700 transition-colors flex items-center space-x-2"

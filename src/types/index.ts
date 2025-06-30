@@ -123,9 +123,11 @@ export interface Expense {
     userId: string;
     splitType?: 'EQUAL' | 'CUSTOM' | 'SPECIFIC';
     splitData?: { [userId: string]: number };
-    // 백엔드 응답에 포함되는 추가 필드들
     expenseType?: 'PERSONAL' | 'GROUP';
     createdAt?: string;
+    isGroupShare?: boolean;
+    groupName?: string;
+    myShareAmount?: number;
 }
 
 export interface Post {

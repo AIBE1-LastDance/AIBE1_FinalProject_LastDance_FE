@@ -56,5 +56,14 @@ export const expenseAPI = {
     delete: async (id: number) => {
         const response = await apiClient.delete(`/api/v1/expenses/${id}`);
         return response.data;
+    },
+
+    // 개인의 그룹 분담금 조회
+    getGroupShares: async (params: {
+        year: number;
+        month: number;
+    }) => {
+        const response = await apiClient.get('/api/v1/expenses/group-shares', { params });
+        return response.data;
     }
 }
