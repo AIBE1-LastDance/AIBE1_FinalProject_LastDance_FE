@@ -20,7 +20,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/authStore";
 import PostCard from "./PostCard";
 import CreatePostModal from "./CreatePostModal";
-import { Post } from "../../types";
+import { Post } from "../../types"; // Assuming this points to src/types/community/community.ts
 import { fetchAllPosts } from "../../api/community/community";
 
 const CommunityPage: React.FC = () => {
@@ -42,26 +42,21 @@ const CommunityPage: React.FC = () => {
   useEffect(() => {
     fetchAllPosts()
       .then((data: any[]) => {
-        // 🔧 혹은 정확한 타입을 지정하려면 아래 참고
         const mappedPosts: Post[] = data.map((item) => ({
-          id: item.postId,
+          postId: item.postId, // Changed from 'id' to 'postId'
           title: item.title,
           content: item.content,
-          category: item.category, // 변환 필요 시 convertCategory(item.category)
+          category: item.category,
+          likeCount: item.likeCount, // Added
+          reportCount: item.reportCount, // Added
+          createdAt: item.createdAt, // Kept as string as per your type
+          updatedAt: item.updatedAt ?? item.createdAt, // Kept as string as per your type (or new Date if you prefer Date objects here)
           userId: item.userId,
-          createdAt: new Date(item.createdAt),
-          updatedAt: new Date(item.updatedAt ?? item.createdAt),
-          likes: item.likeCount,
-          likedBy: [],
-          bookmarkedBy: [],
-          comments: [],
-          author: {
-            id: item.userId,
-            username: item.username,
-            nickname: item.username,
-            email: "",
-            provider: "google",
-          },
+          authorNickname: item.authorNickname, // ✅ Map authorNickname directly
+          commentCount: item.commentCount, // Added
+          comments: item.comments || [], // Added, with fallback
+          likedBy: item.likedBy || [], // Added, with fallback
+          bookmarkedBy: item.bookmarkedBy || [], // Added, with fallback
         }));
         setPosts(mappedPosts);
       })
@@ -122,9 +117,9 @@ const CommunityPage: React.FC = () => {
   const sortedPosts = [...filteredPosts].sort((a, b) => {
     switch (sortBy) {
       case "likes":
-        return (b.likes || 0) - (a.likes || 0);
+        return (b.likeCount || 0) - (a.likeCount || 0); // Use likeCount
       case "comments":
-        return (b.comments?.length || 0) - (a.comments?.length || 0);
+        return (b.commentCount || 0) - (a.commentCount || 0); // Use commentCount
       case "latest":
       default:
         return (
@@ -140,10 +135,19 @@ const CommunityPage: React.FC = () => {
 
   const handlePostDelete = (postId: string) => {
     // 삭제 로직
+    // You'd typically call your deletePost API here and then re-fetch posts or update state
+    console.log(`Deleting post with ID: ${postId}`);
+    // Example:
+    // deletePost(postId)
+    //   .then(() => {
+    //     setPosts(prevPosts => prevPosts.filter(post => post.postId !== postId));
+    //     // Or re-fetch all posts: fetchAllPosts().then(setPosts).catch(console.error);
+    //   })
+    //   .catch(err => console.error("[❌ 게시글 삭제 실패]", err));
   };
 
   const handlePostClick = (post: Post) => {
-    navigate(`/community/${post.id}`);
+    navigate(`/community/${post.postId}`); // Use post.postId
   };
 
   return (
@@ -167,7 +171,10 @@ const CommunityPage: React.FC = () => {
             </div>
           </div>
           <button
-            onClick={() => setIsCreateModalOpen(true)}
+            onClick={() => {
+              setEditingPost(null); // Ensure no post is being edited when opening for create
+              setIsCreateModalOpen(true);
+            }}
             className="flex items-center space-x-2 bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-xl transition-colors"
           >
             <Plus className="w-5 h-5" />
@@ -309,7 +316,10 @@ const CommunityPage: React.FC = () => {
                 : "첫 번째 게시글을 작성해보세요!"}
             </p>
             <button
-              onClick={() => setIsCreateModalOpen(true)}
+              onClick={() => {
+                setEditingPost(null); // Ensure no post is being edited when opening for create
+                setIsCreateModalOpen(true);
+              }}
               className="bg-primary-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-primary-700 transition-colors"
             >
               글쓰기
@@ -318,7 +328,7 @@ const CommunityPage: React.FC = () => {
         ) : (
           sortedPosts.map((post, index) => (
             <motion.div
-              key={post.id}
+              key={post.postId} // Use postId for key
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
