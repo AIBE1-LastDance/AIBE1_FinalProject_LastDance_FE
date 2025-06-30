@@ -497,71 +497,73 @@ const ExpensesPage: React.FC = () => {
     return (
         <div className="space-y-8">
             {/* Header */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0">
+            <div className="flex flex-col xl:flex-row xl:items-center justify-between space-y-4 xl:space-y-0">
                 <div>
-                    <div className="flex items-center space-x-4">
-                        <h1 className="text-3xl font-bold text-gray-900">
+                    <div className="flex flex-col lg:flex-row lg:items-center space-y-2 lg:space-y-0 lg:space-x-4">
+                        <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">
                             {mode === 'personal' ? '내 가계부' : (
-                                <div className="flex items-center space-x-3">
-                                    <span>공동 가계부</span>
-                                    <span className="text-xl text-primary-600">•</span>
-                                    <span className="text-2xl text-primary-600 font-semibold">
+                                <div className="flex items-center space-x-2 lg:space-x-3 flex-wrap">
+                                    <span className="whitespace-nowrap">공동 가계부</span>
+                                    <span className="text-lg lg:text-xl text-primary-600">•</span>
+                                    <span className="text-lg lg:text-2xl text-primary-600 font-semibold whitespace-nowrap">
                             {currentGroup?.name || '그룹 선택 필요'}
                         </span>
                                 </div>
                             )}
                         </h1>
 
-                        <motion.button
-                            whileHover={{scale: 1.1}}
-                            whileTap={{scale: 0.9}}
-                            onClick={handlePreviousMonth}
-                            className="p-2 rounded-lg hover:bg-gray-100"
-                        >
-                            <ChevronLeft className="w-5 h-5"/>
-                        </motion.button>
+                        <div className="flex items-center space-x-2">
+                            <motion.button
+                                whileHover={{scale: 1.1}}
+                                whileTap={{scale: 0.9}}
+                                onClick={handlePreviousMonth}
+                                className="p-2 rounded-lg hover:bg-gray-100"
+                            >
+                                <ChevronLeft className="w-5 h-5"/>
+                            </motion.button>
 
-                        <p className="text-gray-600">
-                            {format(currentMonth, 'yyyy년 M월', {locale: ko})} 지출 현황
-                        </p>
+                            <p className="text-gray-600 whitespace-nowrap">
+                                {format(currentMonth, 'yyyy년 M월', {locale: ko})} 지출 현황
+                            </p>
 
-                        <motion.button
-                            whileHover={{scale: 1.1}}
-                            whileTap={{scale: 0.9}}
-                            onClick={handleNextMonth}
-                            className="p-2 rounded-lg hover:bg-gray-100"
-                            disabled={new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1) > new Date()}
-                        >
-                            <ChevronRight className="w-5 h-5"/>
-                        </motion.button>
+                            <motion.button
+                                whileHover={{scale: 1.1}}
+                                whileTap={{scale: 0.9}}
+                                onClick={handleNextMonth}
+                                className="p-2 rounded-lg hover:bg-gray-100"
+                                disabled={new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1) > new Date()}
+                            >
+                                <ChevronRight className="w-5 h-5"/>
+                            </motion.button>
+                        </div>
                     </div>
                 </div>
 
-                <div className="flex items-center space-x-4">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
                     {/* Search */}
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4"/>
                         <input
                             type="text"
                             placeholder="지출 검색..."
-                            className="pl-10 pr-4 py-3 border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white hover:bg-gray-50 transition-colors font-medium text-gray-700 placeholder-gray-400 shadow-sm"
+                            className="pl-10 pr-4 py-3 border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white hover:bg-gray-50 transition-colors font-medium text-gray-700 placeholder-gray-400 shadow-sm w-full sm:w-auto"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
 
-                    {/* Category Filter - Custom Dropdown */}
+                    {/* Category Filter */}
                     <div className="relative">
                         <motion.button
-                            className="flex items-center space-x-3 pl-3 pr-4 py-3 border border-gray-200 rounded-2xl text-sm bg-white hover:bg-gray-50 transition-colors font-medium text-gray-700 cursor-pointer shadow-sm min-w-[140px]"
+                            className="flex items-center space-x-3 pl-3 pr-4 py-3 border border-gray-200 rounded-2xl text-sm bg-white hover:bg-gray-50 transition-colors font-medium text-gray-700 cursor-pointer shadow-sm w-full sm:w-auto whitespace-nowrap"
                             whileHover={{scale: 1.02}}
                             whileTap={{scale: 0.98}}
                             onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
                         >
                             <Filter className="w-4 h-4 text-gray-400"/>
                             <span className="flex-1 text-left">
-                                {categories.find(cat => cat.value === categoryFilter)?.label}
-                            </span>
+                    {categories.find(cat => cat.value === categoryFilter)?.label}
+                </span>
                             <motion.svg
                                 className="w-4 h-4 text-gray-400"
                                 fill="none"
@@ -574,17 +576,14 @@ const ExpensesPage: React.FC = () => {
                             </motion.svg>
                         </motion.button>
 
-                        {/* Custom Dropdown Menu */}
+                        {/* Dropdown은 그대로 유지 */}
                         <AnimatePresence>
                             {showCategoryDropdown && (
                                 <>
-                                    {/* Backdrop */}
                                     <div
                                         className="fixed inset-0 z-10"
                                         onClick={() => setShowCategoryDropdown(false)}
                                     />
-
-                                    {/* Dropdown */}
                                     <motion.div
                                         initial={{opacity: 0, y: -10, scale: 0.95}}
                                         animate={{opacity: 1, y: 0, scale: 1}}
@@ -606,11 +605,11 @@ const ExpensesPage: React.FC = () => {
                                             >
                                                 <div className={`w-2 h-2 rounded-full ${
                                                     cat.value === 'all' ? 'bg-gray-400' :
-                                                        cat.value === 'food' ? 'bg-red-400' :
-                                                            cat.value === 'utilities' ? 'bg-teal-400' :
-                                                                cat.value === 'transport' ? 'bg-blue-400' :
-                                                                    cat.value === 'shopping' ? 'bg-green-400' :
-                                                                        cat.value === 'entertainment' ? 'bg-yellow-400' :
+                                                        cat.value === 'FOOD' ? 'bg-red-400' :
+                                                            cat.value === 'UTILITIES' ? 'bg-teal-400' :
+                                                                cat.value === 'TRANSPORT' ? 'bg-blue-400' :
+                                                                    cat.value === 'SHOPPING' ? 'bg-green-400' :
+                                                                        cat.value === 'ENTERTAINMENT' ? 'bg-yellow-400' :
                                                                             'bg-purple-400'
                                                 }`}/>
                                                 <span>{cat.label}</span>
@@ -636,43 +635,43 @@ const ExpensesPage: React.FC = () => {
                         </AnimatePresence>
                     </div>
 
-                    {/* AI Analysis Button - 개인 모드에서만 표시 */}
-                    {mode === 'personal' && (
+                    <div className="flex space-x-4">
+                        {/* AI Analysis Button */}
+                        {mode === 'personal' && (
+                            <motion.button
+                                className="flex items-center space-x-2 px-6 py-3 bg-primary-500 text-white rounded-2xl font-medium hover:bg-primary-700 transition-colors shadow-md hover:shadow-lg whitespace-nowrap"
+                                whileHover={{scale: 1.05}}
+                                whileTap={{scale: 0.95}}
+                                onClick={generateAIAnalysis}
+                                disabled={analysisLoading}
+                            >
+                                {analysisLoading ? (
+                                    <div
+                                        className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"/>
+                                ) : (
+                                    <Bot className="w-5 h-5"/>
+                                )}
+                                <span>{analysisLoading ? '분석 중...' : 'AI 분석'}</span>
+                            </motion.button>
+                        )}
+
+                        {/* Add Expense Button */}
                         <motion.button
-                            className="flex items-center space-x-2 px-6 py-3 bg-primary-500 text-white rounded-2xl font-medium hover:bg-primary-700 transition-colors shadow-md hover:shadow-lg"
+                            className="flex items-center space-x-2 px-6 py-3 bg-primary-600 text-white rounded-2xl font-medium hover:bg-primary-700 transition-colors shadow-md hover:shadow-lg whitespace-nowrap"
                             whileHover={{scale: 1.05}}
                             whileTap={{scale: 0.95}}
-                            onClick={generateAIAnalysis}
-                            disabled={analysisLoading}
+                            onClick={() => {
+                                setSelectedExpense(null);
+                                setShowExpenseModal(true);
+                            }}
                         >
-                            {analysisLoading ? (
-                                <div
-                                    className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"/>
-                            ) : (
-                                <Bot className="w-5 h-5"/>
-                            )}
-                            <span>{analysisLoading ? '분석 중...' : 'AI 분석'}</span>
+                            <Plus className="w-5 h-5"/>
+                            <span>지출 추가</span>
                         </motion.button>
-                    )}
-
-                    {/* Add Expense Button */}
-                    <motion.button
-                        className="flex items-center space-x-2 px-6 py-3 bg-primary-600 text-white rounded-2xl font-medium hover:bg-primary-700 transition-colors shadow-md hover:shadow-lg"
-                        whileHover={{scale: 1.05}}
-                        whileTap={{scale: 0.95}}
-                        onClick={() => {
-                            setSelectedExpense(null);
-                            setShowExpenseModal(true);
-                        }}
-                    >
-                        <Plus className="w-5 h-5"/>
-                        <span>지출 추가</span>
-                    </motion.button>
+                    </div>
                 </div>
             </div>
 
-            {/* Analytics Cards */}
-            {/* Analytics Cards - 버튼식 슬라이더 */}
             {/* Analytics Cards - 버튼식 슬라이더 */}
             {(() => {
                 // 카드 데이터 준비 (동일)
@@ -815,7 +814,8 @@ const ExpensesPage: React.FC = () => {
                                         whileHover={{y: -5, transition: {duration: 0.2}}}
                                     >
                                         <div className="flex items-center justify-between mb-2">
-                                            <div className={`w-8 h-8 rounded-lg ${card.bgColor} flex items-center justify-center ${card.textColor}`}>
+                                            <div
+                                                className={`w-8 h-8 rounded-lg ${card.bgColor} flex items-center justify-center ${card.textColor}`}>
                                                 <card.icon className="w-4 h-4"/>
                                             </div>
                                             {card.badgeIcon ? (
@@ -1488,7 +1488,8 @@ const ExpensesPage: React.FC = () => {
                                                         <p className="text-sm text-green-700 mb-3">{rec.message}</p>
                                                         <div className="flex items-center space-x-4 text-xs">
                                                             <div className="flex items-center space-x-1">
-                                                                <span className="text-green-600 font-medium">예상 효과:</span>
+                                                                <span
+                                                                    className="text-green-600 font-medium">예상 효과:</span>
                                                                 <span className="text-green-800">{rec.impact}</span>
                                                             </div>
                                                             <div className="flex items-center space-x-1">
