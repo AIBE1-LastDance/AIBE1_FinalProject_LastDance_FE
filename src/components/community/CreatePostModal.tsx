@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 import toast from "react-hot-toast";
-import { Post } from "../../types";
+import { Post } from "../../types/community/community";
 import { createPost, updatePost } from "../../api/community/community";
 
 interface CreatePostModalProps {
@@ -80,7 +80,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ post, onClose }) => {
       };
 
       if (isEditing && post) {
-        await updatePost(post.id, requestData);
+        await updatePost(post.postId, requestData);
         toast.success("게시글이 수정되었습니다!");
       } else {
         await createPost(requestData);
