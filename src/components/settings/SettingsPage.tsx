@@ -535,8 +535,8 @@ const SettingsPage: React.FC = () => {
                                         description: '일정 시작 15분 전에 알림을 받습니다'
                                     },
                                     paymentReminder: {
-                                        label: '납부일 알림',
-                                        description: '납부일이나 지출 관련 알림을 받습니다'
+                                        label: '정산 알림',
+                                        description: '정산 관련 알림을 받습니다'
                                     },
                                     checklistReminder: {
                                         label: '할일 알림',
