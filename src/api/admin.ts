@@ -14,22 +14,25 @@ export interface AdminUser {
 }
 
 export interface AdminUserDetail extends AdminUser {
-  penalties: Penalty[];
-  reportHistory: ReportHistory[];
+  username: string;
+  providerId: string;
+  userBudget: number;
+  profileImageFileId: string | null;
+  updatedAt: string;
+  inactivedAt: string | null;
+  stats: {
+    postCount: number;
+    commentCount: number;
+    groupCount: number;
+    reportCount: number;
+  };
+  recentReports: RecentReport[];
 }
 
-export interface Penalty {
-  penaltyId: number;
-  type: string;
-  reason: string;
-  startDate: string;
-  endDate: string | null;
-  isActive: boolean;
-}
-
-export interface ReportHistory {
+export interface RecentReport {
   reportId: number;
   reportType: string;
+  reason: string;
   status: string;
   createdAt: string;
 }
@@ -193,7 +196,7 @@ export class AdminAPI {
   }
 
   // 회원 가입 추세 조회
-  static async getSignupTrend(period?: 'daily' | 'weekly' | 'monthly'): Promise<SignupTrend[]> {
+  static async getSignupTrend(period?: 'weekly' | 'monthly'): Promise<SignupTrend[]> {
     const params = period ? { period } : {};
     const response = await apiClient.get('/api/v1/admin/dashboard/signup-trend', { params });
     return response.data.data;
@@ -224,10 +227,12 @@ export class AdminAPI {
   // 사용자 정지
   static async banUser(userId: string, data: {
     banEndDate: string;
-    reason: string;
-    sendNotification: boolean;
+    sendNotification?: boolean;
   }) {
-    const response = await apiClient.patch(`/api/v1/admin/users/${userId}/ban`, data);
+    const response = await apiClient.patch(`/api/v1/admin/users/${userId}/ban`, {
+      banEndDate: data.banEndDate,
+      sendNotification: data.sendNotification
+    });
     return response.data.data;
   }
 
@@ -298,7 +303,7 @@ export class AdminAPI {
       processedAt: data.processedAt || null,
       createdAt: data.createdAt || new Date().toISOString(),
       updatedAt: data.updatedAt || new Date().toISOString(),
-      targetContent: data.targetContent || null,
+      targetContent: data.targetContent || null, // null이면 UI에서 "불러올 수 없음" 표시
       adminNote: data.adminNote || null,
       reporter: {
         userId: data.reporter?.userId || '',
@@ -348,11 +353,9 @@ export class AdminAPI {
 
   // 신고 처리
   static async processReport(reportId: number, data: {
-    action: string;
     status: string;
-    adminNote: string;
-    penaltyType?: string;
-    penaltyDuration?: number;
+    banUser?: boolean;
+    banEndDate?: string;
     sendNotification: boolean;
   }) {
     const response = await apiClient.patch(`/api/v1/admin/reports/${reportId}/process`, data);
@@ -399,5 +402,27 @@ export class AdminAPI {
   static async getAIJudgmentStats(period: 'daily' | 'weekly' | 'monthly' = 'weekly'): Promise<AIJudgmentStats> {
     const response = await apiClient.get('/api/v1/admin/ai/judgment/stats', { params: { period } });
     return response.data.data;
+  }
+
+  // 댓글 상세 조회 (신고 처리용)
+  static async getCommentDetail(commentId: string) {
+    try {
+      const response = await apiClient.get(`/api/v1/comments/${commentId}`);
+      return response.data; // 댓글 API는 data 래핑 없이 직접 반환
+    } catch (error) {
+      console.error('댓글 상세 조회 실패:', error);
+      return null;
+    }
+  }
+
+  // 게시글 상세 조회 (신고 처리용)  
+  static async getPostDetail(postId: string) {
+    try {
+      const response = await apiClient.get(`/api/v1/community/${postId}`);
+      return response.data.data; // 게시글 API는 data로 래핑됨
+    } catch (error) {
+      console.error('게시글 상세 조회 실패:', error);
+      return null;
+    }
   }
 }
