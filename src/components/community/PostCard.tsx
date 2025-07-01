@@ -1,4 +1,4 @@
-// src/components/community/PostCard.tsx 에 위치
+// src/components/community/PostCard.tsx
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import {
@@ -7,31 +7,29 @@ import {
   Share2,
   Bookmark,
   Clock,
-  User, // 사용되지 않는 import 제거 가능
-  Tag, // 사용되지 않는 import 제거 가능
   MoreVertical,
   Edit,
   Trash2,
   Lightbulb,
-  ChefHat,
-  Sparkles,
-  ShoppingCart,
+  Users, // User 대신 Users 아이콘 사용
   MessageSquare,
   HelpCircle,
-  Star,
   FileText,
 } from "lucide-react";
 import { Post } from "../../types/community/community"; // Post 타입 임포트
 import { useAuthStore } from "../../store/authStore";
-import { useAppStore } from "../../store/appStore"; // 이 부분은 예시이므로 실제 프로젝트의 스토어에 따라 달라질 수 있습니다.
+// import { useAppStore } from "../../store/appStore"; // ✅ 더 이상 여기서 직접 사용하지 않음
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
 
 interface PostCardProps {
   post: Post;
-  onClick: () => void;
+  onClick: (post: Post) => void; // ✅ post 객체를 인자로 받도록 수정 (navigate 등에 필요)
   onEdit?: (post: Post) => void;
   onDelete?: (postId: string) => void;
+  // ✅ 좋아요/북마크 토글 함수를 props로 전달받도록 추가
+  onToggleLike: (postId: string) => void;
+  onToggleBookmark: (postId: string) => void;
 }
 
 const PostCard: React.FC<PostCardProps> = ({
@@ -39,19 +37,16 @@ const PostCard: React.FC<PostCardProps> = ({
   onClick,
   onEdit,
   onDelete,
+  onToggleLike, // ✅ props로 받은 함수
+  onToggleBookmark, // ✅ props로 받은 함수
 }) => {
   const { user } = useAuthStore();
-  // `useAppStore`에서 `updatePost`, `deletePost`를 가져오는 것은 해당 스토어의 실제 구현에 따라 달라질 수 있습니다.
-  // 이 부분은 해당 로직을 처리하는 함수를 직접 호출하거나, context/query hook 등을 사용할 수도 있습니다.
-  const { updatePost, deletePost } = useAppStore();
+  // ✅ useAppStore에서 직접 상태를 업데이트하는 로직은 CommunityPage로 이동했으므로 필요 없음
+  // const { updatePost, deletePost } = useAppStore();
   const [showMenu, setShowMenu] = useState(false);
 
   // 게시글 카테고리 정보 가져오기
   const getCategoryInfo = (category: string) => {
-    // PostCategory 타입에 맞춰 정확한 ENUM 값을 사용해야 합니다.
-    // 백엔드 PostCategory enum (LIFE_TIPS, FREE_BOARD, FIND_MATE, QNA, POLICY)와 프론트엔드 문자열을 매핑해야 합니다.
-    // 현재 프론트엔드 매핑 (`tip`, `recipe` 등)과 백엔드 enum (`LIFE_TIPS` 등)이 다릅니다.
-    // 백엔드 enum 값으로 변경하거나, 프론트엔드에서 변환 로직을 추가해야 합니다.
     const categories: Record<
       string,
       { name: string; icon: any; color: string }
@@ -68,7 +63,7 @@ const PostCard: React.FC<PostCardProps> = ({
       },
       FIND_MATE: {
         name: "메이트구하기",
-        icon: User, // Users 아이콘이 더 적합할 수 있음
+        icon: Users, // Users 아이콘 사용
         color: "bg-blue-100 text-blue-800",
       },
       QNA: {
@@ -92,68 +87,49 @@ const PostCard: React.FC<PostCardProps> = ({
     );
   };
 
+  // ✅ 좋아요 토글 핸들러: props로 받은 onToggleLike 함수 호출
   const handleLike = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!user) return;
-
-    // `post.likes`는 `PostResponseDTO`에서 `likeCount`로 변경되었으므로, `post.likeCount`를 사용해야 합니다.
-    const isLiked = post.likedBy?.includes(user.id) || false;
-    const newLikes = isLiked
-      ? (post.likeCount || 0) - 1
-      : (post.likeCount || 0) + 1;
-    const newLikedBy = isLiked
-      ? post.likedBy?.filter((id) => id !== user.id) || []
-      : [...(post.likedBy || []), user.id];
-
-    // `post.id` 대신 `post.postId`를 사용해야 합니다.
-    // `likes` 대신 `likeCount`를 사용해야 합니다.
-    updatePost(post.postId, {
-      likeCount: newLikes,
-      likedBy: newLikedBy,
-    });
+    onToggleLike(post.postId); // postId 전달
   };
 
+  // ✅ 북마크 토글 핸들러: props로 받은 onToggleBookmark 함수 호출
   const handleBookmark = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!user) return;
-
-    const isBookmarked = post.bookmarkedBy?.includes(user.id) || false;
-    const newBookmarkedBy = isBookmarked
-      ? post.bookmarkedBy?.filter((id) => id !== user.id) || []
-      : [...(post.bookmarkedBy || []), user.id];
-
-    // `post.id` 대신 `post.postId`를 사용해야 합니다.
-    updatePost(post.postId, {
-      bookmarkedBy: newBookmarkedBy,
-    });
+    onToggleBookmark(post.postId); // postId 전달
   };
 
+  // ✅ 삭제 핸들러: props로 받은 onDelete 함수 호출
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (window.confirm("정말로 이 게시글을 삭제하시겠습니까?")) {
-      // `post.id` 대신 `post.postId`를 사용해야 합니다.
-      deletePost(post.postId);
       if (onDelete) onDelete(post.postId);
     }
     setShowMenu(false);
   };
 
+  // ✅ 편집 핸들러: props로 받은 onEdit 함수 호출
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (onEdit) onEdit(post);
     setShowMenu(false);
   };
 
+  const handleCardClick = () => {
+    onClick(post); // ✅ 카드 클릭 시 post 객체를 전달
+  };
+
   const categoryInfo = getCategoryInfo(post.category);
-  const isLiked = post.likedBy?.includes(user?.id || "") || false;
-  const isBookmarked = post.bookmarkedBy?.includes(user?.id || "") || false;
+  // ✅ 백엔드에서 받은 userLiked, userBookmarked 값을 직접 사용
+  const isLiked = post.userLiked;
+  const isBookmarked = post.userBookmarked;
   const isAuthor = user?.id === post.userId; // `user.id`가 UUID 형식인지 확인
 
   return (
     <motion.div
       whileHover={{ scale: 1.01 }}
       whileTap={{ scale: 0.99 }}
-      onClick={onClick}
+      onClick={handleCardClick} // ✅ 수정된 클릭 핸들러
       className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 cursor-pointer"
     >
       {/* 헤더 */}
@@ -311,7 +287,7 @@ const PostCard: React.FC<PostCardProps> = ({
           <div className="flex items-center space-x-2 text-gray-500">
             <MessageCircle className="w-5 h-5" />
             <span className="text-sm font-medium">
-              {/* ✅ post.commentCount 사용 (댓글 배열 대신) */}
+              {/* ✅ post.commentCount 사용 */}
               {post.commentCount || 0}
             </span>
           </div>
