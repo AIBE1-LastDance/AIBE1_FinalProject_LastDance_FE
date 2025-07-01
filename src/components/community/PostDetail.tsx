@@ -178,8 +178,19 @@ const PostDetail: React.FC<PostDetailProps> = ({
         content: newComment.trim(),
       });
 
-      // 백엔드에서 받은 댓글 정보로 프론트엔드 comments 상태 업데이트
-      setComments((prevComments) => [...prevComments, createdComment]);
+      setComments((prevComments) => [
+        ...prevComments,
+        {
+          id: createdComment.id,
+          postId: createdComment.postId,
+          userId: createdComment.userId,
+          content: createdComment.content,
+          createdAt: createdComment.createdAt,
+          updatedAt: createdComment.updatedAt ?? createdComment.createdAt,
+          authorNickname: user?.username || "익명", // ✅ 사용자 닉네임 지정
+          reportCount: createdComment.reportCount ?? 0,
+        },
+      ]);
 
       // 게시글의 commentCount도 업데이트 (useAppStore의 updatePost 활용)
       updatePost(post.postId, { commentCount: (post.commentCount || 0) + 1 });

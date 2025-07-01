@@ -1,4 +1,3 @@
-// 커뮤니티 게시글
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
@@ -14,14 +13,19 @@ import {
   HelpCircle,
   FileText,
   Clock,
-  ThumbsUp, // 좋아요 아이콘
+  ThumbsUp,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/authStore";
 import PostCard from "./PostCard";
 import CreatePostModal from "./CreatePostModal";
-import { Post } from "../../types/community/community"; // Assuming this points to src/types/community/community.ts
-import { fetchAllPosts } from "../../api/community/community";
+import { Post } from "../../types/community/community";
+import {
+  fetchAllPosts,
+  togglePostLike,
+  togglePostBookmark,
+  deletePost,
+} from "../../api/community/community";
 
 const CommunityPage: React.FC = () => {
   const { user } = useAuthStore();
@@ -37,41 +41,78 @@ const CommunityPage: React.FC = () => {
     "all"
   );
   const [editingPost, setEditingPost] = useState<Post | null>(null);
-  const [totalLikes, setTotalLikes] = useState<number>(0); // ✅ 좋아요 총 개수 상태 추가
+  const [totalLikes, setTotalLikes] = useState<number>(0);
 
-  // 게시글 불러오기
+  const loadPosts = async () => {
+    try {
+      const data: any[] = await fetchAllPosts();
+      console.log("백엔드에서 받은 원본 게시글 데이터:", data);
+
+      const mappedPosts: Post[] = data.map((item) => ({
+        postId: item.postId,
+        title: item.title,
+        content: item.content,
+        category: item.category,
+        likeCount: item.likeCount,
+        reportCount: item.reportCount,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt ?? item.createdAt,
+        userId: item.authorId,
+        authorNickname: item.authorNickname,
+        userLiked: item.userLiked,
+        commentCount: item.commentCount || 0, // 🔧 새로 추가
+        comments: item.comments || [], // 🔧 새로 추가
+        userBookmarked: item.userBookmarked || false, // 🔧 새로 추가
+      }));
+
+      setPosts(mappedPosts);
+    } catch (err) {
+      console.error("[❌ 게시글 로딩 실패]", err);
+      // 사용자에게 에러 메시지를 표시하거나 다른 처리를 할 수 있습니다.
+    }
+  };
+
   useEffect(() => {
-    fetchAllPosts()
-      .then((data: any[]) => {
-        const mappedPosts: Post[] = data.map((item) => ({
-          postId: item.postId,
-          title: item.title,
-          content: item.content,
-          category: item.category,
-          likeCount: item.likeCount,
-          reportCount: item.reportCount,
-          createdAt: item.createdAt,
-          updatedAt: item.updatedAt ?? item.createdAt,
-          userId: item.userId,
-          authorNickname: item.authorNickname,
-          commentCount: item.commentCount,
-          comments: item.comments || [],
-          likedBy: item.likedBy || [],
-          bookmarkedBy: item.bookmarkedBy || [],
-        }));
-        setPosts(mappedPosts);
-      })
-      .catch((err) => console.error("[❌ 게시글 로딩 실패]", err));
-  }, []);
+    loadPosts();
+  }, [user]);
 
-  // ✅ posts 상태가 업데이트될 때마다 totalLikes 계산
   useEffect(() => {
     const calculatedTotalLikes = posts.reduce(
       (sum, post) => sum + (post.likeCount || 0),
       0
     );
     setTotalLikes(calculatedTotalLikes);
-  }, [posts]); // posts 배열이 변경될 때마다 실행
+  }, [posts]);
+
+  const handleToggleLike = async (postId: string) => {
+    if (!user) {
+      alert("로그인 후 좋아요를 누를 수 있습니다.");
+      navigate("/login");
+      return;
+    }
+    try {
+      await togglePostLike(postId);
+      await loadPosts(); // 변경 후 목록 다시 로드
+    } catch (error) {
+      console.error(`[❌ 좋아요 토글 실패] PostId: ${postId}`, error);
+      alert("좋아요 처리에 실패했습니다.");
+    }
+  };
+
+  const handleToggleBookmark = async (postId: string) => {
+    if (!user) {
+      alert("로그인 후 북마크할 수 있습니다.");
+      navigate("/login");
+      return;
+    }
+    try {
+      await togglePostBookmark(postId);
+      await loadPosts(); // 변경 후 목록 다시 로드
+    } catch (error) {
+      console.error(`[❌ 북마크 토글 실패] PostId: ${postId}`, error);
+      alert("북마크 처리에 실패했습니다.");
+    }
+  };
 
   const categories = [
     { id: "all", name: "전체", icon: Filter, color: "text-gray-600" },
@@ -116,9 +157,9 @@ const CommunityPage: React.FC = () => {
 
     let matchesFilter = true;
     if (filterBy === "bookmarked") {
-      matchesFilter = post.bookmarkedBy?.includes(user?.id || "") || false;
+      matchesFilter = post.userBookmarked;
     } else if (filterBy === "liked") {
-      matchesFilter = post.likedBy?.includes(user?.id || "") || false;
+      matchesFilter = post.userLiked;
     }
 
     return matchesSearch && matchesCategory && matchesFilter;
@@ -143,11 +184,17 @@ const CommunityPage: React.FC = () => {
     setIsCreateModalOpen(true);
   };
 
-  const handlePostDelete = (postId: string) => {
-    // 삭제 로직
-    console.log(`Deleting post with ID: ${postId}`);
-    // 실제 API 호출 및 상태 업데이트 로직 추가 필요
-    // 예: deletePost(postId).then(() => setPosts(prev => prev.filter(p => p.postId !== postId)));
+  const handlePostDelete = async (postId: string) => {
+    if (!window.confirm("정말로 이 게시글을 삭제하시겠습니까?")) {
+      return;
+    }
+    try {
+      await deletePost(postId);
+      await loadPosts(); // 삭제 후 목록 다시 로드
+    } catch (error) {
+      console.error(`[❌ 게시글 삭제 실패] PostId: ${postId}`, error);
+      alert("게시글 삭제에 실패했습니다.");
+    }
   };
 
   const handlePostClick = (post: Post) => {
@@ -172,7 +219,6 @@ const CommunityPage: React.FC = () => {
               <p className="text-primary-100">
                 다양한 생활 정보를 공유하고 소통해보세요!
               </p>
-              {/* ✅ 총 좋아요 개수 표시 추가 */}
               <div className="flex items-center mt-2 text-primary-50">
                 <ThumbsUp className="w-4 h-4 mr-1" />
                 <span className="text-sm font-medium">
@@ -183,7 +229,7 @@ const CommunityPage: React.FC = () => {
           </div>
           <button
             onClick={() => {
-              setEditingPost(null); // Ensure no post is being edited when opening for create
+              setEditingPost(null);
               setIsCreateModalOpen(true);
             }}
             className="flex items-center space-x-2 bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-xl transition-colors"
@@ -328,7 +374,7 @@ const CommunityPage: React.FC = () => {
             </p>
             <button
               onClick={() => {
-                setEditingPost(null); // Ensure no post is being edited when opening for create
+                setEditingPost(null);
                 setIsCreateModalOpen(true);
               }}
               className="bg-primary-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-primary-700 transition-colors"
@@ -349,6 +395,8 @@ const CommunityPage: React.FC = () => {
                 onClick={() => handlePostClick(post)}
                 onEdit={handlePostEdit}
                 onDelete={handlePostDelete}
+                onToggleLike={handleToggleLike}
+                onToggleBookmark={handleToggleBookmark}
               />
             </motion.div>
           ))
@@ -359,31 +407,11 @@ const CommunityPage: React.FC = () => {
       {isCreateModalOpen && (
         <CreatePostModal
           post={editingPost}
-          onClose={() => {
+          onClose={async () => {
+            // ✅ loadPosts()를 await로 호출하도록 수정
             setIsCreateModalOpen(false);
             setEditingPost(null);
-            // 게시글 작성/수정 후 목록을 새로고침하려면 여기에서 fetchAllPosts를 다시 호출
-            fetchAllPosts()
-              .then((data: any[]) => {
-                const mappedPosts: Post[] = data.map((item) => ({
-                  postId: item.postId,
-                  title: item.title,
-                  content: item.content,
-                  category: item.category,
-                  likeCount: item.likeCount,
-                  reportCount: item.reportCount,
-                  createdAt: item.createdAt,
-                  updatedAt: item.updatedAt ?? item.createdAt,
-                  userId: item.userId,
-                  authorNickname: item.authorNickname,
-                  commentCount: item.commentCount,
-                  comments: item.comments || [],
-                  likedBy: item.likedBy || [],
-                  bookmarkedBy: item.bookmarkedBy || [],
-                }));
-                setPosts(mappedPosts);
-              })
-              .catch((err) => console.error("[❌ 게시글 로딩 실패]", err));
+            await loadPosts();
           }}
         />
       )}
