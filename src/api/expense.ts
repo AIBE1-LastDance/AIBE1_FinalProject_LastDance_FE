@@ -1,5 +1,10 @@
 import { apiClient } from "../utils/api";
 
+export interface SplitDataItem {
+    userId: string;
+    amount: number;
+}
+
 export interface ExpenseRequest {
     title: string;
     amount: number;
@@ -8,7 +13,7 @@ export interface ExpenseRequest {
     memo?: string;
     groupId?: string | null;
     splitType?: 'EQUAL' | 'CUSTOM' | 'SPECIFIC';
-    splitData?: Record<string, number>;
+    splitData?: SplitDataItem[];
 }
 
 export interface ExpenseResponse {

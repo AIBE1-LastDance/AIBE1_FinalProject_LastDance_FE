@@ -97,6 +97,20 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
             }
         }
 
+        let splitDataArray = undefined;
+        if (mode === 'group' && currentGroup) {
+            // EQUAL일 때는 데이터 x
+            if (formData.splitType === 'EQUAL') {
+                splitDataArray = undefined;
+            } else if ((formData.splitType === 'CUSTOM' || formData.splitType === 'SPECIFIC') &&
+                Object.keys(formData.splitData).length > 0) {
+                splitDataArray = Object.entries(formData.splitData).map(([userId, amount]) => ({
+                    userId,
+                    amount: Number(amount)
+                }));
+            }
+        }
+
         if (!user) return;
 
         const expenseData = {
@@ -109,7 +123,7 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
             groupId: mode === 'group' && currentGroup ? currentGroup.id : null,  // 개인 모드에서는 null
             userId: user.id,
             splitType: mode === 'group' ? formData.splitType : undefined,
-            splitData: mode === 'group' && Object.keys(formData.splitData).length > 0 ? formData.splitData : undefined,
+            splitData: splitDataArray,
         };
 
         try {

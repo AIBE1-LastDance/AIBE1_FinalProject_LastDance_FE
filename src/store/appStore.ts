@@ -543,17 +543,17 @@ export const useAppStore = create<AppState>()(
 
       updateExpense: async (id, updates) => {
         try {
-          const response = await expenseAPI.update(id, updates);
+          await expenseAPI.update(id, updates);
 
-          set((state) => ({
-            expenses: state.expenses.map(expense =>
-                expense.id === id ? {
-                  ...expense,
-                  ...response.data,
-                  id: response.data.expenseId
-                } : expense
-            )
-          }));
+          // 전체 새로고침으로 확실히 업데이트
+          const state = get();
+          await state.loadExpenses({
+            mode: state.mode,
+            year: new Date().getFullYear(),
+            month: new Date().getMonth() + 1,
+            groupId: state.mode === 'group' ? state.currentGroup?.id : null
+          });
+
 
           toast.success('지출이 수정되었습니다!');
         } catch (error: any) {
