@@ -444,9 +444,9 @@ export const useAppStore = create<AppState>()(
             splitType: expense.splitType,
             splitData: expense.splitData,
             expenseType: expense.expenseType,
-            createdAt: expense.createdAt
+            createdAt: expense.createdAt,
+            hasReceipt: expense.hasReceipt
           }));
-          console.log('🔄 변환된 지출 데이터:', expenses);
 
           // 중복 데이터 체크
           const uniqueExpenses = expenses.filter((expense, index, arr) =>
@@ -469,6 +469,7 @@ export const useAppStore = create<AppState>()(
 
           const groupShares = response.data.map((share: any) => ({
             id: share.expenseId,
+            originalId: share.originalExpenseId,
             title: share.title,
             amount: share.amount,
             myShareAmount: share.myShareAmount, // 내 분담금
@@ -479,6 +480,7 @@ export const useAppStore = create<AppState>()(
             groupName: share.groupName,
             splitType: share.splitType,
             isGroupShare: true, // 구분용 플래그
+            hasReceipt: share.hasReceipt,
           }));
 
           set({ groupShares });
@@ -487,7 +489,7 @@ export const useAppStore = create<AppState>()(
         }
       },
 
-      addExpense: async (expenseData) => {
+      addExpense: async (expenseData: any) => {
         try {
           const expenseRequest = {
             title: expenseData.title,
@@ -502,15 +504,9 @@ export const useAppStore = create<AppState>()(
                   userId: userId,
                   amount: Number(amount)
                 }))
-                : undefined
+                : undefined,
+            receipt: expenseData.receipt,
           };
-
-          // 디버깅 코드 여기에 추가!
-          console.log('전송할 전체 데이터:', JSON.stringify(expenseRequest, null, 2));
-          console.log('splitData 타입:', typeof expenseRequest.splitData);
-          console.log('splitData 내용:', expenseRequest.splitData);
-          console.log('splitType:', expenseRequest.splitType);
-
 
           const response = await expenseAPI.create(expenseRequest);
           const newExpense = {
@@ -525,7 +521,8 @@ export const useAppStore = create<AppState>()(
             splitType: response.data.splitType,
             splitData: response.data.splitData,
             expenseType: response.data.expenseType,
-            createdAt: response.data.createdAt
+            createdAt: response.data.createdAt,
+            hasReceipt: response.data.hasReceipt
           };
 
           set((state) => ({

@@ -126,7 +126,7 @@ export interface Expense {
     amount: number;
     category: 'FOOD' | 'UTILITIES' | 'TRANSPORT' | 'SHOPPING' | 'ENTERTAINMENT' | 'OTHER'; // 대문자로 변경
     date: string; // Date → string 변경 (YYYY-MM-DD 형식)
-    receipt?: string;
+    hasReceipt?: boolean;
     memo?: string;
     groupId?: string;
     userId: string;

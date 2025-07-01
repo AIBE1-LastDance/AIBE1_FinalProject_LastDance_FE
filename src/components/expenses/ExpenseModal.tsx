@@ -1,10 +1,11 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {motion} from 'framer-motion';
 import {X, Calculator, Tag, Calendar, FileText, Users, Camera} from 'lucide-react';
 import {useAppStore} from '../../store/appStore';
 import {useAuthStore} from '../../store/authStore';
 import {Expense} from '../../types';
 import toast from 'react-hot-toast';
+import {expenseAPI} from "../../api/expense";
 
 interface ExpenseModalProps {
     expense: Expense | null;
@@ -45,10 +46,25 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
         category: expense?.category || 'FOOD',
         date: expense?.date ? new Date(expense.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
         memo: expense?.memo || '',
-        receipt: expense?.receipt || '',
+        receipt: null as File | null,
         splitType: expense?.splitType || 'EQUAL',
         splitData: convertSplitDataToObject(expense?.splitData),
     });
+
+    // 영수증 별도 관리
+    const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (expense?.hasReceipt && expense.id) {
+            expenseAPI.getReceiptUrl(expense.id)
+                .then(response => {
+                    setReceiptUrl(response.data);
+                })
+                .catch(error => {
+                    console.error('영수증 로드 실패: ', error);
+                });
+        }
+    }, [expense]);
 
     const categories = [
         {value: 'FOOD', label: '식비', color: '#FF6B6B'},
@@ -119,11 +135,11 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
             category: formData.category,
             date: formData.date,
             memo: formData.memo || undefined,
-            receipt: formData.receipt || undefined,
             groupId: mode === 'group' && currentGroup ? currentGroup.id : null,  // 개인 모드에서는 null
             userId: user.id,
             splitType: mode === 'group' ? formData.splitType : undefined,
             splitData: splitDataArray,
+            receipt: formData.receipt,
         };
 
         try {
@@ -290,23 +306,62 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                             accept="image/*"
                             onChange={(e) => {
                                 const file = e.target.files?.[0];
+                                console.log('file: ', file);
                                 if (file) {
-                                    const reader = new FileReader();
-                                    reader.onload = (e) => {
-                                        setFormData({...formData, receipt: e.target?.result as string});
-                                    };
-                                    reader.readAsDataURL(file);
+                                    // 파일 크기 제한
+                                    if (file.size > 1024 * 1024 * 10) {
+                                        toast.error('파일 크기는 10MB를 초과할 수 없습니다.');
+                                        e.target.value = '';
+                                        return;
+                                    }
+                                    setFormData({...formData, receipt: file});
+                                    setReceiptUrl(null);
                                 }
                             }}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
-                        {formData.receipt && (
+                        {(formData.receipt || receiptUrl) && (
                             <div className="mt-2">
                                 <img
-                                    src={formData.receipt}
+                                    src={formData.receipt ? URL.createObjectURL(formData.receipt) : receiptUrl}
                                     alt="Receipt"
                                     className="w-full h-32 object-cover rounded-lg"
                                 />
+                                <div className="flex flex-col space-y-2 mt-3">
+                                    {/* 임시 제거 (새로 선택한 파일이나 미리보기 제거) */}
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setFormData({...formData, receipt: null});
+                                            setReceiptUrl(null);
+                                        }}
+                                        className="text-sm text-gray-600 hover:text-gray-800 text-left"
+                                    >
+                                        📎 다시 선택
+                                    </button>
+
+                                    {/* 기존 영수증 완전 삭제 */}
+                                    {expense && receiptUrl && (
+                                        <button
+                                            type="button"
+                                            onClick={async () => {
+                                                if (window.confirm('영수증을 완전히 삭제하시겠습니까?')) {
+                                                    try {
+                                                        await expenseAPI.deleteReceipt(expense.id);
+                                                        setReceiptUrl(null);
+                                                        toast.success('영수증이 삭제되었습니다.');
+                                                    } catch (error) {
+                                                        console.error('영수증 삭제 실패:', error);
+                                                        toast.error('영수증 삭제에 실패했습니다.');
+                                                    }
+                                                }
+                                            }}
+                                            className="text-sm text-red-600 hover:text-red-800 text-left"
+                                        >
+                                            🗑️ 영수증 삭제
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         )}
                     </div>
@@ -353,7 +408,6 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                                                         const numericValue = e.target.value.replace(/[^0-9]/g, '');
                                                         const amount = numericValue === '' ? 0 : Number(numericValue);
 
-                                                        console.log(`${member.nickname} 금액변경:`, amount)
                                                         setFormData({
                                                             ...formData,
                                                             splitData: {

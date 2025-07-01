@@ -14,6 +14,11 @@ export interface ExpenseRequest {
     groupId?: string | null;
     splitType?: 'EQUAL' | 'CUSTOM' | 'SPECIFIC';
     splitData?: SplitDataItem[];
+
+}
+
+export interface ExpenseWithReceiptRequest extends ExpenseRequest {
+    receipt?: File;
 }
 
 export interface ExpenseResponse {
@@ -33,8 +38,35 @@ export interface ExpenseResponse {
 
 export const expenseAPI = {
     // 지출 생성
-    create: async (data: ExpenseRequest) => {
-        const response = await apiClient.post('/api/v1/expenses', data);
+    create: async (data: ExpenseWithReceiptRequest) => {
+        const formData = new FormData();
+
+        // 기본 데이터를 JSON으로 추가
+        const expenseData = {
+            title: data.title,
+            amount: data.amount,
+            category: data.category,
+            date: data.date,
+            memo: data.memo,
+            groupId: data.groupId,
+            splitType: data.splitType,
+            splitData: data.splitData,
+        };
+
+        formData.append('expense', new Blob([JSON.stringify(expenseData)], {
+            type: 'application/json',
+        }))
+
+        // 영수증 파일이 있으면 추가
+        if (data.receipt) {
+            formData.append('receiptFile', data.receipt);
+        }
+
+        const response = await apiClient.post('/api/v1/expenses', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
         return response.data;
     },
 
@@ -82,8 +114,33 @@ export const expenseAPI = {
     },
 
     // 지출 수정
-    update: async (id: number, data: Partial<ExpenseRequest>) => {
-        const response = await apiClient.patch(`/api/v1/expenses/${id}`, data);
+    update: async (id: number, data: Partial<ExpenseWithReceiptRequest>) => {
+        const formData = new FormData();
+
+        // 수정할 데이터만 포함
+        const expenseData: any = {};
+        if (data.title !== undefined) expenseData.title = data.title;
+        if (data.amount !== undefined) expenseData.amount = data.amount;
+        if (data.category !== undefined) expenseData.category = data.category;
+        if (data.date !== undefined) expenseData.date = data.date;
+        if (data.memo !== undefined) expenseData.memo = data.memo;
+        if (data.groupId !== undefined) expenseData.groupId = data.groupId;
+        if (data.splitType !== undefined) expenseData.splitType = data.splitType;
+        if (data.splitData !== undefined) expenseData.splitData = data.splitData;
+
+        formData.append('expense', new Blob([JSON.stringify(expenseData)], {
+            type: 'application/json'
+        }));
+
+        if (data.receipt) {
+            formData.append('receiptFile', data.receipt);
+        }
+
+        const response = await apiClient.patch(`/api/v1/expenses/${id}`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
         return response.data;
     },
 
@@ -93,4 +150,15 @@ export const expenseAPI = {
         return response.data;
     },
 
+    // 영수증 URL 조회
+    getReceiptUrl: async (id: number) => {
+        const response = await apiClient.get(`/api/v1/expenses/${id}/receipt`);
+        return response.data;
+    },
+
+    // 영수증만 삭제
+    deleteReceipt: async (id: number) => {
+        const response = await apiClient.delete(`/api/v1/expenses/${id}/receipt`);
+        return response.data;
+    },
 }
