@@ -178,7 +178,6 @@ const PostDetail: React.FC<PostDetailProps> = ({
         content: newComment.trim(),
       });
 
-      // 백엔드에서 받은 댓글 정보로 프론트엔드 comments 상태 업데이트
       setComments((prevComments) => [
         ...prevComments,
         {
@@ -188,8 +187,8 @@ const PostDetail: React.FC<PostDetailProps> = ({
           content: createdComment.content,
           createdAt: createdComment.createdAt,
           updatedAt: createdComment.updatedAt ?? createdComment.createdAt,
-          authorNickname: createdComment.authorNickname, // ✅ 핵심
-          reportCount: createdComment.reportCount ?? 0, // optional한 필드 처리
+          authorNickname: user?.username || "익명", // ✅ 사용자 닉네임 지정
+          reportCount: createdComment.reportCount ?? 0,
         },
       ]);
 
