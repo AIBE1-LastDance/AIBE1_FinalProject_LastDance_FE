@@ -15,17 +15,16 @@ import {
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { useAdminAI } from '../../../hooks/useAdmin';
 import { AdminAPI, AIJudgment, AIJudgmentDetail } from '../../../api/admin';
 import { safeNumber, safeString, formatNumber, formatPercentage, safeArray } from '../../../utils/numberUtils';
 
 const AISystemManagement: React.FC = () => {
-  const { judgments, pagination, stats, loading, error, fetchJudgments, fetchStats } = useAdminAI();
+  const { judgments, pagination, stats, overallStats, loading, error, fetchJudgments, fetchStats, fetchOverallStats } = useAdminAI();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [ratingFilter, setRatingFilter] = useState<'all' | 'UP' | 'DOWN'>('all');
-  const [categoryFilter, setCategoryFilter] = useState<'all' | 'EXPENSE' | 'BUDGET'>('all');
   const [selectedJudgment, setSelectedJudgment] = useState<AIJudgmentDetail | null>(null);
   const [showJudgmentDetail, setShowJudgmentDetail] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -34,6 +33,7 @@ const AISystemManagement: React.FC = () => {
   useEffect(() => {
     handleSearch();
     fetchStats('weekly');
+    fetchOverallStats(); // 전체 통계 가져오기
   }, []);
 
   const handleSearch = () => {
@@ -48,10 +48,6 @@ const AISystemManagement: React.FC = () => {
 
     if (ratingFilter !== 'all') {
       params.rating = ratingFilter;
-    }
-
-    if (categoryFilter !== 'all') {
-      params.category = categoryFilter;
     }
 
     fetchJudgments(params);
@@ -70,10 +66,6 @@ const AISystemManagement: React.FC = () => {
 
     if (ratingFilter !== 'all') {
       params.rating = ratingFilter;
-    }
-
-    if (categoryFilter !== 'all') {
-      params.category = categoryFilter;
     }
 
     fetchJudgments(params);
@@ -112,17 +104,6 @@ const AISystemManagement: React.FC = () => {
         );
       default:
         return <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full">미평가</span>;
-    }
-  };
-
-  const getCategoryBadge = (category: string) => {
-    switch (category) {
-      case 'EXPENSE':
-        return <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">지출</span>;
-      case 'BUDGET':
-        return <span className="px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded-full">예산</span>;
-      default:
-        return <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full">{category}</span>;
     }
   };
 
@@ -255,6 +236,7 @@ const AISystemManagement: React.FC = () => {
             onClick={() => {
               handleSearch();
               fetchStats('weekly');
+              fetchOverallStats();
             }}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
@@ -266,14 +248,14 @@ const AISystemManagement: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-full overflow-hidden">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">AI 시스템 관리</h1>
           <p className="text-gray-600 mt-1">AI 판단 로그 및 성능 분석</p>
         </div>
-        <div className="flex space-x-2">
+        <div className="flex flex-wrap gap-2">
           <button
             onClick={() => fetchStats('daily')}
             className="px-3 py-1 text-xs bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition-colors"
@@ -299,97 +281,64 @@ const AISystemManagement: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="총 판단 요청"
-          value={formatNumber(judgments?.length || 0)}
+          value={formatNumber(overallStats?.totalJudgments || stats?.totalJudgments || 0)}
           icon={Brain}
           color="bg-purple-500"
         />
         <StatCard
           title="만족 건수"
-          value={formatNumber(judgments?.filter(j => j.userRating === 'UP').length || 0)}
+          value={formatNumber(overallStats?.satisfactionCount || stats?.satisfactionCount || 0)}
           icon={ThumbsUp}
           color="bg-green-500"
         />
         <StatCard
           title="불만족 건수"
-          value={formatNumber(judgments?.filter(j => j.userRating === 'DOWN').length || 0)}
+          value={formatNumber(overallStats?.dissatisfactionCount || stats?.dissatisfactionCount || 0)}
           icon={ThumbsDown}
           color="bg-red-500"
         />
         <StatCard
           title="만족도"
-          value={(() => {
-            const ratedJudgments = judgments?.filter(j => j.userRating !== null) || [];
-            const satisfiedCount = judgments?.filter(j => j.userRating === 'UP').length || 0;
-            return ratedJudgments.length > 0 ? 
-              formatPercentage((satisfiedCount / ratedJudgments.length) * 100) : 
-              '0%';
-          })()}
+          value={
+            overallStats?.satisfactionRate ? 
+              formatPercentage(overallStats.satisfactionRate) : 
+              (stats?.satisfactionRate ? formatPercentage(stats.satisfactionRate) : '0%')
+          }
           icon={TrendingUp}
           color="bg-blue-500"
         />
       </div>
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6">
         {/* AI Usage Trend */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 lg:p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">AI 만족도 추이</h3>
           {stats?.trends && stats.trends.length > 0 ? (
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={stats.trends}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis yAxisId="left" />
-                <YAxis yAxisId="right" orientation="right" />
-                <Tooltip />
-                <Bar yAxisId="left" dataKey="judgmentCount" fill="#8884d8" name="요청 수" />
-                <Line yAxisId="right" type="monotone" dataKey="satisfactionRate" stroke="#82ca9d" name="만족도(%)" />
-              </LineChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="h-[300px] flex items-center justify-center text-gray-500">
-              통계 데이터가 없습니다.
+            <div className="w-full overflow-hidden">
+              <ResponsiveContainer width="100%" height={250} className="min-w-0">
+                <LineChart data={stats.trends}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis yAxisId="left" />
+                  <YAxis yAxisId="right" orientation="right" />
+                  <Tooltip />
+                  <Bar yAxisId="left" dataKey="judgmentCount" fill="#8884d8" name="요청 수" />
+                  <Line yAxisId="right" type="monotone" dataKey="satisfactionRate" stroke="#82ca9d" name="만족도(%)" />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
-          )}
-        </div>
-
-        {/* Category Distribution */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">카테고리별 요청 분포</h3>
-          {stats?.categoryStats && stats.categoryStats.length > 0 ? (
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={stats.categoryStats.map((cat, index) => ({
-                    name: cat.category,
-                    value: cat.count,
-                    color: ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6'][index % 5]
-                  }))}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={100}
-                  fill="#8884d8"
-                  dataKey="value"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                >
-                  {stats.categoryStats.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6'][index % 5]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
           ) : (
-            <div className="h-[300px] flex items-center justify-center text-gray-500">
-              카테고리 통계 데이터가 없습니다.
+            <div className="h-[250px] flex items-center justify-center text-gray-500">
+              통계 데이터가 없습니다.
             </div>
           )}
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 lg:p-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input
@@ -397,32 +346,24 @@ const AISystemManagement: React.FC = () => {
               placeholder="사용자 검색"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
             />
           </div>
           
           <select
             value={ratingFilter}
             onChange={(e) => setRatingFilter(e.target.value as 'all' | 'UP' | 'DOWN')}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
           >
             <option value="all">모든 평가</option>
             <option value="UP">만족</option>
             <option value="DOWN">불만족</option>
           </select>
 
-          <select
-            value="all"
-            disabled
-            className="px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-500"
-          >
-            <option value="all">모든 카테고리 (준비중)</option>
-          </select>
-
           <button 
             onClick={handleSearch}
             disabled={loading}
-            className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+            className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 text-sm"
           >
             <Filter className="w-4 h-4 mr-2" />
             {loading ? '로딩...' : '필터 적용'}
@@ -439,25 +380,25 @@ const AISystemManagement: React.FC = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[100px]">
                   판단 ID
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
                   요청자
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px] max-w-[250px]">
                   요청 내용
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px] max-w-[250px]">
                   AI 응답
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[100px]">
                   사용자 평가
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[100px]">
                   요청일시
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[80px]">
                   액션
                 </th>
               </tr>
@@ -481,36 +422,38 @@ const AISystemManagement: React.FC = () => {
               ) : (
                 safeArray(judgments).map((judgment) => (
                   <tr key={judgment.judgmentId} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      #{judgment.judgmentId.slice(0, 8)}...
+                    <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      <span className="hidden sm:inline">#{judgment.judgmentId.slice(0, 8)}...</span>
+                      <span className="sm:hidden">#{judgment.judgmentId.slice(0, 6)}</span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{judgment.user?.nickname || 'N/A'}</div>
-                      <div className="text-sm text-gray-500">{judgment.user?.email || 'N/A'}</div>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900 truncate max-w-[100px]">{judgment.user?.nickname || 'N/A'}</div>
+                      <div className="text-xs text-gray-500 truncate max-w-[100px] hidden sm:block">{judgment.user?.email || 'N/A'}</div>
                     </td>
-                    <td className="px-6 py-4 max-w-xs truncate">
+                    <td className="px-4 py-4 max-w-[200px] truncate">
                       <div className="text-sm text-gray-900 truncate" title={judgment.requestSummary}>
                         {judgment.requestSummary || 'N/A'}
                       </div>
                     </td>
-                    <td className="px-6 py-4 max-w-xs truncate">
+                    <td className="px-4 py-4 max-w-[200px] truncate">
                       <div className="text-sm text-gray-900 truncate" title={judgment.aiResponse}>
                         {judgment.aiResponse || 'N/A'}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 py-4 whitespace-nowrap">
                       {getFeedbackBadge(judgment.userRating)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {new Date(judgment.createdAt).toLocaleDateString('ko-KR')}
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <div className="hidden sm:block">{new Date(judgment.createdAt).toLocaleDateString('ko-KR')}</div>
+                      <div className="sm:hidden">{new Date(judgment.createdAt).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
                       <button
                         onClick={() => handleJudgmentDetail(judgment.judgmentId)}
                         className="text-blue-600 hover:text-blue-900 flex items-center"
                       >
                         <Eye className="w-4 h-4 mr-1" />
-                        상세
+                        <span className="hidden sm:inline">상세</span>
                       </button>
                     </td>
                   </tr>

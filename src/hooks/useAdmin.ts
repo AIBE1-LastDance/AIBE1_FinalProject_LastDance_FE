@@ -69,7 +69,7 @@ export const useAdminDashboard = () => {
     }
   };
 
-  const fetchSignupTrend = async (period?: 'daily' | 'weekly' | 'monthly') => {
+  const fetchSignupTrend = async (period?: 'weekly' | 'monthly') => {
     try {
       const trend = await AdminAPI.getSignupTrend(period);
       setSignupTrend(trend);
@@ -80,7 +80,7 @@ export const useAdminDashboard = () => {
 
   useEffect(() => {
     fetchDashboardStats();
-    fetchSignupTrend('daily');
+    fetchSignupTrend('weekly');
   }, []);
 
   return {
@@ -127,8 +127,7 @@ export const useAdminUsers = () => {
 
   const banUser = async (userId: string, data: {
     banEndDate: string;
-    reason: string;
-    sendNotification: boolean;
+    sendNotification?: boolean;
   }) => {
     try {
       await AdminAPI.banUser(userId, data);
@@ -198,11 +197,9 @@ export const useAdminReports = () => {
   };
 
   const processReport = async (reportId: number, data: {
-    action: string;
     status: string;
-    adminNote: string;
-    penaltyType?: string;
-    penaltyDuration?: number;
+    banUser?: boolean;
+    banEndDate?: string;
     sendNotification: boolean;
   }) => {
     try {
@@ -230,6 +227,7 @@ export const useAdminAI = () => {
   const [judgments, setJudgments] = useState<AIJudgment[]>([]);
   const [pagination, setPagination] = useState<any>(null);
   const [stats, setStats] = useState<AIJudgmentStats | null>(null);
+  const [overallStats, setOverallStats] = useState<any>(null); // 전체 통계용
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -264,21 +262,48 @@ export const useAdminAI = () => {
       setStats(statsData);
     } catch (err: any) {
       console.error('AI 판단 통계 조회 실패:', err);
-      // 현재 데이터를 기반으로 기본 통계 생성
-      if (judgments.length > 0) {
-        const ratedJudgments = judgments.filter(j => j.userRating !== null);
-        const satisfiedCount = judgments.filter(j => j.userRating === 'UP').length;
-        const dissatisfiedCount = judgments.filter(j => j.userRating === 'DOWN').length;
-        
-        setStats({
-          totalJudgments: judgments.length,
-          satisfactionCount: satisfiedCount,
-          dissatisfactionCount: dissatisfiedCount,
-          satisfactionRate: ratedJudgments.length > 0 ? (satisfiedCount / ratedJudgments.length) * 100 : 0,
-          categoryStats: [],
-          trends: []
-        });
-      }
+      // 기본 통계 설정
+      setStats({
+        totalJudgments: 0,
+        satisfactionCount: 0,
+        dissatisfactionCount: 0,
+        satisfactionRate: 0,
+        categoryStats: [],
+        trends: []
+      });
+    }
+  };
+
+  const fetchOverallStats = async () => {
+    try {
+      // 전체 데이터를 가져와서 통계 계산
+      const allJudgmentsResponse = await AdminAPI.getAIJudgments({ 
+        page: 1, 
+        limit: 10000 // 충분히 큰 수로 전체 데이터 가져오기
+      });
+      
+      const allJudgments = allJudgmentsResponse.aiJudgments || [];
+      const totalJudgments = allJudgments.length;
+      const satisfiedCount = allJudgments.filter(j => j.userRating === 'UP').length;
+      const dissatisfiedCount = allJudgments.filter(j => j.userRating === 'DOWN').length;
+      const ratedJudgments = allJudgments.filter(j => j.userRating !== null);
+      const satisfactionRate = ratedJudgments.length > 0 ? (satisfiedCount / ratedJudgments.length) * 100 : 0;
+
+      setOverallStats({
+        totalJudgments,
+        satisfactionCount: satisfiedCount,
+        dissatisfactionCount: dissatisfiedCount,
+        satisfactionRate
+      });
+    } catch (err: any) {
+      console.error('전체 AI 판단 통계 조회 실패:', err);
+      // API 실패 시 기본값 설정
+      setOverallStats({
+        totalJudgments: 0,
+        satisfactionCount: 0,
+        dissatisfactionCount: 0,
+        satisfactionRate: 0
+      });
     }
   };
 
@@ -286,9 +311,11 @@ export const useAdminAI = () => {
     judgments,
     pagination,
     stats,
+    overallStats,
     loading,
     error,
     fetchJudgments,
-    fetchStats
+    fetchStats,
+    fetchOverallStats
   };
 };
