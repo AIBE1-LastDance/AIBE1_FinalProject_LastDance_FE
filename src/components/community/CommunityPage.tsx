@@ -1,3 +1,5 @@
+// src/components/community/CommunityPage.tsx (수정)
+
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
@@ -52,7 +54,8 @@ const CommunityPage: React.FC = () => {
         postId: item.postId,
         title: item.title,
         content: item.content,
-        category: item.category,
+        category: item.category, // 백엔드 Enum ID (예: "LIFE_TIPS")
+        categoryName: item.categoryName, // ✅ 이 줄 추가: 백엔드에서 내려준 한글 이름
         likeCount: item.likeCount,
         reportCount: item.reportCount,
         createdAt: item.createdAt,
@@ -60,9 +63,9 @@ const CommunityPage: React.FC = () => {
         userId: item.authorId,
         authorNickname: item.authorNickname,
         userLiked: item.userLiked,
-        commentCount: item.commentCount || 0, // 🔧 새로 추가
-        comments: item.comments || [], // 🔧 새로 추가
-        userBookmarked: item.userBookmarked || false, // 🔧 새로 추가
+        commentCount: item.commentCount || 0,
+        comments: item.comments || [],
+        userBookmarked: item.userBookmarked || false,
       }));
 
       setPosts(mappedPosts);
