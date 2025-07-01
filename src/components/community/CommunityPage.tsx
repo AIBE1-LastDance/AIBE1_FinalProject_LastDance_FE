@@ -57,15 +57,14 @@ const CommunityPage: React.FC = () => {
         reportCount: item.reportCount,
         createdAt: item.createdAt,
         updatedAt: item.updatedAt ?? item.createdAt,
-        userId: item.userId,
+        userId: item.authorId,
         authorNickname: item.authorNickname,
-        commentCount: item.commentCount,
-        comments: item.comments || [],
-        likedBy: item.likedBy || [],
-        bookmarkedBy: item.bookmarkedBy || [],
         userLiked: item.userLiked,
-        userBookmarked: item.userBookmarked,
+        commentCount: item.commentCount || 0, // 🔧 새로 추가
+        comments: item.comments || [], // 🔧 새로 추가
+        userBookmarked: item.userBookmarked || false, // 🔧 새로 추가
       }));
+
       setPosts(mappedPosts);
     } catch (err) {
       console.error("[❌ 게시글 로딩 실패]", err);
