@@ -311,9 +311,9 @@ const TasksPage: React.FC = () => {
                                       {getPriorityLabel(checklist.priority)}
                                     </span>
                                     {/* 그룹 체크리스트인 경우 그룹명 표시 */}
-                                    {checklist.type === 'GROUP' && checklist.groupId && (
+                                    {checklist.type === 'GROUP' && checklist.groupName && (
                                       <span className="px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 border border-purple-200">
-                                        {currentGroup?.name || '그룹'}
+                                        {checklist.groupName}
                                       </span>
                                     )}
                                     {checklist.isCompleted && (
