@@ -115,6 +115,9 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
             }
         }
 
+        console.log('🔍 전송할 splitData:', formData.splitData); // 디버깅용
+
+
         let splitDataArray = undefined;
         if (mode === 'group' && currentGroup) {
             // EQUAL일 때는 데이터 x
@@ -128,6 +131,9 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                 }));
             }
         }
+
+        console.log('🔍 최종 splitDataArray:', splitDataArray); // 디버깅용
+
 
         if (!user) return;
 
@@ -148,7 +154,7 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
             if (expense) {
                 updateExpense(expense.id, expenseData);
             } else {
-                addExpense(expenseData);
+                await addExpense(expenseData);
             }
 
             // 지출 추가/수정 후 목록 새로고침
@@ -159,6 +165,15 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                 month: new Date().getMonth() + 1,
                 groupId: mode === 'group' ? currentGroup?.id : null
             });
+
+            // 그룹 분담금도 새로고침
+            if (mode === 'group' && currentGroup) {
+                const {loadGroupShares} = useAppStore.getState();
+                await loadGroupShares({
+                    year: new Date().getFullYear(),
+                    month: new Date().getMonth() + 1,
+                });
+            }
 
             onClose();
         } catch (error) {
@@ -428,12 +443,16 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                                                         const numericValue = e.target.value.replace(/[^0-9]/g, '');
                                                         const amount = numericValue === '' ? 0 : Number(numericValue);
 
+                                                        const newSplitData = {
+                                                            ...formData.splitData,
+                                                            [member.userId]: amount
+                                                        };
+                                                        console.log('CUSTOM splitData:', newSplitData); // 디버깅용
+
+
                                                         setFormData({
                                                             ...formData,
-                                                            splitData: {
-                                                                ...formData.splitData,
-                                                                [member.userId]: amount
-                                                            }
+                                                            splitData: newSplitData
                                                         });
                                                     }}
                                                     className="w-24 px-2 py-1 border border-gray-300 rounded text-sm text-center"
@@ -531,52 +550,53 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                                 <div className="bg-gray-50 rounded-lg p-4">
                                     <h4 className="text-sm font-medium text-gray-700 mb-3">특정 인원 선택</h4>
                                     <div className="space-y-2">
-                                        {currentGroup.members.map((member) => (
-                                            <label key={member.userId} className="flex items-center space-x-3">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={formData.splitData[member.userId] !== undefined}
-                                                    onChange={(e) => {
-                                                        const newSplitData = {...formData.splitData};
-                                                        if (e.target.checked) {
-                                                            // 특정 인원: 선택한 사람이 전체 금액 부담
-                                                            if (formData.splitType === 'SPECIFIC') {
-                                                                // 기존 선택 모두 해제
-                                                                Object.keys(newSplitData).forEach(key => delete newSplitData[key]);
-                                                                newSplitData[member.userId] = formData.amount; // 전체 금액
+                                        {currentGroup.members.map((member) => {
+                                            console.log('멤버 정보:', member); // 디버깅용
+                                            return (
+                                                <label key={member.userId} className="flex items-center space-x-3">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={formData.splitData[member.userId] !== undefined}
+                                                        onChange={(e) => {
+                                                            const newSplitData = {...formData.splitData};
+                                                            if (e.target.checked) {
+                                                                // SPECIFIC: 선택된 사람들이 균등분할
+                                                                newSplitData[member.userId] = 0; // 일단 0으로 설정
                                                             } else {
-                                                                newSplitData[member.userId] = 0;
+                                                                delete newSplitData[member.userId];
                                                             }
-                                                        } else {
-                                                            delete newSplitData[member.userId];
-                                                        }
 
-                                                        // specific이 아닌 경우만 균등분할
-                                                        if (formData.splitType !== 'SPECIFIC') {
+                                                            // 선택된 사람들 간 균등분할 계산
                                                             const selectedMembers = Object.keys(newSplitData);
-                                                            const amountPerPerson = selectedMembers.length > 0 ? Math.floor(formData.amount / selectedMembers.length) : 0;
+                                                            const amountPerPerson = selectedMembers.length > 0
+                                                                ? Math.floor(Number(formData.amount) / selectedMembers.length)
+                                                                : 0;
+
                                                             selectedMembers.forEach(memberId => {
                                                                 newSplitData[memberId] = amountPerPerson;
                                                             });
-                                                        }
 
-                                                        setFormData({
-                                                            ...formData,
-                                                            splitData: newSplitData
-                                                        });
-                                                    }}
-                                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                                />
-                                                <span className="text-sm text-gray-700">{member.nickname}</span>
-                                                {formData.splitData[member.userId] !== undefined && (
-                                                    <span className="text-sm text-blue-600 ml-auto">
-                            {new Intl.NumberFormat('ko-KR', {style: 'currency', currency: 'KRW'}).format(
-                                formData.splitData[member.userId] || 0
-                            )}
-                          </span>
-                                                )}
-                                            </label>
-                                        ))}
+                                                            console.log('SPECIFIC splitData:', newSplitData); // 디버깅용
+
+                                                            setFormData({
+                                                                ...formData,
+                                                                splitData: newSplitData
+                                                            });
+                                                        }}
+                                                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                                    />
+                                                    <span className="text-sm text-gray-700">{member.nickname}</span>
+                                                    {formData.splitData[member.userId] !== undefined && (
+                                                        <span className="text-sm text-blue-600 ml-auto">
+                                {new Intl.NumberFormat('ko-KR', {style: 'currency', currency: 'KRW'}).format(
+                                    formData.splitData[member.userId] || 0
+                                )}
+                            </span>
+                                                    )}
+                                                </label>
+                                            );
+                                        })}
+
                                         {Object.keys(formData.splitData).length > 0 && (
                                             <div className="border-t pt-3 mt-3">
                                                 <div className="text-sm text-gray-600">

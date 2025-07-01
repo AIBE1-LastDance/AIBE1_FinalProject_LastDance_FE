@@ -499,14 +499,10 @@ export const useAppStore = create<AppState>()(
             memo: expenseData.memo,
             groupId: expenseData.groupId || null,
             splitType: expenseData.splitType,
-            splitData: expenseData.splitData && Object.keys(expenseData.splitData).length > 0
-                ? Object.entries(expenseData.splitData).map(([userId, amount]) => ({
-                  userId: userId,
-                  amount: Number(amount)
-                }))
-                : undefined,
+            splitData: expenseData.splitData,
             receipt: expenseData.receipt,
           };
+          console.log('API 전송 데이터: ', expenseRequest);
 
           const response = await expenseAPI.create(expenseRequest);
           const newExpense = {

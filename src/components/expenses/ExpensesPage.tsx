@@ -225,7 +225,7 @@ const ExpensesPage: React.FC = () => {
             // EQUAL, CUSTOM으로 대문자 타입에 맞춰 수정
             if (expense.splitType === 'EQUAL') {
                 personalAmount = expense.amount / currentGroup.members.length;
-                console.log('균등분할 계산:', personalAmount);
+                // console.log('균등분할 계산:', personalAmount);
             } else if (expense.splitType === 'CUSTOM' && expense.splitData && expense.splitData.length > 0) {
                 console.log('커스텀 분할 처리 중...');
                 const userSplit = expense.splitData.find(split => split.userId === user.id);
@@ -1158,8 +1158,8 @@ const ExpensesPage: React.FC = () => {
                                                 <span>전체: {formatCurrency(share.amount)}</span>
                                                 <span>•</span>
                                                 <span>
-                                                    {share.splitType === 'equal' ? '균등분할' :
-                                                        share.splitType === 'specific' ? '지정분할' : '사용자정의'}
+                                                    {share.splitType === 'EQUAL' ? '균등분할' :
+                                                        share.splitType === 'SPECIFIC' ? '지정분할' : '사용자정의'}
                                                 </span>
                                             </div>
                                         </div>
