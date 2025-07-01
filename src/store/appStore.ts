@@ -469,7 +469,7 @@ export const useAppStore = create<AppState>()(
 
           const groupShares = response.data.map((share: any) => ({
             id: share.expenseId,
-            originalId: share.originalExpenseId,
+            originalExpenseId: share.originalExpenseId,
             title: share.title,
             amount: share.amount,
             myShareAmount: share.myShareAmount, // 내 분담금

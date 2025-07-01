@@ -182,6 +182,14 @@ const ExpensesPage: React.FC = () => {
     const handleExpenseClick = (expense) => {
         setSelectedExpense(expense);
         setShowExpenseModal(true);
+
+        // 그룹 분담금인 경우 수정 불가 - 조회만 가능
+        if (expense.isGroupShare) {
+            toast('그룹 지출은 그룹 페이지에서만 수정할 수 있습니다.', {
+                duration: 3000
+            });
+            return;
+        }
     };
 
     // 영수증 조회 함수
@@ -189,7 +197,7 @@ const ExpensesPage: React.FC = () => {
         e.stopPropagation();
 
         try {
-            const targetId = expense.originalId || expense.id;
+            const targetId = expense.originalExpenseId || expense.id;
             console.log('targetId: ', targetId);
             const response = await expenseAPI.getReceiptUrl(targetId);
             if (response.data) {

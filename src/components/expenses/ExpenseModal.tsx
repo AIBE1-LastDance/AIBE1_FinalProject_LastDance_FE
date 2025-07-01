@@ -56,7 +56,9 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
 
     useEffect(() => {
         if (expense?.hasReceipt && expense.id) {
-            expenseAPI.getReceiptUrl(expense.id)
+            // 그룹분담금인 경우 originalExpenseId 사용, 아니면 id
+            const targetId = expense.originalExpenseId || expense.id;
+            expenseAPI.getReceiptUrl(targetId)
                 .then(response => {
                     setReceiptUrl(response.data);
                 })
@@ -296,75 +298,93 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                     </div>
 
                     {/* Receipt */}
-                    <div>
-                        <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
-                            <Camera className="w-4 h-4"/>
-                            <span>영수증</span>
-                        </label>
-                        <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                console.log('file: ', file);
-                                if (file) {
-                                    // 파일 크기 제한
-                                    if (file.size > 1024 * 1024 * 10) {
-                                        toast.error('파일 크기는 10MB를 초과할 수 없습니다.');
-                                        e.target.value = '';
-                                        return;
+                    {!expense?.isGroupShare && (
+                        <div>
+                            <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
+                                <Camera className="w-4 h-4"/>
+                                <span>영수증</span>
+                            </label>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    console.log('file: ', file);
+                                    if (file) {
+                                        // 파일 크기 제한
+                                        if (file.size > 1024 * 1024 * 10) {
+                                            toast.error('파일 크기는 10MB를 초과할 수 없습니다.');
+                                            e.target.value = '';
+                                            return;
+                                        }
+                                        setFormData({...formData, receipt: file});
+                                        setReceiptUrl(null);
                                     }
-                                    setFormData({...formData, receipt: file});
-                                    setReceiptUrl(null);
-                                }
-                            }}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                        {(formData.receipt || receiptUrl) && (
+                                }}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                            {(formData.receipt || receiptUrl) && (
+                                <div className="mt-2">
+                                    <img
+                                        src={formData.receipt ? URL.createObjectURL(formData.receipt) : receiptUrl}
+                                        alt="Receipt"
+                                        className="w-full h-32 object-cover rounded-lg"
+                                    />
+                                    <div className="flex flex-col space-y-2 mt-3">
+                                        {/* 임시 제거 (새로 선택한 파일이나 미리보기 제거) */}
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setFormData({...formData, receipt: null});
+                                                setReceiptUrl(null);
+                                            }}
+                                            className="text-sm text-gray-600 hover:text-gray-800 text-left"
+                                        >
+                                            📎 다시 선택
+                                        </button>
+
+                                        {/* 기존 영수증 완전 삭제 */}
+                                        {expense && receiptUrl && (
+                                            <button
+                                                type="button"
+                                                onClick={async () => {
+                                                    if (window.confirm('영수증을 완전히 삭제하시겠습니까?')) {
+                                                        try {
+                                                            await expenseAPI.deleteReceipt(expense.id);
+                                                            setReceiptUrl(null);
+                                                            toast.success('영수증이 삭제되었습니다.');
+                                                        } catch (error) {
+                                                            console.error('영수증 삭제 실패:', error);
+                                                            toast.error('영수증 삭제에 실패했습니다.');
+                                                        }
+                                                    }
+                                                }}
+                                                className="text-sm text-red-600 hover:text-red-800 text-left"
+                                            >
+                                                🗑️ 영수증 삭제
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                    {/* 그룹 분담의 경우 영수증 조회만 가능 */}
+                    {expense?.isGroupShare && receiptUrl && (
+                        <div>
+                            <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
+                                <Camera className="w-4 h-4"/>
+                                <span>영수증 (조회 전용)</span>
+                            </label>
                             <div className="mt-2">
                                 <img
-                                    src={formData.receipt ? URL.createObjectURL(formData.receipt) : receiptUrl}
+                                    src={receiptUrl}
                                     alt="Receipt"
                                     className="w-full h-32 object-cover rounded-lg"
                                 />
-                                <div className="flex flex-col space-y-2 mt-3">
-                                    {/* 임시 제거 (새로 선택한 파일이나 미리보기 제거) */}
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setFormData({...formData, receipt: null});
-                                            setReceiptUrl(null);
-                                        }}
-                                        className="text-sm text-gray-600 hover:text-gray-800 text-left"
-                                    >
-                                        📎 다시 선택
-                                    </button>
-
-                                    {/* 기존 영수증 완전 삭제 */}
-                                    {expense && receiptUrl && (
-                                        <button
-                                            type="button"
-                                            onClick={async () => {
-                                                if (window.confirm('영수증을 완전히 삭제하시겠습니까?')) {
-                                                    try {
-                                                        await expenseAPI.deleteReceipt(expense.id);
-                                                        setReceiptUrl(null);
-                                                        toast.success('영수증이 삭제되었습니다.');
-                                                    } catch (error) {
-                                                        console.error('영수증 삭제 실패:', error);
-                                                        toast.error('영수증 삭제에 실패했습니다.');
-                                                    }
-                                                }
-                                            }}
-                                            className="text-sm text-red-600 hover:text-red-800 text-left"
-                                        >
-                                            🗑️ 영수증 삭제
-                                        </button>
-                                    )}
-                                </div>
                             </div>
-                        )}
-                    </div>
+                        </div>
+                    )}
 
                     {/* Split Options (Group Mode Only) */}
                     {mode === 'group' && currentGroup && (
@@ -596,7 +616,7 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
 
                     {/* Buttons */}
                     <div className="flex space-x-3 pt-4">
-                        {expense && (
+                        {expense && !expense.isGroupShare && (
                             <motion.button
                                 type="button"
                                 className="px-4 py-2 border border-red-300 text-red-700 rounded-lg font-medium hover:bg-red-50 transition-colors"
@@ -616,14 +636,17 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                         >
                             취소
                         </motion.button>
-                        <motion.button
-                            type="submit"
-                            className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
-                            whileHover={{scale: 1.02}}
-                            whileTap={{scale: 0.98}}
-                        >
-                            {expense ? '수정' : '추가'}
-                        </motion.button>
+
+                        {!expense?.isGroupShare && (
+                            <motion.button
+                                type="submit"
+                                className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                                whileHover={{scale: 1.02}}
+                                whileTap={{scale: 0.98}}
+                            >
+                                {expense ? '수정' : '추가'}
+                            </motion.button>
+                        )}
                     </div>
                 </form>
             </motion.div>
