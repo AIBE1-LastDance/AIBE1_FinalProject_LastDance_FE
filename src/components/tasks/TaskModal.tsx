@@ -61,7 +61,8 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onSave }) => {
         description: formData.description.trim() || undefined,
         priority: formData.priority.toUpperCase() as "HIGH" | "MEDIUM" | "LOW",
         dueDate: formData.dueDate ? new Date(formData.dueDate + 'T23:59:59.000Z').toISOString() : undefined,
-        assigneeId: mode === 'group' && formData.assigneeId ? formData.assigneeId : undefined,
+        // 개인모드일 때는 현재 로그인된 사용자를 담당자로 자동 설정, 그룹모드일 때만 선택된 담당자 사용
+        assigneeId: mode === 'personal' ? user.id : (formData.assigneeId || undefined),
       };
 
       if (task) {

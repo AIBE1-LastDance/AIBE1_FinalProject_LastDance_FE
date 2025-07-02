@@ -1,4 +1,5 @@
-// src/components/community/PostCard.tsx 에 위치
+// src/components/community/PostCard.tsx (수정)
+
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import {
@@ -7,31 +8,27 @@ import {
   Share2,
   Bookmark,
   Clock,
-  User, // 사용되지 않는 import 제거 가능
-  Tag, // 사용되지 않는 import 제거 가능
   MoreVertical,
   Edit,
   Trash2,
   Lightbulb,
-  ChefHat,
-  Sparkles,
-  ShoppingCart,
+  Users,
   MessageSquare,
   HelpCircle,
-  Star,
   FileText,
 } from "lucide-react";
-import { Post } from "../../types/community/community"; // Post 타입 임포트
+import { Post } from "../../types/community/community";
 import { useAuthStore } from "../../store/authStore";
-import { useAppStore } from "../../store/appStore"; // 이 부분은 예시이므로 실제 프로젝트의 스토어에 따라 달라질 수 있습니다.
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
 
 interface PostCardProps {
   post: Post;
-  onClick: () => void;
+  onClick: (post: Post) => void;
   onEdit?: (post: Post) => void;
   onDelete?: (postId: string) => void;
+  onToggleLike: (postId: string) => void;
+  onToggleBookmark: (postId: string) => void;
 }
 
 const PostCard: React.FC<PostCardProps> = ({
@@ -39,45 +36,36 @@ const PostCard: React.FC<PostCardProps> = ({
   onClick,
   onEdit,
   onDelete,
+  onToggleLike,
+  onToggleBookmark,
 }) => {
   const { user } = useAuthStore();
-  // `useAppStore`에서 `updatePost`, `deletePost`를 가져오는 것은 해당 스토어의 실제 구현에 따라 달라질 수 있습니다.
-  // 이 부분은 해당 로직을 처리하는 함수를 직접 호출하거나, context/query hook 등을 사용할 수도 있습니다.
-  const { updatePost, deletePost } = useAppStore();
   const [showMenu, setShowMenu] = useState(false);
 
-  // 게시글 카테고리 정보 가져오기
-  const getCategoryInfo = (category: string) => {
-    // PostCategory 타입에 맞춰 정확한 ENUM 값을 사용해야 합니다.
-    // 백엔드 PostCategory enum (LIFE_TIPS, FREE_BOARD, FIND_MATE, QNA, POLICY)와 프론트엔드 문자열을 매핑해야 합니다.
-    // 현재 프론트엔드 매핑 (`tip`, `recipe` 등)과 백엔드 enum (`LIFE_TIPS` 등)이 다릅니다.
-    // 백엔드 enum 값으로 변경하거나, 프론트엔드에서 변환 로직을 추가해야 합니다.
+  // 게시글 카테고리 아이콘 및 색상 정보만 가져오기
+  // categoryName은 이제 post 객체에서 직접 가져옵니다.
+  const getCategoryDisplayInfo = (category: string) => {
     const categories: Record<
       string,
-      { name: string; icon: any; color: string }
+      { icon: any; color: string } // name 필드 제거
     > = {
       LIFE_TIPS: {
-        name: "생활팁",
         icon: Lightbulb,
         color: "bg-yellow-100 text-yellow-800",
       },
       FREE_BOARD: {
-        name: "자유게시판",
         icon: MessageSquare,
         color: "bg-purple-100 text-purple-800",
       },
       FIND_MATE: {
-        name: "메이트구하기",
-        icon: User, // Users 아이콘이 더 적합할 수 있음
+        icon: Users,
         color: "bg-blue-100 text-blue-800",
       },
       QNA: {
-        name: "질문/답변",
         icon: HelpCircle,
         color: "bg-red-100 text-red-800",
       },
       POLICY: {
-        name: "정책게시판",
         icon: FileText,
         color: "bg-green-100 text-green-800",
       },
@@ -85,54 +73,25 @@ const PostCard: React.FC<PostCardProps> = ({
     };
     return (
       categories[category] || {
-        name: "기타",
-        icon: FileText,
-        color: "bg-gray-100 text-gray-800",
+        icon: FileText, // 기본 아이콘
+        color: "bg-gray-100 text-gray-800", // 기본 색상
       }
     );
   };
 
   const handleLike = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!user) return;
-
-    // `post.likes`는 `PostResponseDTO`에서 `likeCount`로 변경되었으므로, `post.likeCount`를 사용해야 합니다.
-    const isLiked = post.likedBy?.includes(user.id) || false;
-    const newLikes = isLiked
-      ? (post.likeCount || 0) - 1
-      : (post.likeCount || 0) + 1;
-    const newLikedBy = isLiked
-      ? post.likedBy?.filter((id) => id !== user.id) || []
-      : [...(post.likedBy || []), user.id];
-
-    // `post.id` 대신 `post.postId`를 사용해야 합니다.
-    // `likes` 대신 `likeCount`를 사용해야 합니다.
-    updatePost(post.postId, {
-      likeCount: newLikes,
-      likedBy: newLikedBy,
-    });
+    onToggleLike(post.postId);
   };
 
   const handleBookmark = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!user) return;
-
-    const isBookmarked = post.bookmarkedBy?.includes(user.id) || false;
-    const newBookmarkedBy = isBookmarked
-      ? post.bookmarkedBy?.filter((id) => id !== user.id) || []
-      : [...(post.bookmarkedBy || []), user.id];
-
-    // `post.id` 대신 `post.postId`를 사용해야 합니다.
-    updatePost(post.postId, {
-      bookmarkedBy: newBookmarkedBy,
-    });
+    onToggleBookmark(post.postId);
   };
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (window.confirm("정말로 이 게시글을 삭제하시겠습니까?")) {
-      // `post.id` 대신 `post.postId`를 사용해야 합니다.
-      deletePost(post.postId);
       if (onDelete) onDelete(post.postId);
     }
     setShowMenu(false);
@@ -144,16 +103,21 @@ const PostCard: React.FC<PostCardProps> = ({
     setShowMenu(false);
   };
 
-  const categoryInfo = getCategoryInfo(post.category);
-  const isLiked = post.likedBy?.includes(user?.id || "") || false;
-  const isBookmarked = post.bookmarkedBy?.includes(user?.id || "") || false;
-  const isAuthor = user?.id === post.userId; // `user.id`가 UUID 형식인지 확인
+  const handleCardClick = () => {
+    onClick(post);
+  };
+
+  // ✅ post.category를 사용하여 아이콘과 색상 정보를 가져오고, post.categoryName을 직접 표시
+  const categoryDisplayInfo = getCategoryDisplayInfo(post.category);
+  const isLiked = post.userLiked;
+  const isBookmarked = post.bookmarkedBy; // `userBookmarked` 대신 `bookmarkedBy` 사용 (아마도 오타이거나 기존 코드에 따라야 함)
+  const isAuthor = user?.id === post.userId;
 
   return (
     <motion.div
       whileHover={{ scale: 1.01 }}
       whileTap={{ scale: 0.99 }}
-      onClick={onClick}
+      onClick={handleCardClick}
       className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 cursor-pointer"
     >
       {/* 헤더 */}
@@ -161,22 +125,14 @@ const PostCard: React.FC<PostCardProps> = ({
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
             <span className="text-white font-medium text-sm">
-              {/* ✅ post.authorNickname의 첫 글자를 사용 */}
               {post.authorNickname?.charAt(0) || "U"}
             </span>
           </div>
           <div>
             <div className="flex items-center space-x-2">
               <span className="font-medium text-gray-900">
-                {/* ✅ post.authorNickname을 사용, 없으면 "익명" */}
                 {post.authorNickname || "익명"}
               </span>
-              {/* post.groupId는 현재 Post 타입에 없으므로, 필요하다면 추가해야 합니다. */}
-              {/* post.groupId && (
-                <span className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full">
-                  그룹
-                </span>
-              )*/}
             </div>
             <div className="flex items-center space-x-2 text-sm text-gray-500">
               <Clock className="w-4 h-4" />
@@ -191,10 +147,11 @@ const PostCard: React.FC<PostCardProps> = ({
         </div>
         <div className="flex items-center space-x-2">
           <div
-            className={`flex items-center space-x-1 px-3 py-1 rounded-full text-xs font-medium ${categoryInfo.color}`}
+            className={`flex items-center space-x-1 px-3 py-1 rounded-full text-xs font-medium ${categoryDisplayInfo.color}`}
           >
-            <categoryInfo.icon className="w-3 h-3" />
-            <span>{categoryInfo.name}</span>
+            <categoryDisplayInfo.icon className="w-3 h-3" />
+            {/* ✅ post.categoryName 직접 사용 */}
+            <span>{post.categoryName}</span>
           </div>
 
           {/* 작성자만 보이는 메뉴 */}
@@ -245,52 +202,7 @@ const PostCard: React.FC<PostCardProps> = ({
         </p>
       </div>
 
-      {/* 이미지 (있는 경우) */}
-      {/* post.images는 Post 타입에 없으므로, 필요하다면 추가해야 합니다. */}
-      {/* {post.images && post.images.length > 0 && (
-        <div className="mb-4">
-          <div className="grid grid-cols-2 gap-2">
-            {post.images.slice(0, 4).map((image, index) => (
-              <div key={index} className="relative">
-                <img
-                  src={image}
-                  alt={`게시글 이미지 ${index + 1}`}
-                  className="w-full h-32 object-cover rounded-lg"
-                />
-                {index === 3 && post.images!.length > 4 && (
-                  <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex items-center justify-center">
-                    <span className="text-white font-medium">
-                      +{post.images!.length - 4}
-                    </span>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )} */}
-
-      {/* 태그 */}
-      {/* post.tags는 Post 타입에 없으므로, 필요하다면 추가해야 합니다. */}
-      {/* {post.tags && post.tags.length > 0 && (
-        <div className="mb-4">
-          <div className="flex flex-wrap gap-2">
-            {post.tags.slice(0, 3).map((tag, index) => (
-              <span
-                key={index}
-                className="text-sm text-purple-600 bg-purple-50 px-2 py-1 rounded-lg"
-              >
-                #{tag}
-              </span>
-            ))}
-            {post.tags.length > 3 && (
-              <span className="text-sm text-gray-500">
-                +{post.tags.length - 3}개
-              </span>
-            )}
-          </div>
-        </div>
-      )} */}
+      {/* 이미지 및 태그는 현재 Post 타입에 없으므로 주석 처리 유지 */}
 
       {/* 액션 버튼들 */}
       <div className="flex items-center justify-between pt-4 border-t border-gray-100">
@@ -304,14 +216,12 @@ const PostCard: React.FC<PostCardProps> = ({
             } transition-colors`}
           >
             <Heart className={`w-5 h-5 ${isLiked ? "fill-current" : ""}`} />
-            {/* ✅ post.likeCount 사용 */}
             <span className="text-sm font-medium">{post.likeCount || 0}</span>
           </motion.button>
 
           <div className="flex items-center space-x-2 text-gray-500">
             <MessageCircle className="w-5 h-5" />
             <span className="text-sm font-medium">
-              {/* ✅ post.commentCount 사용 (댓글 배열 대신) */}
               {post.commentCount || 0}
             </span>
           </div>
@@ -327,13 +237,13 @@ const PostCard: React.FC<PostCardProps> = ({
           whileTap={{ scale: 0.9 }}
           onClick={handleBookmark}
           className={`${
-            isBookmarked
+            post.userBookmarked // ✅ `bookmarkedBy` 대신 `userBookmarked` 사용
               ? "text-yellow-500"
               : "text-gray-400 hover:text-yellow-500"
           } transition-colors`}
         >
           <Bookmark
-            className={`w-5 h-5 ${isBookmarked ? "fill-current" : ""}`}
+            className={`w-5 h-5 ${post.userBookmarked ? "fill-current" : ""}`} // ✅ `bookmarkedBy` 대신 `userBookmarked` 사용
           />
         </motion.button>
       </div>
