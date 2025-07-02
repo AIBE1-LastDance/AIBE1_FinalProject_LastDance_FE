@@ -26,6 +26,7 @@ interface WebPushSubscriptionRequest {
 
 export const useNotifications = () => {
     const { user } = useAuthStore();
+    const { setCurrentUser } = useNotificationStore();
     const {
         setSSEConnected,
         setWebPushSupported,
@@ -408,6 +409,9 @@ export const useNotifications = () => {
     useEffect(() => {
         console.log('사용자 상태 변경됨:', !!user);
         
+        // 사용자 정보가 변경될 때마다 알림 스토어에 현재 사용자 설정
+        setCurrentUser(user?.id || null);
+        
         if (user) {
             console.log('사용자 로그인됨, SSE 연결 시작');
             // 기존 연결이 있다면 먼저 해제
@@ -428,7 +432,7 @@ export const useNotifications = () => {
         return () => {
             disconnectSSE();
         };
-    }, [user?.id, connectSSE, disconnectSSE]);
+    }, [user?.id, connectSSE, disconnectSSE, setCurrentUser]);
 
     // 반환값 없음 - 모든 상태는 전역 store에서 관리
     return null;

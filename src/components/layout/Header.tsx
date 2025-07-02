@@ -34,7 +34,7 @@ const Header: React.FC = () => {
     const {user, logout: storeLogout} = useAuthStore();
     const {logout} = useAuth();
     const {mode, setMode, currentGroup, joinedGroups, setCurrentGroup, loadMyGroups} = useAppStore();
-    const {notifications, unreadCount, markAsRead, markAllAsRead} = useNotificationStore();
+    const {getUserNotifications, unreadCount, markAsRead, markAllAsRead} = useNotificationStore();
     const {isSSEConnected} = useSSEStore();
     const navigate = useNavigate();
     const location = useLocation();
@@ -49,6 +49,9 @@ const Header: React.FC = () => {
 
     // 로그인 상태 확인
     const isAuthenticated = !!user;
+    
+    // 현재 사용자의 알림만 가져오기
+    const notifications = getUserNotifications();
 
     // 그룹 모드 전환 가능 여부 확인
     const canSwitchToGroup = joinedGroups.length > 0;
