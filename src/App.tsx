@@ -22,11 +22,16 @@ import SettingsPage from './components/settings/SettingsPage';
 import {useAuth} from './hooks/useAuth';
 import {useEffect, useState} from "react";
 import AdminRouter from './components/admin/AdminRouter';
+// SSE 관리를 위해 추가
+import { useNotifications } from './hooks/useNotifications';
 
 function App() {
     const {isAuthenticated, user} = useAuthStore();
     const { getCurrentUser } = useAuth();
     const [ isInitialized, setIsInitialized ] = useState(false);
+
+    // 🔥 앱 최상위에서 SSE 연결 관리 (한 번만 실행)
+    useNotifications();
 
     console.log('App component rendered, isAuthenticated:', isAuthenticated);
 

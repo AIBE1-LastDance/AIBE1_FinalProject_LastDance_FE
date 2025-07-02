@@ -20,6 +20,8 @@ import {FaGoogle, FaComment} from 'react-icons/fa';
 import {SiNaver} from 'react-icons/si';
 import {useAuthStore} from '../../store/authStore';
 import {useAppStore} from '../../store/appStore';
+import {useNotificationStore} from '../../store/notificationStore';
+import {useSSEStore} from '../../store/sseStore';
 import {useNavigate, useLocation} from 'react-router-dom';
 import CreateGroupModal from '../groups/CreateGroupModal';
 import JoinGroupModal from '../groups/JoinGroupModal';
@@ -32,6 +34,8 @@ const Header: React.FC = () => {
     const {user, logout: storeLogout} = useAuthStore();
     const {logout} = useAuth();
     const {mode, setMode, currentGroup, joinedGroups, setCurrentGroup, loadMyGroups} = useAppStore();
+    const {getUserNotifications, unreadCount, markAsRead, markAllAsRead} = useNotificationStore();
+    const {isSSEConnected} = useSSEStore();
     const navigate = useNavigate();
     const location = useLocation();
     const [showUserMenu, setShowUserMenu] = useState(false);
@@ -45,6 +49,13 @@ const Header: React.FC = () => {
 
     // 로그인 상태 확인
     const isAuthenticated = !!user;
+    
+    // 현재 사용자의 알림만 가져오기
+    const notifications = getUserNotifications();
+
+    // 그룹 모드 전환 가능 여부 확인
+    const canSwitchToGroup = joinedGroups.length > 0;
+    const isDisabled = mode === 'group' && !canSwitchToGroup;
 
     // 그룹 모드 전환 가능 여부 확인
     const canSwitchToGroup = joinedGroups.length > 0;
@@ -57,48 +68,6 @@ const Header: React.FC = () => {
             loadMyGroups();
         }
     }, [isAuthenticated, loadMyGroups, joinedGroups.length]);
-
-    // 임시 알림 데이터
-    const [notifications] = useState([
-        {
-            id: '1',
-            type: 'task',
-            title: '할일 마감 알림',
-            message: '설거지 할일이 내일 마감입니다.',
-            timestamp: new Date(Date.now() - 10 * 60 * 1000), // 10분 전
-            read: false,
-            icon: '📋'
-        },
-        {
-            id: '2',
-            type: 'expense',
-            title: '지출 정산 요청',
-            message: '김철수님이 전기요금 정산을 요청했습니다.',
-            timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2시간 전
-            read: false,
-            icon: '💰'
-        },
-        {
-            id: '3',
-            type: 'event',
-            title: '일정 알림',
-            message: '30분 후 "대청소" 일정이 시작됩니다.',
-            timestamp: new Date(Date.now() - 30 * 60 * 1000), // 30분 전
-            read: true,
-            icon: '📅'
-        },
-        {
-            id: '4',
-            type: 'group',
-            title: '그룹 알림',
-            message: '이영희님이 그룹에 참여했습니다.',
-            timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000), // 5시간 전
-            read: true,
-            icon: '👥'
-        }
-    ]);
-
-    const unreadCount = notifications.filter(n => !n.read).length;
 
     // 외부 클릭 시 드롭다운 닫기
     useEffect(() => {
@@ -128,7 +97,6 @@ const Header: React.FC = () => {
 
     const handleLogout = async () => {
         await logout();
-        // navigate('/login');
         setShowUserMenu(false);
     };
 
@@ -143,9 +111,16 @@ const Header: React.FC = () => {
         setShowUserMenu(false);
     };
 
-    const formatTimeAgo = (timestamp: Date) => {
+    const formatTimeAgo = (timestamp: Date | string) => {
         const now = new Date();
-        const diffInMs = now.getTime() - timestamp.getTime();
+        const targetTime = typeof timestamp === 'string' ? new Date(timestamp) : timestamp;
+        
+        // 유효한 Date 객체인지 확인
+        if (!(targetTime instanceof Date) || isNaN(targetTime.getTime())) {
+            return '시간 알 수 없음';
+        }
+        
+        const diffInMs = now.getTime() - targetTime.getTime();
         const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
         const diffInHours = Math.floor(diffInMinutes / 60);
         const diffInDays = Math.floor(diffInHours / 24);
@@ -156,9 +131,31 @@ const Header: React.FC = () => {
         return `${diffInDays}일 전`;
     };
 
-    const markAllAsRead = () => {
-        // 실제로는 서버에 요청을 보내서 모든 알림을 읽음 처리
-        console.log('모든 알림을 읽음 처리');
+    const handleMarkAllAsRead = () => {
+        markAllAsRead();
+        toast.success('모든 알림을 읽음 처리했습니다.');
+    };
+
+    const handleNotificationClick = (notificationId: string, url?: string) => {
+        // 알림을 읽음 처리
+        markAsRead(notificationId);
+        
+        // URL이 있으면 해당 페이지로 이동
+        if (url) {
+            navigate(url);
+        }
+        
+        // 알림 드롭다운 닫기
+        setShowNotifications(false);
+    };
+
+    const getNotificationTypeConfig = (type: string) => {
+        const configs = {
+            SCHEDULE: { icon: '📅', bgColor: 'bg-blue-50', borderColor: 'border-blue-500' },
+            PAYMENT: { icon: '💳', bgColor: 'bg-green-50', borderColor: 'border-green-500' },
+            CHECKLIST: { icon: '✅', bgColor: 'bg-purple-50', borderColor: 'border-purple-500' }
+        };
+        return configs[type as keyof typeof configs] || configs.SCHEDULE;
     };
 
     const navigationItems = [
@@ -232,12 +229,18 @@ const Header: React.FC = () => {
                                 whileTap={{scale: 0.95}}
                                 onClick={() => setShowNotifications(!showNotifications)}
                             >
-                                <Bell className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600"/>
+                                <div className="relative">
+                                    <Bell className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600"/>
+                                    {/* SSE 연결 상태 표시 */}
+                                    <div className={`absolute -top-1 -left-1 w-2 h-2 rounded-full ${
+                                        isSSEConnected ? 'bg-green-500' : 'bg-gray-400'
+                                    }`} title={isSSEConnected ? 'SSE 연결됨' : 'SSE 연결 끊김'} />
+                                </div>
                                 {unreadCount > 0 && (
                                     <span
                                         className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-red-500 text-white text-[10px] sm:text-xs rounded-full flex items-center justify-center font-medium">
-                    {unreadCount > 9 ? '9+' : unreadCount}
-                  </span>
+                                        {unreadCount > 9 ? '9+' : unreadCount}
+                                    </span>
                                 )}
                             </motion.button>
 
@@ -261,16 +264,26 @@ const Header: React.FC = () => {
                                                 className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
                                                 <div className="flex items-center space-x-2">
                                                     <h3 className="font-semibold text-gray-900">알림</h3>
-                                                    {unreadCount > 0 && (
-                                                        <span
-                                                            className="px-2 py-1 bg-red-100 text-red-600 text-xs rounded-full font-medium">
-                            {unreadCount}개 안읽음
-                          </span>
-                                                    )}
+                                                    <div className="flex items-center space-x-1">
+                                                        {unreadCount > 0 && (
+                                                            <span
+                                                                className="px-2 py-1 bg-red-100 text-red-600 text-xs rounded-full font-medium">
+                                                                {unreadCount}개 안읽음
+                                                            </span>
+                                                        )}
+                                                        {/* SSE 연결 상태 */}
+                                                        <span className={`px-2 py-1 text-xs rounded-full font-medium ${
+                                                            isSSEConnected 
+                                                                ? 'bg-green-100 text-green-600' 
+                                                                : 'bg-gray-100 text-gray-600'
+                                                        }`}>
+                                                            {isSSEConnected ? '실시간' : '오프라인'}
+                                                        </span>
+                                                    </div>
                                                 </div>
                                                 {unreadCount > 0 && (
                                                     <button
-                                                        onClick={markAllAsRead}
+                                                        onClick={handleMarkAllAsRead}
                                                         className="text-xs text-blue-600 hover:text-blue-700 font-medium"
                                                     >
                                                         모두 읽음
@@ -284,51 +297,69 @@ const Header: React.FC = () => {
                                                     <div className="text-center py-8">
                                                         <Bell className="w-12 h-12 text-gray-300 mx-auto mb-3"/>
                                                         <p className="text-gray-500">새로운 알림이 없습니다.</p>
+                                                        {!isSSEConnected && (
+                                                            <p className="text-xs text-gray-400 mt-2">
+                                                                실시간 알림이 비활성화되어 있습니다.
+                                                            </p>
+                                                        )}
                                                     </div>
                                                 ) : (
-                                                    notifications.map((notification) => (
-                                                        <motion.div
-                                                            key={notification.id}
-                                                            className={`px-4 py-4 sm:py-3 hover:bg-gray-50 active:bg-gray-100 transition-colors cursor-pointer border-l-4 ${
-                                                                notification.read
-                                                                    ? 'border-transparent bg-white'
-                                                                    : 'border-blue-500 bg-blue-50'
-                                                            }`}
-                                                            whileHover={{x: 2}}
-                                                            onClick={() => {
-                                                                // 알림 클릭 시 해당 페이지로 이동하거나 상세 보기
-                                                                console.log('Notification clicked:', notification.id);
-                                                            }}
-                                                        >
-                                                            <div className="flex items-start space-x-3">
-                                                                <div
-                                                                    className="flex-shrink-0 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-sm">
-                                                                    {notification.icon}
-                                                                </div>
-                                                                <div className="flex-1 min-w-0">
-                                                                    <div className="flex items-center justify-between">
-                                                                        <p className={`text-sm font-medium truncate ${
-                                                                            notification.read ? 'text-gray-700' : 'text-gray-900'
-                                                                        }`}>
-                                                                            {notification.title}
-                                                                        </p>
-                                                                        {!notification.read && (
-                                                                            <div
-                                                                                className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 ml-2"/>
-                                                                        )}
+                                                    notifications.map((notification) => {
+                                                        const typeConfig = getNotificationTypeConfig(notification.type);
+                                                        
+                                                        return (
+                                                            <motion.div
+                                                                key={notification.id}
+                                                                className={`px-4 py-4 sm:py-3 hover:bg-gray-50 active:bg-gray-100 transition-colors cursor-pointer border-l-4 ${
+                                                                    notification.read
+                                                                        ? 'border-transparent bg-white'
+                                                                        : `${typeConfig.borderColor} ${typeConfig.bgColor}`
+                                                                }`}
+                                                                whileHover={{x: 2}}
+                                                                onClick={() => handleNotificationClick(notification.id, notification.url)}
+                                                            >
+                                                                <div className="flex items-start space-x-3">
+                                                                    <div
+                                                                        className="flex-shrink-0 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-sm">
+                                                                        {notification.icon}
                                                                     </div>
-                                                                    <p className={`text-sm mt-1 ${
-                                                                        notification.read ? 'text-gray-500' : 'text-gray-700'
-                                                                    }`}>
-                                                                        {notification.message}
-                                                                    </p>
-                                                                    <p className="text-xs text-gray-400 mt-1">
-                                                                        {formatTimeAgo(notification.timestamp)}
-                                                                    </p>
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <div className="flex items-center justify-between">
+                                                                            <p className={`text-sm font-medium truncate ${
+                                                                                notification.read ? 'text-gray-700' : 'text-gray-900'
+                                                                            }`}>
+                                                                                {notification.title}
+                                                                            </p>
+                                                                            {!notification.read && (
+                                                                                <div
+                                                                                    className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 ml-2"/>
+                                                                            )}
+                                                                        </div>
+                                                                        <p className={`text-sm mt-1 ${
+                                                                            notification.read ? 'text-gray-500' : 'text-gray-700'
+                                                                        }`}>
+                                                                            {notification.content}
+                                                                        </p>
+                                                                        <div className="flex items-center justify-between mt-1">
+                                                                            <p className="text-xs text-gray-400">
+                                                                                {formatTimeAgo(notification.timestamp)}
+                                                                            </p>
+                                                                            <span className={`text-xs px-2 py-1 rounded-full ${
+                                                                                notification.type === 'SCHEDULE' ? 'bg-blue-100 text-blue-600' :
+                                                                                notification.type === 'PAYMENT' ? 'bg-green-100 text-green-600' :
+                                                                                notification.type === 'CHECKLIST' ? 'bg-purple-100 text-purple-600' :
+                                                                                'bg-gray-100 text-gray-600'
+                                                                            }`}>
+                                                                                {notification.type === 'SCHEDULE' ? '일정' :
+                                                                                 notification.type === 'PAYMENT' ? '결제' :
+                                                                                 notification.type === 'CHECKLIST' ? '할일' : '알림'}
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                        </motion.div>
-                                                    ))
+                                                            </motion.div>
+                                                        );
+                                                    })
                                                 )}
                                             </div>
 
@@ -526,7 +557,7 @@ const Header: React.FC = () => {
                                             >
                                                 <LogOut className="w-4 h-4"/>
                                                 <span>로그아웃</span>
-                                            </motion.button>
+                            </motion.button>
                                         </motion.div>
                                     </>
                                 )}
