@@ -15,6 +15,8 @@ interface ExpenseModalProps {
 const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
     const {addExpense, updateExpense, deleteExpense, mode, currentGroup} = useAppStore();
     const {user} = useAuthStore();
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     // splitData 변환
     const convertSplitDataToObject = (splitData: any) => {
@@ -92,6 +94,7 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (isSubmitting) return;
 
         const amount = Number(formData.amount.replace(/[^0-9]/g, ''));
 
@@ -138,6 +141,8 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
 
         if (!user) return;
 
+        setIsSubmitting(true)
+
         const expenseData = {
             title: formData.title,
             amount: amount,
@@ -179,6 +184,8 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
             onClose();
         } catch (error) {
             console.error('지출 처리 실패: ', error);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -635,20 +642,34 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                         {expense && !expense.isGroupShare && (
                             <motion.button
                                 type="button"
-                                className="px-4 py-2 border border-red-300 text-red-700 rounded-lg font-medium hover:bg-red-50 transition-colors"
-                                whileHover={{scale: 1.02}}
-                                whileTap={{scale: 0.98}}
+                                className={`px-4 py-2 border border-red-300 text-red-700 rounded-lg font-medium transition-colors ${
+                                    isDeleting
+                                        ? 'opacity-50 cursor-not-allowed'
+                                        : 'hover:bg-red-50'
+                                }`}
+                                whileHover={isDeleting ? {} : {scale: 1.02}}
+                                whileTap={isDeleting ? {} : {scale: 0.98}}
                                 onClick={handleDelete}
+                                disabled={isDeleting || isSubmitting}
                             >
-                                삭제
+                                {isDeleting ? (
+                                    <div className="flex items-center space-x-2">
+                                        <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin"/>
+                                        <span>삭제 중...</span>
+                                    </div>
+                                ) : (
+                                    '삭제'
+                                )}
                             </motion.button>
                         )}
+
                         <motion.button
                             type="button"
                             className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
                             whileHover={{scale: 1.02}}
                             whileTap={{scale: 0.98}}
                             onClick={onClose}
+                            disabled={isSubmitting || isDeleting}
                         >
                             취소
                         </motion.button>
@@ -656,11 +677,23 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                         {!expense?.isGroupShare && (
                             <motion.button
                                 type="submit"
-                                className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
-                                whileHover={{scale: 1.02}}
-                                whileTap={{scale: 0.98}}
+                                className={`px-4 py-2 bg-blue-600 text-white rounded-lg font-medium transition-colors ${
+                                    isSubmitting
+                                        ? 'opacity-50 cursor-not-allowed'
+                                        : 'hover:bg-blue-700'
+                                }`}
+                                whileHover={isSubmitting ? {} : {scale: 1.02}}
+                                whileTap={isSubmitting ? {} : {scale: 0.98}}
+                                disabled={isSubmitting || isDeleting}
                             >
-                                {expense ? '수정' : '추가'}
+                                {isSubmitting ? (
+                                    <div className="flex items-center space-x-2">
+                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"/>
+                                        <span>{expense ? '수정 중...' : '추가 중...'}</span>
+                                    </div>
+                                ) : (
+                                    expense ? '수정' : '추가'
+                                )}
                             </motion.button>
                         )}
                     </div>
