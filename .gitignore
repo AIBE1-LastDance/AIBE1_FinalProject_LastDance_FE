@@ -167,9 +167,3 @@ storybook-static
 .yarn/install-state.gz
 .pnp.*
 .env
-
-<<<<<<< HEAD
-
-.env
-=======
->>>>>>> feat/community
