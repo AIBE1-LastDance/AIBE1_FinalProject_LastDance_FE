@@ -1,6 +1,4 @@
-// src/components/community/CommunityPage.tsx (수정)
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   Plus,
@@ -16,6 +14,8 @@ import {
   FileText,
   Clock,
   ThumbsUp,
+  ChevronLeft, // 페이지네이션 이전 버튼 아이콘
+  ChevronRight, // 페이지네이션 다음 버튼 아이콘
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/authStore";
@@ -45,6 +45,11 @@ const CommunityPage: React.FC = () => {
   const [editingPost, setEditingPost] = useState<Post | null>(null);
   const [totalLikes, setTotalLikes] = useState<number>(0);
 
+  // --- 페이지네이션 상태 추가 ---
+  const [currentPage, setCurrentPage] = useState(1);
+  const postsPerPage = 15; // 한 페이지당 게시글 수
+  // -----------------------------
+
   const loadPosts = async () => {
     try {
       const data: any[] = await fetchAllPosts();
@@ -54,8 +59,8 @@ const CommunityPage: React.FC = () => {
         postId: item.postId,
         title: item.title,
         content: item.content,
-        category: item.category, // 백엔드 Enum ID (예: "LIFE_TIPS")
-        categoryName: item.categoryName, // ✅ 이 줄 추가: 백엔드에서 내려준 한글 이름
+        category: item.category,
+        categoryName: item.categoryName,
         likeCount: item.likeCount,
         reportCount: item.reportCount,
         createdAt: item.createdAt,
@@ -69,6 +74,7 @@ const CommunityPage: React.FC = () => {
       }));
 
       setPosts(mappedPosts);
+      setCurrentPage(1); // 게시글이 새로 로드되면 첫 페이지로 리셋
     } catch (err) {
       console.error("[❌ 게시글 로딩 실패]", err);
       // 사용자에게 에러 메시지를 표시하거나 다른 처리를 할 수 있습니다.
@@ -151,36 +157,81 @@ const CommunityPage: React.FC = () => {
     },
   ];
 
-  const filteredPosts = posts.filter((post) => {
-    const matchesSearch =
-      post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      post.content.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory =
-      selectedCategory === "all" || post.category === selectedCategory;
+  // 필터링 및 정렬 로직을 useMemo로 감싸 성능 최적화
+  const processedPosts = useMemo(() => {
+    let tempPosts = [...posts];
 
-    let matchesFilter = true;
+    // 검색 필터
+    if (searchQuery) {
+      tempPosts = tempPosts.filter(
+        (post) =>
+          post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          post.content.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // 카테고리 필터
+    if (selectedCategory !== "all") {
+      tempPosts = tempPosts.filter(
+        (post) => post.category === selectedCategory
+      );
+    }
+
+    // 북마크/좋아요 필터
     if (filterBy === "bookmarked") {
-      matchesFilter = post.userBookmarked;
+      tempPosts = tempPosts.filter((post) => post.userBookmarked);
     } else if (filterBy === "liked") {
-      matchesFilter = post.userLiked;
+      tempPosts = tempPosts.filter((post) => post.userLiked);
     }
 
-    return matchesSearch && matchesCategory && matchesFilter;
-  });
+    // 정렬
+    tempPosts.sort((a, b) => {
+      switch (sortBy) {
+        case "likes":
+          return (b.likeCount || 0) - (a.likeCount || 0);
+        case "comments":
+          return (b.commentCount || 0) - (a.commentCount || 0);
+        case "latest":
+        default:
+          return (
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+      }
+    });
 
-  const sortedPosts = [...filteredPosts].sort((a, b) => {
-    switch (sortBy) {
-      case "likes":
-        return (b.likeCount || 0) - (a.likeCount || 0);
-      case "comments":
-        return (b.commentCount || 0) - (a.commentCount || 0);
-      case "latest":
-      default:
-        return (
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
+    return tempPosts;
+  }, [posts, searchQuery, selectedCategory, filterBy, sortBy]);
+
+  // --- 페이지네이션 관련 계산 ---
+  const totalPages = Math.ceil(processedPosts.length / postsPerPage);
+  const currentPosts = useMemo(() => {
+    const indexOfLastPost = currentPage * postsPerPage;
+    const indexOfFirstPost = indexOfLastPost - postsPerPage;
+    return processedPosts.slice(indexOfFirstPost, indexOfLastPost);
+  }, [processedPosts, currentPage, postsPerPage]);
+
+  const paginate = (pageNumber: number) => {
+    if (pageNumber < 1 || pageNumber > totalPages) return; // 유효하지 않은 페이지 번호 방지
+    setCurrentPage(pageNumber);
+    window.scrollTo({ top: 0, behavior: "smooth" }); // 페이지 이동 시 맨 위로 스크롤
+  };
+
+  const getPageNumbers = () => {
+    const pageNumbers = [];
+    const maxPageButtons = 5; // 화면에 보여줄 최대 페이지 버튼 수
+    let startPage = Math.max(1, currentPage - Math.floor(maxPageButtons / 2));
+    let endPage = Math.min(totalPages, startPage + maxPageButtons - 1);
+
+    if (endPage - startPage + 1 < maxPageButtons) {
+      startPage = Math.max(1, endPage - maxPageButtons + 1);
     }
-  });
+
+    for (let i = startPage; i <= endPage; i++) {
+      pageNumbers.push(i);
+    }
+    return pageNumbers;
+  };
+  // -----------------------------
 
   const handlePostEdit = (post: Post) => {
     setEditingPost(post);
@@ -257,7 +308,10 @@ const CommunityPage: React.FC = () => {
               type="text"
               placeholder="게시글을 검색해보세요..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1); // 검색 시 첫 페이지로 이동
+              }}
               className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             />
           </div>
@@ -268,7 +322,10 @@ const CommunityPage: React.FC = () => {
           {categories.map((category) => (
             <button
               key={category.id}
-              onClick={() => setSelectedCategory(category.id)}
+              onClick={() => {
+                setSelectedCategory(category.id);
+                setCurrentPage(1); // 카테고리 변경 시 첫 페이지로 이동
+              }}
               className={`flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                 selectedCategory === category.id
                   ? "bg-primary-100 text-primary-700 border-2 border-primary-200"
@@ -299,9 +356,10 @@ const CommunityPage: React.FC = () => {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={() =>
-              setFilterBy(filterBy === "bookmarked" ? "all" : "bookmarked")
-            }
+            onClick={() => {
+              setFilterBy(filterBy === "bookmarked" ? "all" : "bookmarked");
+              setCurrentPage(1); // 필터 변경 시 첫 페이지로 이동
+            }}
             className={`p-2 rounded-lg transition-colors ${
               filterBy === "bookmarked"
                 ? "bg-blue-100 text-blue-700 border border-blue-300"
@@ -318,7 +376,10 @@ const CommunityPage: React.FC = () => {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={() => setFilterBy(filterBy === "liked" ? "all" : "liked")}
+            onClick={() => {
+              setFilterBy(filterBy === "liked" ? "all" : "liked");
+              setCurrentPage(1); // 필터 변경 시 첫 페이지로 이동
+            }}
             className={`p-2 rounded-lg transition-colors ${
               filterBy === "liked"
                 ? "bg-red-100 text-red-700 border border-red-300"
@@ -341,7 +402,10 @@ const CommunityPage: React.FC = () => {
           ].map((option) => (
             <button
               key={option.key}
-              onClick={() => setSortBy(option.key as any)}
+              onClick={() => {
+                setSortBy(option.key as any);
+                setCurrentPage(1); // 정렬 변경 시 첫 페이지로 이동
+              }}
               className={`flex items-center space-x-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                 sortBy === option.key
                   ? "bg-white text-purple-600 shadow-sm"
@@ -362,7 +426,7 @@ const CommunityPage: React.FC = () => {
         transition={{ delay: 0.2 }}
         className="space-y-4"
       >
-        {sortedPosts.length === 0 ? (
+        {currentPosts.length === 0 ? (
           <div className="bg-white rounded-2xl p-12 text-center shadow-sm border border-gray-200">
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <MessageCircle className="w-8 h-8 text-gray-400" />
@@ -386,12 +450,12 @@ const CommunityPage: React.FC = () => {
             </button>
           </div>
         ) : (
-          sortedPosts.map((post, index) => (
+          currentPosts.map((post, index) => (
             <motion.div
               key={post.postId}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
+              transition={{ delay: index * 0.05 }}
             >
               <PostCard
                 post={post}
@@ -406,12 +470,53 @@ const CommunityPage: React.FC = () => {
         )}
       </motion.div>
 
+      {/* --- 페이지네이션 컨트롤 --- */}
+      {totalPages > 1 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="flex justify-center items-center space-x-2 py-6"
+        >
+          <button
+            onClick={() => paginate(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            aria-label="이전 페이지"
+          >
+            <ChevronLeft className="w-5 h-5 text-gray-600" />
+          </button>
+          {getPageNumbers().map((number) => (
+            <button
+              key={number}
+              onClick={() => paginate(number)}
+              className={`px-4 py-2 rounded-full font-medium transition-colors ${
+                currentPage === number
+                  ? "bg-primary-600 text-white shadow-md"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+              aria-current={currentPage === number ? "page" : undefined}
+            >
+              {number}
+            </button>
+          ))}
+          <button
+            onClick={() => paginate(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            aria-label="다음 페이지"
+          >
+            <ChevronRight className="w-5 h-5 text-gray-600" />
+          </button>
+        </motion.div>
+      )}
+      {/* --------------------------- */}
+
       {/* 글쓰기 모달 */}
       {isCreateModalOpen && (
         <CreatePostModal
           post={editingPost}
           onClose={async () => {
-            // ✅ loadPosts()를 await로 호출하도록 수정
             setIsCreateModalOpen(false);
             setEditingPost(null);
             await loadPosts();
