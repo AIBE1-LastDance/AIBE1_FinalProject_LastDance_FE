@@ -21,7 +21,7 @@ import {SiNaver} from 'react-icons/si';
 import {useAuthStore} from '../../store/authStore';
 import {useAppStore} from '../../store/appStore';
 import {useNotificationStore} from '../../store/notificationStore';
-import {useNotifications} from '../../hooks/useNotifications';
+import {useSSEStore} from '../../store/sseStore';
 import {useNavigate, useLocation} from 'react-router-dom';
 import CreateGroupModal from '../groups/CreateGroupModal';
 import JoinGroupModal from '../groups/JoinGroupModal';
@@ -35,7 +35,7 @@ const Header: React.FC = () => {
     const {logout} = useAuth();
     const {mode, setMode, currentGroup, joinedGroups, setCurrentGroup, loadMyGroups} = useAppStore();
     const {notifications, unreadCount, markAsRead, markAllAsRead} = useNotificationStore();
-    const {isSSEConnected} = useNotifications();
+    const {isSSEConnected} = useSSEStore();
     const navigate = useNavigate();
     const location = useLocation();
     const [showUserMenu, setShowUserMenu] = useState(false);

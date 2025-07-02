@@ -3,12 +3,16 @@ import Header from './Header';
 import MobileNav from './MobileNav';
 import Footer from './Footer';
 import { Toaster } from 'react-hot-toast';
+import { useNotifications } from '../../hooks/useNotifications';
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
+  // 전체 앱에서 한 번만 SSE 연결 관리
+  useNotifications();
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header />

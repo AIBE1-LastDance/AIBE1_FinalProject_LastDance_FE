@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import {profileApi} from "../../api/profile";
 import {notificationApi, NotificationSettingRequest} from "../../api/notifications";
 import Avatar from "../common/Avatar";
-import {useNotifications} from "../../hooks/useNotifications";
+import {useSSEStore} from "../../store/sseStore";
 
 const SettingsPage: React.FC = () => {
     const {user, setProcessingAccountDeletion} = useAuthStore();
@@ -20,7 +20,7 @@ const SettingsPage: React.FC = () => {
         unsubscribeFromWebPush,
         connectSSE,
         disconnectSSE
-    } = useNotifications();
+    } = useSSEStore();
     const [activeTab, setActiveTab] = useState('profile');
     const [profileData, setProfileData] = useState({
         name: user?.username || '',
@@ -670,7 +670,7 @@ const SettingsPage: React.FC = () => {
                                 <div className="flex space-x-2">
                                     {notificationPermission !== 'granted' && (
                                         <button
-                                            onClick={requestNotificationPermission}
+                                            onClick={() => requestNotificationPermission?.()}
                                             className="px-3 py-1 rounded-lg text-sm font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
                                         >
                                             권한 요청
@@ -678,7 +678,7 @@ const SettingsPage: React.FC = () => {
                                     )}
                                     {isWebPushSupported && notificationPermission === 'granted' && (
                                         <button
-                                            onClick={isWebPushSubscribed ? unsubscribeFromWebPush : subscribeToWebPush}
+                                            onClick={() => isWebPushSubscribed ? unsubscribeFromWebPush?.() : subscribeToWebPush?.()}
                                             disabled={!import.meta.env.VITE_VAPID_PUBLIC_KEY || 
                                                      import.meta.env.VITE_VAPID_PUBLIC_KEY === 'your_vapid_public_key_here'}
                                             className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
