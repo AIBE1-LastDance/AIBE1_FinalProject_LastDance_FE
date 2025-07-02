@@ -41,17 +41,32 @@ export const expenseAPI = {
     create: async (data: ExpenseWithReceiptRequest) => {
         const formData = new FormData();
 
-        // 기본 데이터를 JSON으로 추가
-        const expenseData = {
-            title: data.title,
-            amount: data.amount,
-            category: data.category,
-            date: data.date,
-            memo: data.memo,
-            groupId: data.groupId,
-            splitType: data.splitType,
-            splitData: data.splitData,
-        };
+        // 개인 지출과 그룹 지출에 따른 데이터 구조
+        let expenseData;
+        let endpoint;
+
+        if (data.groupId) {
+            expenseData = {
+                title: data.title,
+                amount: data.amount,
+                category: data.category,
+                date: data.date,
+                memo: data.memo,
+                groupId: data.groupId,
+                splitType: data.splitType,
+                splitData: data.splitData,
+            };
+            endpoint = '/api/v1/expenses/group';
+        } else {
+            expenseData = {
+                title: data.title,
+                amount: data.amount,
+                category: data.category,
+                date: data.date,
+                memo: data.memo,
+            };
+            endpoint = '/api/v1/expenses/personal';
+        }
 
         formData.append('expense', new Blob([JSON.stringify(expenseData)], {
             type: 'application/json',
@@ -62,7 +77,7 @@ export const expenseAPI = {
             formData.append('receiptFile', data.receipt);
         }
 
-        const response = await apiClient.post('/api/v1/expenses', formData, {
+        const response = await apiClient.post(endpoint, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },

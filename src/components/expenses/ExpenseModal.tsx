@@ -150,7 +150,6 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
             date: formData.date,
             memo: formData.memo || undefined,
             groupId: mode === 'group' && currentGroup ? currentGroup.id : null,  // 개인 모드에서는 null
-            userId: user.id,
             splitType: mode === 'group' ? formData.splitType : undefined,
             splitData: splitDataArray,
             receipt: formData.receipt,
