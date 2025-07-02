@@ -68,6 +68,13 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
         }
     }, [expense]);
 
+    const getDisplayNickname = (member: any) => {
+        if (member.userId === user?.id) {
+            return user?.nickname || member.nickname;
+        }
+        return member.nickname;
+    };
+
     const categories = [
         {value: 'FOOD', label: '식비', color: '#FF6B6B'},
         {value: 'UTILITIES', label: '공과금', color: '#4ECDC4'},
@@ -427,7 +434,7 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                                     <div className="space-y-3">
                                         {currentGroup.members.map((member) => (
                                             <div key={member.userId} className="flex items-center justify-between">
-                                                <span className="text-sm text-gray-600">{member.nickname}</span>
+                                                <span className="text-sm text-gray-600">{getDisplayNickname(member)}</span>
                                                 <input
                                                     type="text"  // number → text로 변경
                                                     value={formData.splitData[member.userId] ?
@@ -523,7 +530,7 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                                                                             }}
                                                                             className="px-2 py-1 bg-purple-100 text-purple-600 rounded text-xs hover:bg-purple-200 transition-colors"
                                                                         >
-                                                                            {member.nickname}가 부담
+                                                                            {getDisplayNickname(member)}가 부담
                                                                         </button>
                                                                     ))}
                                                                 </div>
@@ -574,7 +581,7 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                                                         }}
                                                         className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                                                     />
-                                                    <span className="text-sm text-gray-700">{member.nickname}</span>
+                                                    <span className="text-sm text-gray-700">{getDisplayNickname(member)}</span>
                                                     {formData.splitData[member.userId] !== undefined && (
                                                         <span className="text-sm text-blue-600 ml-auto">
                                 {new Intl.NumberFormat('ko-KR', {style: 'currency', currency: 'KRW'}).format(

@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import {profileApi} from "../../api/profile";
 import {notificationApi, NotificationSettingRequest} from "../../api/notifications";
 import Avatar from "../common/Avatar";
+import {useAppStore} from "../../store/appStore.ts";
 
 const SettingsPage: React.FC = () => {
     const {user, setProcessingAccountDeletion} = useAuthStore();
