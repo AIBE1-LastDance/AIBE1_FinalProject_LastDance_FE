@@ -4,16 +4,15 @@ import {
   X,
   Hash,
   Send,
-  MapPin,
+  Users,
   Lightbulb,
   MessageSquare,
   HelpCircle,
   Star,
-  Users,
 } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 import toast from "react-hot-toast";
-import { Post } from "../../types";
+import { Post } from "../../types/community/community";
 import { createPost, updatePost } from "../../api/community/community";
 
 interface CreatePostModalProps {
@@ -77,20 +76,25 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ post, onClose }) => {
         title: title.trim(),
         content: content.trim(),
         category: frontendToBackendCategory[category],
+        // tags는 백엔드에 보내는 데이터에 포함되지 않았으므로 제거하거나 백엔드 API에 맞게 추가해야 합니다.
+        // tags: tags,
       };
 
       if (isEditing && post) {
-        await updatePost(post.id, requestData);
+        await updatePost(post.postId, requestData);
         toast.success("게시글이 수정되었습니다!");
       } else {
         await createPost(requestData);
         toast.success("게시글이 성공적으로 작성되었습니다!");
       }
 
-      onClose();
-    } catch (error) {
+      onClose(); // 게시글 작성/수정 성공 후 모달 닫기
+    } catch (error: any) {
+      // 에러 객체의 message 속성에 접근하기 위해 any 타입 명시
+      console.error("게시글 처리 중 오류 발생:", error);
       toast.error(
-        isEditing ? "게시글 수정 중 오류 발생" : "게시글 작성 중 오류 발생"
+        error.message ||
+          (isEditing ? "게시글 수정 중 오류 발생" : "게시글 작성 중 오류 발생")
       );
     } finally {
       setIsSubmitting(false);
@@ -181,8 +185,8 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ post, onClose }) => {
                 </div>
               </div>
 
-              {/* 태그 */}
-              <div>
+              {/* 태그 (현재 백엔드 API에 tags가 포함되지 않아 주석 처리) */}
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   태그 (최대 5개)
                 </label>
@@ -232,7 +236,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ post, onClose }) => {
                     </div>
                   )}
                 </div>
-              </div>
+              </div> */}
             </div>
           </div>
 

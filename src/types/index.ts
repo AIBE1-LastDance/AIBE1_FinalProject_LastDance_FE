@@ -4,8 +4,8 @@ export interface User {
     nickname: string;
     email: string;
     avatar?: string;
-    provider: 'google' | 'kakao' | 'naver';
-    role?: 'USER' | 'ADMIN';
+    provider: "google" | "kakao" | "naver";
+    role?: "USER" | "ADMIN";
     monthlyBudget?: number; // 개인 한 달 예산
 }
 
@@ -26,7 +26,7 @@ export interface GroupMember {
     userId: string;
     nickname: string;
     profileImagePath?: string;
-    role: 'OWNER' | 'MEMBER';
+    role: "OWNER" | "MEMBER";
 }
 
 export interface GroupResponse {
@@ -46,9 +46,9 @@ export interface CreateGroupRequest {
 }
 
 export interface UpdateGroupRequest {
-    groupName: string;     // 필수로 변경
-    maxMembers: number;    // 필수로 변경
-    groupBudget: number;   // 필수로 변경
+    groupName: string; // 필수로 변경
+    maxMembers: number; // 필수로 변경
+    groupBudget: number; // 필수로 변경
 }
 
 export interface JoinGroupRequest {
@@ -85,12 +85,21 @@ export interface Event {
     startTime?: string;
     endTime?: string;
     isAllDay?: boolean;
-    category: 'general' | 'bill' | 'cleaning' | 'meeting' | 'appointment' | 'health' | 'shopping' | 'travel' | 'other';
+    category:
+        | "general"
+        | "bill"
+        | "cleaning"
+        | "meeting"
+        | "appointment"
+        | "health"
+        | "shopping"
+        | "travel"
+        | "other";
     color: string;
     groupId?: string;
     groupName?: string; // 그룹 이름 추가
     userId: string;
-    repeat?: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
+    repeat?: "none" | "daily" | "weekly" | "monthly" | "yearly";
     repeatEndDate?: Date;
     exceptionDates?: string[] | Date[]; // 반복 일정에서 제외할 날짜들
     originalEventId?: string; // 반복 일정의 원본 이벤트 ID
@@ -103,64 +112,43 @@ export interface Task {
     description?: string;
     completed: boolean;
     dueDate?: Date;
-    priority: 'low' | 'medium' | 'high';
+    priority: "low" | "medium" | "high";
     assignedTo?: string;
     groupId?: string;
     userId: string;
-    category: 'personal' | 'group';
+    category: "personal" | "group";
     createdAt: Date;
 }
 
 export interface Expense {
-    id: string;
+    id: number; // string → number 변경
     title: string;
     amount: number;
-    category: 'food' | 'utilities' | 'transport' | 'shopping' | 'entertainment' | 'other';
-    date: Date;
-    receipt?: string;
+    category: 'FOOD' | 'UTILITIES' | 'TRANSPORT' | 'SHOPPING' | 'ENTERTAINMENT' | 'OTHER'; // 대문자로 변경
+    date: string; // Date → string 변경 (YYYY-MM-DD 형식)
+    hasReceipt?: boolean;
     memo?: string;
     groupId?: string;
     userId: string;
-    splitType?: 'equal' | 'custom' | 'specific';
+    splitType?: 'EQUAL' | 'CUSTOM' | 'SPECIFIC';
     splitData?: { [userId: string]: number };
-}
-
-export interface Post {
-    id: string;
-    title: string;
-    content: string;
-    category: 'roommate' | 'tip' | 'free' | 'question' | 'policy' | 'recipe' | 'cleaning' | 'shopping';
-    author?: User;
-    userId: string;
-    groupId?: string;
-    createdAt: Date;
-    updatedAt: Date;
-    likes?: number;
-    likedBy?: string[];
-    bookmarkedBy?: string[];
-    comments?: Comment[];
-    images?: string[];
-    tags?: string[];
-}
-
-export interface Comment {
-    id: string;
-    content: string;
-    author?: User;
-    userId: string;
-    createdAt: Date;
-    updatedAt?: Date;
+    expenseType?: 'PERSONAL' | 'GROUP';
+    createdAt?: string;
+    isGroupShare?: boolean;
+    groupName?: string;
+    myShareAmount?: number;
+    originalExpenseId?: number;
 }
 
 export interface GameResult {
     id: string;
-    gameType: 'roulette' | 'rps' | 'slot' | 'quiz';
+    gameType: "roulette" | "rps" | "slot" | "quiz";
     result: any;
     participants: string[];
     winner?: string;
     timestamp: Date;
 }
 
-export type AppMode = 'personal' | 'group';
+export type AppMode = "personal" | "group";
 
-export type ViewType = 'year' | 'month' | 'week' | 'day';
+export type ViewType = "year" | "month" | "week" | "day";

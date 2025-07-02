@@ -3,8 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAppStore } from "../../store/appStore";
 import PostDetail from "./PostDetail";
 import CreatePostModal from "./CreatePostModal";
-import { Post } from "../../types";
-import { fetchPostById } from "../../api/community/community"; // ✅ API 불러오기
+import { Post } from "../../types/community/community";
+import { fetchPostById } from "../../api/community/community";
 import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 
@@ -20,33 +20,35 @@ const PostDetailPage: React.FC = () => {
   const [editingPost, setEditingPost] = useState<Post | null>(null);
 
   useEffect(() => {
-    const localPost = posts.find((p) => p.id === postId);
+    // 로컬 스토어의 posts에서 먼저 찾기 (선택 사항, API 호출이 우선이라면 제거 가능)
+    const localPost = posts.find((p) => p.postId === postId); // `p.id` 대신 `p.postId` 사용 (타입에 맞춰)
     if (localPost) {
       setPost(localPost);
       setLoading(false);
     } else if (postId) {
       fetchPostById(postId)
         .then((data) => {
-          // ✅ author 직접 추가 (백엔드 응답에는 없으므로)
-          const postWithAuthor: Post = {
+          // ✅ 백엔드 응답(data)이 이미 Post 타입에 맞게 comments와 authorNickname을 가지고 있다고 가정합니다.
+          // 따라서 여기서는 `author` 객체를 수동으로 만들 필요가 없습니다.
+          // data 자체를 Post 타입으로 타입 캐스팅하여 사용합니다.
+          const fetchedPost: Post = {
             ...data,
-            author: {
-              id: data.userId,
-              username: data.username,
-              nickname: data.username,
-              email: "",
-              provider: "google",
-            },
-            likedBy: [],
-            bookmarkedBy: [],
-            comments: [],
+            // 백엔드에서 내려주는 필드를 여기에 명시적으로 적지 않습니다.
+            // data에 이미 포함되어 있을 것으로 예상합니다.
+            // 만약 likedBy, bookmarkedBy가 백엔드 응답에 없다면 아래처럼 기본값 설정
+            likedBy: data.likedBy || [],
+            bookmarkedBy: data.bookmarkedBy || [],
+            comments: data.comments || [],
           };
-          setPost(postWithAuthor);
+          setPost(fetchedPost);
         })
-        .catch(() => setNotFound(true))
+        .catch((error) => {
+          console.error("게시글 불러오기 실패:", error);
+          setNotFound(true);
+        })
         .finally(() => setLoading(false));
     }
-  }, [postId, posts]);
+  }, [postId, posts]); // 의존성 배열에 posts 추가 (로컬 스토어 사용 시)
 
   if (loading) {
     return <div className="text-center py-20">로딩 중...</div>;
@@ -80,13 +82,15 @@ const PostDetailPage: React.FC = () => {
     );
   }
 
-  const handleEdit = (post: Post) => {
-    setEditingPost(post);
+  const handleEdit = (postToEdit: Post) => {
+    // 매개변수 이름을 겹치지 않게 변경
+    setEditingPost(postToEdit);
     setIsEditModalOpen(true);
   };
 
-  const handleDelete = (postId: string) => {
-    deletePost(postId);
+  const handleDelete = (idToDelete: string) => {
+    // 매개변수 이름을 겹치지 않게 변경
+    deletePost(idToDelete);
     navigate("/community");
   };
 

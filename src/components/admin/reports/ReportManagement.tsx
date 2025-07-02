@@ -153,10 +153,47 @@ const ReportManagement: React.FC = () => {
           const reportDetail = await AdminAPI.getReportDetail(reportId);
           console.log('신고 상세 API 응답:', reportDetail);
           
+          // 원본 콘텐츠 조회
+          let targetContent = null;
+          if (reportDetail.targetId) {
+            if (reportDetail.reportType === 'COMMENT') {
+              console.log('댓글 상세 조회 시작, commentId:', reportDetail.targetId);
+              const commentDetail = await AdminAPI.getCommentDetail(reportDetail.targetId);
+              if (commentDetail) {
+                targetContent = {
+                  type: 'COMMENT',
+                  id: commentDetail.commentId,
+                  content: commentDetail.content,
+                  author: commentDetail.username,
+                  createdAt: commentDetail.createdAt,
+                  postId: commentDetail.postId
+                };
+              }
+            } else if (reportDetail.reportType === 'POST') {
+              console.log('게시글 상세 조회 시작, postId:', reportDetail.targetId);
+              const postDetail = await AdminAPI.getPostDetail(reportDetail.targetId);
+              if (postDetail) {
+                targetContent = {
+                  type: 'POST',
+                  id: postDetail.postId,
+                  title: postDetail.title,
+                  content: postDetail.content,
+                  category: postDetail.category,
+                  author: postDetail.username,
+                  createdAt: postDetail.createdAt,
+                  likeCount: postDetail.likeCount
+                };
+              }
+            }
+          }
+          
           // 모달이 여전히 열려있을 때만 업데이트
           setSelectedReport(prev => {
             if (prev && prev.reportId === reportId) {
-              return reportDetail;
+              return {
+                ...reportDetail,
+                targetContent: targetContent
+              };
             }
             return prev;
           });
@@ -169,7 +206,42 @@ const ReportManagement: React.FC = () => {
         const reportDetail = await AdminAPI.getReportDetail(reportId);
         console.log('신고 상세 API 응답:', reportDetail);
         
-        setSelectedReport(reportDetail);
+        // 원본 콘텐츠 조회
+        let targetContent = null;
+        if (reportDetail.targetId) {
+          if (reportDetail.reportType === 'COMMENT') {
+            const commentDetail = await AdminAPI.getCommentDetail(reportDetail.targetId);
+            if (commentDetail) {
+              targetContent = {
+                type: 'COMMENT',
+                id: commentDetail.commentId,
+                content: commentDetail.content,
+                author: commentDetail.username,
+                createdAt: commentDetail.createdAt,
+                postId: commentDetail.postId
+              };
+            }
+          } else if (reportDetail.reportType === 'POST') {
+            const postDetail = await AdminAPI.getPostDetail(reportDetail.targetId);
+            if (postDetail) {
+              targetContent = {
+                type: 'POST',
+                id: postDetail.postId,
+                title: postDetail.title,
+                content: postDetail.content,
+                category: postDetail.category,
+                author: postDetail.username,
+                createdAt: postDetail.createdAt,
+                likeCount: postDetail.likeCount
+              };
+            }
+          }
+        }
+        
+        setSelectedReport({
+          ...reportDetail,
+          targetContent: targetContent
+        });
         setShowReportDetail(true);
       }
     } catch (err) {
@@ -218,7 +290,7 @@ const ReportManagement: React.FC = () => {
     if (!selectedReport) return null;
 
     const [processType, setProcessType] = useState('approve');
-    const [adminComment, setAdminComment] = useState('');
+    const [banDuration, setBanDuration] = useState(7);
 
     return (
       <div className="p-6">
@@ -292,21 +364,108 @@ const ReportManagement: React.FC = () => {
                   <div className="mb-2">
                     <span className="text-sm text-gray-600">상세 신고 내용:</span>
                   </div>
-                  <p className="text-sm text-gray-800 mb-4">{selectedReport.reason || 'N/A'}</p>
+                  <div className="bg-gray-50 p-3 rounded mb-4">
+                    <p className="text-sm text-gray-800">{selectedReport.reason || 'N/A'}</p>
+                  </div>
                   
                   <div className="mb-2">
                     <span className="text-sm text-gray-600">원본 콘텐츠:</span>
                   </div>
-                  <div className="bg-white p-3 rounded border">
-                    <p className="text-sm text-gray-800">
-                      {selectedReport.targetContent ? 
-                        (typeof selectedReport.targetContent === 'string' ? 
-                          selectedReport.targetContent : 
-                          JSON.stringify(selectedReport.targetContent, null, 2)
-                        ) : 
-                        '콘텐츠 정보를 불러올 수 없습니다.'
-                      }
-                    </p>
+                  <div className="bg-white p-4 rounded border">
+                    {selectedReport.targetContent ? (
+                      <div className="space-y-3">
+                        {/* 콘텐츠 타입 헤더 */}
+                        <div className="flex items-center justify-between pb-2 border-b">
+                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                            selectedReport.targetContent.type === 'POST' 
+                              ? 'bg-blue-100 text-blue-800' 
+                              : 'bg-green-100 text-green-800'
+                          }`}>
+                            {selectedReport.targetContent.type === 'POST' ? '게시글' : '댓글'}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {new Date(selectedReport.targetContent.createdAt).toLocaleDateString('ko-KR', {
+                              year: 'numeric',
+                              month: 'long', 
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </span>
+                        </div>
+
+                        {/* 콘텐츠 내용 */}
+                        <div className="space-y-2">
+                          <div className="flex items-start space-x-2">
+                            <span className="text-xs text-gray-500 min-w-12">작성자:</span>
+                            <span className="text-sm font-medium text-gray-900">
+                              {selectedReport.targetContent.author}
+                            </span>
+                          </div>
+
+                          {selectedReport.targetContent.type === 'POST' && selectedReport.targetContent.title && (
+                            <div className="flex items-start space-x-2">
+                              <span className="text-xs text-gray-500 min-w-12">제목:</span>
+                              <span className="text-sm font-medium text-gray-900">
+                                {selectedReport.targetContent.title}
+                              </span>
+                            </div>
+                          )}
+
+                          {selectedReport.targetContent.type === 'POST' && selectedReport.targetContent.category && (
+                            <div className="flex items-start space-x-2">
+                              <span className="text-xs text-gray-500 min-w-12">카테고리:</span>
+                              <span className="text-sm text-gray-700">
+                                {selectedReport.targetContent.category}
+                              </span>
+                            </div>
+                          )}
+
+                          <div className="flex items-start space-x-2">
+                            <span className="text-xs text-gray-500 min-w-12">내용:</span>
+                            <div className="flex-1">
+                              <div className="bg-gray-50 p-3 rounded text-sm text-gray-800 whitespace-pre-wrap">
+                                {selectedReport.targetContent.content}
+                              </div>
+                            </div>
+                          </div>
+
+                          {selectedReport.targetContent.type === 'POST' && selectedReport.targetContent.likeCount !== undefined && (
+                            <div className="flex items-start space-x-2">
+                              <span className="text-xs text-gray-500 min-w-12">좋아요:</span>
+                              <span className="text-sm text-gray-700">
+                                {selectedReport.targetContent.likeCount}개
+                              </span>
+                            </div>
+                          )}
+
+                          {selectedReport.targetContent.type === 'COMMENT' && selectedReport.targetContent.postId && (
+                            <div className="flex items-start space-x-2">
+                              <span className="text-xs text-gray-500 min-w-12">게시글 ID:</span>
+                              <span className="text-xs text-gray-600 font-mono">
+                                {selectedReport.targetContent.postId}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-6">
+                        <div className="text-gray-400 mb-3">
+                          <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                        </div>
+                        <p className="text-sm text-gray-600 font-medium">
+                          원본 콘텐츠를 불러올 수 없습니다
+                        </p>
+                        <p className="text-xs text-gray-400 mt-2">
+                          • 콘텐츠가 삭제되었을 수 있습니다<br/>
+                          • 접근 권한이 없을 수 있습니다<br/>
+                          • 지원하지 않는 콘텐츠 유형일 수 있습니다
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -384,7 +543,7 @@ const ReportManagement: React.FC = () => {
                           onChange={(e) => setProcessType(e.target.value)}
                           className="mr-2"
                         />
-                        <span className="text-sm">신고 승인 (콘텐츠 삭제/숨김 및 사용자 제재)</span>
+                        <span className="text-sm">신고 승인 (사용자 제재)</span>
                       </label>
                       <label className="flex items-center">
                         <input
@@ -411,42 +570,42 @@ const ReportManagement: React.FC = () => {
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      처리 의견 *
-                    </label>
-                    <textarea
-                      value={adminComment}
-                      onChange={(e) => setAdminComment(e.target.value)}
-                      rows={4}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="처리 의견을 입력하세요..."
-                      required
-                    />
-                  </div>
+                  {processType === 'approve' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        제재 기간 (일)
+                      </label>
+                      <input
+                        type="number"
+                        value={banDuration}
+                        onChange={(e) => setBanDuration(parseInt(e.target.value))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        min="1"
+                        max="365"
+                        placeholder="제재 기간을 입력하세요"
+                      />
+                    </div>
+                  )}
 
                   <div className="flex space-x-3">
                     <button
                         onClick={async () => {
-                          if (!adminComment.trim()) {
-                            alert('처리 의견을 입력해주세요.');
-                            return;
-                          }
-
                           try {
-                            await processReport(selectedReport.reportId, {
-                              action: processType,
-                              status:
-                                  processType === 'approve'
-                                      ? 'RESOLVED'
-                                      : processType === 'reject'
-                                          ? 'REJECTED'
-                                          : 'IN_PROGRESS',
-                              adminNote: adminComment,
-                              penaltyType: processType === 'approve' ? 'BAN' : undefined,
-                              penaltyDuration: processType === 'approve' ? 30 : undefined,
+                            const requestData: any = {
+                              status: processType === 'approve' ? 'RESOLVED' : 
+                                      processType === 'reject' ? 'REJECTED' : 'IN_PROGRESS',
                               sendNotification: true
-                            });
+                            };
+
+                            // 승인인 경우 사용자 제재 추가
+                            if (processType === 'approve') {
+                              requestData.banUser = true;
+                              const banEndDate = new Date();
+                              banEndDate.setDate(banEndDate.getDate() + (banDuration || 7));
+                              requestData.banEndDate = banEndDate.toISOString();
+                            }
+
+                            await processReport(selectedReport.reportId, requestData);
 
                             alert('신고 처리가 완료되었습니다.');
                             setShowReportDetail(false);
@@ -475,12 +634,6 @@ const ReportManagement: React.FC = () => {
             ) : (
               <div className="bg-gray-50 p-4 rounded-lg">
                 <p className="text-sm text-gray-600">이미 처리된 신고입니다.</p>
-                {selectedReport.adminNote && (
-                  <div className="mt-3">
-                    <span className="text-sm text-gray-600">처리 의견:</span>
-                    <p className="text-sm text-gray-800 mt-1">{selectedReport.adminNote}</p>
-                  </div>
-                )}
               </div>
             )}
         </div>

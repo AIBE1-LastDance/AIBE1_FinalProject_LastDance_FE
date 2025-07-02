@@ -22,7 +22,8 @@ interface UseCalendarReturn {
     loadEvents: (query?: CalendarsQuery) => Promise<void>;
     createEvent: (eventData: Partial<Event>) => Promise<Event | null>;
     updateEvent: (eventId: string, eventData: Partial<Event>) => Promise<Event | null>;
-    deleteEvent: (eventId: string, deleteType?: 'single' | 'future' | 'all', instanceDate?: string) => Promise<boolean>;
+    // 이벤트 삭제 (모든 반복 일정 삭제)
+    deleteEvent: (eventId: string) => Promise<boolean>;
     refreshEvents: () => Promise<void>;
 
     // 네비게이션
@@ -196,25 +197,19 @@ export const useCalendar = (options: UseCalendarOptions = {}): UseCalendarReturn
         }
     }, [loading]);
 
-    // 이벤트 삭제
-    const deleteEvent = useCallback(async (eventId: string, deleteType?: 'single' | 'future' | 'all', instanceDate?: string): Promise<boolean> => {
+    // 이벤트 삭제 (모든 반복 일정 삭제)
+    const deleteEvent = useCallback(async (eventId: string): Promise<boolean> => {
         if (loading) return false;
         
         setLoading(true);
         setError(null);
 
         try {
-            const response = await calendarApi.deleteCalendar(eventId, deleteType, instanceDate);
+            const response = await calendarApi.deleteCalendar(eventId);
 
             if (response.success) {
-                if (deleteType === 'single' && instanceDate) {
-                    // 'single' 삭제의 경우: 전체 이벤트를 제거하지 않고 새로고침으로 업데이트된 데이터 가져오기
-                    await refreshEvents(); // 서버에서 최신 데이터 다시 가져오기
-                } else {
-                    // 'all' 또는 'future' 삭제의 경우: 이벤트 완전 제거
-                    setEvents(prev => prev.filter(event => event.id !== eventId));
-                }
-                
+                // 모든 반복 일정 삭제이므로 해당 이벤트를 완전히 제거
+                setEvents(prev => prev.filter(event => event.id !== eventId));
                 return true;
             } else {
                 const errorMsg = response.error || 'Failed to delete event';
@@ -234,7 +229,7 @@ export const useCalendar = (options: UseCalendarOptions = {}): UseCalendarReturn
         } finally {
             setLoading(false);
         }
-    }, [loading, refreshEvents]);
+    }, [loading]);
 
     // 네비게이션 함수들
     const goToToday = useCallback(() => {
@@ -369,7 +364,7 @@ export const useCalendar = (options: UseCalendarOptions = {}): UseCalendarReturn
         });
     }, [events]);
 
-    // 자동 로드 - 한 번만 실행
+    // 자동 로드 - groupId, currentDate, currentView 변경 시 실행
     useEffect(() => {
         if (autoLoad) {
             const query: CalendarsQuery = {
@@ -393,33 +388,7 @@ export const useCalendar = (options: UseCalendarOptions = {}): UseCalendarReturn
 
             loadEvents(query);
         }
-    }, []); // 컴포넌트 마운트 시에만 실행
-
-    // 날짜나 뷰 변경 시 이벤트 새로고침
-    useEffect(() => {
-        if (autoLoad) {
-            const query: CalendarsQuery = {
-                dateTime: currentDate.toISOString(),
-            };
-
-            switch (currentView) {
-                case 'year':
-                    query.viewType = 'YEARLY';
-                    break;
-                case 'month':
-                    query.viewType = 'MONTHLY';
-                    break;
-                case 'week':
-                    query.viewType = 'WEEKLY';
-                    break;
-                case 'day':
-                    query.viewType = 'DAILY';
-                    break;
-            }
-
-            loadEvents(query);
-        }
-    }, [currentDate, currentView]); // loadEvents, autoLoad 의존성 제거
+    }, [groupId, currentDate, currentView, autoLoad, loadEvents]); // 모든 관련 의존성 추가
 
     return {
         // 상태

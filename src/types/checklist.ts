@@ -21,6 +21,7 @@ export interface ChecklistResponseDTO {
   description: string;         // 설명
   type: "PERSONAL" | "GROUP";  // 체크리스트 타입
   groupId?: string;            // 그룹 ID (그룹 체크리스트인 경우)
+  groupName?: string;          // 그룹명 (그룹 체크리스트인 경우)
   assignee: GroupMemberDTO;    // 담당자 정보
   isCompleted: boolean;        // 완료 여부
   completedAt?: string;        // 완료 시간 (ISO 8601 형식)

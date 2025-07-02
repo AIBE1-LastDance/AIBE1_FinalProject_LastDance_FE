@@ -20,7 +20,7 @@ import { useAdminDashboard } from '../../../hooks/useAdmin';
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { dashboardStats, signupTrend, loading, error, refetch, fetchSignupTrend } = useAdminDashboard();
-  const [selectedPeriod, setSelectedPeriod] = useState<'daily' | 'weekly' | 'monthly'>('daily');
+  const [selectedPeriod, setSelectedPeriod] = useState<'weekly' | 'monthly'>('weekly');
 
   // 차트 데이터 변환
   const chartData = signupTrend.map(item => {
@@ -28,9 +28,6 @@ const AdminDashboard: React.FC = () => {
     let formattedDate = '';
     
     switch (selectedPeriod) {
-      case 'daily':
-        formattedDate = date.toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' });
-        break;
       case 'weekly':
         formattedDate = date.toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' });
         break;
@@ -45,14 +42,13 @@ const AdminDashboard: React.FC = () => {
     };
   });
 
-  const handlePeriodChange = (period: 'daily' | 'weekly' | 'monthly') => {
+  const handlePeriodChange = (period: 'weekly' | 'monthly') => {
     setSelectedPeriod(period);
     fetchSignupTrend(period);
   };
 
   const getPeriodText = (period: string) => {
     switch (period) {
-      case 'daily': return '일간';
       case 'weekly': return '주간';
       case 'monthly': return '월간';
       default: return period;
@@ -221,7 +217,7 @@ const AdminDashboard: React.FC = () => {
               <p className="text-sm text-gray-500 mt-1">기간별 신규 가입자 현황을 확인하세요</p>
             </div>
             <div className="flex space-x-2 bg-gray-100 rounded-lg p-1">
-              {(['daily', 'weekly', 'monthly'] as const).map((period) => (
+              {(['weekly', 'monthly'] as const).map((period) => (
                 <button
                   key={period}
                   onClick={() => handlePeriodChange(period)}

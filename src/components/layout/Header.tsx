@@ -26,6 +26,7 @@ import JoinGroupModal from '../groups/JoinGroupModal';
 import GroupSettingsModal from '../groups/GroupSettingsModal';
 import {useAuth} from "../../hooks/useAuth.ts";
 import Avatar from '../common/Avatar'
+import toast from 'react-hot-toast';
 
 const Header: React.FC = () => {
     const {user, logout: storeLogout} = useAuthStore();
@@ -44,6 +45,11 @@ const Header: React.FC = () => {
 
     // 로그인 상태 확인
     const isAuthenticated = !!user;
+
+    // 그룹 모드 전환 가능 여부 확인
+    const canSwitchToGroup = joinedGroups.length > 0;
+    const isDisabled = mode === 'group' && !canSwitchToGroup;
+
 
     // 사용자가 로그인되어 있을 때 그룹 목록 로드
     useEffect(() => {
@@ -127,6 +133,12 @@ const Header: React.FC = () => {
     };
 
     const handleModeToggle = () => {
+        // 그룹 모드 전환시 그룹 없으면 차단
+        if (mode === 'personal' && joinedGroups.length === 0) {
+            toast.error('먼저 그룹을 만들거나 참여해 주세요!')
+            return;
+        }
+
         setMode(mode === 'personal' ? 'group' : 'personal');
         setShowUserMenu(false);
     };
@@ -390,71 +402,87 @@ const Header: React.FC = () => {
                                                         )}
                                                         <span className="text-sm font-medium text-gray-700">모드 변경</span>
                                                     </div>
-                                                    <motion.button
-                                                        className={`px-3 py-1 rounded-lg text-xs font-medium transition-all duration-200 ${
-                                                            mode === 'personal'
-                                                                ? 'bg-[#df6d14] text-white'
-                                                                : 'bg-purple-600 text-white'
-                                                        }`}
-                                                        whileHover={{scale: 1.05}}
-                                                        whileTap={{scale: 0.95}}
-                                                        onClick={handleModeToggle}
-                                                    >
-                                                        {mode === 'personal' ? '개인 모드' : '그룹 모드'}
-                                                    </motion.button>
+                                                    <div className="flex flex-col items-end">
+                                                        <motion.button
+                                                            className={`px-3 py-1 rounded-lg text-xs font-medium transition-all duration-200 ${
+                                                                isDisabled
+                                                                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                                                    : mode === 'personal'
+                                                                        ? 'bg-[#df6d14] text-white hover:bg-[#df6d14]/90'
+                                                                        : 'bg-purple-600 text-white hover:bg-purple-700'
+                                                            }`}
+                                                            whileHover={isDisabled ? {} : {scale: 1.05}}
+                                                            whileTap={isDisabled ? {} : {scale: 0.95}}
+                                                            onClick={handleModeToggle}
+                                                            disabled={isDisabled}
+                                                        >
+                                                            {mode === 'personal' ? '개인 모드' : '그룹 모드'}
+                                                        </motion.button>
+                                                        {mode === 'personal' && !canSwitchToGroup && (
+                                                            <span
+                                                                className="text-xs text-gray-400 mt-1">그룹에 먼저 참여하세요</span>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
 
                                             {/* Group Selector - only show in group mode */}
-                                            {mode === 'group' && (
+                                            {(mode === 'group' || joinedGroups.length === 0) && (
                                                 <div className="px-4 py-3 border-b border-gray-100">
-                                                    <div className="text-xs font-medium text-gray-500 mb-2">현재 그룹</div>
-                                                    <div className="space-y-2 max-h-32 overflow-y-auto">
-                                                        {joinedGroups.map((group) => (
-                                                            <motion.div
-                                                                key={group.id}
-                                                                className={`w-full flex items-center justify-between px-3 py-2 hover:bg-gray-50 transition-colors rounded-lg ${
-                                                                    currentGroup?.id === group.id ? 'bg-[#df6d14]/10 border border-[#df6d14]/20' : ''
-                                                                }`}
-                                                            >
-                                                                <motion.button
-                                                                    className="flex items-center space-x-3 flex-1 text-left"
-                                                                    whileHover={{x: 2}}
-                                                                    onClick={() => {
-                                                                        setCurrentGroup(group);
-                                                                        setShowUserMenu(false);
-                                                                    }}
-                                                                >
-                                                                    <div className="flex-1 min-w-0">
-                                                                        <div
-                                                                            className="text-sm font-medium text-gray-900 truncate">{group.name}</div>
-                                                                        <div
-                                                                            className="text-xs text-gray-500">{group.members.length}명
-                                                                        </div>
-                                                                    </div>
-                                                                    {currentGroup?.id === group.id && (
-                                                                        <div
-                                                                            className="w-2 h-2 bg-[#df6d14] rounded-full flex-shrink-0"></div>
-                                                                    )}
-                                                                </motion.button>
-
-                                                                {currentGroup?.id === group.id && (
-                                                                    <motion.button
-                                                                        whileHover={{scale: 1.1}}
-                                                                        whileTap={{scale: 0.9}}
-                                                                        onClick={() => {
-                                                                            setShowGroupSettingsModal(true);
-                                                                            setShowUserMenu(false);
-                                                                        }}
-                                                                        className="p-1 text-gray-400 hover:text-[#df6d14] transition-colors"
+                                                    {mode === 'group' && joinedGroups.length > 0 && (
+                                                        <>
+                                                            <div className="text-xs font-medium text-gray-500 mb-2">현재
+                                                                그룹
+                                                            </div>
+                                                            <div className="space-y-2 max-h-32 overflow-y-auto">
+                                                                {joinedGroups.map((group) => (
+                                                                    <motion.div
+                                                                        key={group.id}
+                                                                        className={`w-full flex items-center justify-between px-3 py-2 hover:bg-gray-50 transition-colors rounded-lg ${
+                                                                            currentGroup?.id === group.id ? 'bg-[#df6d14]/10 border border-[#df6d14]/20' : ''
+                                                                        }`}
                                                                     >
-                                                                        <Settings className="w-4 h-4"/>
-                                                                    </motion.button>
-                                                                )}
-                                                            </motion.div>
-                                                        ))}
-                                                    </div>
-                                                    <div className="mt-3 pt-2 border-t border-gray-100 space-y-1">
+                                                                        <motion.button
+                                                                            className="flex items-center space-x-3 flex-1 text-left"
+                                                                            whileHover={{x: 2}}
+                                                                            onClick={() => {
+                                                                                setCurrentGroup(group);
+                                                                                setShowUserMenu(false);
+                                                                            }}
+                                                                        >
+                                                                            <div className="flex-1 min-w-0">
+                                                                                <div
+                                                                                    className="text-sm font-medium text-gray-900 truncate">{group.name}</div>
+                                                                                <div
+                                                                                    className="text-xs text-gray-500">{group.members.length}명
+                                                                                </div>
+                                                                            </div>
+                                                                            {currentGroup?.id === group.id && (
+                                                                                <div
+                                                                                    className="w-2 h-2 bg-[#df6d14] rounded-full flex-shrink-0"></div>
+                                                                            )}
+                                                                        </motion.button>
+
+                                                                        {currentGroup?.id === group.id && (
+                                                                            <motion.button
+                                                                                whileHover={{scale: 1.1}}
+                                                                                whileTap={{scale: 0.9}}
+                                                                                onClick={() => {
+                                                                                    setShowGroupSettingsModal(true);
+                                                                                    setShowUserMenu(false);
+                                                                                }}
+                                                                                className="p-1 text-gray-400 hover:text-[#df6d14] transition-colors"
+                                                                            >
+                                                                                <Settings className="w-4 h-4"/>
+                                                                            </motion.button>
+                                                                        )}
+                                                                    </motion.div>
+                                                                ))}
+                                                            </div>
+                                                        </>
+                                                    )}
+                                                    <div
+                                                        className={`${mode === 'group' && joinedGroups.length > 0 ? 'mt-3 pt-2 border-t border-gray-100' : ''} space-y-1`}>
                                                         <motion.button
                                                             className="w-full flex items-center space-x-2 px-3 py-1.5 text-left text-[#df6d14] hover:bg-[#df6d14]/5 transition-colors rounded-lg text-sm"
                                                             whileHover={{x: 2}}

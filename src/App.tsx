@@ -194,7 +194,7 @@ function App() {
                     }
                 />
                 <Route
-                    path="/games/yatzy"
+                    path="/games/yahtzee"
                     element={
                         <ProtectedRoute>
                             <Layout>
