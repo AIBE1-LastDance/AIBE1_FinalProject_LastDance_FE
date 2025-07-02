@@ -24,6 +24,204 @@ interface WebPushSubscriptionRequest {
     };
 }
 
+// 전역 SSE 연결 관리자
+class SSEManager {
+    private static instance: SSEManager;
+    private eventSource: EventSource | null = null;
+    private reconnectTimeout: NodeJS.Timeout | null = null;
+    private reconnectAttempts = 0;
+    private isConnecting = false;
+    private currentUserId: string | null = null;
+    private listeners = new Set<() => void>();
+    private readonly maxReconnectAttempts = 5;
+
+    private constructor() {}
+
+    static getInstance(): SSEManager {
+        if (!SSEManager.instance) {
+            SSEManager.instance = new SSEManager();
+        }
+        return SSEManager.instance;
+    }
+
+    // 리스너 등록
+    addListener(listener: () => void) {
+        this.listeners.add(listener);
+    }
+
+    // 리스너 제거
+    removeListener(listener: () => void) {
+        this.listeners.delete(listener);
+    }
+
+    // 상태 변경 알림
+    private notifyListeners() {
+        this.listeners.forEach(listener => listener());
+    }
+
+    // 연결 상태 확인
+    isConnected(): boolean {
+        return this.eventSource?.readyState === EventSource.OPEN;
+    }
+
+    // SSE 연결
+    connect(userId: string) {
+        // 이미 같은 사용자로 연결되어 있으면 스킵
+        if (this.currentUserId === userId && this.isConnected()) {
+            console.log('[SSEManager] 이미 연결되어 있음, 스킵');
+            return;
+        }
+
+        // 다른 사용자로 연결 중이거나 이미 연결 중이면 기존 연결 해제 후 재연결
+        if (this.isConnecting || this.eventSource) {
+            console.log('[SSEManager] 기존 연결 해제 후 재연결');
+            this.disconnect();
+        }
+
+        this.isConnecting = true;
+        this.currentUserId = userId;
+
+        console.log(`[SSEManager] SSE 연결 시작 - 사용자: ${userId}`);
+
+        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
+        this.eventSource = new EventSource(`${apiBaseUrl}/api/v1/notifications/stream`, {
+            withCredentials: true
+        });
+
+        this.eventSource.onopen = () => {
+            console.log('[SSEManager] SSE 연결 성공');
+            this.isConnecting = false;
+            this.reconnectAttempts = 0;
+            useSSEStore.getState().setSSEConnected(true);
+            this.notifyListeners();
+        };
+
+        this.eventSource.addEventListener('connected', (event) => {
+            console.log('[SSEManager] SSE 연결 확인:', event.data);
+            useSSEStore.getState().setSSEConnected(true);
+            this.notifyListeners();
+        });
+
+        this.eventSource.addEventListener('notification', (event) => {
+            try {
+                const notification: NotificationData = JSON.parse(event.data);
+                console.log('[SSEManager] SSE 알림 수신:', notification);
+
+                // 알림 타입에 따른 URL 결정
+                const getUrl = (type: string) => {
+                    switch (type) {
+                        case 'SCHEDULE': return '/calendar';
+                        case 'PAYMENT': return '/expenses';
+                        case 'CHECKLIST': return '/tasks';
+                        default: return '/dashboard';
+                    }
+                };
+
+                // 알림 store에 저장
+                useNotificationStore.getState().addNotification({
+                    type: notification.type,
+                    title: notification.title,
+                    content: notification.content,
+                    icon: notification.icon,
+                    relatedId: notification.id,
+                    url: getUrl(notification.type)
+                });
+
+                // 인앱 토스트 알림 표시
+                const typeConfig = {
+                    SCHEDULE: { emoji: '📅', color: '#3B82F6' },
+                    PAYMENT: { emoji: '💳', color: '#10B981' },
+                    CHECKLIST: { emoji: '✅', color: '#8B5CF6' }
+                };
+
+                const config = typeConfig[notification.type as keyof typeof typeConfig] || typeConfig.SCHEDULE;
+
+                toast(
+                    `${config.emoji} ${notification.title}\n${notification.content}`,
+                    {
+                        duration: 5000,
+                        position: 'top-right',
+                        style: {
+                            borderLeft: `4px solid ${config.color}`,
+                            padding: '16px',
+                            backgroundColor: 'white',
+                            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                            borderRadius: '12px',
+                            maxWidth: '400px'
+                        }
+                    }
+                );
+            } catch (error) {
+                console.error('[SSEManager] SSE 알림 파싱 오류:', error);
+            }
+        });
+
+        this.eventSource.addEventListener('heartbeat', (event) => {
+            console.log('[SSEManager] SSE heartbeat 수신:', event.data);
+            useSSEStore.getState().setSSEConnected(true);
+            this.notifyListeners();
+        });
+
+        this.eventSource.onerror = (error) => {
+            console.error('[SSEManager] SSE 연결 오류:', error);
+            this.isConnecting = false;
+            useSSEStore.getState().setSSEConnected(false);
+            this.notifyListeners();
+
+            if (this.eventSource) {
+                this.eventSource.close();
+                this.eventSource = null;
+            }
+
+            // 현재 사용자가 있고 재연결 횟수가 초과되지 않았을 때만 재연결
+            if (this.currentUserId && this.reconnectAttempts < this.maxReconnectAttempts) {
+                const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
+                this.reconnectAttempts++;
+
+                console.log(`[SSEManager] SSE 재연결 시도 (${this.reconnectAttempts}/${this.maxReconnectAttempts}) ${delay}ms 후`);
+
+                this.reconnectTimeout = setTimeout(() => {
+                    if (this.currentUserId) { // 재연결 시점에 여전히 사용자가 있는지 확인
+                        this.connect(this.currentUserId);
+                    }
+                }, delay);
+            } else if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+                console.log('[SSEManager] SSE 재연결 포기. 웹푸시 모드로 전환');
+                toast.error('실시간 알림 연결이 실패했습니다. 브라우저 알림으로 전환됩니다.');
+            }
+        };
+    }
+
+    // SSE 연결 해제
+    disconnect() {
+        console.log('[SSEManager] SSE 연결 해제 시작');
+
+        if (this.eventSource) {
+            this.eventSource.close();
+            this.eventSource = null;
+        }
+
+        if (this.reconnectTimeout) {
+            clearTimeout(this.reconnectTimeout);
+            this.reconnectTimeout = null;
+        }
+
+        this.isConnecting = false;
+        this.currentUserId = null;
+        this.reconnectAttempts = 0;
+
+        useSSEStore.getState().setSSEConnected(false);
+        this.notifyListeners();
+
+        console.log('[SSEManager] SSE 연결 해제 완료');
+    }
+
+    // 현재 연결된 사용자 ID 반환
+    getCurrentUserId(): string | null {
+        return this.currentUserId;
+    }
+}
+
 export const useNotifications = () => {
     const { user } = useAuthStore();
     const { setCurrentUser } = useNotificationStore();
@@ -34,12 +232,9 @@ export const useNotifications = () => {
         setNotificationPermission,
         setFunctions
     } = useSSEStore();
-    
-    const eventSourceRef = useRef<EventSource | null>(null);
-    const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const reconnectAttempts = useRef(0);
-    const isConnectingRef = useRef(false);
-    const maxReconnectAttempts = 5;
+
+    const sseManager = SSEManager.getInstance();
+    const stateUpdateRef = useRef<() => void>();
 
     // 웹푸시 구독 상태 확인
     const checkWebPushSubscription = useCallback(async () => {
@@ -63,8 +258,7 @@ export const useNotifications = () => {
         if (event.data?.type === 'PUSH_NOTIFICATION_RECEIVED') {
             const notificationData = event.data.data;
             console.log('Service Worker로부터 웹푸시 알림 수신:', notificationData);
-            
-            // store의 addNotification을 직접 호출
+
             useNotificationStore.getState().addNotification({
                 type: notificationData.type,
                 title: notificationData.title,
@@ -76,143 +270,18 @@ export const useNotifications = () => {
         }
     }, []);
 
-    // SSE 연결 해제
-    const disconnectSSE = useCallback(() => {
-        console.log('SSE 연결 해제 시작');
-        
-        if (eventSourceRef.current) {
-            eventSourceRef.current.close();
-            eventSourceRef.current = null;
-        }
-        
-        if (reconnectTimeoutRef.current) {
-            clearTimeout(reconnectTimeoutRef.current);
-            reconnectTimeoutRef.current = null;
-        }
-        
-        setSSEConnected(false);
-        reconnectAttempts.current = 0;
-        isConnectingRef.current = false;
-        
-        console.log('SSE 연결 해제 완료');
-    }, [setSSEConnected]);
-
-    // SSE 연결 함수
+    // SSE 연결 함수 (전역 관리자를 통해)
     const connectSSE = useCallback(() => {
-        // 중복 연결 방지
-        if (eventSourceRef.current || isConnectingRef.current) {
-            console.log('SSE 연결 건너뜀 - 이미 연결되어 있거나 연결 중');
-            return;
+        const currentUser = useAuthStore.getState().user;
+        if (currentUser?.id) {
+            sseManager.connect(currentUser.id);
         }
+    }, [sseManager]);
 
-        isConnectingRef.current = true;
-        console.log('SSE 연결 시도...');
-        
-        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
-        const eventSource = new EventSource(`${apiBaseUrl}/api/v1/notifications/stream`, {
-            withCredentials: true
-        });
-        
-        eventSourceRef.current = eventSource;
-
-        eventSource.onopen = () => {
-            console.log('SSE 연결 성공');
-            setSSEConnected(true);
-            reconnectAttempts.current = 0;
-            isConnectingRef.current = false;
-        };
-
-        eventSource.addEventListener('connected', (event) => {
-            console.log('SSE 연결 확인:', event.data);
-            setSSEConnected(true);
-        });
-
-        eventSource.addEventListener('notification', (event) => {
-            try {
-                const notification: NotificationData = JSON.parse(event.data);
-                console.log('SSE 알림 수신:', notification);
-                
-                // 알림 타입에 따른 URL 결정
-                const getUrl = (type: string) => {
-                    switch (type) {
-                        case 'SCHEDULE': return '/calendar';
-                        case 'PAYMENT': return '/expenses';
-                        case 'CHECKLIST': return '/tasks';
-                        default: return '/dashboard';
-                    }
-                };
-
-                // 1. 알림 store에 저장 (Header에서 표시)
-                useNotificationStore.getState().addNotification({
-                    type: notification.type,
-                    title: notification.title,
-                    content: notification.content,
-                    icon: notification.icon,
-                    relatedId: notification.id,
-                    url: getUrl(notification.type)
-                });
-                
-                // 2. 인앱 토스트 알림 표시
-                const typeConfig = {
-                    SCHEDULE: { emoji: '📅', color: '#3B82F6' },
-                    PAYMENT: { emoji: '💳', color: '#10B981' },
-                    CHECKLIST: { emoji: '✅', color: '#8B5CF6' }
-                };
-
-                const config = typeConfig[notification.type as keyof typeof typeConfig] || typeConfig.SCHEDULE;
-                
-                toast(
-                    `${config.emoji} ${notification.title}\n${notification.content}`,
-                    {
-                        duration: 5000,
-                        position: 'top-right',
-                        style: {
-                            borderLeft: `4px solid ${config.color}`,
-                            padding: '16px',
-                            backgroundColor: 'white',
-                            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-                            borderRadius: '12px',
-                            maxWidth: '400px'
-                        }
-                    }
-                );
-            } catch (error) {
-                console.error('SSE 알림 파싱 오류:', error);
-            }
-        });
-
-        eventSource.addEventListener('heartbeat', (event) => {
-            console.log('SSE heartbeat 수신:', event.data);
-            setSSEConnected(true);
-        });
-
-        eventSource.onerror = (error) => {
-            console.error('SSE 연결 오류:', error);
-            setSSEConnected(false);
-            isConnectingRef.current = false;
-            
-            if (eventSourceRef.current) {
-                eventSourceRef.current.close();
-                eventSourceRef.current = null;
-            }
-            
-            // 현재 user 상태를 직접 참조하여 재연결 결정
-            const currentUser = useAuthStore.getState().user;
-            if (currentUser && reconnectAttempts.current < maxReconnectAttempts) {
-                const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 30000);
-                reconnectAttempts.current++;
-                
-                console.log(`SSE 재연결 시도 (${reconnectAttempts.current}/${maxReconnectAttempts}) ${delay}ms 후`);
-                
-                reconnectTimeoutRef.current = setTimeout(() => {
-                    connectSSE();
-                }, delay);
-            } else if (reconnectAttempts.current >= maxReconnectAttempts) {
-                console.log('SSE 재연결 포기. 웹푸시 모드로 전환');
-                toast.error('실시간 알림 연결이 실패했습니다. 브라우저 알림으로 전환됩니다.');
-            }
-        };
-    }, [setSSEConnected]);
+    // SSE 연결 해제 함수 (전역 관리자를 통해)
+    const disconnectSSE = useCallback(() => {
+        sseManager.disconnect();
+    }, [sseManager]);
 
     // 알림 권한 요청
     const requestNotificationPermission = useCallback(async (): Promise<boolean> => {
@@ -224,7 +293,7 @@ export const useNotifications = () => {
         try {
             const permission = await Notification.requestPermission();
             setNotificationPermission(permission);
-            
+
             if (permission === 'granted') {
                 toast.success('알림 권한이 허용되었습니다.');
                 return true;
@@ -242,7 +311,7 @@ export const useNotifications = () => {
     // 웹푸시 구독 등록
     const subscribeToWebPush = useCallback(async (): Promise<boolean> => {
         const isWebPushSupported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
-        
+
         if (!isWebPushSupported) {
             toast.error('이 브라우저는 웹푸시를 지원하지 않습니다.');
             return false;
@@ -255,7 +324,6 @@ export const useNotifications = () => {
         }
 
         try {
-            // Service Worker 등록 확인
             let registration = await navigator.serviceWorker.getRegistration();
             if (!registration) {
                 console.log('Service Worker 등록 중...');
@@ -264,13 +332,11 @@ export const useNotifications = () => {
                 console.log('Service Worker 등록 완료');
             }
 
-            // 기존 구독 확인
             let subscription = await registration.pushManager.getSubscription();
-            
+
             if (!subscription) {
-                // VAPID 공개키 확인
                 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
-                
+
                 if (!VAPID_PUBLIC_KEY || VAPID_PUBLIC_KEY === 'your_vapid_public_key_here') {
                     console.warn('VAPID 공개키가 설정되지 않았습니다.');
                     toast.error('웹푸시 기능을 사용하려면 VAPID 키 설정이 필요합니다. 현재는 SSE와 이메일 알림을 사용합니다.');
@@ -285,7 +351,7 @@ export const useNotifications = () => {
 
                 console.log('새 웹푸시 구독 생성 중...');
                 const applicationServerKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
-                
+
                 subscription = await registration.pushManager.subscribe({
                     userVisibleOnly: true,
                     applicationServerKey: applicationServerKey
@@ -293,7 +359,6 @@ export const useNotifications = () => {
                 console.log('웹푸시 구독 생성 완료');
             }
 
-            // 서버에 구독 정보 전송
             const subscriptionData: WebPushSubscriptionRequest = {
                 endpoint: subscription.endpoint,
                 keys: {
@@ -305,7 +370,7 @@ export const useNotifications = () => {
             await apiClient.post('/api/v1/notifications/webpush/subscribe', subscriptionData);
             setWebPushSubscribed(true);
             toast.success('웹푸시 구독이 완료되었습니다.');
-            
+
             return true;
         } catch (error) {
             console.error('웹푸시 구독 오류:', error);
@@ -349,7 +414,7 @@ export const useNotifications = () => {
         for (let i = 0; i < rawData.length; ++i) {
             outputArray[i] = rawData.charCodeAt(i);
         }
-        
+
         return outputArray;
     };
 
@@ -363,7 +428,7 @@ export const useNotifications = () => {
     useEffect(() => {
         const isSupported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
         setWebPushSupported(isSupported);
-        
+
         if ('Notification' in window) {
             setNotificationPermission(Notification.permission);
         }
@@ -376,6 +441,13 @@ export const useNotifications = () => {
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage);
         }
+
+        // SSE 상태 변경 리스너 등록
+        const stateUpdateListener = () => {
+            setSSEConnected(sseManager.isConnected());
+        };
+        stateUpdateRef.current = stateUpdateListener;
+        sseManager.addListener(stateUpdateListener);
 
         // 전역 store에 함수들 등록
         setFunctions({
@@ -391,6 +463,9 @@ export const useNotifications = () => {
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.removeEventListener('message', handleServiceWorkerMessage);
             }
+            if (stateUpdateRef.current) {
+                sseManager.removeListener(stateUpdateRef.current);
+            }
         };
     }, [
         setWebPushSupported,
@@ -403,36 +478,37 @@ export const useNotifications = () => {
         unsubscribeFromWebPush,
         connectSSE,
         disconnectSSE,
+        sseManager,
+        setSSEConnected,
     ]);
 
     // SSE 연결 관리 - 사용자 로그인/로그아웃 시
     useEffect(() => {
-        console.log('사용자 상태 변경됨:', !!user);
-        
+        console.log('[useNotifications] 사용자 상태 변경됨:', !!user, user?.id);
+
         // 사용자 정보가 변경될 때마다 알림 스토어에 현재 사용자 설정
         setCurrentUser(user?.id || null);
-        
-        if (user) {
-            console.log('사용자 로그인됨, SSE 연결 시작');
-            // 기존 연결이 있다면 먼저 해제
-            if (eventSourceRef.current) {
-                console.log('기존 SSE 연결 해제');
-                disconnectSSE();
+
+        if (user?.id) {
+            console.log('[useNotifications] 사용자 로그인됨, SSE 연결 확인/시작');
+            // 현재 연결된 사용자와 다르면 새로 연결
+            if (sseManager.getCurrentUserId() !== user.id) {
+                // 짧은 지연 후 연결 (중복 방지)
+                setTimeout(() => {
+                    sseManager.connect(user.id);
+                }, 100);
             }
-            // 짧은 지연 후 새 연결 시작
-            setTimeout(() => {
-                connectSSE();
-            }, 100);
         } else {
-            console.log('사용자 로그아웃됨, SSE 연결 해제');
-            disconnectSSE();
+            console.log('[useNotifications] 사용자 로그아웃됨, SSE 연결 해제');
+            sseManager.disconnect();
         }
 
-        // 컴포넌트 언마운트 시 정리
+        // 컴포넌트 언마운트 시에는 연결을 유지 (전역 관리자이므로)
         return () => {
-            disconnectSSE();
+            // 컴포넌트 언마운트 시에는 연결을 해제하지 않음
+            // 전역 SSEManager가 생명주기를 관리
         };
-    }, [user?.id, connectSSE, disconnectSSE, setCurrentUser]);
+    }, [user?.id, setCurrentUser, sseManager]);
 
     // 반환값 없음 - 모든 상태는 전역 store에서 관리
     return null;
