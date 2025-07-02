@@ -4,6 +4,7 @@ import { useNotificationStore } from '../store/notificationStore';
 import { useSSEStore } from '../store/sseStore';
 import { apiClient } from '../utils/api';
 import toast from 'react-hot-toast';
+import { sseDebugger } from '../utils/sseDebugger';
 
 // 알림 데이터 타입
 interface NotificationData {
@@ -24,7 +25,7 @@ interface WebPushSubscriptionRequest {
     };
 }
 
-// 전역 SSE 연결 관리자
+// 전역 SSE 연결 관리자 - 개선된 버전
 class SSEManager {
     private static instance: SSEManager;
     private eventSource: EventSource | null = null;
@@ -34,6 +35,11 @@ class SSEManager {
     private currentUserId: string | null = null;
     private listeners = new Set<() => void>();
     private readonly maxReconnectAttempts = 5;
+    
+    // 🔥 중복 연결 방지를 위한 추가 플래그
+    private connectionInProgress = false;
+    private lastConnectAttempt = 0;
+    private readonly minConnectInterval = 1000; // 1초 내 중복 연결 방지
 
     private constructor() {}
 
@@ -64,24 +70,48 @@ class SSEManager {
         return this.eventSource?.readyState === EventSource.OPEN;
     }
 
-    // SSE 연결
+    // SSE 연결 - 개선된 중복 방지 로직
     connect(userId: string) {
-        // 이미 같은 사용자로 연결되어 있으면 스킵
-        if (this.currentUserId === userId && this.isConnected()) {
-            console.log('[SSEManager] 이미 연결되어 있음, 스킵');
+        const now = Date.now();
+        
+        sseDebugger.log('SSE 연결 시도', { userId, currentUserId: this.currentUserId, isConnected: this.isConnected() }, userId);
+        
+        // 🔥 중복 연결 방지 체크들
+        // 1. 너무 빈번한 연결 시도 방지
+        if (now - this.lastConnectAttempt < this.minConnectInterval) {
+            console.log('[SSEManager] 너무 빈번한 연결 시도, 스킵');
+            sseDebugger.log('연결 시도 스킵 - 빈번한 시도', { timeDiff: now - this.lastConnectAttempt }, userId);
             return;
         }
-
-        // 다른 사용자로 연결 중이거나 이미 연결 중이면 기존 연결 해제 후 재연결
-        if (this.isConnecting || this.eventSource) {
+        
+        // 2. 이미 연결 진행 중인 경우
+        if (this.connectionInProgress) {
+            console.log('[SSEManager] 이미 연결 진행 중, 스킵');
+            sseDebugger.log('연결 시도 스킵 - 진행 중', { connectionInProgress: this.connectionInProgress }, userId);
+            return;
+        }
+        
+        // 3. 이미 같은 사용자로 연결되어 있고 연결 상태가 정상인 경우
+        if (this.currentUserId === userId && this.isConnected()) {
+            console.log('[SSEManager] 이미 연결되어 있음, 스킵');
+            sseDebugger.log('연결 시도 스킵 - 이미 연결됨', { userId, isConnected: true }, userId);
+            return;
+        }
+        
+        // 4. 연결 중이거나 이미 연결되어 있지만 다른 사용자인 경우
+        if (this.isConnecting || (this.eventSource && this.currentUserId !== userId)) {
             console.log('[SSEManager] 기존 연결 해제 후 재연결');
+            sseDebugger.log('기존 연결 해제 후 재연결', { oldUserId: this.currentUserId, newUserId: userId }, userId);
             this.disconnect();
         }
 
+        this.lastConnectAttempt = now;
+        this.connectionInProgress = true;
         this.isConnecting = true;
         this.currentUserId = userId;
 
         console.log(`[SSEManager] SSE 연결 시작 - 사용자: ${userId}`);
+        sseDebugger.log('SSE 연결 시작', { userId }, userId);
 
         const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
         this.eventSource = new EventSource(`${apiBaseUrl}/api/v1/notifications/stream`, {
@@ -90,7 +120,9 @@ class SSEManager {
 
         this.eventSource.onopen = () => {
             console.log('[SSEManager] SSE 연결 성공');
+            sseDebugger.log('SSE 연결 성공', { userId: this.currentUserId }, this.currentUserId);
             this.isConnecting = false;
+            this.connectionInProgress = false;
             this.reconnectAttempts = 0;
             useSSEStore.getState().setSSEConnected(true);
             this.notifyListeners();
@@ -164,7 +196,9 @@ class SSEManager {
 
         this.eventSource.onerror = (error) => {
             console.error('[SSEManager] SSE 연결 오류:', error);
+            sseDebugger.log('SSE 연결 오류', { error, userId: this.currentUserId }, this.currentUserId);
             this.isConnecting = false;
+            this.connectionInProgress = false;
             useSSEStore.getState().setSSEConnected(false);
             this.notifyListeners();
 
@@ -207,6 +241,7 @@ class SSEManager {
         }
 
         this.isConnecting = false;
+        this.connectionInProgress = false;
         this.currentUserId = null;
         this.reconnectAttempts = 0;
 
@@ -235,6 +270,9 @@ export const useNotifications = () => {
 
     const sseManager = SSEManager.getInstance();
     const stateUpdateRef = useRef<() => void>();
+    
+    // 🔥 중복 실행 방지를 위한 ref
+    const initializationRef = useRef(false);
 
     // 웹푸시 구독 상태 확인
     const checkWebPushSubscription = useCallback(async () => {
@@ -424,8 +462,16 @@ export const useNotifications = () => {
         return window.btoa(binary);
     };
 
-    // 브라우저 지원 확인 및 초기화
+    // 🔥 브라우저 지원 확인 및 초기화 - 한 번만 실행되도록 개선
     useEffect(() => {
+        // 이미 초기화되었으면 스킵
+        if (initializationRef.current) {
+            return;
+        }
+        
+        console.log('[useNotifications] 초기화 시작');
+        initializationRef.current = true;
+
         const isSupported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
         setWebPushSupported(isSupported);
 
@@ -459,7 +505,10 @@ export const useNotifications = () => {
             checkWebPushSubscription,
         });
 
+        console.log('[useNotifications] 초기화 완료');
+
         return () => {
+            console.log('[useNotifications] cleanup 시작');
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.removeEventListener('message', handleServiceWorkerMessage);
             }
@@ -467,39 +516,33 @@ export const useNotifications = () => {
                 sseManager.removeListener(stateUpdateRef.current);
             }
         };
-    }, [
-        setWebPushSupported,
-        setNotificationPermission,
-        checkWebPushSubscription,
-        handleServiceWorkerMessage,
-        setFunctions,
-        requestNotificationPermission,
-        subscribeToWebPush,
-        unsubscribeFromWebPush,
-        connectSSE,
-        disconnectSSE,
-        sseManager,
-        setSSEConnected,
-    ]);
+    }, []); // 🔥 빈 dependency array로 한 번만 실행
 
-    // SSE 연결 관리 - 사용자 로그인/로그아웃 시
+    // 🔥 SSE 연결 관리 - 사용자 로그인/로그아웃 시에만 실행
     useEffect(() => {
         console.log('[useNotifications] 사용자 상태 변경됨:', !!user, user?.id);
+        sseDebugger.log('useNotifications - 사용자 상태 변경', { hasUser: !!user, userId: user?.id }, user?.id);
 
         // 사용자 정보가 변경될 때마다 알림 스토어에 현재 사용자 설정
         setCurrentUser(user?.id || null);
 
         if (user?.id) {
             console.log('[useNotifications] 사용자 로그인됨, SSE 연결 확인/시작');
+            sseDebugger.log('사용자 로그인됨 - SSE 연결 확인', { 
+                userId: user.id, 
+                currentSSEUser: sseManager.getCurrentUserId(),
+                isConnected: sseManager.isConnected()
+            }, user.id);
+            
             // 현재 연결된 사용자와 다르면 새로 연결
             if (sseManager.getCurrentUserId() !== user.id) {
-                // 짧은 지연 후 연결 (중복 방지)
-                setTimeout(() => {
-                    sseManager.connect(user.id);
-                }, 100);
+                // 🔥 중복 방지를 위해 setTimeout 제거하고 직접 호출
+                sseDebugger.log('SSE 연결 호출', { userId: user.id }, user.id);
+                connectSSE();
             }
         } else {
             console.log('[useNotifications] 사용자 로그아웃됨, SSE 연결 해제');
+            sseDebugger.log('사용자 로그아웃됨 - SSE 연결 해제', {}, null);
             sseManager.disconnect();
         }
 
