@@ -115,9 +115,6 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
             }
         }
 
-        console.log('🔍 전송할 splitData:', formData.splitData); // 디버깅용
-
-
         let splitDataArray = undefined;
         if (mode === 'group' && currentGroup) {
             // EQUAL일 때는 데이터 x
@@ -131,9 +128,6 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                 }));
             }
         }
-
-        console.log('🔍 최종 splitDataArray:', splitDataArray); // 디버깅용
-
 
         if (!user) return;
 
@@ -447,8 +441,6 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                                                             ...formData.splitData,
                                                             [member.userId]: amount
                                                         };
-                                                        console.log('CUSTOM splitData:', newSplitData); // 디버깅용
-
 
                                                         setFormData({
                                                             ...formData,
@@ -551,7 +543,6 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                                     <h4 className="text-sm font-medium text-gray-700 mb-3">특정 인원 선택</h4>
                                     <div className="space-y-2">
                                         {currentGroup.members.map((member) => {
-                                            console.log('멤버 정보:', member); // 디버깅용
                                             return (
                                                 <label key={member.userId} className="flex items-center space-x-3">
                                                     <input
@@ -575,8 +566,6 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                                                             selectedMembers.forEach(memberId => {
                                                                 newSplitData[memberId] = amountPerPerson;
                                                             });
-
-                                                            console.log('SPECIFIC splitData:', newSplitData); // 디버깅용
 
                                                             setFormData({
                                                                 ...formData,

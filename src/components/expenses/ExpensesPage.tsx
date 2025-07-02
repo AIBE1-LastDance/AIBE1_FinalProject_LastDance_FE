@@ -198,7 +198,6 @@ const ExpensesPage: React.FC = () => {
 
         try {
             const targetId = expense.originalExpenseId || expense.id;
-            console.log('targetId: ', targetId);
             const response = await expenseAPI.getReceiptUrl(targetId);
             if (response.data) {
                 setCurrentReceiptUrl(response.data);
@@ -225,13 +224,10 @@ const ExpensesPage: React.FC = () => {
             // EQUAL, CUSTOM으로 대문자 타입에 맞춰 수정
             if (expense.splitType === 'EQUAL') {
                 personalAmount = expense.amount / currentGroup.members.length;
-                // console.log('균등분할 계산:', personalAmount);
             } else if (expense.splitType === 'CUSTOM' && expense.splitData && expense.splitData.length > 0) {
-                console.log('커스텀 분할 처리 중...');
                 const userSplit = expense.splitData.find(split => split.userId === user.id);
                 personalAmount = userSplit ? userSplit.amount : 0;
             } else if (expense.splitType === 'SPECIFIC' && expense.splitData && expense.splitData.length > 0) {
-                console.log('지정 분할 처리 중...');
                 const userSplit = expense.splitData.find(split => split.userId === user.id);
                 personalAmount = userSplit ? userSplit.amount : 0;
             } else {
