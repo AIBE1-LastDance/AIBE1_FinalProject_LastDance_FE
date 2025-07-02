@@ -57,11 +57,6 @@ const Header: React.FC = () => {
     const canSwitchToGroup = joinedGroups.length > 0;
     const isDisabled = mode === 'group' && !canSwitchToGroup;
 
-    // 그룹 모드 전환 가능 여부 확인
-    const canSwitchToGroup = joinedGroups.length > 0;
-    const isDisabled = mode === 'group' && !canSwitchToGroup;
-
-
     // 사용자가 로그인되어 있을 때 그룹 목록 로드
     useEffect(() => {
         if (isAuthenticated && joinedGroups.length === 0) {
