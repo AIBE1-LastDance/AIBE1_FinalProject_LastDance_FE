@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { RotateCcw, Play, ArrowLeft, Trophy } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { RotateCcw, Play, ArrowLeft, Trophy, HelpCircle, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import GameSetupModal from './GameSetupModal';
 
@@ -12,6 +12,7 @@ const RoulettePage: React.FC = () => {
   const [isSpinning, setIsSpinning] = useState(false);
   const [result, setResult] = useState<{ winner: string; penalty: string } | null>(null);
   const [rotation, setRotation] = useState(0);
+  const [showHelpModal, setShowHelpModal] = useState(false);
 
   const handleGameSetup = (playerNames: string[], penaltyText: string) => {
     setPlayers(playerNames);
@@ -26,16 +27,27 @@ const RoulettePage: React.FC = () => {
     setResult(null);
 
     const spins = 5 + Math.random() * 5; // 5-10 spins
-    const finalRotation = rotation + spins * 360;
-    const selectedIndex = Math.floor(Math.random() * players.length);
-    const degreePerOption = 360 / players.length;
-    const finalDegree = finalRotation + (selectedIndex * degreePerOption);
+    const extraRotation = Math.random() * 360; // 추가 랜덤 회전
+    const finalRotation = rotation + spins * 360 + extraRotation;
 
-    setRotation(finalDegree);
+    setRotation(finalRotation);
 
+    // 3초 후 스피닝 종료, 그 후 1초 딜레이 후 결과 표시
     setTimeout(() => {
-      setResult({ winner: players[selectedIndex], penalty });
       setIsSpinning(false);
+      
+      // 1초 딜레이 후 결과 표시
+      setTimeout(() => {
+        // 최종 회전 각도에서 화살표가 가리키는 섹션 계산
+        const normalizedRotation = finalRotation % 360;
+        const degreePerOption = 360 / players.length;
+        
+        // 화살표는 위쪽(0도)에 있고, 룰렛이 시계방향으로 회전하므로
+        // 화살표가 가리키는 섹션을 계산
+        const selectedIndex = Math.floor((360 - normalizedRotation) / degreePerOption) % players.length;
+        
+        setResult({ winner: players[selectedIndex], penalty });
+      }, 1000);
     }, 3000);
   };
 
@@ -61,19 +73,92 @@ const RoulettePage: React.FC = () => {
               <p className="text-gray-600">룰렛을 돌려서 당번을 정하세요!</p>
             </div>
           </div>
-          {!showSetup && !result && (
+          <div className="flex items-center space-x-3">
             <button
-              onClick={resetRoulette}
-              className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              onClick={() => setShowHelpModal(true)}
+              className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center hover:bg-red-200 transition-colors"
+              title="게임 방법 보기"
             >
-              <RotateCcw className="w-4 h-4" />
-              <span>초기화</span>
+              <HelpCircle className="w-5 h-5 text-red-600" />
             </button>
-          )}
+            {!showSetup && !result && (
+              <button
+                onClick={resetRoulette}
+                className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                <RotateCcw className="w-4 h-4" />
+                <span>초기화</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
       <div className="max-w-4xl mx-auto p-6">
+        {/* Help Modal */}
+        <AnimatePresence>
+          {showHelpModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+              onClick={() => setShowHelpModal(false)}
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                className="bg-white rounded-2xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-gray-800">게임 방법</h2>
+                  <button
+                    onClick={() => setShowHelpModal(false)}
+                    className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
+                  >
+                    <X className="w-4 h-4 text-gray-600" />
+                  </button>
+                </div>
+
+                <div className="space-y-6">
+                  {/* 게임 방법 */}
+                  <div className="p-4 bg-red-50 rounded-lg">
+                    <h3 className="font-semibold text-red-800 mb-3">🎯 게임 방법</h3>
+                    <ul className="text-sm text-red-700 space-y-2">
+                      <li>• 빨간 화살표가 가리키는 위치에서 당첨자가 결정됩니다</li>
+                      <li>• 룰렛이 멈춘 후 1초 뒤에 결과가 발표됩니다</li>
+                      <li>• 다시 하기를 누르면 새로운 게임을 시작할 수 있습니다</li>
+                      <li>• <span className="font-bold">룰렛 돌리기 버튼</span>을 눌러 게임을 시작하세요</li>
+                    </ul>
+                  </div>
+
+                  {/* 게임 정보 */}
+                  <div className="p-4 bg-blue-50 rounded-lg">
+                    <h3 className="font-semibold text-blue-800 mb-3">🎲 게임 정보</h3>
+                    <div className="text-sm text-blue-700 space-y-1">
+                      <div><strong>참여자:</strong> {players.join(', ')}</div>
+                      <div><strong>벌칙:</strong> {penalty}</div>
+                    </div>
+                  </div>
+
+                  {/* 게임 특징 */}
+                  <div className="p-4 bg-yellow-50 rounded-lg">
+                    <h3 className="font-semibold text-yellow-800 mb-3">⭐ 게임 특징</h3>
+                    <div className="text-sm text-yellow-700 space-y-2">
+                      <div>• <strong>완전한 랜덤</strong>으로 공정한 결과</div>
+                      <div>• <strong>시각적 효과</strong>로 재미있는 경험</div>
+                      <div>• <strong>즉시 결과</strong> 확인 가능</div>
+                      <div>• <strong>반복 플레이</strong> 가능</div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Game Setup Modal */}
         <GameSetupModal
           isOpen={showSetup}
@@ -139,54 +224,120 @@ const RoulettePage: React.FC = () => {
             className="bg-white rounded-2xl p-8 shadow-lg"
           >
             <div className="flex flex-col items-center space-y-8">
-              {/* Roulette Wheel */}
-              <div className="relative">
-                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-4 z-10">
-                  <div className="w-0 h-0 border-l-[15px] border-r-[15px] border-t-[30px] border-l-transparent border-r-transparent border-t-red-500"></div>
-                </div>
-                
+              {/* Roulette Wheel Container */}
+              <div className="relative flex flex-col items-center">
+                {/* 상단 화살표 - 당첨 지점 표시 */}
                 <motion.div
-                  className="w-80 h-80 rounded-full relative overflow-hidden shadow-2xl"
-                  style={{
-                    background: `conic-gradient(${players.map((_, index) => {
-                      const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#FFB6C1', '#98FB98'];
-                      return `${colors[index % colors.length]} ${(index * 360 / players.length)}deg ${((index + 1) * 360 / players.length)}deg`;
-                    }).join(', ')})`,
-                  }}
-                  animate={{
-                    rotate: rotation,
-                  }}
-                  transition={{
-                    duration: isSpinning ? 3 : 0,
-                    ease: isSpinning ? "easeOut" : "linear",
-                  }}
+                  className="mb-2 flex flex-col items-center z-50"
+                  animate={isSpinning ? { scale: [1, 1.1, 1] } : {}}
+                  transition={{ duration: 0.5, repeat: isSpinning ? Infinity : 0 }}
                 >
-                  {/* Roulette Sections */}
-                  {players.map((player, index) => {
-                    const angle = (360 / players.length) * index;
-                    const textAngle = angle + (360 / players.length) / 2;
-                    return (
-                      <div
-                        key={index}
-                        className="absolute inset-0 flex items-center justify-center"
-                        style={{
-                          transformOrigin: 'center',
-                          transform: `rotate(${textAngle}deg)`,
-                        }}
-                      >
+                  {/* 작은 삼각형 화살표 */}
+                  <div 
+                    className="w-0 h-0"
+                    style={{ 
+                      borderLeft: '15px solid transparent',
+                      borderRight: '15px solid transparent',
+                      borderTop: '30px solid #dc2626',
+                      filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.3))',
+                    }}
+                  />
+                </motion.div>
+
+                {/* 룰렛 휠 컨테이너 */}
+                <div className="relative">
+                  {/* 룰렛 휠 외부 테두리 */}
+                  <div className="absolute -inset-2 rounded-full border-8 border-yellow-400 shadow-2xl"></div>
+                  
+                  <motion.div
+                    className="w-80 h-80 rounded-full relative overflow-hidden shadow-2xl border-4 border-white"
+                    animate={{
+                      rotate: rotation,
+                    }}
+                    transition={{
+                      duration: isSpinning ? 3 : 0,
+                      ease: isSpinning ? "easeOut" : "linear",
+                    }}
+                  >
+                    {/* SVG로 정확한 섹션 그리기 */}
+                    <svg
+                      width="100%"
+                      height="100%"
+                      viewBox="0 0 200 200"
+                      className="absolute inset-0"
+                    >
+                      {players.map((_, index) => {
+                        const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#FFB6C1', '#98FB98'];
+                        const anglePerSection = 360 / players.length;
+                        const startAngle = index * anglePerSection;
+                        const endAngle = (index + 1) * anglePerSection;
+                        
+                        // SVG path로 정확한 섹션 그리기
+                        const centerX = 100;
+                        const centerY = 100;
+                        const radius = 100;
+                        
+                        const startAngleRad = (startAngle - 90) * Math.PI / 180; // -90도로 12시 방향을 0도로
+                        const endAngleRad = (endAngle - 90) * Math.PI / 180;
+                        
+                        const x1 = centerX + radius * Math.cos(startAngleRad);
+                        const y1 = centerY + radius * Math.sin(startAngleRad);
+                        const x2 = centerX + radius * Math.cos(endAngleRad);
+                        const y2 = centerY + radius * Math.sin(endAngleRad);
+                        
+                        const largeArc = anglePerSection > 180 ? 1 : 0;
+                        
+                        const pathData = [
+                          `M ${centerX} ${centerY}`,
+                          `L ${x1} ${y1}`,
+                          `A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2}`,
+                          'Z'
+                        ].join(' ');
+                        
+                        return (
+                          <path
+                            key={index}
+                            d={pathData}
+                            fill={colors[index % colors.length]}
+                            stroke="white"
+                            strokeWidth="2"
+                          />
+                        );
+                      })}
+                    </svg>
+
+                    {/* 룰렛 섹션 텍스트 */}
+                    {players.map((player, index) => {
+                      const anglePerSection = 360 / players.length;
+                      const textAngle = index * anglePerSection + anglePerSection / 2;
+                      return (
                         <div
-                          className="text-white font-bold text-sm transform -rotate-90"
+                          key={index}
+                          className="absolute inset-0 flex items-center justify-center"
                           style={{
-                            marginTop: '-120px',
-                            textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
+                            transformOrigin: 'center',
+                            transform: `rotate(${textAngle}deg)`,
                           }}
                         >
-                          {player}
+                          <div
+                            className="text-white font-bold text-sm transform -rotate-90"
+                            style={{
+                              marginTop: '-120px',
+                              textShadow: '2px 2px 4px rgba(0,0,0,0.7)',
+                            }}
+                          >
+                            {player}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </motion.div>
+                      );
+                    })}
+                  </motion.div>
+
+                  {/* 중앙 원 */}
+                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-white rounded-full border-4 border-yellow-400 shadow-lg flex items-center justify-center z-10">
+                    <div className="w-8 h-8 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full"></div>
+                  </div>
+                </div>
               </div>
 
               {/* Spin Button */}
@@ -204,17 +355,6 @@ const RoulettePage: React.FC = () => {
                 <Play className={`w-6 h-6 ${isSpinning ? 'animate-spin' : ''}`} />
                 <span>{isSpinning ? '돌리는 중...' : '룰렛 돌리기'}</span>
               </motion.button>
-
-              {/* Game Info */}
-              <div className="text-center bg-red-50 rounded-lg p-6 w-full">
-                <h3 className="font-semibold text-red-800 mb-3">게임 정보</h3>
-                <div className="space-y-2 text-red-700">
-                  <div className="flex justify-center space-x-4">
-                    <span>참여자: {players.join(', ')}</span>
-                  </div>
-                  <div>벌칙: {penalty}</div>
-                </div>
-              </div>
             </div>
           </motion.div>
         )}
