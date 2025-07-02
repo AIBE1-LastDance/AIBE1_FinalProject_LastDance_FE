@@ -24,6 +24,7 @@ export const formatNumber = (value: any, defaultValue: string = '0'): string => 
 
 export const formatPercentage = (value: any, decimals: number = 1, defaultValue: string = '0.0'): string => {
   const num = safeNumber(value);
+  console.log('formatPercentage 호출:', { value, num, decimals, result: `${num.toFixed(decimals)}%` });
   return `${num.toFixed(decimals)}%`;
 };
 

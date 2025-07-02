@@ -283,17 +283,61 @@ export const useAdminAI = () => {
       });
       
       const allJudgments = allJudgmentsResponse.aiJudgments || [];
-      const totalJudgments = allJudgments.length;
-      const satisfiedCount = allJudgments.filter(j => j.userRating === 'UP').length;
-      const dissatisfiedCount = allJudgments.filter(j => j.userRating === 'DOWN').length;
-      const ratedJudgments = allJudgments.filter(j => j.userRating !== null);
-      const satisfactionRate = ratedJudgments.length > 0 ? (satisfiedCount / ratedJudgments.length) * 100 : 0;
+      console.log('전체 AI 판단 데이터:', allJudgments);
+      
+      if (allJudgments.length > 0) {
+        console.log('첫 번째 데이터 예시:', allJudgments[0]);
+        console.log('모든 userRating 값들:', allJudgments.map(j => j.userRating));
+      }
+      
+      // 데이터 변환: up/down boolean을 UP/DOWN 문자열로 변환 (백엔드 수정 전 임시방편)
+      const processedJudgments = allJudgments.map(judgment => {
+        let userRating = judgment.userRating;
+        
+        // 백엔드에서 up/down boolean으로 온다면 변환
+        if ((judgment as any).up === true && (judgment as any).down === false) {
+          userRating = 'UP';
+        } else if ((judgment as any).up === false && (judgment as any).down === true) {
+          userRating = 'DOWN';
+        }
+        
+        return {
+          ...judgment,
+          userRating
+        };
+      });
+      
+      const totalJudgments = processedJudgments.length;
+      const satisfiedCount = processedJudgments.filter(j => j.userRating === 'UP').length;
+      const dissatisfiedCount = processedJudgments.filter(j => j.userRating === 'DOWN').length;
+      
+      // 명시적으로 UP 또는 DOWN만 평가된 것으로 간주
+      const ratedJudgments = processedJudgments.filter(j => 
+        j.userRating === 'UP' || j.userRating === 'DOWN'
+      );
+      
+      console.log('통계 계산:', {
+        totalJudgments,
+        satisfiedCount,
+        dissatisfiedCount,
+        ratedCount: ratedJudgments.length,
+        processedRatings: processedJudgments.map(j => j.userRating)
+      });
+      
+      // 0으로 나누기 방지 및 NaN 체크
+      let satisfactionRate = 0;
+      if (ratedJudgments.length > 0) {
+        satisfactionRate = (satisfiedCount / ratedJudgments.length) * 100;
+        if (isNaN(satisfactionRate)) {
+          satisfactionRate = 0;
+        }
+      }
 
       setOverallStats({
         totalJudgments,
         satisfactionCount: satisfiedCount,
         dissatisfactionCount: dissatisfiedCount,
-        satisfactionRate
+        satisfactionRate: Math.round(satisfactionRate * 10) / 10 // 소수점 1자리로 반올림
       });
     } catch (err: any) {
       console.error('전체 AI 판단 통계 조회 실패:', err);
