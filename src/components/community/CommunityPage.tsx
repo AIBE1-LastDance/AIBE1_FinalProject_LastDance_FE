@@ -1,3 +1,5 @@
+// src/components/community/CommunityPage.tsx (수정)
+
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
@@ -19,8 +21,13 @@ import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/authStore";
 import PostCard from "./PostCard";
 import CreatePostModal from "./CreatePostModal";
-import { Post } from "../../types";
-import { fetchAllPosts } from "../../api/community/community";
+import { Post } from "../../types/community/community";
+import {
+  fetchAllPosts,
+  togglePostLike,
+  togglePostBookmark,
+  deletePost,
+} from "../../api/community/community";
 
 const CommunityPage: React.FC = () => {
   const { user } = useAuthStore();
@@ -36,36 +43,79 @@ const CommunityPage: React.FC = () => {
     "all"
   );
   const [editingPost, setEditingPost] = useState<Post | null>(null);
+  const [totalLikes, setTotalLikes] = useState<number>(0);
 
-  // 게시글 불러오기
+  const loadPosts = async () => {
+    try {
+      const data: any[] = await fetchAllPosts();
+      console.log("백엔드에서 받은 원본 게시글 데이터:", data);
+
+      const mappedPosts: Post[] = data.map((item) => ({
+        postId: item.postId,
+        title: item.title,
+        content: item.content,
+        category: item.category, // 백엔드 Enum ID (예: "LIFE_TIPS")
+        categoryName: item.categoryName, // ✅ 이 줄 추가: 백엔드에서 내려준 한글 이름
+        likeCount: item.likeCount,
+        reportCount: item.reportCount,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt ?? item.createdAt,
+        userId: item.authorId,
+        authorNickname: item.authorNickname,
+        userLiked: item.userLiked,
+        commentCount: item.commentCount || 0,
+        comments: item.comments || [],
+        userBookmarked: item.userBookmarked || false,
+      }));
+
+      setPosts(mappedPosts);
+    } catch (err) {
+      console.error("[❌ 게시글 로딩 실패]", err);
+      // 사용자에게 에러 메시지를 표시하거나 다른 처리를 할 수 있습니다.
+    }
+  };
+
   useEffect(() => {
-    fetchAllPosts()
-      .then((data: any[]) => {
-        // 🔧 혹은 정확한 타입을 지정하려면 아래 참고
-        const mappedPosts: Post[] = data.map((item) => ({
-          id: item.postId,
-          title: item.title,
-          content: item.content,
-          category: item.category, // 변환 필요 시 convertCategory(item.category)
-          userId: item.userId,
-          createdAt: new Date(item.createdAt),
-          updatedAt: new Date(item.updatedAt ?? item.createdAt),
-          likes: item.likeCount,
-          likedBy: [],
-          bookmarkedBy: [],
-          comments: [],
-          author: {
-            id: item.userId,
-            username: item.username,
-            nickname: item.username,
-            email: "",
-            provider: "google",
-          },
-        }));
-        setPosts(mappedPosts);
-      })
-      .catch((err) => console.error("[❌ 게시글 로딩 실패]", err));
-  }, []);
+    loadPosts();
+  }, [user]);
+
+  useEffect(() => {
+    const calculatedTotalLikes = posts.reduce(
+      (sum, post) => sum + (post.likeCount || 0),
+      0
+    );
+    setTotalLikes(calculatedTotalLikes);
+  }, [posts]);
+
+  const handleToggleLike = async (postId: string) => {
+    if (!user) {
+      alert("로그인 후 좋아요를 누를 수 있습니다.");
+      navigate("/login");
+      return;
+    }
+    try {
+      await togglePostLike(postId);
+      await loadPosts(); // 변경 후 목록 다시 로드
+    } catch (error) {
+      console.error(`[❌ 좋아요 토글 실패] PostId: ${postId}`, error);
+      alert("좋아요 처리에 실패했습니다.");
+    }
+  };
+
+  const handleToggleBookmark = async (postId: string) => {
+    if (!user) {
+      alert("로그인 후 북마크할 수 있습니다.");
+      navigate("/login");
+      return;
+    }
+    try {
+      await togglePostBookmark(postId);
+      await loadPosts(); // 변경 후 목록 다시 로드
+    } catch (error) {
+      console.error(`[❌ 북마크 토글 실패] PostId: ${postId}`, error);
+      alert("북마크 처리에 실패했습니다.");
+    }
+  };
 
   const categories = [
     { id: "all", name: "전체", icon: Filter, color: "text-gray-600" },
@@ -110,9 +160,9 @@ const CommunityPage: React.FC = () => {
 
     let matchesFilter = true;
     if (filterBy === "bookmarked") {
-      matchesFilter = post.bookmarkedBy?.includes(user?.id || "") || false;
+      matchesFilter = post.userBookmarked;
     } else if (filterBy === "liked") {
-      matchesFilter = post.likedBy?.includes(user?.id || "") || false;
+      matchesFilter = post.userLiked;
     }
 
     return matchesSearch && matchesCategory && matchesFilter;
@@ -121,9 +171,9 @@ const CommunityPage: React.FC = () => {
   const sortedPosts = [...filteredPosts].sort((a, b) => {
     switch (sortBy) {
       case "likes":
-        return (b.likes || 0) - (a.likes || 0);
+        return (b.likeCount || 0) - (a.likeCount || 0);
       case "comments":
-        return (b.comments?.length || 0) - (a.comments?.length || 0);
+        return (b.commentCount || 0) - (a.commentCount || 0);
       case "latest":
       default:
         return (
@@ -137,12 +187,21 @@ const CommunityPage: React.FC = () => {
     setIsCreateModalOpen(true);
   };
 
-  const handlePostDelete = (postId: string) => {
-    // 삭제 로직
+  const handlePostDelete = async (postId: string) => {
+    if (!window.confirm("정말로 이 게시글을 삭제하시겠습니까?")) {
+      return;
+    }
+    try {
+      await deletePost(postId);
+      await loadPosts(); // 삭제 후 목록 다시 로드
+    } catch (error) {
+      console.error(`[❌ 게시글 삭제 실패] PostId: ${postId}`, error);
+      alert("게시글 삭제에 실패했습니다.");
+    }
   };
 
   const handlePostClick = (post: Post) => {
-    navigate(`/community/${post.id}`);
+    navigate(`/community/${post.postId}`);
   };
 
   return (
@@ -163,10 +222,19 @@ const CommunityPage: React.FC = () => {
               <p className="text-primary-100">
                 다양한 생활 정보를 공유하고 소통해보세요!
               </p>
+              <div className="flex items-center mt-2 text-primary-50">
+                <ThumbsUp className="w-4 h-4 mr-1" />
+                <span className="text-sm font-medium">
+                  총 좋아요: {totalLikes}개
+                </span>
+              </div>
             </div>
           </div>
           <button
-            onClick={() => setIsCreateModalOpen(true)}
+            onClick={() => {
+              setEditingPost(null);
+              setIsCreateModalOpen(true);
+            }}
             className="flex items-center space-x-2 bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-xl transition-colors"
           >
             <Plus className="w-5 h-5" />
@@ -308,7 +376,10 @@ const CommunityPage: React.FC = () => {
                 : "첫 번째 게시글을 작성해보세요!"}
             </p>
             <button
-              onClick={() => setIsCreateModalOpen(true)}
+              onClick={() => {
+                setEditingPost(null);
+                setIsCreateModalOpen(true);
+              }}
               className="bg-primary-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-primary-700 transition-colors"
             >
               글쓰기
@@ -317,7 +388,7 @@ const CommunityPage: React.FC = () => {
         ) : (
           sortedPosts.map((post, index) => (
             <motion.div
-              key={post.id}
+              key={post.postId}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
@@ -327,6 +398,8 @@ const CommunityPage: React.FC = () => {
                 onClick={() => handlePostClick(post)}
                 onEdit={handlePostEdit}
                 onDelete={handlePostDelete}
+                onToggleLike={handleToggleLike}
+                onToggleBookmark={handleToggleBookmark}
               />
             </motion.div>
           ))
@@ -337,9 +410,11 @@ const CommunityPage: React.FC = () => {
       {isCreateModalOpen && (
         <CreatePostModal
           post={editingPost}
-          onClose={() => {
+          onClose={async () => {
+            // ✅ loadPosts()를 await로 호출하도록 수정
             setIsCreateModalOpen(false);
             setEditingPost(null);
+            await loadPosts();
           }}
         />
       )}

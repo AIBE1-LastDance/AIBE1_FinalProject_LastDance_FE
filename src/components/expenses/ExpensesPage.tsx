@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {motion, AnimatePresence} from 'framer-motion';
 import {
     Plus,
@@ -16,7 +16,8 @@ import {
     TrendingDown,
     ChevronLeft,
     ChevronRight,
-    Share2
+    Share2,
+    RefreshCw,
 } from 'lucide-react';
 import {
     PieChart as RechartsPieChart,
@@ -36,8 +37,9 @@ import {format, startOfMonth, endOfMonth, isWithinInterval, subMonths} from 'dat
 import {ko} from 'date-fns/locale';
 import ExpenseModal from './ExpenseModal';
 
+
 const ExpensesPage: React.FC = () => {
-    const {expenses, mode, currentGroup, savedAnalyses, saveAnalysis} = useAppStore();
+    const {expenses, mode, currentGroup, savedAnalyses, saveAnalysis, loadExpenses} = useAppStore();
     const {user} = useAuthStore();
     const [showExpenseModal, setShowExpenseModal] = useState(false);
     const [selectedExpense, setSelectedExpense] = useState(null);
@@ -49,6 +51,28 @@ const ExpensesPage: React.FC = () => {
     const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
     const [activeTab, setActiveTab] = useState<'expenses' | 'analyses'>('expenses');
     const [selectedAnalysis, setSelectedAnalysis] = useState(null);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        const fetchExpenses = async () => {
+            setLoading(true);
+            try {
+                const params = {
+                    mode,
+                    year: currentMonth.getFullYear(),
+                    month: currentMonth.getMonth() + 1,
+                    groupId: mode === 'group' ? currentGroup?.id : null
+                };
+                await loadExpenses(params);
+            } catch (error) {
+                console.error('지출 로드 실패: ', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchExpenses();
+    }, [mode, currentMonth, currentGroup?.id, loadExpenses]);
 
     const filteredExpenses = expenses.filter(expense => {
         const isModeMatch = mode === 'personal' ? !expense.groupId : expense.groupId;
@@ -68,12 +92,12 @@ const ExpensesPage: React.FC = () => {
     const maxAmount = Math.max(...filteredExpenses.map(e => e.amount), 0);
 
     const categoryData = [
-        {category: 'food', label: '식비', color: '#FF6B6B'},
-        {category: 'utilities', label: '공과금', color: '#4ECDC4'},
-        {category: 'transport', label: '교통비', color: '#45B7D1'},
-        {category: 'shopping', label: '쇼핑', color: '#96CEB4'},
-        {category: 'entertainment', label: '유흥', color: '#FFEAA7'},
-        {category: 'other', label: '기타', color: '#DDA0DD'},
+        {category: 'FOOD', label: '식비', color: '#FF6B6B'},
+        {category: 'UTILITIES', label: '공과금', color: '#4ECDC4'},
+        {category: 'TRANSPORT', label: '교통비', color: '#45B7D1'},
+        {category: 'SHOPPING', label: '쇼핑', color: '#96CEB4'},
+        {category: 'ENTERTAINMENT', label: '유흥', color: '#FFEAA7'},
+        {category: 'OTHER', label: '기타', color: '#DDA0DD'},
     ];
 
     // Category breakdown data (전체 데이터, 필터와 무관)
@@ -175,21 +199,38 @@ const ExpensesPage: React.FC = () => {
         const personalShares = [];
 
         groupExpenses.forEach(expense => {
+            // 디버깅용 로그 추가
+            // console.log('=== 지출 분석 ===');
+            // console.log('제목:', expense.title);
+            // console.log('splitType:', expense.splitType);
+            // console.log('splitData:', expense.splitData);
+            // console.log('현재 사용자 ID:', user.id);
+
             let personalAmount = 0;
 
-            if (expense.splitType === 'equal') {
-                // 균등 분할
+            // EQUAL, CUSTOM으로 대문자 타입에 맞춰 수정
+            if (expense.splitType === 'EQUAL') {
                 personalAmount = expense.amount / currentGroup.members.length;
-            } else if (expense.splitType === 'specific' && expense.splitData) {
-                // 특정 분할
-                personalAmount = expense.splitData[user.id] || 0;
-            } else if (expense.splitType === 'custom' && expense.splitData) {
-                // 사용자 정의 분할
-                personalAmount = expense.splitData[user.id] || 0;
+                console.log('균등분할 계산:', personalAmount);
+            } else if (expense.splitType === 'CUSTOM' && expense.splitData && expense.splitData.length > 0) {
+                console.log('커스텀 분할 처리 중...');
+                const userSplit = expense.splitData.find(split => split.userId === user.id);
+                personalAmount = userSplit ? userSplit.amount : 0;
+                // console.log('찾은 사용자 split:', userSplit);
+                // console.log('개인 부담금:', personalAmount);
+            } else if (expense.splitType === 'SPECIFIC' && expense.splitData && expense.splitData.length > 0) {
+                console.log('지정 분할 처리 중...');
+                const userSplit = expense.splitData.find(split => split.userId === user.id);
+                personalAmount = userSplit ? userSplit.amount : 0;
+                // console.log('찾은 사용자 split:', userSplit);
+                // console.log('개인 부담금:', personalAmount);
             } else {
-                // 기본적으로 균등 분할
                 personalAmount = expense.amount / currentGroup.members.length;
+                // console.log('기본 균등분할:', personalAmount);
             }
+
+            // console.log('최종 개인부담금:', personalAmount);
+            // console.log('==================');
 
             if (personalAmount > 0) {
                 personalShares.push({
@@ -235,20 +276,43 @@ const ExpensesPage: React.FC = () => {
     };
 
     // 이전/다음 달 이동
-    const handlePreviousMonth = () => {
-        setCurrentMonth(prev => subMonths(prev, 1));
+    const handlePreviousMonth = async () => {
+        setLoading(true);
+        const newMonth = subMonths(currentMonth, 1);
+        setCurrentMonth(newMonth);
+
+        try {
+            const params = {
+                mode,
+                year: newMonth.getFullYear(),
+                month: newMonth.getMonth() + 1,
+                groupId: mode === 'group' ? currentGroup?.id : undefined
+            };
+            await loadExpenses(params);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const handleNextMonth = () => {
-        setCurrentMonth(prev => {
-            const nextMonth = new Date(prev.getFullYear(), prev.getMonth() + 1, 1);
-            const today = new Date();
-            // 미래 월로는 이동하지 않음
-            if (nextMonth <= today) {
-                return nextMonth;
+    const handleNextMonth = async () => {
+        const nextMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1);
+        const today = new Date();
+        if (nextMonth <= today) {
+            setLoading(true);
+            setCurrentMonth(nextMonth);
+
+            try {
+                const params = {
+                    mode,
+                    year: nextMonth.getFullYear(),
+                    month: nextMonth.getMonth() + 1,
+                    groupId: mode === 'group' ? currentGroup?.id : undefined
+                };
+                await loadExpenses(params);
+            } finally {
+                setLoading(false);
             }
-            return prev;
-        });
+        }
     };
 
     // AI 분석 데이터 생성 (현재 또는 선택된 분석)
@@ -360,6 +424,19 @@ const ExpensesPage: React.FC = () => {
 
     const aiAnalysis = getAIAnalysis();
 
+    if (loading) {
+        return (
+            <div className="space-y-8">
+                <div className="flex items-center justify-center py-12">
+                    <div className="flex items-center space-x-3">
+                        <RefreshCw className="w-6 h-6 animate-spin text-primary-600" />
+                        <span className="text-gray-600">지출 내역을 불러오는 중...</span>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-8">
             {/* Header */}
@@ -367,7 +444,15 @@ const ExpensesPage: React.FC = () => {
                 <div>
                     <div className="flex items-center space-x-4">
                         <h1 className="text-3xl font-bold text-gray-900">
-                            {mode === 'personal' ? '내 가계부' : '공동 가계부'}
+                            {mode === 'personal' ? '내 가계부' : (
+                                <div className="flex items-center space-x-3">
+                                    <span>공동 가계부</span>
+                                    <span className="text-xl text-primary-600">•</span>
+                                    <span className="text-2xl text-primary-600 font-semibold">
+                            {currentGroup?.name || '그룹 선택 필요'}
+                        </span>
+                                </div>
+                            )}
                         </h1>
 
                         <motion.button
@@ -696,21 +781,28 @@ const ExpensesPage: React.FC = () => {
                                 <YAxis
                                     axisLine={false}
                                     tickLine={false}
-                                    tickFormatter={(value) => `${value / 10000}만`}
+                                    tickFormatter={(value) => {
+                                        if (value >= 10000) {
+                                            return `${Math.round(value / 10000)}만`;
+                                        } else {
+                                            return `${Math.round(value / 1000)}천`;
+                                        }
+                                    }}
                                 />
                                 <Tooltip
                                     content={({active, payload, label}) => {
                                         if (active && payload && payload.length > 0) {
                                             return (
-                                                <div
-                                                    className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+                                                <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
                                                     <p className="font-medium">{label}</p>
                                                     {payload.map((entry, index) => {
                                                         const categoryInfo = categoryData.find(cat => cat.category === entry.dataKey);
                                                         return (
-                                                            <p key={index} className="text-sm"
-                                                               style={{color: entry.color}}>
-                                                                {categoryInfo?.label || '기타'}: {formatCurrency(entry.value)}
+                                                            <p key={index} className="text-sm" style={{color: entry.color}}>
+                                                                {categoryInfo?.label || '기타'}: {new Intl.NumberFormat('ko-KR', {
+                                                                style: 'currency',
+                                                                currency: 'KRW'
+                                                            }).format(entry.value)}
                                                             </p>
                                                         );
                                                     })}
@@ -898,7 +990,7 @@ const ExpensesPage: React.FC = () => {
                                                     <span>•</span>
                                                     <div className="flex items-center space-x-1">
                                                         <Calendar className="w-3 h-3"/>
-                                                        <span>{format(new Date(expense.date), 'M월 d일 HH:mm', {locale: ko})}</span>
+                                                        <span>{format(new Date(expense.date), 'M월 d일 (E)', {locale: ko})}</span>
                                                     </div>
                                                 </div>
                                             </div>

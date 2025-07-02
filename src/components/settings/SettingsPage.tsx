@@ -1,11 +1,13 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {motion} from 'framer-motion';
-import {Settings, User, Bell, Save, Camera, Trash2, Upload} from 'lucide-react';
+import {Settings, User, Bell, Save, Camera, Trash2} from 'lucide-react';
 import {useAuthStore} from '../../store/authStore';
 import toast from 'react-hot-toast';
+import {profileApi} from "../../api/profile";
+import Avatar from "../common/Avatar";
 
 const SettingsPage: React.FC = () => {
-    const {user} = useAuthStore();
+    const {user, setProcessingAccountDeletion} = useAuthStore();
     const [activeTab, setActiveTab] = useState('profile');
     const [profileData, setProfileData] = useState({
         name: user?.username || '',
@@ -13,6 +15,97 @@ const SettingsPage: React.FC = () => {
         avatar: user?.avatar || '',
         monthlyBudget: user?.monthlyBudget || 0
     });
+    const [previewImage, setPreviewImage] = useState<string | null>(null);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [hasImageChange, setHasImageChange] = useState<boolean>(false);
+
+
+    // user가 변경될 때마다 profileData 업데이트
+    useEffect(() => {
+        if (user) {
+            setProfileData({
+                name: user.username || '',
+                nickname: user.nickname || '',
+                avatar: user.avatar || '',
+                monthlyBudget: user.monthlyBudget || 0
+            });
+        }
+    }, [user])
+
+    // 닉네임 상태
+    const [nicknameState, setNicknameState] = useState<{
+        checking: boolean;
+        available: boolean;
+        message: string;
+    }>({
+        checking: false,
+        available: false,
+        message: ''
+    });
+
+    // 닉네임 체크 함수
+    const checkNicknameAvailability = async (nickname: string) => {
+        if (!nickname || nickname.length < 2) {
+            setNicknameState({
+                checking: false,
+                available: false,
+                message: ''
+            });
+            return;
+        }
+
+        // 현재 닉네임과 같으면 체크하지 않음
+        if (nickname === user?.nickname) {
+            setNicknameState({
+                checking: false,
+                available: true,
+                message: ''
+            });
+            return;
+        }
+
+        setNicknameState({
+            checking: true,
+            available: false,
+            message: '확인 중...'
+        });
+
+        try {
+            const result = await profileApi.checkNickname(nickname);
+
+            // data: true = 사용 가능, data: false = 사용 불가능
+            const isAvailable = result.data === true;
+            setNicknameState({
+                checking: false,
+                available: isAvailable,
+                message: isAvailable ? '사용 가능한 닉네임입니다' : '이미 사중 중인 닉네임입니다'
+            });
+        } catch (error) {
+            console.error('Nickname check error:', error);
+            setNicknameState({
+                checking: false,
+                available: false,
+                message: '닉네임 확인에 실패했습니다.'
+            })
+        }
+    };
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (profileData.nickname) {  // 닉네임이 있으면 항상 체크
+                checkNicknameAvailability(profileData.nickname);
+            } else {
+                setNicknameState({
+                    checking: false,
+                    available: false,
+                    message: ''
+                });
+            }
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, [profileData.nickname, user?.nickname]);
+
     const [notifications, setNotifications] = useState({
         expenses: true,
         tasks: true,
@@ -27,46 +120,142 @@ const SettingsPage: React.FC = () => {
 
     const handleProfileChange = (field: string, value: string) => {
         if (field === 'monthlyBudget') {
-            const numericValue = parseInt(value) || 0;
+            const numericValue = parseNumber(value) || 0;
+            const MAX_BUDGET = 1000000000; // 10억원
+
+            if (numericValue > MAX_BUDGET) {
+                toast.error(`예산은 최대 ${formatNumber(MAX_BUDGET)}원까지 설정 가능합니다.`);
+                return;
+            }
+
+            if (numericValue < 0) {
+                toast.error('예산은 0원 이상이어야 합니다.');
+                return;
+            }
+
             setProfileData(prev => ({...prev, [field]: numericValue}));
         } else {
             setProfileData(prev => ({...prev, [field]: value}));
         }
     };
 
-    const handleAvatarUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const result = e.target?.result as string;
-                setProfileData(prev => ({...prev, avatar: result}));
-            };
-            reader.readAsDataURL(file);
+        if (!file) return;
+
+        // 파일 형식 체크
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+        if (!allowedTypes.includes(file.type)) {
+            toast.error('JPG, PNG, GIF 파일만 업로드 가능합니다.');
+            event.target.value = ''; // 파일 선택 초기화
+            return;
         }
+
+        // 파일 크기 체크
+        const maxSize = 5 * 1024 * 1024; // 5MB
+        if (file.size > maxSize) {
+            toast.error('파일 크기는 5MB 이하여야 합니다.');
+            event.target.value = '';
+            return;
+        }
+
+        setSelectedFile(file);
+        setHasImageChange(true);
+
+        // 미리보기 이미지 생성
+        const render = new FileReader();
+        render.onload = (e) => {
+            if (e.target?.result) {
+                setPreviewImage(e.target.result as string);
+            }
+        };
+        render.readAsDataURL(file);
     };
 
-    const handleDeleteAccount = () => {
+    const handleDeleteAccount = async () => {
         if (showDeleteConfirm) {
-            // 실제 계정 삭제 로직
-            toast.success('계정이 삭제되었습니다.');
-            // 로그아웃 처리 등
+            try {
+                setProcessingAccountDeletion(true);
+
+                await profileApi.deleteAccount(); // 200응답
+
+                // 로그아웃 처리 후 이동
+                const {logout} = useAuthStore.getState();
+                toast.success('계정이 삭제되었습니다.');
+                logout();
+                window.location.href = '/';
+
+            } catch (error) {
+                toast.error('계정 삭제에 실패했습니다');
+            } finally {
+                setProcessingAccountDeletion(false);
+            }
         } else {
             setShowDeleteConfirm(true);
             setTimeout(() => setShowDeleteConfirm(false), 5000); // 5초 후 자동으로 확인 상태 해제
         }
     };
 
-    const handleSave = () => {
-        // 사용자 정보 업데이트
-        const {updateUser} = useAuthStore.getState();
-        updateUser({
-            nickname: profileData.nickname,
-            monthlyBudget: profileData.monthlyBudget
-        });
+    const handleSave = async () => {
+        // 닉네임 체크
+        if (profileData.nickname !== user?.nickname && !nicknameState.available) {
+            toast.error('사용할 수 없는 닉네임입니다.');
+            return;
+        }
 
-        // 설정 저장 로직
-        toast.success('설정이 저장되었습니다.');
+        try {
+            let updatedAvatar = profileData.avatar;
+            // 이미지 변경되었으면 업로드
+            if (hasImageChange && selectedFile) {
+                const response = await profileApi.uploadAvatar(selectedFile);
+                updatedAvatar = response.data.profileImageUrl;
+
+                // 로컬 상태 업데이트
+                setProfileData(prev => ({...prev, avatar: updatedAvatar}));
+            }
+
+            // 프로필 정보 업데이트
+            await profileApi.updateProfile({
+                nickname: profileData.nickname,
+                monthlyBudget: profileData.monthlyBudget
+            });
+
+            // 전역상태 업데이트
+            const {updateUser} = useAuthStore.getState();
+            updateUser({
+                ...user,
+                nickname: profileData.nickname,
+                monthlyBudget: profileData.monthlyBudget,
+                avatar: updatedAvatar
+            });
+
+            setPreviewImage(null);
+            setSelectedFile(null);
+            setHasImageChange(false);
+
+            toast.success('정보가 수정되었습니다.');
+        } catch (error) {
+            toast.error('정보 수정에 실패했습니다.');
+            console.error('Profile update error: ', error);
+        }
+    };
+
+    // 이미지 취소
+    const handleImageCancel = () => {
+        setPreviewImage(null);
+        setSelectedFile(null);
+        setHasImageChange(false);
+        // 파일 input 초기화
+        const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+        if (fileInput) fileInput.value = '';
+    }
+
+    // 금액 포맷팅
+    const formatNumber = (num: number): string => {
+        return num.toLocaleString('ko-KR');
+    };
+    const parseNumber = (str: string): number => {
+        return parseInt(str.replace(/,/g, '')) || 0;
     };
 
     const renderProfileSettings = () => (
@@ -77,40 +266,66 @@ const SettingsPage: React.FC = () => {
                 {/* 프로필 사진 */}
                 <div className="flex items-center space-x-6 mb-6">
                     <div className="relative">
-                        <div
-                            className="w-24 h-24 rounded-full overflow-hidden bg-gradient-to-r from-primary-500 to-primary-600 flex items-center justify-center">
-                            {profileData.avatar ? (
-                                <img
-                                    src={profileData.avatar}
-                                    alt="프로필"
-                                    className="w-full h-full object-cover"
-                                />
-                            ) : (
-                                <span className="text-2xl font-bold text-white">
-                  {profileData.name?.[0] || 'U'}
-                </span>
-                            )}
-                        </div>
+                        {user && (
+                            <Avatar
+                                user={{
+                                    avatar: previewImage || profileData.avatar,
+                                    username: profileData.name,
+                                    nickname: profileData.nickname,
+                                    provider: user.provider
+                                }}
+                                size="lg"
+                            />
+                        )}
                         <label
                             className="absolute bottom-0 right-0 w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center cursor-pointer hover:bg-primary-700 transition-colors">
                             <Camera className="w-4 h-4 text-white"/>
                             <input
                                 type="file"
-                                accept="image/*"
-                                onChange={handleAvatarUpload}
+                                accept="image/jpeg,image/jpg,image/png,image/gif" // 허용할 파일 형식 명시
+                                onChange={handleImageSelect}
                                 className="hidden"
                             />
                         </label>
                     </div>
                     <div>
                         <h4 className="text-lg font-semibold text-gray-900">프로필 사진</h4>
-                        <p className="text-sm text-gray-600">JPG, PNG 파일을 업로드할 수 있습니다</p>
-                        <button
-                            onClick={() => setProfileData(prev => ({...prev, avatar: ''}))}
-                            className="text-sm text-red-600 hover:text-red-700 mt-1"
-                        >
-                            사진 제거
-                        </button>
+                        <p className="text-sm text-gray-600">JPG, PNG, GIF 파일만 업로드 가능 (최대 5MB)
+                        </p>
+                        <div className="flex space-x-4 mt-1">
+                            <button
+                                onClick={async () => {
+                                    try {
+                                        await profileApi.deleteAvatar();
+                                        // 로컬 상태 업데이트
+                                        setProfileData(prev => ({...prev, avatar: ''}));
+
+                                        // 전역 상태 업데이트
+                                        const {updateUser} = useAuthStore.getState();
+                                        updateUser({
+                                            ...user,
+                                            avatar: ''
+                                        })
+
+                                        toast.success('프로필 사진이 삭제되었습니다.')
+                                    } catch (error) {
+                                        toast.error('이미지 삭제에 실패했습니다.');
+                                        console.error('Profile image delete error: ', error);
+                                    }
+                                }}
+                                className="text-sm text-red-600 hover:text-red-700"
+                            >
+                                사진 제거
+                            </button>
+                            {hasImageChange && (
+                                <button
+                                    onClick={handleImageCancel}
+                                    className="text-sm text-gray-600 hover:text-gray-800"
+                                >
+                                    변경 취소
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -131,25 +346,47 @@ const SettingsPage: React.FC = () => {
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">닉네임</label>
-                        <input
-                            type="text"
-                            value={profileData.nickname}
-                            onChange={(e) => handleProfileChange('nickname', e.target.value)}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                            placeholder="사용할 닉네임을 입력하세요"
-                        />
+                        <div className="relative">
+                            <input
+                                type="text"
+                                value={profileData.nickname}
+                                onChange={(e) => handleProfileChange('nickname', e.target.value)}
+                                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                                    nicknameState.available ? 'border-green-500' :
+                                        !nicknameState.available ? 'border-red-500' :
+                                            'border-gray-300'
+                                }`}
+                                placeholder="사용할 닉네임을 입력하세요"
+                            />
+                            {nicknameState.checking && (
+                                <div className="absolute right-3 top-3">
+                                    <div
+                                        className="w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+                                </div>
+                            )}
+                        </div>
+                        <p className={`text-xs mt-1 ${
+                            nicknameState.available ? 'text-green-600' :
+                                !nicknameState.available ? 'text-red-600' :
+                                    'text-gray-500'
+                        }`}>
+                            {nicknameState.message || (!profileData.nickname ? '사용할 닉네임을 입력하세요' : '')}
+                        </p>
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">개인 한 달 예산</label>
                         <div className="relative">
                             <input
-                                type="number"
-                                value={profileData.monthlyBudget}
-                                onChange={(e) => handleProfileChange('monthlyBudget', e.target.value)}
+                                type="text"
+                                value={formatNumber(profileData.monthlyBudget)} // 콤마 추가된 형태로 표시
+                                onChange={(e) => {
+                                    const numericValue = parseNumber(e.target.value);
+                                    if (numericValue <= 1000000000) { // 10억원 이하만 입력 허용
+                                        handleProfileChange('monthlyBudget', numericValue.toString());
+                                    }
+                                }}
                                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent pr-8"
                                 placeholder="0"
-                                min="0"
-                                step="1000"
                             />
                             <span className="absolute right-3 top-3 text-gray-500">원</span>
                         </div>
@@ -348,9 +585,14 @@ const SettingsPage: React.FC = () => {
                     <div className="flex justify-end mt-8">
                         <motion.button
                             onClick={handleSave}
-                            className="flex items-center space-x-3 px-6 py-3 bg-primary-600 text-white rounded-xl font-medium hover:bg-primary-700 transition-colors shadow-lg"
-                            whileHover={{scale: 1.02}}
-                            whileTap={{scale: 0.98}}
+                            disabled={!nicknameState.available && profileData.nickname !== user?.nickname}
+                            className={`flex items-center space-x-3 px-6 py-3 rounded-xl font-medium transition-colors shadow-lg ${
+                                !nicknameState.available && profileData.nickname !== user?.nickname
+                                    ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                                    : 'bg-primary-600 text-white hover:bg-primary-700'
+                            }`}
+                            whileHover={nicknameState.available ? {scale: 1.02} : {}}
+                            whileTap={nicknameState.available ? {scale: 0.98} : {}}
                         >
                             <Save className="w-5 h-5"/>
                             <span>변경사항 저장</span>

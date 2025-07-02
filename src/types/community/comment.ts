@@ -4,8 +4,8 @@ export interface Comment {
   userId: string;
   content: string;
   createdAt: string;
-  updatedAt: string;
-  authorName?: string; // 선택: 닉네임 표시 등
+  updatedAt?: string; // ✅ 백엔드 DTO에 없으므로 선택적(optional)으로 변경
+  authorNickname?: string; // 선택: 닉네임 표시 등
 }
 
 export interface CreateCommentDTO {

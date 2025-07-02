@@ -13,14 +13,12 @@ import {
   MessageSquare,
   HelpCircle,
   FileText,
-  Edit,
   Trash2,
-  X,
-  Check,
   MoreVertical,
   Pencil,
 } from "lucide-react";
-import { Post, Comment } from "../../types";
+import { Comment } from "../../types/community/comment";
+import { Post } from "../../types/community/community";
 import { useAuthStore } from "../../store/authStore";
 import { useAppStore } from "../../store/appStore";
 import { useDeleteConfirmation } from "../../hooks/useDeleteConfirmation";
@@ -28,6 +26,13 @@ import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
 import toast from "react-hot-toast";
 import ReportModal from "./ReportModal";
+// commentApi 함수들을 임포트합니다.
+import {
+  fetchCommentsByPostId,
+  createComment,
+  deleteComment,
+  // updateComment // 댓글 수정 기능을 사용하지 않으므로 필요하지 않습니다.
+} from "../../api/community/comment";
 
 interface PostDetailProps {
   post: Post;
@@ -44,11 +49,10 @@ const PostDetail: React.FC<PostDetailProps> = ({
 }) => {
   const { user } = useAuthStore();
   const { updatePost, deletePost, posts } = useAppStore();
-  const [post, setPost] = useState<Post>(initialPost);
+  const [post, setPost] = useState<Post>(initialPost); // 게시글 자체의 상태
+  const [comments, setComments] = useState<Comment[]>([]); // 댓글 목록을 별도로 관리하는 상태
   const [newComment, setNewComment] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
-  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
-  const [editCommentText, setEditCommentText] = useState("");
   const [reportModal, setReportModal] = useState<{
     isOpen: boolean;
     type: "post" | "comment";
@@ -67,7 +71,7 @@ const PostDetail: React.FC<PostDetailProps> = ({
   const { isDeleting: isDeletingPost, handleDelete: triggerDeletePost } =
     useDeleteConfirmation({
       onConfirm: () => {
-        deletePost(post.id);
+        deletePost(post.postId); // post.id 대신 post.postId 사용
         toast.success("게시글이 삭제되었습니다.");
         onBack();
       },
@@ -76,11 +80,27 @@ const PostDetail: React.FC<PostDetailProps> = ({
 
   // posts 상태가 변경될 때마다 현재 post를 업데이트
   useEffect(() => {
-    const updatedPost = posts.find((p) => p.id === post.id);
+    const updatedPost = posts.find((p) => p.postId === post.postId);
     if (updatedPost) {
       setPost(updatedPost);
+      // 이 시점에서는 댓글을 업데이트하지 않습니다. 댓글은 아래의 별도 useEffect에서 불러옵니다.
     }
-  }, [posts, post.id]);
+  }, [posts, post.postId]);
+
+  // 게시글 ID가 변경될 때마다 댓글을 백엔드에서 불러오는 useEffect
+  useEffect(() => {
+    const loadComments = async () => {
+      try {
+        const fetchedComments = await fetchCommentsByPostId(post.postId);
+        setComments(fetchedComments); // 불러온 댓글로 comments 상태 업데이트
+      } catch (error) {
+        console.error("댓글 로드 실패:", error);
+        toast.error("댓글을 불러오는 데 실패했습니다.");
+        setComments([]); // 오류 발생 시 댓글 목록을 비웁니다.
+      }
+    };
+    loadComments();
+  }, [post.postId]); // post.postId가 변경될 때마다 실행
 
   // 외부 클릭 시 액션 메뉴 닫기
   useEffect(() => {
@@ -144,25 +164,33 @@ const PostDetail: React.FC<PostDetailProps> = ({
   };
 
   const handleSubmitComment = async () => {
-    if (!newComment.trim() || !user) return;
+    if (!newComment.trim() || !user) {
+      toast.error("댓글 내용을 입력하거나, 로그인 후 이용해주세요.");
+      return;
+    }
 
     setIsSubmittingComment(true);
 
     try {
-      const comment: Comment = {
-        id: Date.now().toString(),
+      // 댓글 생성
+      await createComment({
+        postId: post.postId,
         content: newComment.trim(),
-        userId: user.id,
-        author: user,
-        createdAt: new Date(),
-      };
+      });
 
-      const updatedComments = [...(post.comments || []), comment];
-      updatePost(post.id, { comments: updatedComments });
+      // ✅ 댓글 목록을 다시 백엔드에서 불러오기 (닉네임 포함됨)
+      const refreshedComments = await fetchCommentsByPostId(post.postId);
+      setComments(refreshedComments);
+
+      // 댓글 수 반영
+      updatePost(post.postId, {
+        commentCount: (post.commentCount || 0) + 1,
+      });
 
       setNewComment("");
       toast.success("댓글이 작성되었습니다.");
     } catch (error) {
+      console.error("댓글 작성 중 오류:", error);
       toast.error("댓글 작성 중 오류가 발생했습니다.");
     } finally {
       setIsSubmittingComment(false);
@@ -170,41 +198,30 @@ const PostDetail: React.FC<PostDetailProps> = ({
   };
 
   const handleDeleteComment = (commentId: string) => {
-    // 즉시 실행하지 않고 다음 렌더링 사이클에서 실행
-    requestAnimationFrame(() => {
+    // 즉시 실행하지 않고 다음 렌더링 사이클에서 실행 (requestAnimationFrame)
+    requestAnimationFrame(async () => {
+      // async 추가
       if (window.confirm("정말로 이 댓글을 삭제하시겠습니까?")) {
-        const updatedComments =
-          post.comments?.filter((c) => c.id !== commentId) || [];
-        updatePost(post.id, { comments: updatedComments });
-        toast.success("댓글이 삭제되었습니다.");
+        try {
+          // 백엔드 API 호출하여 댓글 삭제
+          await deleteComment(commentId);
+
+          // 성공 시 프론트엔드 comments 상태 업데이트
+          setComments((prevComments) =>
+            prevComments.filter((c) => c.id !== commentId)
+          );
+          // 게시글의 commentCount도 업데이트 (useAppStore의 updatePost 활용)
+          updatePost(post.postId, {
+            commentCount: Math.max(0, (post.commentCount || 0) - 1),
+          });
+
+          toast.success("댓글이 삭제되었습니다.");
+        } catch (error) {
+          console.error("댓글 삭제 중 오류:", error);
+          toast.error("댓글 삭제 중 오류가 발생했습니다.");
+        }
       }
     });
-  };
-
-  const handleEditComment = (comment: Comment) => {
-    setEditingCommentId(comment.id);
-    setEditCommentText(comment.content);
-  };
-
-  const handleSaveEditComment = () => {
-    if (!editCommentText.trim()) return;
-
-    const updatedComments =
-      post.comments?.map((c) =>
-        c.id === editingCommentId
-          ? { ...c, content: editCommentText.trim(), updatedAt: new Date() }
-          : c
-      ) || [];
-
-    updatePost(post.id, { comments: updatedComments });
-    setEditingCommentId(null);
-    setEditCommentText("");
-    toast.success("댓글이 수정되었습니다.");
-  };
-
-  const handleCancelEditComment = () => {
-    setEditingCommentId(null);
-    setEditCommentText("");
   };
 
   const handleShare = async () => {
@@ -239,7 +256,7 @@ const PostDetail: React.FC<PostDetailProps> = ({
     setReportModal({
       isOpen: true,
       type: "post",
-      targetId: post.id,
+      targetId: post.postId, // post.id 대신 post.postId 사용
       targetTitle: post.title,
     });
   };
@@ -251,34 +268,6 @@ const PostDetail: React.FC<PostDetailProps> = ({
       targetId: commentId,
       targetTitle: `${post.title}의 댓글`,
     });
-  };
-
-  const handleDeletePost = () => {
-    if (isDeletingPost) {
-      return;
-    }
-
-    setIsDeletingPost(true);
-    setShowPostActions(false);
-
-    // 모든 이벤트 리스너를 임시로 정리
-    const allElements = document.querySelectorAll("*");
-    const listeners: Array<{
-      element: Element;
-      type: string;
-      listener: EventListener;
-    }> = [];
-
-    // 확인 다이얼로그 실행
-    const confirmed = window.confirm("정말로 이 게시글을 삭제하시겠습니까?");
-
-    if (confirmed) {
-      deletePost(post.id);
-      toast.success("게시글이 삭제되었습니다.");
-      onBack();
-    }
-
-    setIsDeletingPost(false);
   };
 
   const handleEditPost = () => {
@@ -327,12 +316,12 @@ const PostDetail: React.FC<PostDetailProps> = ({
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
               <span className="text-white font-medium text-sm">
-                {post.author?.username?.charAt(0) || "U"}
+                {post.authorNickname?.charAt(0) || "U"}
               </span>
             </div>
             <div>
               <span className="font-medium text-gray-900">
-                {post.author?.username || "익명"}
+                {post.authorNickname || "익명"}
               </span>
               <div className="flex items-center space-x-2 text-sm text-gray-500">
                 <Clock className="w-4 h-4" />
@@ -359,7 +348,7 @@ const PostDetail: React.FC<PostDetailProps> = ({
             })()}
 
             {/* 작성자 본인인 경우 편집/삭제 버튼 */}
-            {user?.id === post.author?.id && (
+            {user?.id === post.userId && (
               <div className="relative" ref={postActionsRef}>
                 <motion.button
                   whileHover={{ scale: 1.05 }}
@@ -415,8 +404,8 @@ const PostDetail: React.FC<PostDetailProps> = ({
           {post.content}
         </p>
 
-        {/* 태그 */}
-        {post.tags && post.tags.length > 0 && (
+        {/* 태그 (Post 타입에 tags 속성이 없으므로 주석 처리하거나 타입에 추가 필요) */}
+        {/* {post.tags && post.tags.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-6">
             {post.tags.map((tag, index) => (
               <span
@@ -427,18 +416,19 @@ const PostDetail: React.FC<PostDetailProps> = ({
               </span>
             ))}
           </div>
-        )}
+        )} */}
 
         {/* 액션 버튼들 */}
         <div className="flex items-center justify-between pt-4 border-t border-gray-100">
           <div className="flex items-center space-x-6">
             <div className="flex items-center space-x-2 text-gray-500">
               <Heart className="w-5 h-5" />
-              <span>{post.likes || 0}</span>
+              <span>{post.likeCount || 0}</span>{" "}
             </div>
             <div className="flex items-center space-x-2 text-gray-500">
               <MessageCircle className="w-5 h-5" />
-              <span>{post.comments?.length || 0}</span>
+              {/* comments 상태의 길이를 사용합니다. */}
+              <span>{comments.length || 0}</span>
             </div>
           </div>
 
@@ -474,14 +464,15 @@ const PostDetail: React.FC<PostDetailProps> = ({
         className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6"
       >
         <h3 className="text-lg font-semibold text-gray-900 mb-6">
-          댓글 {post.comments?.length || 0}개
+          댓글 {comments.length || 0}개{" "}
+          {/* comments 상태의 길이를 사용합니다. */}
         </h3>
 
         {/* 댓글 작성 */}
         <div className="flex space-x-4 mb-6">
           <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
             <span className="text-white font-medium text-sm">
-              {user?.name?.charAt(0) || "U"}
+              {user?.username?.charAt(0) || "U"}{" "}
             </span>
           </div>
           <div className="flex-1">
@@ -522,8 +513,8 @@ const PostDetail: React.FC<PostDetailProps> = ({
 
         {/* 댓글 목록 */}
         <div className="space-y-4">
-          {post.comments && post.comments.length > 0 ? (
-            post.comments
+          {comments && comments.length > 0 ? ( // comments 상태를 사용합니다.
+            comments
               .sort(
                 (a, b) =>
                   new Date(b.createdAt).getTime() -
@@ -531,7 +522,6 @@ const PostDetail: React.FC<PostDetailProps> = ({
               )
               .map((comment, index) => {
                 const isCommentAuthor = user?.id === comment.userId;
-                const isEditing = editingCommentId === comment.id;
 
                 return (
                   <motion.div
@@ -543,14 +533,14 @@ const PostDetail: React.FC<PostDetailProps> = ({
                   >
                     <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center">
                       <span className="text-white font-medium text-xs">
-                        {comment.author?.username?.charAt(0) || "U"}
+                        {comment.authorNickname?.charAt(0) || "U"}
                       </span>
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center space-x-2">
                           <span className="font-medium text-gray-900 text-sm">
-                            {comment.author?.username || "익명"}
+                            {comment.authorNickname || "익명"}
                           </span>
                           <span className="text-xs text-gray-500">
                             {formatDistanceToNow(new Date(comment.createdAt), {
@@ -567,27 +557,16 @@ const PostDetail: React.FC<PostDetailProps> = ({
                             )}
                         </div>
                         <div className="flex items-center space-x-1">
-                          {isCommentAuthor && !isEditing && (
-                            <>
-                              <motion.button
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                onClick={() => handleEditComment(comment)}
-                                className="flex items-center space-x-1 px-2 py-1 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded transition-colors"
-                              >
-                                <Edit className="w-3 h-3" />
-                                <span className="text-xs">편집</span>
-                              </motion.button>
-                              <motion.button
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                onClick={() => handleDeleteComment(comment.id)}
-                                className="flex items-center space-x-1 px-2 py-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
-                              >
-                                <Trash2 className="w-3 h-3" />
-                                <span className="text-xs">삭제</span>
-                              </motion.button>
-                            </>
+                          {isCommentAuthor && (
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => handleDeleteComment(comment.id)}
+                              className="flex items-center space-x-1 px-2 py-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                              <span className="text-xs">삭제</span>
+                            </motion.button>
                           )}
                           {!isCommentAuthor && (
                             <motion.button
@@ -602,48 +581,9 @@ const PostDetail: React.FC<PostDetailProps> = ({
                           )}
                         </div>
                       </div>
-
-                      {isEditing ? (
-                        <div className="space-y-2">
-                          <textarea
-                            value={editCommentText}
-                            onChange={(e) => setEditCommentText(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none text-sm"
-                            rows={2}
-                            maxLength={500}
-                          />
-                          <div className="flex items-center justify-between">
-                            <div className="text-xs text-gray-500">
-                              {editCommentText.length}/500
-                            </div>
-                            <div className="flex space-x-2">
-                              <motion.button
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                onClick={handleCancelEditComment}
-                                className="flex items-center space-x-1 px-2 py-1 text-gray-500 hover:bg-gray-100 rounded transition-colors"
-                              >
-                                <X className="w-3 h-3" />
-                                <span className="text-xs">취소</span>
-                              </motion.button>
-                              <motion.button
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                onClick={handleSaveEditComment}
-                                disabled={!editCommentText.trim()}
-                                className="flex items-center space-x-1 px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 disabled:bg-gray-300 transition-colors"
-                              >
-                                <Check className="w-3 h-3" />
-                                <span className="text-xs">저장</span>
-                              </motion.button>
-                            </div>
-                          </div>
-                        </div>
-                      ) : (
-                        <p className="text-gray-700 text-sm leading-relaxed">
-                          {comment.content}
-                        </p>
-                      )}
+                      <p className="text-gray-700 text-sm leading-relaxed">
+                        {comment.content}
+                      </p>
                     </div>
                   </motion.div>
                 );

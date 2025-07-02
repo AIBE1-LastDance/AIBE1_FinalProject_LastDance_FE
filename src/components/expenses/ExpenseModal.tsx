@@ -14,55 +14,86 @@ interface ExpenseModalProps {
 const ExpenseModal: React.FC<ExpenseModalProps> = ({ expense, onClose }) => {
   const { addExpense, updateExpense, deleteExpense, mode, currentGroup } = useAppStore();
   const { user } = useAuthStore();
-  
+
+  // splitData 변환
+  const convertSplitDataToObject = (splitData: any) => {
+    if (!splitData) return {};
+
+    // 객체라면 그대로 반환
+    if (typeof splitData === 'object' && !Array.isArray(splitData)) {
+      return splitData;
+    }
+
+    // 배열 형태면 객체로 변환
+    if (Array.isArray(splitData)) {
+      const converted = {};
+      splitData.forEach(item => {
+        if (item.userId && item.amount !== undefined) {
+          converted[item.userId] = item.amount;
+        }
+      });
+      return converted;
+    }
+
+    return {};
+  };
+
+
+
   const [formData, setFormData] = useState({
     title: expense?.title || '',
-    amount: expense?.amount || 0,
-    category: expense?.category || 'food',
+    amount: expense?.amount?.toString() || '',
+    category: expense?.category || 'FOOD',
     date: expense?.date ? new Date(expense.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
     memo: expense?.memo || '',
     receipt: expense?.receipt || '',
-    splitType: expense?.splitType || 'equal',
-    splitData: expense?.splitData || {},
+    splitType: expense?.splitType || 'EQUAL',
+    splitData: convertSplitDataToObject(expense?.splitData),
   });
 
+  console.log('formData.splitData:', formData.splitData);
+  console.log('==========================');
+
   const categories = [
-    { value: 'food', label: '식비', color: '#FF6B6B' },
-    { value: 'utilities', label: '공과금', color: '#4ECDC4' },
-    { value: 'transport', label: '교통비', color: '#45B7D1' },
-    { value: 'shopping', label: '쇼핑', color: '#96CEB4' },
-    { value: 'entertainment', label: '유흥', color: '#FFEAA7' },
-    { value: 'other', label: '기타', color: '#DDA0DD' },
+    { value: 'FOOD', label: '식비', color: '#FF6B6B' },
+    { value: 'UTILITIES', label: '공과금', color: '#4ECDC4' },
+    { value: 'TRANSPORT', label: '교통비', color: '#45B7D1' },
+    { value: 'SHOPPING', label: '쇼핑', color: '#96CEB4' },
+    { value: 'ENTERTAINMENT', label: '유흥', color: '#FFEAA7' },
+    { value: 'OTHER', label: '기타', color: '#DDA0DD' },
   ];
 
   const splitTypes = [
-    { value: 'equal', label: '균등 분할' },
-    { value: 'custom', label: '커스텀 분할' },
-    { value: 'specific', label: '특정 인원' },
+    { value: 'EQUAL', label: '균등 분할' },
+    { value: 'CUSTOM', label: '커스텀 분할' },
+    { value: 'SPECIFIC', label: '특정 인원' },
   ];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
+    const amount = Number(formData.amount.replace(/[^0-9]/g, ''));
+
     if (!formData.title.trim()) {
       toast.error('제목을 입력해주세요.');
       return;
     }
 
-    if (formData.amount <= 0) {
+    if (amount <= 0 || isNaN(amount)) {
       toast.error('올바른 금액을 입력해주세요.');
       return;
     }
 
     // 그룹 모드에서 정산 방식별 검증
     if (mode === 'group' && currentGroup) {
-      if (formData.splitType === 'custom') {
+      if (formData.splitType === 'CUSTOM') {
         const totalSplit = Object.values(formData.splitData).reduce((sum, val) => sum + (Number(val) || 0), 0);
-        if (totalSplit !== formData.amount) {
+        const totalAmount = Number(formData.amount);
+        if (totalSplit !== totalAmount) {
           toast.error('커스텀 분할 금액의 합계가 총 금액과 일치하지 않습니다.');
           return;
         }
-      } else if (formData.splitType === 'specific') {
+      } else if (formData.splitType === 'SPECIFIC') {
         if (Object.keys(formData.splitData).length === 0) {
           toast.error('정산에 참여할 인원을 선택해주세요.');
           return;
@@ -72,26 +103,23 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({ expense, onClose }) => {
 
     if (!user) return;
 
-    const expenseData: Expense = {
-      id: expense?.id || Math.random().toString(36).substr(2, 9),
+    const expenseData = {
       title: formData.title,
-      amount: formData.amount,
-      category: formData.category as any,
-      date: new Date(formData.date),
+      amount: amount,
+      category: formData.category,
+      date: formData.date, // ← string 그대로 사용
       memo: formData.memo || undefined,
       receipt: formData.receipt || undefined,
       groupId: mode === 'group' && currentGroup ? currentGroup.id : undefined,
       userId: user.id,
-      splitType: formData.splitType as any,
+      splitType: formData.splitType,
       splitData: mode === 'group' ? formData.splitData : undefined,
     };
 
     if (expense) {
       updateExpense(expense.id, expenseData);
-      toast.success('지출이 수정되었습니다.');
     } else {
       addExpense(expenseData);
-      toast.success('지출이 추가되었습니다.');
     }
 
     onClose();
@@ -100,7 +128,6 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({ expense, onClose }) => {
   const handleDelete = () => {
     if (expense && window.confirm('정말로 이 지출을 삭제하시겠습니까?')) {
       deleteExpense(expense.id);
-      toast.success('지출이 삭제되었습니다.');
       onClose();
     }
   };
@@ -152,12 +179,16 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({ expense, onClose }) => {
               <span>금액 *</span>
             </label>
             <input
-              type="number"
-              value={formData.amount}
-              onChange={(e) => setFormData({ ...formData, amount: Number(e.target.value) })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-2xl font-bold"
-              placeholder="0"
-              min="0"
+                type="text"
+                value={formData.amount ? new Intl.NumberFormat('ko-KR').format(Number(formData.amount)) : ''}
+                onChange={(e) => {
+                  // 숫자만 추출 (콤마 제거)
+                  const numericValue = e.target.value.replace(/[^0-9]/g, '');
+                  setFormData({ ...formData, amount: numericValue });
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-2xl font-bold text-right"
+                placeholder="10,000"
+                inputMode="numeric"
             />
           </div>
 
@@ -279,76 +310,152 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({ expense, onClose }) => {
               </div>
 
               {/* Custom Split Settings */}
-              {formData.splitType === 'custom' && (
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h4 className="text-sm font-medium text-gray-700 mb-3">커스텀 분할 설정</h4>
-                  <div className="space-y-3">
-                    {currentGroup.members.map((member) => (
-                      <div key={member.id} className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600">{member.name}</span>
-                        <input
-                          type="number"
-                          min="0"
-                          value={formData.splitData[member.id] || 0}
-                          onChange={(e) => setFormData({
-                            ...formData,
-                            splitData: {
-                              ...formData.splitData,
-                              [member.id]: Number(e.target.value)
-                            }
-                          })}
-                          className="w-24 px-2 py-1 border border-gray-300 rounded text-sm"
-                          placeholder="0"
-                        />
+              {formData.splitType === 'CUSTOM' && (
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h4 className="text-sm font-medium text-gray-700 mb-3">커스텀 분할 설정</h4>
+                    <div className="space-y-3">
+                      {currentGroup.members.map((member) => (
+                          <div key={member.userId} className="flex items-center justify-between">
+                            <span className="text-sm text-gray-600">{member.nickname}</span>
+                            <input
+                                type="text"  // number → text로 변경
+                                value={formData.splitData[member.userId] ?
+                                    new Intl.NumberFormat('ko-KR').format(formData.splitData[member.userId]) : ''}
+                                onChange={(e) => {
+                                  // 입력하는 동안 실시간으로 콤마 표시
+                                  const numericValue = e.target.value.replace(/[^0-9]/g, '');
+                                  const amount = numericValue === '' ? 0 : Number(numericValue);
+
+                                  console.log(`${member.nickname} 금액변경:`, amount)
+                                  setFormData({
+                                    ...formData,
+                                    splitData: {
+                                      ...formData.splitData,
+                                      [member.userId]: amount
+                                    }
+                                  });
+                                }}
+                                className="w-24 px-2 py-1 border border-gray-300 rounded text-sm text-center"
+                                placeholder="0"
+                                inputMode="numeric"  // 모바일에서 숫자 키패드
+                            />
+                          </div>
+                      ))}
+                      <div className="border-t pt-3 mt-3">
+                        {(() => {
+                          const totalSplit = Object.values(formData.splitData).reduce((sum, val) => sum + (Number(val) || 0), 0);
+                          const totalAmount = Number(formData.amount);
+                          const remainingAmount = Number(formData.amount) - totalSplit;
+
+                          return (
+                              <>
+                                <div className="flex items-center justify-between text-sm">
+                                  <span className="font-medium">분할 합계:</span>
+                                  <span className={`font-medium ${
+                                      totalSplit === totalAmount ? 'text-green-600' : 'text-gray-600'
+                                  }`}>
+                  {new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW' }).format(totalSplit)}
+                </span>
+                                </div>
+
+                                <div className="flex items-center justify-between text-sm mt-1">
+                                  <span className="font-medium">남은 금액:</span>
+                                  <span className={`font-medium ${
+                                      remainingAmount === 0 ? 'text-green-600' :
+                                          remainingAmount > 0 ? 'text-blue-600' : 'text-red-600'
+                                  }`}>
+                  {new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW' }).format(remainingAmount)}
+                </span>
+                                </div>
+
+                                {/* 빠른 분할 버튼들 - 균등분할 버튼 제거 */}
+                                {remainingAmount > 0 && (
+                                    <div className="mt-3 space-y-2">
+                                      <div className="text-xs text-gray-500 mb-1">빠른 분할:</div>
+                                      <div className="flex space-x-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                              // 남은 금액을 현재 사용자에게 배정
+                                              if (user) {
+                                                setFormData({
+                                                  ...formData,
+                                                  splitData: {
+                                                    ...formData.splitData,
+                                                    [user.id]: (formData.splitData[user.id] || 0) + remainingAmount
+                                                  }
+                                                });
+                                              }
+                                            }}
+                                            className="px-2 py-1 bg-blue-100 text-blue-600 rounded text-xs hover:bg-blue-200 transition-colors"
+                                        >
+                                          내가 부담 (+{new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW' }).format(remainingAmount)})
+                                        </button>
+
+                                        {/* 다른 사람에게 배정하는 버튼들도 추가할 수 있어요 */}
+                                        {currentGroup.members.filter(m => m.userId !== user?.id).map(member => (
+                                            <button
+                                                key={member.userId}
+                                                type="button"
+                                                onClick={() => {
+                                                  setFormData({
+                                                    ...formData,
+                                                    splitData: {
+                                                      ...formData.splitData,
+                                                      [member.userId]: (formData.splitData[member.userId] || 0) + remainingAmount
+                                                    }
+                                                  });
+                                                }}
+                                                className="px-2 py-1 bg-purple-100 text-purple-600 rounded text-xs hover:bg-purple-200 transition-colors"
+                                            >
+                                              {member.nickname}가 부담
+                                            </button>
+                                        ))}
+                                      </div>
+                                    </div>
+                                )}
+                              </>
+                          );
+                        })()}
                       </div>
-                    ))}
-                    <div className="border-t pt-3 mt-3">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="font-medium">합계:</span>
-                        <span className={`font-medium ${
-                          Object.values(formData.splitData).reduce((sum, val) => sum + (Number(val) || 0), 0) === formData.amount
-                            ? 'text-green-600' : 'text-red-600'
-                        }`}>
-                          {new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW' }).format(
-                            Object.values(formData.splitData).reduce((sum, val) => sum + (Number(val) || 0), 0)
-                          )}
-                        </span>
-                      </div>
-                      {Object.values(formData.splitData).reduce((sum, val) => sum + (Number(val) || 0), 0) !== formData.amount && (
-                        <p className="text-xs text-red-600 mt-1">
-                          분할 금액의 합계가 총 금액과 일치하지 않습니다.
-                        </p>
-                      )}
                     </div>
                   </div>
-                </div>
               )}
 
               {/* Specific Split Settings */}
-              {formData.splitType === 'specific' && (
+              {formData.splitType === 'SPECIFIC' && (
                 <div className="bg-gray-50 rounded-lg p-4">
                   <h4 className="text-sm font-medium text-gray-700 mb-3">특정 인원 선택</h4>
                   <div className="space-y-2">
                     {currentGroup.members.map((member) => (
-                      <label key={member.id} className="flex items-center space-x-3">
+                      <label key={member.userId} className="flex items-center space-x-3">
                         <input
                           type="checkbox"
-                          checked={formData.splitData[member.id] !== undefined}
+                          checked={formData.splitData[member.userId] !== undefined}
                           onChange={(e) => {
                             const newSplitData = { ...formData.splitData };
                             if (e.target.checked) {
-                              newSplitData[member.id] = 0; // 일단 0으로 설정, 아래에서 균등분할로 계산
+                              // 특정 인원: 선택한 사람이 전체 금액 부담
+                              if (formData.splitType === 'SPECIFIC') {
+                                // 기존 선택 모두 해제
+                                Object.keys(newSplitData).forEach(key => delete newSplitData[key]);
+                                newSplitData[member.userId] = formData.amount; // 전체 금액
+                              } else {
+                                newSplitData[member.userId] = 0;
+                              }
                             } else {
-                              delete newSplitData[member.id];
+                              delete newSplitData[member.userId];
                             }
-                            
-                            // 선택된 인원으로 균등분할
-                            const selectedMembers = Object.keys(newSplitData);
-                            const amountPerPerson = selectedMembers.length > 0 ? Math.floor(formData.amount / selectedMembers.length) : 0;
-                            selectedMembers.forEach(memberId => {
-                              newSplitData[memberId] = amountPerPerson;
-                            });
-                            
+
+                            // specific이 아닌 경우만 균등분할
+                            if (formData.splitType !== 'SPECIFIC') {
+                              const selectedMembers = Object.keys(newSplitData);
+                              const amountPerPerson = selectedMembers.length > 0 ? Math.floor(formData.amount / selectedMembers.length) : 0;
+                              selectedMembers.forEach(memberId => {
+                                newSplitData[memberId] = amountPerPerson;
+                              });
+                            }
+
                             setFormData({
                               ...formData,
                               splitData: newSplitData
@@ -356,11 +463,11 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({ expense, onClose }) => {
                           }}
                           className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                         />
-                        <span className="text-sm text-gray-700">{member.name}</span>
-                        {formData.splitData[member.id] !== undefined && (
+                        <span className="text-sm text-gray-700">{member.nickname}</span>
+                        {formData.splitData[member.userId] !== undefined && (
                           <span className="text-sm text-blue-600 ml-auto">
                             {new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW' }).format(
-                              formData.splitData[member.id] || 0
+                              formData.splitData[member.userId] || 0
                             )}
                           </span>
                         )}
@@ -381,7 +488,7 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({ expense, onClose }) => {
               )}
 
               {/* Equal Split Info */}
-              {formData.splitType === 'equal' && (
+              {formData.splitType === 'EQUAL' && (
                 <div className="bg-blue-50 rounded-lg p-4">
                   <h4 className="text-sm font-medium text-blue-700 mb-2">균등 분할</h4>
                   <p className="text-sm text-blue-600">

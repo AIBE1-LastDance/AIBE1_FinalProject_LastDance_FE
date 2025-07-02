@@ -1,0 +1,19 @@
+export interface Post {
+  postId: string;
+  title: string;
+  content: string;
+  category: string; // 백엔드 PostCategory의 Enum ID (예: "LIFE_TIPS")
+  categoryName: string; // ✅ 추가: 백엔드 PostCategory의 한글 이름 (예: "생활팁")
+  likeCount: number;
+  reportCount: number; // 백엔드 DTO에 있다면 유지
+  createdAt: string;
+  updatedAt?: string;
+  userId: string; // 게시글 작성자의 UUID
+  authorNickname: string; // 게시글 작성자의 닉네임
+  commentCount: number;
+  comments?: Comment[]; // 댓글 목록 (게시글 상세 조회 시 제공될 수 있음)
+  userLiked: boolean; // 현재 사용자가 이 게시글에 '좋아요'를 눌렀는지 여부
+  userBookmarked: boolean; // 현재 사용자가 이 게시글을 '북마크'했는지 여부
+  likedBy?: string[];
+  bookmarkedBy?: string[];
+}

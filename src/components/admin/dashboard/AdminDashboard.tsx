@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   Users, 
   UserCheck, 
@@ -15,66 +15,63 @@ import {
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useNavigate } from 'react-router-dom';
-
-// 가상 데이터
-const userStats = {
-  total: 2847,
-  active: 2654,
-  suspended: 193,
-  newThisWeek: 124
-};
-
-const groupStats = {
-  total: 1245,
-  active: 1178,
-  pendingReports: 23,
-  systemErrors: 5
-};
-
-const dailySignupData = [
-  { date: '01/01', signups: 12 },
-  { date: '01/02', signups: 19 },
-  { date: '01/03', signups: 8 },
-  { date: '01/04', signups: 27 },
-  { date: '01/05', signups: 18 },
-  { date: '01/06', signups: 23 },
-  { date: '01/07', signups: 31 },
-];
-
-const monthlyActiveUsers = [
-  { month: '7월', users: 2341 },
-  { month: '8월', users: 2456 },
-  { month: '9월', users: 2523 },
-  { month: '10월', users: 2487 },
-  { month: '11월', users: 2598 },
-  { month: '12월', users: 2654 },
-];
-
-const reportsByCategory = [
-  { name: '욕설/비방', value: 35, color: '#ef4444' },
-  { name: '스팸', value: 28, color: '#f59e0b' },
-  { name: '부적절한 콘텐츠', value: 22, color: '#8b5cf6' },
-  { name: '기타', value: 15, color: '#6b7280' },
-];
-
-const hourlyTraffic = [
-  { hour: '00', users: 45 },
-  { hour: '06', users: 23 },
-  { hour: '12', users: 89 },
-  { hour: '18', users: 156 },
-  { hour: '22', users: 134 },
-];
+import { useAdminDashboard } from '../../../hooks/useAdmin';
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
+  const { dashboardStats, signupTrend, loading, error, refetch, fetchSignupTrend } = useAdminDashboard();
+  const [selectedPeriod, setSelectedPeriod] = useState<'daily' | 'weekly' | 'monthly'>('daily');
 
-  const StatCard = ({ title, value, change, icon: Icon, color }: any) => (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+  // 차트 데이터 변환
+  const chartData = signupTrend.map(item => {
+    const date = new Date(item.date);
+    let formattedDate = '';
+    
+    switch (selectedPeriod) {
+      case 'daily':
+        formattedDate = date.toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' });
+        break;
+      case 'weekly':
+        formattedDate = date.toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' });
+        break;
+      case 'monthly':
+        formattedDate = date.toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' });
+        break;
+    }
+    
+    return {
+      date: formattedDate,
+      signups: item.signups || 0
+    };
+  });
+
+  const handlePeriodChange = (period: 'daily' | 'weekly' | 'monthly') => {
+    setSelectedPeriod(period);
+    fetchSignupTrend(period);
+  };
+
+  const getPeriodText = (period: string) => {
+    switch (period) {
+      case 'daily': return '일간';
+      case 'weekly': return '주간';
+      case 'monthly': return '월간';
+      default: return period;
+    }
+  };
+
+  const StatCard = ({ title, value, change, icon: Icon, color, isLoading }: any) => (
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-medium text-gray-600">{title}</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{value.toLocaleString()}</p>
-          {change && (
+          {isLoading ? (
+            <div className="animate-pulse">
+              <div className="h-8 bg-gray-200 rounded w-20 mt-1"></div>
+            </div>
+          ) : (
+            <p className="text-2xl font-bold text-gray-900 mt-1">{value?.toLocaleString() || 0}</p>
+          )}
+          {change && !isLoading && (
             <div className={`flex items-center mt-2 text-sm ${
               change > 0 ? 'text-green-600' : 'text-red-600'
             }`}>
@@ -90,12 +87,30 @@ const AdminDashboard: React.FC = () => {
     </div>
   );
 
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">오류가 발생했습니다</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button
+            onClick={refetch}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            다시 시도
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">대시보드</h1>
+          <h1 className="text-2xl font-bold text-gray-900">관리자 대시보드</h1>
           <p className="text-gray-600 mt-1">시스템 전체 현황을 확인하세요</p>
         </div>
         <div className="flex items-center space-x-2 text-sm text-gray-500">
@@ -107,7 +122,7 @@ const AdminDashboard: React.FC = () => {
       {/* Quick Actions */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">빠른 작업</h3>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <button 
             onClick={() => navigate('/admin/users')}
             className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:text-blue-500 transition-colors"
@@ -129,165 +144,190 @@ const AdminDashboard: React.FC = () => {
             <Activity className="w-5 h-5 mr-2" />
             AI 시스템
           </button>
-          <button 
-            onClick={() => navigate('/admin/analytics')}
-            className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-500 hover:text-green-500 transition-colors"
-          >
-            <BarChart3 className="w-5 h-5 mr-2" />
-            통계 보기
-          </button>
         </div>
       </div>
 
-      {/* Main Stats Grid */}
+      {/* Main Stats Grid - 사용자 통계 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="전체 사용자 수"
-          value={userStats.total}
-          change={8.2}
+          value={dashboardStats?.dashboardUserStats.total}
           icon={Users}
           color="bg-blue-500"
+          isLoading={loading}
         />
         <StatCard
           title="활성 사용자"
-          value={userStats.active}
-          change={5.1}
+          value={dashboardStats?.dashboardUserStats.active}
           icon={UserCheck}
           color="bg-green-500"
+          isLoading={loading}
         />
         <StatCard
           title="정지된 사용자"
-          value={userStats.suspended}
-          change={-12.3}
+          value={dashboardStats?.dashboardUserStats.suspended}
           icon={UserX}
           color="bg-red-500"
+          isLoading={loading}
         />
         <StatCard
-          title="주간 신규 가입"
-          value={userStats.newThisWeek}
-          change={15.7}
+          title="이번 주 신규 가입"
+          value={dashboardStats?.dashboardUserStats.newThisWeek}
           icon={UserPlus}
           color="bg-purple-500"
+          isLoading={loading}
         />
       </div>
 
-      {/* Secondary Stats Grid */}
+      {/* Secondary Stats Grid - 콘텐츠 통계 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
-          title="전체 그룹"
-          value={groupStats.total}
-          change={3.4}
+          title="전체 게시글"
+          value={dashboardStats?.dashboardContentStats.totalPosts}
           icon={MessageSquare}
           color="bg-indigo-500"
+          isLoading={loading}
         />
         <StatCard
-          title="활성 그룹 수"
-          value={groupStats.active}
-          change={4.2}
+          title="전체 댓글"
+          value={dashboardStats?.dashboardContentStats.totalComments}
           icon={MessageCircle}
           color="bg-teal-500"
+          isLoading={loading}
         />
         <StatCard
-          title="미처리 신고 수"
-          value={groupStats.pendingReports}
-          change={-18.5}
-          icon={AlertTriangle}
-          color="bg-orange-500"
+          title="오늘 게시글"
+          value={dashboardStats?.dashboardContentStats.todayPosts}
+          icon={MessageSquare}
+          color="bg-cyan-500"
+          isLoading={loading}
         />
         <StatCard
-          title="시스템 에러"
-          value={groupStats.systemErrors}
-          change={-25.0}
-          icon={AlertCircle}
-          color="bg-rose-500"
+          title="오늘 댓글"
+          value={dashboardStats?.dashboardContentStats.todayComments}
+          icon={MessageCircle}
+          color="bg-emerald-500"
+          isLoading={loading}
         />
       </div>
 
       {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Daily Signups Chart */}
+      <div className="grid grid-cols-1 gap-6">
+        {/* Signup Trend Chart */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">일별 신규 가입자 추이</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={dailySignupData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis />
-              <Tooltip />
-              <Line 
-                type="monotone" 
-                dataKey="signups" 
-                stroke="#3b82f6" 
-                strokeWidth={2}
-                dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Monthly Active Users */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">월별 활성 사용자 수</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={monthlyActiveUsers}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis />
-              <Tooltip />
-              <Line 
-                type="monotone" 
-                dataKey="users" 
-                stroke="#10b981" 
-                strokeWidth={2}
-                dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Reports by Category */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">카테고리별 신고 현황</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={reportsByCategory}
-                cx="50%"
-                cy="50%"
-                outerRadius={100}
-                fill="#8884d8"
-                dataKey="value"
-                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-              >
-                {reportsByCategory.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Hourly Traffic */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">시간대별 접속자 수</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={hourlyTraffic}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="hour" />
-              <YAxis />
-              <Tooltip />
-              <Line 
-                type="monotone" 
-                dataKey="users" 
-                stroke="#8b5cf6" 
-                strokeWidth={2}
-                dot={{ fill: '#8b5cf6', strokeWidth: 2, r: 4 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">신규 가입자 추이</h3>
+              <p className="text-sm text-gray-500 mt-1">기간별 신규 가입자 현황을 확인하세요</p>
+            </div>
+            <div className="flex space-x-2 bg-gray-100 rounded-lg p-1">
+              {(['daily', 'weekly', 'monthly'] as const).map((period) => (
+                <button
+                  key={period}
+                  onClick={() => handlePeriodChange(period)}
+                  className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                    selectedPeriod === period
+                      ? 'bg-white text-blue-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  {getPeriodText(period)}
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          {loading ? (
+            <div className="h-[400px] flex items-center justify-center">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                <p className="text-sm text-gray-500">데이터를 불러오는 중...</p>
+              </div>
+            </div>
+          ) : chartData.length === 0 ? (
+            <div className="h-[400px] flex items-center justify-center">
+              <div className="text-center">
+                <BarChart3 className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                <p className="text-gray-500 font-medium">데이터가 없습니다</p>
+                <p className="text-sm text-gray-400 mt-1">선택한 기간에 가입자가 없습니다</p>
+              </div>
+            </div>
+          ) : (
+            <div className="mt-4">
+              <ResponsiveContainer width="100%" height={400}>
+                <LineChart 
+                  data={chartData} 
+                  margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis 
+                    dataKey="date" 
+                    stroke="#6b7280"
+                    fontSize={12}
+                    tick={{ fill: '#6b7280' }}
+                  />
+                  <YAxis 
+                    stroke="#6b7280"
+                    fontSize={12}
+                    tick={{ fill: '#6b7280' }}
+                  />
+                  <Tooltip 
+                    contentStyle={{
+                      backgroundColor: '#fff',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    }}
+                    labelStyle={{ color: '#374151', fontWeight: 'medium' }}
+                    formatter={(value: any) => [
+                      `${value.toLocaleString()}명`, 
+                      '신규 가입자'
+                    ]}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="signups" 
+                    stroke="#3b82f6" 
+                    strokeWidth={3}
+                    dot={{ 
+                      fill: '#3b82f6', 
+                      strokeWidth: 2, 
+                      r: 5,
+                      fillOpacity: 1
+                    }}
+                    activeDot={{ 
+                      r: 7, 
+                      fill: '#1d4ed8',
+                      strokeWidth: 2,
+                      stroke: '#fff'
+                    }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+              
+              {/* Chart Summary */}
+              <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-gray-100">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-blue-600">
+                    {chartData.reduce((sum, item) => sum + item.signups, 0).toLocaleString()}
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">총 가입자</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-green-600">
+                    {chartData.length > 0 ? Math.round(chartData.reduce((sum, item) => sum + item.signups, 0) / chartData.length) : 0}
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">평균 가입자</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-purple-600">
+                    {Math.max(...chartData.map(item => item.signups), 0)}
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">최대 가입자</p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
