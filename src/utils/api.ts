@@ -72,7 +72,9 @@ const shouldSkipUnauthorizedHandling = (url: string, method: string) => {
     // 계정삭제 API
     const isAccountDeletion = url?.includes('/api/v1/users/me') && method === 'delete';
 
-    return isAuthPage || isAccountDeletion || isProcessingAccountDeletion;
+    const isMainRoot = currentPath === '/';
+
+    return isAuthPage || isAccountDeletion || isProcessingAccountDeletion || isMainRoot;
 };
 
 // Refresh Token 처리 함수
