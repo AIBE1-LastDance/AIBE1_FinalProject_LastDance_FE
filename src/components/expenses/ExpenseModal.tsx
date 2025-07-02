@@ -1,10 +1,11 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {motion} from 'framer-motion';
 import {X, Calculator, Tag, Calendar, FileText, Users, Camera} from 'lucide-react';
 import {useAppStore} from '../../store/appStore';
 import {useAuthStore} from '../../store/authStore';
 import {Expense} from '../../types';
 import toast from 'react-hot-toast';
+import {expenseAPI} from "../../api/expense";
 
 interface ExpenseModalProps {
     expense: Expense | null;
@@ -45,10 +46,27 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
         category: expense?.category || 'FOOD',
         date: expense?.date ? new Date(expense.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
         memo: expense?.memo || '',
-        receipt: expense?.receipt || '',
+        receipt: null as File | null,
         splitType: expense?.splitType || 'EQUAL',
         splitData: convertSplitDataToObject(expense?.splitData),
     });
+
+    // 영수증 별도 관리
+    const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (expense?.hasReceipt && expense.id) {
+            // 그룹분담금인 경우 originalExpenseId 사용, 아니면 id
+            const targetId = expense.originalExpenseId || expense.id;
+            expenseAPI.getReceiptUrl(targetId)
+                .then(response => {
+                    setReceiptUrl(response.data);
+                })
+                .catch(error => {
+                    console.error('영수증 로드 실패: ', error);
+                });
+        }
+    }, [expense]);
 
     const categories = [
         {value: 'FOOD', label: '식비', color: '#FF6B6B'},
@@ -97,6 +115,20 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
             }
         }
 
+        let splitDataArray = undefined;
+        if (mode === 'group' && currentGroup) {
+            // EQUAL일 때는 데이터 x
+            if (formData.splitType === 'EQUAL') {
+                splitDataArray = undefined;
+            } else if ((formData.splitType === 'CUSTOM' || formData.splitType === 'SPECIFIC') &&
+                Object.keys(formData.splitData).length > 0) {
+                splitDataArray = Object.entries(formData.splitData).map(([userId, amount]) => ({
+                    userId,
+                    amount: Number(amount)
+                }));
+            }
+        }
+
         if (!user) return;
 
         const expenseData = {
@@ -105,18 +137,18 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
             category: formData.category,
             date: formData.date,
             memo: formData.memo || undefined,
-            receipt: formData.receipt || undefined,
             groupId: mode === 'group' && currentGroup ? currentGroup.id : null,  // 개인 모드에서는 null
             userId: user.id,
             splitType: mode === 'group' ? formData.splitType : undefined,
-            splitData: mode === 'group' && Object.keys(formData.splitData).length > 0 ? formData.splitData : undefined,
+            splitData: splitDataArray,
+            receipt: formData.receipt,
         };
 
         try {
             if (expense) {
                 updateExpense(expense.id, expenseData);
             } else {
-                addExpense(expenseData);
+                await addExpense(expenseData);
             }
 
             // 지출 추가/수정 후 목록 새로고침
@@ -127,6 +159,15 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                 month: new Date().getMonth() + 1,
                 groupId: mode === 'group' ? currentGroup?.id : null
             });
+
+            // 그룹 분담금도 새로고침
+            if (mode === 'group' && currentGroup) {
+                const {loadGroupShares} = useAppStore.getState();
+                await loadGroupShares({
+                    year: new Date().getFullYear(),
+                    month: new Date().getMonth() + 1,
+                });
+            }
 
             onClose();
         } catch (error) {
@@ -266,36 +307,93 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                     </div>
 
                     {/* Receipt */}
-                    <div>
-                        <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
-                            <Camera className="w-4 h-4"/>
-                            <span>영수증</span>
-                        </label>
-                        <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file) {
-                                    const reader = new FileReader();
-                                    reader.onload = (e) => {
-                                        setFormData({...formData, receipt: e.target?.result as string});
-                                    };
-                                    reader.readAsDataURL(file);
-                                }
-                            }}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                        {formData.receipt && (
+                    {!expense?.isGroupShare && (
+                        <div>
+                            <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
+                                <Camera className="w-4 h-4"/>
+                                <span>영수증</span>
+                            </label>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    console.log('file: ', file);
+                                    if (file) {
+                                        // 파일 크기 제한
+                                        if (file.size > 1024 * 1024 * 10) {
+                                            toast.error('파일 크기는 10MB를 초과할 수 없습니다.');
+                                            e.target.value = '';
+                                            return;
+                                        }
+                                        setFormData({...formData, receipt: file});
+                                        setReceiptUrl(null);
+                                    }
+                                }}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                            {(formData.receipt || receiptUrl) && (
+                                <div className="mt-2">
+                                    <img
+                                        src={formData.receipt ? URL.createObjectURL(formData.receipt) : receiptUrl}
+                                        alt="Receipt"
+                                        className="w-full h-32 object-cover rounded-lg"
+                                    />
+                                    <div className="flex flex-col space-y-2 mt-3">
+                                        {/* 임시 제거 (새로 선택한 파일이나 미리보기 제거) */}
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setFormData({...formData, receipt: null});
+                                                setReceiptUrl(null);
+                                            }}
+                                            className="text-sm text-gray-600 hover:text-gray-800 text-left"
+                                        >
+                                            📎 다시 선택
+                                        </button>
+
+                                        {/* 기존 영수증 완전 삭제 */}
+                                        {expense && receiptUrl && (
+                                            <button
+                                                type="button"
+                                                onClick={async () => {
+                                                    if (window.confirm('영수증을 완전히 삭제하시겠습니까?')) {
+                                                        try {
+                                                            await expenseAPI.deleteReceipt(expense.id);
+                                                            setReceiptUrl(null);
+                                                            toast.success('영수증이 삭제되었습니다.');
+                                                        } catch (error) {
+                                                            console.error('영수증 삭제 실패:', error);
+                                                            toast.error('영수증 삭제에 실패했습니다.');
+                                                        }
+                                                    }
+                                                }}
+                                                className="text-sm text-red-600 hover:text-red-800 text-left"
+                                            >
+                                                🗑️ 영수증 삭제
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                    {/* 그룹 분담의 경우 영수증 조회만 가능 */}
+                    {expense?.isGroupShare && receiptUrl && (
+                        <div>
+                            <label className="flex items-center space-x-2 text-sm font-medium text-gray-700 mb-2">
+                                <Camera className="w-4 h-4"/>
+                                <span>영수증 (조회 전용)</span>
+                            </label>
                             <div className="mt-2">
                                 <img
-                                    src={formData.receipt}
+                                    src={receiptUrl}
                                     alt="Receipt"
                                     className="w-full h-32 object-cover rounded-lg"
                                 />
                             </div>
-                        )}
-                    </div>
+                        </div>
+                    )}
 
                     {/* Split Options (Group Mode Only) */}
                     {mode === 'group' && currentGroup && (
@@ -339,13 +437,14 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                                                         const numericValue = e.target.value.replace(/[^0-9]/g, '');
                                                         const amount = numericValue === '' ? 0 : Number(numericValue);
 
-                                                        console.log(`${member.nickname} 금액변경:`, amount)
+                                                        const newSplitData = {
+                                                            ...formData.splitData,
+                                                            [member.userId]: amount
+                                                        };
+
                                                         setFormData({
                                                             ...formData,
-                                                            splitData: {
-                                                                ...formData.splitData,
-                                                                [member.userId]: amount
-                                                            }
+                                                            splitData: newSplitData
                                                         });
                                                     }}
                                                     className="w-24 px-2 py-1 border border-gray-300 rounded text-sm text-center"
@@ -443,52 +542,50 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                                 <div className="bg-gray-50 rounded-lg p-4">
                                     <h4 className="text-sm font-medium text-gray-700 mb-3">특정 인원 선택</h4>
                                     <div className="space-y-2">
-                                        {currentGroup.members.map((member) => (
-                                            <label key={member.userId} className="flex items-center space-x-3">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={formData.splitData[member.userId] !== undefined}
-                                                    onChange={(e) => {
-                                                        const newSplitData = {...formData.splitData};
-                                                        if (e.target.checked) {
-                                                            // 특정 인원: 선택한 사람이 전체 금액 부담
-                                                            if (formData.splitType === 'SPECIFIC') {
-                                                                // 기존 선택 모두 해제
-                                                                Object.keys(newSplitData).forEach(key => delete newSplitData[key]);
-                                                                newSplitData[member.userId] = formData.amount; // 전체 금액
+                                        {currentGroup.members.map((member) => {
+                                            return (
+                                                <label key={member.userId} className="flex items-center space-x-3">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={formData.splitData[member.userId] !== undefined}
+                                                        onChange={(e) => {
+                                                            const newSplitData = {...formData.splitData};
+                                                            if (e.target.checked) {
+                                                                // SPECIFIC: 선택된 사람들이 균등분할
+                                                                newSplitData[member.userId] = 0; // 일단 0으로 설정
                                                             } else {
-                                                                newSplitData[member.userId] = 0;
+                                                                delete newSplitData[member.userId];
                                                             }
-                                                        } else {
-                                                            delete newSplitData[member.userId];
-                                                        }
 
-                                                        // specific이 아닌 경우만 균등분할
-                                                        if (formData.splitType !== 'SPECIFIC') {
+                                                            // 선택된 사람들 간 균등분할 계산
                                                             const selectedMembers = Object.keys(newSplitData);
-                                                            const amountPerPerson = selectedMembers.length > 0 ? Math.floor(formData.amount / selectedMembers.length) : 0;
+                                                            const amountPerPerson = selectedMembers.length > 0
+                                                                ? Math.floor(Number(formData.amount) / selectedMembers.length)
+                                                                : 0;
+
                                                             selectedMembers.forEach(memberId => {
                                                                 newSplitData[memberId] = amountPerPerson;
                                                             });
-                                                        }
 
-                                                        setFormData({
-                                                            ...formData,
-                                                            splitData: newSplitData
-                                                        });
-                                                    }}
-                                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                                />
-                                                <span className="text-sm text-gray-700">{member.nickname}</span>
-                                                {formData.splitData[member.userId] !== undefined && (
-                                                    <span className="text-sm text-blue-600 ml-auto">
-                            {new Intl.NumberFormat('ko-KR', {style: 'currency', currency: 'KRW'}).format(
-                                formData.splitData[member.userId] || 0
-                            )}
-                          </span>
-                                                )}
-                                            </label>
-                                        ))}
+                                                            setFormData({
+                                                                ...formData,
+                                                                splitData: newSplitData
+                                                            });
+                                                        }}
+                                                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                                    />
+                                                    <span className="text-sm text-gray-700">{member.nickname}</span>
+                                                    {formData.splitData[member.userId] !== undefined && (
+                                                        <span className="text-sm text-blue-600 ml-auto">
+                                {new Intl.NumberFormat('ko-KR', {style: 'currency', currency: 'KRW'}).format(
+                                    formData.splitData[member.userId] || 0
+                                )}
+                            </span>
+                                                    )}
+                                                </label>
+                                            );
+                                        })}
+
                                         {Object.keys(formData.splitData).length > 0 && (
                                             <div className="border-t pt-3 mt-3">
                                                 <div className="text-sm text-gray-600">
@@ -528,7 +625,7 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
 
                     {/* Buttons */}
                     <div className="flex space-x-3 pt-4">
-                        {expense && (
+                        {expense && !expense.isGroupShare && (
                             <motion.button
                                 type="button"
                                 className="px-4 py-2 border border-red-300 text-red-700 rounded-lg font-medium hover:bg-red-50 transition-colors"
@@ -548,14 +645,17 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                         >
                             취소
                         </motion.button>
-                        <motion.button
-                            type="submit"
-                            className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
-                            whileHover={{scale: 1.02}}
-                            whileTap={{scale: 0.98}}
-                        >
-                            {expense ? '수정' : '추가'}
-                        </motion.button>
+
+                        {!expense?.isGroupShare && (
+                            <motion.button
+                                type="submit"
+                                className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                                whileHover={{scale: 1.02}}
+                                whileTap={{scale: 0.98}}
+                            >
+                                {expense ? '수정' : '추가'}
+                            </motion.button>
+                        )}
                     </div>
                 </form>
             </motion.div>

@@ -18,7 +18,7 @@ import {
     ChevronRight,
     Share2,
     RefreshCw,
-    Users
+    Users, Image, Eye, Trash2, X
 } from 'lucide-react';
 import {
     PieChart as RechartsPieChart,
@@ -37,6 +37,8 @@ import {useAuthStore} from '../../store/authStore';
 import {format, startOfMonth, endOfMonth, isWithinInterval, subMonths} from 'date-fns';
 import {ko} from 'date-fns/locale';
 import ExpenseModal from './ExpenseModal';
+import {expenseAPI} from "../../api/expense";
+import toast from "react-hot-toast";
 
 interface GroupSummary {
     groupId: string;
@@ -71,6 +73,8 @@ const ExpensesPage: React.FC = () => {
     const [selectedAnalysis, setSelectedAnalysis] = useState(null);
     const [loading, setLoading] = useState(false);
     const [currentCardIndex, setCurrentCardIndex] = useState(0);
+    const [showReceiptModal, setShowReceiptModal] = useState(false);
+    const [currentReceiptUrl, setCurrentReceiptUrl] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchExpenses = async () => {
@@ -178,7 +182,34 @@ const ExpensesPage: React.FC = () => {
     const handleExpenseClick = (expense) => {
         setSelectedExpense(expense);
         setShowExpenseModal(true);
+
+        // 그룹 분담금인 경우 수정 불가 - 조회만 가능
+        if (expense.isGroupShare) {
+            toast('그룹 지출은 그룹 페이지에서만 수정할 수 있습니다.', {
+                duration: 3000
+            });
+            return;
+        }
     };
+
+    // 영수증 조회 함수
+    const handleReceiptClick = async (expense: any, e: React.MouseEvent) => {
+        e.stopPropagation();
+
+        try {
+            const targetId = expense.originalExpenseId || expense.id;
+            const response = await expenseAPI.getReceiptUrl(targetId);
+            if (response.data) {
+                setCurrentReceiptUrl(response.data);
+                setShowReceiptModal(true);
+            } else {
+                toast.error('영수증이 없습니다.')
+            }
+        } catch (error) {
+            console.error('영수증 조회 실패: ', error);
+            toast.error('영수증을 불러 올 수 없습니다.');
+        }
+    }
 
     // 그룹 모드에서 개인 분담금 계산
     const calculatePersonalShare = () => {
@@ -193,13 +224,10 @@ const ExpensesPage: React.FC = () => {
             // EQUAL, CUSTOM으로 대문자 타입에 맞춰 수정
             if (expense.splitType === 'EQUAL') {
                 personalAmount = expense.amount / currentGroup.members.length;
-                console.log('균등분할 계산:', personalAmount);
             } else if (expense.splitType === 'CUSTOM' && expense.splitData && expense.splitData.length > 0) {
-                console.log('커스텀 분할 처리 중...');
                 const userSplit = expense.splitData.find(split => split.userId === user.id);
                 personalAmount = userSplit ? userSplit.amount : 0;
             } else if (expense.splitType === 'SPECIFIC' && expense.splitData && expense.splitData.length > 0) {
-                console.log('지정 분할 처리 중...');
                 const userSplit = expense.splitData.find(split => split.userId === user.id);
                 personalAmount = userSplit ? userSplit.amount : 0;
             } else {
@@ -1126,8 +1154,8 @@ const ExpensesPage: React.FC = () => {
                                                 <span>전체: {formatCurrency(share.amount)}</span>
                                                 <span>•</span>
                                                 <span>
-                                                    {share.splitType === 'equal' ? '균등분할' :
-                                                        share.splitType === 'specific' ? '지정분할' : '사용자정의'}
+                                                    {share.splitType === 'EQUAL' ? '균등분할' :
+                                                        share.splitType === 'SPECIFIC' ? '지정분할' : '사용자정의'}
                                                 </span>
                                             </div>
                                         </div>
@@ -1188,66 +1216,84 @@ const ExpensesPage: React.FC = () => {
                 {activeTab === 'expenses' ? (
                     filteredExpenses.length > 0 ? (
                         <div className="divide-y divide-gray-100">
-                            {filteredExpenses.map((expense) => (
-                                <motion.div
-                                    key={`${expense.id}-${expense.groupId ? 'group' : 'personal'}`}
-                                    className="p-6 hover:bg-gray-50 transition-all duration-200 cursor-pointer group"
-                                    whileHover={{x: 5}}
-                                    onClick={() => handleExpenseClick(expense)}
-                                >
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center space-x-4">
-                                            <div
-                                                className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all group-hover:scale-110`}
-                                                style={{
-                                                    backgroundColor: categoryData.find(cat => cat.category === expense.category)?.color + '20'
-                                                }}
-                                            >
-                                                {mode === 'personal' && expense.groupId ? (
-                                                    <Users className="w-6 h-6 text-blue-600"/>
-                                                ) : (
-                                                    <Receipt
-                                                        className="w-6 h-6"
-                                                        style={{
-                                                            color: categoryData.find(cat => cat.category === expense.category)?.color || '#df6d14'
-                                                        }}
-                                                    />
-                                                )}
-                                            </div>
-                                            <div>
-                                                <h4 className="font-semibold text-gray-900 group-hover:text-[#df6d14] transition-colors">
-                                                    {expense.title}
-                                                </h4>
-                                                <div className="flex items-center space-x-3 text-sm text-gray-500">
-                                                    <span>{categoryData.find(cat => cat.category === expense.category)?.label}</span>
-                                                    {mode === 'personal' && expense.groupId && expense.groupName && (
-                                                        <>
-                                                            <span>•</span>
-                                                            <span className="text-blue-600">👥 {expense.groupName}</span>
-                                                        </>
+                            {filteredExpenses.map((expense) => {
+                                return (
+                                    <motion.div
+                                        key={`${expense.id}-${expense.groupId ? 'group' : 'personal'}`}
+                                        className="p-6 hover:bg-gray-50 transition-all duration-200 cursor-pointer group"
+                                        whileHover={{x: 5}}
+                                        onClick={() => handleExpenseClick(expense)}
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center space-x-4">
+                                                <div
+                                                    className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all group-hover:scale-110`}
+                                                    style={{
+                                                        backgroundColor: categoryData.find(cat => cat.category === expense.category)?.color + '20'
+                                                    }}
+                                                >
+                                                    {mode === 'personal' && expense.groupId ? (
+                                                        <Users className="w-6 h-6 text-blue-600"/>
+                                                    ) : (
+                                                        <Receipt
+                                                            className="w-6 h-6"
+                                                            style={{
+                                                                color: categoryData.find(cat => cat.category === expense.category)?.color || '#df6d14'
+                                                            }}
+                                                        />
                                                     )}
-                                                    <span>•</span>
-                                                    <div className="flex items-center space-x-1">
-                                                        <Calendar className="w-3 h-3"/>
-                                                        <span>{format(new Date(expense.date), 'M월 d일 (E)', {locale: ko})}</span>
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-semibold text-gray-900 group-hover:text-[#df6d14] transition-colors">
+                                                        {expense.title}
+                                                    </h4>
+                                                    <div className="flex items-center space-x-3 text-sm text-gray-500">
+                                                        <span>{categoryData.find(cat => cat.category === expense.category)?.label}</span>
+                                                        {mode === 'personal' && expense.groupId && expense.groupName && (
+                                                            <>
+                                                                <span>•</span>
+                                                                <span
+                                                                    className="text-blue-600">👥 {expense.groupName}</span>
+                                                            </>
+                                                        )}
+                                                        <span>•</span>
+                                                        <div className="flex items-center space-x-1">
+                                                            <Calendar className="w-3 h-3"/>
+                                                            <span>{format(new Date(expense.date), 'M월 d일 (E)', {locale: ko})}</span>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
+                                            <div className="flex items-center space-x-3">
+                                                {expense.hasReceipt && (
+                                                    <motion.button
+                                                        className="p-2 bg-gray-100 hover:bg-blue-100 rounded-lg transition-colors group"
+                                                        whileHover={{scale: 1.1}}
+                                                        whileTap={{scale: 0.9}}
+                                                        onClick={(e) => handleReceiptClick(expense, e)}
+                                                        title="영수증 보기"
+                                                    >
+                                                        <Image
+                                                            className="w-4 h-4 text-gray-600 group-hover:text-blue-600"/>
+                                                    </motion.button>
+                                                )}
+
+                                                <div className="text-right">
+                                                    <p className="text-lg font-bold text-gray-900">
+                                                        {formatCurrency(expense.myShareAmount || expense.amount)}
+                                                    </p>
+                                                    {mode === 'personal' && expense.groupId && (
+                                                        <p className="text-xs text-blue-600">그룹 지출</p>
+                                                    )}
+                                                    {expense.memo && (
+                                                        <p className="text-sm text-gray-500 truncate max-w-32">{expense.memo}</p>
+                                                    )}
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div className="text-right">
-                                            <p className="text-lg font-bold text-gray-900">
-                                                {formatCurrency(expense.myShareAmount || expense.amount)}
-                                            </p>
-                                            {mode === 'personal' && expense.groupId && (
-                                                <p className="text-xs text-blue-600">그룹 지출</p>
-                                            )}
-                                            {expense.memo && (
-                                                <p className="text-sm text-gray-500 truncate max-w-32">{expense.memo}</p>
-                                            )}
-                                        </div>
-                                    </div>
-                                </motion.div>
-                            ))}
+                                    </motion.div>
+                                );
+                            })}
                         </div>
                     ) : (
                         <div className="text-center py-16">
@@ -1597,6 +1643,41 @@ const ExpensesPage: React.FC = () => {
                         setSelectedExpense(null);
                     }}
                 />
+            )}
+
+            {/* Receipt Modal */}
+            {showReceiptModal && currentReceiptUrl && (
+                <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+                    <motion.div
+                        initial={{opacity: 0, scale: 0.8}}
+                        animate={{opacity: 1, scale: 1}}
+                        exit={{opacity: 0, scale: 0.8}}
+                        className="bg-white rounded-2xl max-w-4xl max-h-[90vh] overflow-hidden"
+                    >
+                        {/* 모달 헤더 */}
+                        <div className="flex items-center justify-between p-4 border-b">
+                            <h3 className="text-lg font-semibold text-gray-900">영수증</h3>
+                            <button
+                                onClick={() => {
+                                    setShowReceiptModal(false);
+                                    setCurrentReceiptUrl(null);
+                                }}
+                                className="p-2 hover:bg-gray-100 rounded-lg"
+                            >
+                                <X className="w-5 h-5"/>
+                            </button>
+                        </div>
+
+                        {/* 영수증 이미지 */}
+                        <div className="p-4">
+                            <img
+                                src={currentReceiptUrl}
+                                alt="영수증"
+                                className="w-full h-auto max-h-[70vh] object-contain rounded-lg"
+                            />
+                        </div>
+                    </motion.div>
+                </div>
             )}
         </div>
     );

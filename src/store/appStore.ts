@@ -20,7 +20,7 @@ interface AppState {
   currentDate: Date;
   currentView: 'year' | 'month' | 'week' | 'day';
   version?: number; // 버전 관리용
-  
+
   // Actions
   setMode: (mode: AppMode) => void;
   setCurrentGroup: (group: Group | null) => void;
@@ -29,36 +29,36 @@ interface AppState {
   joinGroup: (groupCode: string) => void;
   leaveGroup: (groupId: string) => void;
   deleteGroup: (groupId: string) => void;
-  
+
   // Group API actions
   loadMyGroups: () => Promise<void>;
   refreshCurrentGroup: () => Promise<void>; // 추가
-  
+
   // Calendar actions
   setCurrentDate: (date: Date) => void;
   setCurrentView: (view: 'year' | 'month' | 'week' | 'day') => void;
-  
+
   // Task actions
   addTask: (task: Omit<Task, 'id' | 'createdAt'>) => void;
   updateTask: (id: string, updates: Partial<Task>) => void;
   deleteTask: (id: string) => void;
   toggleTask: (id: string) => void;
   reorderTasks: (startIndex: number, endIndex: number) => void;
-  
+
   // Event actions
   addEvent: (event: Omit<Event, 'id'>) => void;
   updateEvent: (id: string, updates: Partial<Event>) => void;
   deleteEvent: (id: string) => void;
   deleteEventSeries: (eventId: string) => void;
   deleteFutureEvents: (eventId: string) => void;
-  
+
   // Expense actions
   loadExpenses: (params: any) => Promise<void>;
   addExpense: (expense: Omit<Expense, 'id' | 'createdAt'>) => Promise<Expense>;
   updateExpense: (id: number, updates: Partial<Expense>) => Promise<void>;
   deleteExpense: (id: number) => Promise<void>;
   loadGroupShares: (params: any) => Promise<void>;
-  
+
   // Post actions
   addPost: (post: Omit<Post, 'id' | 'createdAt'>) => void;
   updatePost: (id: string, updates: Partial<Post>) => void;
@@ -117,7 +117,7 @@ export const useAppStore = create<AppState>()(
           joinedGroups: state.joinedGroups.map(group =>
             group.id === groupId ? { ...group, ...updates } : group
           ),
-          currentGroup: state.currentGroup?.id === groupId 
+          currentGroup: state.currentGroup?.id === groupId
             ? { ...state.currentGroup, ...updates }
             : state.currentGroup
         }));
@@ -130,13 +130,13 @@ export const useAppStore = create<AppState>()(
           code: generateGroupCode(),
           createdAt: new Date(),
         };
-        
+
         set((state) => ({
           joinedGroups: [...state.joinedGroups, newGroup],
           currentGroup: newGroup,
           mode: 'group'
         }));
-        
+
         toast.success('그룹이 생성되었습니다!');
       },
 
@@ -156,13 +156,13 @@ export const useAppStore = create<AppState>()(
             { id: 'current_user', name: '나', email: 'me@example.com' }
           ]
         };
-        
+
         set((state) => ({
           joinedGroups: [...state.joinedGroups, mockGroup],
           currentGroup: mockGroup,
           mode: 'group'
         }));
-        
+
         toast.success('그룹에 참여했습니다!');
       },
 
@@ -171,13 +171,13 @@ export const useAppStore = create<AppState>()(
           const newJoinedGroups = state.joinedGroups.filter(group => group.id !== groupId);
           return {
             joinedGroups: newJoinedGroups,
-            currentGroup: state.currentGroup?.id === groupId 
+            currentGroup: state.currentGroup?.id === groupId
               ? (newJoinedGroups.length > 0 ? newJoinedGroups[0] : null)
               : state.currentGroup,
             mode: newJoinedGroups.length === 0 ? 'personal' : state.mode
           };
         });
-        
+
         toast.success('그룹에서 탈퇴했습니다.');
       },
 
@@ -186,13 +186,13 @@ export const useAppStore = create<AppState>()(
           const newJoinedGroups = state.joinedGroups.filter(group => group.id !== groupId);
           return {
             joinedGroups: newJoinedGroups,
-            currentGroup: state.currentGroup?.id === groupId 
+            currentGroup: state.currentGroup?.id === groupId
               ? (newJoinedGroups.length > 0 ? newJoinedGroups[0] : null)
               : state.currentGroup,
             mode: newJoinedGroups.length === 0 ? 'personal' : state.mode
           };
         });
-        
+
         toast.success('그룹이 삭제되었습니다.');
       },
 
@@ -200,7 +200,7 @@ export const useAppStore = create<AppState>()(
       loadMyGroups: async () => {
         try {
           const groupResponses = await groupsAPI.getMyGroups();
-          
+
           // API 응답을 Group 타입으로 변환
           const groups: Group[] = groupResponses.map((response: GroupResponse) => ({
             id: response.groupId,
@@ -215,7 +215,7 @@ export const useAppStore = create<AppState>()(
           }));
 
           set({ joinedGroups: groups });
-          
+
           // 현재 그룹이 없거나, 현재 그룹이 업데이트된 목록에 없으면 첫 번째 그룹을 설정
           const { currentGroup } = get();
           if (!currentGroup || !groups.find(g => g.id === currentGroup.id)) {
@@ -241,7 +241,7 @@ export const useAppStore = create<AppState>()(
 
         try {
           const groupResponse = await groupsAPI.getGroup(currentGroup.id);
-          
+
           // API 응답을 Group 타입으로 변환
           const updatedGroup: Group = {
             id: groupResponse.groupId,
@@ -258,7 +258,7 @@ export const useAppStore = create<AppState>()(
           // 현재 그룹과 그룹 목록 모두 업데이트
           set((state) => ({
             currentGroup: updatedGroup,
-            joinedGroups: state.joinedGroups.map(group => 
+            joinedGroups: state.joinedGroups.map(group =>
               group.id === updatedGroup.id ? updatedGroup : group
             )
           }));
@@ -276,7 +276,7 @@ export const useAppStore = create<AppState>()(
           id: generateId(),
           createdAt: new Date(),
         };
-        
+
         set((state) => ({
           tasks: [...state.tasks, newTask]
         }));
@@ -299,12 +299,12 @@ export const useAppStore = create<AppState>()(
       toggleTask: (id) => {
         set((state) => ({
           tasks: state.tasks.map(task =>
-            task.id === id 
-              ? { 
-                  ...task, 
+            task.id === id
+              ? {
+                  ...task,
                   completed: !task.completed,
                   completedAt: !task.completed ? new Date() : undefined
-                } 
+                }
               : task
           )
         }));
@@ -325,7 +325,7 @@ export const useAppStore = create<AppState>()(
           ...eventData,
           id: generateId(),
         };
-        
+
         set((state) => ({
           events: [...state.events, newEvent]
         }));
@@ -352,11 +352,11 @@ export const useAppStore = create<AppState>()(
 
           // 원본 이벤트 ID를 찾기
           const originalId = event.originalEventId || eventId;
-          
+
           // 같은 시리즈의 모든 이벤트 삭제
           return {
-            events: state.events.filter(e => 
-              e.id !== originalId && 
+            events: state.events.filter(e =>
+              e.id !== originalId &&
               e.originalEventId !== originalId &&
               e.id !== eventId
             )
@@ -371,7 +371,7 @@ export const useAppStore = create<AppState>()(
 
           const eventDate = new Date(event.date);
           const originalId = event.originalEventId || eventId;
-          
+
           // 해당 날짜 이후의 반복 이벤트들만 삭제
           return {
             events: state.events.filter(e => {
@@ -388,8 +388,6 @@ export const useAppStore = create<AppState>()(
       // Expense actions
       loadExpenses: async (params) => {
         try {
-          console.log('🔍 지출 조회 요청 파라미터:', params);
-
           let response;
 
           // mode에 따른 적절한 API 호출
@@ -418,19 +416,19 @@ export const useAppStore = create<AppState>()(
             })
           }
 
-          console.log('📡 백엔드 응답:', response);
-          console.log('📊 응답 데이터 개수:', response.data.length);
-          console.log('📋 응답 데이터 상세:', response.data);
+          // console.log('백엔드 응답:', response);
+          // console.log('응답 데이터 개수:', response.data.length);
+          // console.log('응답 데이터 상세:', response.data);
 
           // 각 지출 항목의 splitType과 splitData 확인
-          response.data.forEach((expense: any, index: number) => {
-            console.log(`지출 ${index + 1}:`, {
-              title: expense.title,
-              splitType: expense.splitType,
-              splitData: expense.splitData,
-              expenseType: expense.expenseType
-            });
-          });
+          // response.data.forEach((expense: any, index: number) => {
+          //   console.log(`지출 ${index + 1}:`, {
+          //     title: expense.title,
+          //     splitType: expense.splitType,
+          //     splitData: expense.splitData,
+          //     expenseType: expense.expenseType
+          //   });
+          // });
 
           const expenses = response.data.map((expense: any) => ({
             id: expense.expenseId,
@@ -444,16 +442,16 @@ export const useAppStore = create<AppState>()(
             splitType: expense.splitType,
             splitData: expense.splitData,
             expenseType: expense.expenseType,
-            createdAt: expense.createdAt
+            createdAt: expense.createdAt,
+            hasReceipt: expense.hasReceipt
           }));
-          console.log('🔄 변환된 지출 데이터:', expenses);
 
           // 중복 데이터 체크
           const uniqueExpenses = expenses.filter((expense, index, arr) =>
               arr.findIndex(e => e.id === expense.id) === index
           );
           if (uniqueExpenses.length > 0) {
-            console.warn('⚠️ 중복 데이터 발견:', uniqueExpenses);
+            console.warn('중복 데이터 발견:', uniqueExpenses);
           }
 
           set({ expenses });
@@ -469,6 +467,7 @@ export const useAppStore = create<AppState>()(
 
           const groupShares = response.data.map((share: any) => ({
             id: share.expenseId,
+            originalExpenseId: share.originalExpenseId,
             title: share.title,
             amount: share.amount,
             myShareAmount: share.myShareAmount, // 내 분담금
@@ -479,6 +478,7 @@ export const useAppStore = create<AppState>()(
             groupName: share.groupName,
             splitType: share.splitType,
             isGroupShare: true, // 구분용 플래그
+            hasReceipt: share.hasReceipt,
           }));
 
           set({ groupShares });
@@ -487,7 +487,7 @@ export const useAppStore = create<AppState>()(
         }
       },
 
-      addExpense: async (expenseData) => {
+      addExpense: async (expenseData: any) => {
         try {
           const expenseRequest = {
             title: expenseData.title,
@@ -497,20 +497,10 @@ export const useAppStore = create<AppState>()(
             memo: expenseData.memo,
             groupId: expenseData.groupId || null,
             splitType: expenseData.splitType,
-            splitData: expenseData.splitData && Object.keys(expenseData.splitData).length > 0
-                ? Object.entries(expenseData.splitData).map(([userId, amount]) => ({
-                  userId: userId,
-                  amount: Number(amount)
-                }))
-                : undefined
+            splitData: expenseData.splitData,
+            receipt: expenseData.receipt,
           };
-
-          // 디버깅 코드 여기에 추가!
-          console.log('전송할 전체 데이터:', JSON.stringify(expenseRequest, null, 2));
-          console.log('splitData 타입:', typeof expenseRequest.splitData);
-          console.log('splitData 내용:', expenseRequest.splitData);
-          console.log('splitType:', expenseRequest.splitType);
-
+          console.log('API 전송 데이터: ', expenseRequest);
 
           const response = await expenseAPI.create(expenseRequest);
           const newExpense = {
@@ -525,7 +515,8 @@ export const useAppStore = create<AppState>()(
             splitType: response.data.splitType,
             splitData: response.data.splitData,
             expenseType: response.data.expenseType,
-            createdAt: response.data.createdAt
+            createdAt: response.data.createdAt,
+            hasReceipt: response.data.hasReceipt
           };
 
           set((state) => ({
@@ -543,17 +534,17 @@ export const useAppStore = create<AppState>()(
 
       updateExpense: async (id, updates) => {
         try {
-          const response = await expenseAPI.update(id, updates);
+          await expenseAPI.update(id, updates);
 
-          set((state) => ({
-            expenses: state.expenses.map(expense =>
-                expense.id === id ? {
-                  ...expense,
-                  ...response.data,
-                  id: response.data.expenseId
-                } : expense
-            )
-          }));
+          // 전체 새로고침으로 확실히 업데이트
+          const state = get();
+          await state.loadExpenses({
+            mode: state.mode,
+            year: new Date().getFullYear(),
+            month: new Date().getMonth() + 1,
+            groupId: state.mode === 'group' ? state.currentGroup?.id : null
+          });
+
 
           toast.success('지출이 수정되었습니다!');
         } catch (error: any) {
@@ -586,7 +577,7 @@ export const useAppStore = create<AppState>()(
           id: generateId(),
           createdAt: new Date(),
         };
-        
+
         set((state) => ({
           posts: [...state.posts, newPost]
         }));
@@ -641,7 +632,7 @@ export const useAppStore = create<AppState>()(
 
           try {
             const parsed = JSON.parse(str);
-            
+
             // 버전 체크 및 마이그레이션
             const dataVersion = parsed.state.version || 1;
             if (dataVersion < STORE_VERSION) {
@@ -653,7 +644,7 @@ export const useAppStore = create<AppState>()(
               parsed.state.events = sampleEvents; // 새로운 샘플 이벤트 데이터 적용
               parsed.state.version = STORE_VERSION;
             }
-            
+
             return {
               ...parsed,
               state: {
