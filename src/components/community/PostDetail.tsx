@@ -172,28 +172,20 @@ const PostDetail: React.FC<PostDetailProps> = ({
     setIsSubmittingComment(true);
 
     try {
-      // 백엔드 API 호출하여 댓글 생성
-      const createdComment = await createComment({
+      // 댓글 생성
+      await createComment({
         postId: post.postId,
         content: newComment.trim(),
       });
 
-      setComments((prevComments) => [
-        ...prevComments,
-        {
-          id: createdComment.id,
-          postId: createdComment.postId,
-          userId: createdComment.userId,
-          content: createdComment.content,
-          createdAt: createdComment.createdAt,
-          updatedAt: createdComment.updatedAt ?? createdComment.createdAt,
-          authorNickname: user?.username || "익명", // ✅ 사용자 닉네임 지정
-          reportCount: createdComment.reportCount ?? 0,
-        },
-      ]);
+      // ✅ 댓글 목록을 다시 백엔드에서 불러오기 (닉네임 포함됨)
+      const refreshedComments = await fetchCommentsByPostId(post.postId);
+      setComments(refreshedComments);
 
-      // 게시글의 commentCount도 업데이트 (useAppStore의 updatePost 활용)
-      updatePost(post.postId, { commentCount: (post.commentCount || 0) + 1 });
+      // 댓글 수 반영
+      updatePost(post.postId, {
+        commentCount: (post.commentCount || 0) + 1,
+      });
 
       setNewComment("");
       toast.success("댓글이 작성되었습니다.");
