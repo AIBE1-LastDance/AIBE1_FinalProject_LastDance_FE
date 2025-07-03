@@ -45,12 +45,17 @@ const CommunityPage: React.FC = () => {
   const [editingPost, setEditingPost] = useState<Post | null>(null);
   const [totalLikes, setTotalLikes] = useState<number>(0);
 
+  // --- 스피너 상태 추가 ---
+  const [isLoading, setIsLoading] = useState(true); // 초기 로딩 상태 true로 설정
+  // -----------------------
+
   // --- 페이지네이션 상태 추가 ---
   const [currentPage, setCurrentPage] = useState(1);
   const postsPerPage = 15; // 한 페이지당 게시글 수
   // -----------------------------
 
   const loadPosts = async () => {
+    setIsLoading(true); // 데이터 로드 시작 전에 true로 설정
     try {
       const data: any[] = await fetchAllPosts();
       console.log("백엔드에서 받은 원본 게시글 데이터:", data);
@@ -78,6 +83,8 @@ const CommunityPage: React.FC = () => {
     } catch (err) {
       console.error("[❌ 게시글 로딩 실패]", err);
       // 사용자에게 에러 메시지를 표시하거나 다른 처리를 할 수 있습니다.
+    } finally {
+      setIsLoading(false); // 데이터 로드 완료 후에 false로 설정
     }
   };
 
@@ -93,6 +100,7 @@ const CommunityPage: React.FC = () => {
     setTotalLikes(calculatedTotalLikes);
   }, [posts]);
 
+  // 좋아요/북마크 토글 함수 수정
   const handleToggleLike = async (postId: string) => {
     if (!user) {
       alert("로그인 후 좋아요를 누를 수 있습니다.");
@@ -100,14 +108,28 @@ const CommunityPage: React.FC = () => {
       return;
     }
     try {
-      await togglePostLike(postId);
-      await loadPosts(); // 변경 후 목록 다시 로드
+      // 서버에 좋아요 요청을 보냅니다.
+      const isLiked = await togglePostLike(postId); // true: 좋아요, false: 좋아요 취소
+
+      // 클라이언트 상태를 즉시 업데이트합니다.
+      setPosts((prevPosts) =>
+        prevPosts.map((post) =>
+          post.postId === postId
+            ? {
+                ...post,
+                userLiked: isLiked, // 서버 응답에 따라 좋아요 상태 업데이트
+                likeCount: isLiked ? post.likeCount + 1 : post.likeCount - 1, // 좋아요 수 업데이트
+              }
+            : post
+        )
+      );
     } catch (error) {
       console.error(`[❌ 좋아요 토글 실패] PostId: ${postId}`, error);
       alert("좋아요 처리에 실패했습니다.");
     }
   };
 
+  // 북마크 토글 함수 수정
   const handleToggleBookmark = async (postId: string) => {
     if (!user) {
       alert("로그인 후 북마크할 수 있습니다.");
@@ -115,8 +137,17 @@ const CommunityPage: React.FC = () => {
       return;
     }
     try {
-      await togglePostBookmark(postId);
-      await loadPosts(); // 변경 후 목록 다시 로드
+      // 서버에 북마크 요청을 보냅니다.
+      const isBookmarked = await togglePostBookmark(postId); // true: 북마크, false: 북마크 취소
+
+      // 클라이언트 상태를 즉시 업데이트합니다.
+      setPosts((prevPosts) =>
+        prevPosts.map((post) =>
+          post.postId === postId
+            ? { ...post, userBookmarked: isBookmarked } // 서버 응답에 따라 북마크 상태 업데이트
+            : post
+        )
+      );
     } catch (error) {
       console.error(`[❌ 북마크 토글 실패] PostId: ${postId}`, error);
       alert("북마크 처리에 실패했습니다.");
@@ -244,7 +275,7 @@ const CommunityPage: React.FC = () => {
     }
     try {
       await deletePost(postId);
-      await loadPosts(); // 삭제 후 목록 다시 로드
+      await loadPosts(); // 삭제 후 목록 다시 로드 (이때는 스피너가 표시됩니다. 전체 목록을 다시 불러와야 하므로 자연스럽습니다.)
     } catch (error) {
       console.error(`[❌ 게시글 삭제 실패] PostId: ${postId}`, error);
       alert("게시글 삭제에 실패했습니다.");
@@ -419,15 +450,23 @@ const CommunityPage: React.FC = () => {
         </div>
       </motion.div>
 
-      {/* 게시글 목록 */}
+      {/* 게시글 목록 또는 스피너 */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="space-y-4"
+        className="space-y-4 min-h-[300px] flex items-center justify-center" // 스피너가 중앙에 오도록 최소 높이와 flex 속성 추가
       >
-        {currentPosts.length === 0 ? (
-          <div className="bg-white rounded-2xl p-12 text-center shadow-sm border border-gray-200">
+        {isLoading ? ( // isLoading이 true일 때 스피너 표시
+          <div className="flex flex-col items-center justify-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-primary-500"></div>
+            <p className="mt-4 text-gray-600">게시글을 불러오는 중입니다...</p>
+          </div>
+        ) : // isLoading이 false일 때 게시글 목록 또는 "게시글 없음" 메시지 표시
+        currentPosts.length === 0 ? (
+          <div className="bg-white rounded-2xl p-12 text-center shadow-sm border border-gray-200 w-full">
+            {" "}
+            {/* w-full 추가 */}
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <MessageCircle className="w-8 h-8 text-gray-400" />
             </div>
@@ -450,28 +489,34 @@ const CommunityPage: React.FC = () => {
             </button>
           </div>
         ) : (
-          currentPosts.map((post, index) => (
-            <motion.div
-              key={post.postId}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-            >
-              <PostCard
-                post={post}
-                onClick={() => handlePostClick(post)}
-                onEdit={handlePostEdit}
-                onDelete={handlePostDelete}
-                onToggleLike={handleToggleLike}
-                onToggleBookmark={handleToggleBookmark}
-              />
-            </motion.div>
-          ))
+          // 실제 게시글 목록
+          <div className="w-full space-y-4">
+            {" "}
+            {/* w-full 추가 */}
+            {currentPosts.map((post, index) => (
+              <motion.div
+                key={post.postId}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+              >
+                <PostCard
+                  post={post}
+                  onClick={() => handlePostClick(post)}
+                  onEdit={handlePostEdit}
+                  onDelete={handlePostDelete}
+                  onToggleLike={handleToggleLike}
+                  onToggleBookmark={handleToggleBookmark}
+                />
+              </motion.div>
+            ))}
+          </div>
         )}
       </motion.div>
 
       {/* --- 페이지네이션 컨트롤 --- */}
-      {totalPages > 1 && (
+      {/* isLoading이 아닐 때만 페이지네이션을 보여줍니다. (선택 사항) */}
+      {!isLoading && totalPages > 1 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -519,7 +564,7 @@ const CommunityPage: React.FC = () => {
           onClose={async () => {
             setIsCreateModalOpen(false);
             setEditingPost(null);
-            await loadPosts();
+            await loadPosts(); // 모달 닫힐 때 게시글 새로고침 (이때는 스피너가 표시됩니다)
           }}
         />
       )}
