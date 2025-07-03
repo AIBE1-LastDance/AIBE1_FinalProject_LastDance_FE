@@ -4,6 +4,7 @@ import { Group, Task, Event, Expense, Post, GroupResponse, GroupMember } from '.
 import { groupsAPI } from '../api/groups';
 import { expenseAPI } from "../api/expense";
 import toast from 'react-hot-toast';
+import {useAuthStore} from "./authStore";
 
 type AppMode = 'personal' | 'group';
 
@@ -80,7 +81,30 @@ export const useAppStore = create<AppState>()(
   persist(
     (set, get) => ({
       // ==== UI 상태만 유지 ====
-      mode: 'personal',
+      mode: (() => {
+        const authStore = useAuthStore.getState();
+        const userId = authStore.user?.id;
+        if (userId) {
+          const savedData = localStorage.getItem(`userMode_${userId}`);
+          if (savedData) {
+            try {
+              const data = JSON.parse(savedData);
+              const thirtyDays = 30 * 24 * 60 * 60 * 1000;
+
+              if (Date.now() - data.timestamp < thirtyDays) {
+                return data.mode as AppMode;
+              } else {
+                // 만료된 경우 삭제
+                localStorage.removeItem(`userMode_${userId}`);
+              }
+            } catch (error) {
+              // 파싱 오류 시 삭제
+              localStorage.removeItem(`userMode_${userId}`);
+            }
+          }
+        }
+        return 'personal';
+      })(),
       currentGroup: null,
       currentDate: new Date(),
       currentView: 'month',
@@ -97,6 +121,17 @@ export const useAppStore = create<AppState>()(
 
       setMode: (mode) => {
         set({ mode });
+        // 현재 로그인한 사용자별로 모드 + 만료시간 저장
+        const authStore = useAuthStore.getState();
+        const userId = authStore.user?.id;
+        if (userId) {
+          const data = {
+            mode: mode,
+            timestamp: Date.now()
+          };
+          localStorage.setItem(`userMode_${userId}`, JSON.stringify(data));
+        }
+
         // 그룹 모드로 변경 시 첫 번째 그룹을 선택
         if (mode === 'group') {
           const { joinedGroups, currentGroup } = get();
