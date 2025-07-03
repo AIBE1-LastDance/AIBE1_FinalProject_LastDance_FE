@@ -176,4 +176,26 @@ export const expenseAPI = {
         const response = await apiClient.delete(`/api/v1/expenses/${id}/receipt`);
         return response.data;
     },
+
+    // 개인 지출 추이 조회
+    getPersonalExpensesTrend: async (params: {
+        year: number;
+        month: number;
+        months?: number;
+        category?: string;
+    }) => {
+        const response = await apiClient.get('/api/v1/expenses/personal/trend', { params });
+        return response.data;
+    },
+
+    // 그룹 지출 추이 조회
+    getGroupExpensesTrend: async (groupId: string, params: {
+        year: number;
+        month: number;
+        months?: number;
+        category?: string;
+    }) => {
+        const response = await apiClient.get(`/api/v1/expenses/group/${groupId}/trend`, { params });
+        return response.data;
+    }
 }
