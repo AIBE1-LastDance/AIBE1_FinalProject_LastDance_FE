@@ -31,6 +31,8 @@ const SettingsPage: React.FC = () => {
     const [previewImage, setPreviewImage] = useState<string | null>(null);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [hasImageChange, setHasImageChange] = useState<boolean>(false);
+    const [isSaving, setIsSaving] = useState(false);
+    const [isNotificationSaving, setIsNotificationSaving] = useState(false);
 
 
     // user가 변경될 때마다 profileData 업데이트
@@ -51,17 +53,17 @@ const SettingsPage: React.FC = () => {
             try {
                 setNotificationLoading(true);
                 console.log('Loading started, notificationLoading:', true);
-                
+
                 const data = await notificationApi.getMySettings();
                 console.log('API Response:', data);
-                
+
                 setNotifications({
                     emailEnabled: data.emailEnabled || false,
                     scheduleReminder: data.scheduleReminder || false,
                     paymentReminder: data.paymentReminder || false,
                     checklistReminder: data.checklistReminder || false,
                 });
-                
+
                 console.log('Notifications set, setting loading to false');
             } catch (error) {
                 console.error('Failed to load notification settings:', error);
@@ -250,11 +252,15 @@ const SettingsPage: React.FC = () => {
     };
 
     const handleSave = async () => {
+        if (isSaving) return;
+
         // 닉네임 체크
         if (profileData.nickname !== user?.nickname && !nicknameState.available) {
             toast.error('사용할 수 없는 닉네임입니다.');
             return;
         }
+
+        setIsSaving(true);
 
         try {
             let updatedAvatar = profileData.avatar;
@@ -298,6 +304,8 @@ const SettingsPage: React.FC = () => {
         } catch (error) {
             toast.error('정보 수정에 실패했습니다.');
             console.error('Profile update error: ', error);
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -321,6 +329,8 @@ const SettingsPage: React.FC = () => {
 
     // 알림 설정만 저장
     const handleNotificationSave = async () => {
+        if (isNotificationSaving) return;
+        setIsNotificationSaving(true);
         try {
             await notificationApi.updateMySettings({
                 emailEnabled: notifications.emailEnabled,
@@ -332,6 +342,8 @@ const SettingsPage: React.FC = () => {
         } catch (error) {
             toast.error('알림 설정 저장에 실패했습니다.');
             console.error('Notification settings update error:', error);
+        } finally {
+            setIsNotificationSaving(false);
         }
     };
 
@@ -523,15 +535,16 @@ const SettingsPage: React.FC = () => {
     const renderNotificationSettings = () => {
         console.log('Rendering notification settings, loading:', notificationLoading);
         console.log('Current notifications state:', notifications);
-        
+
         return (
             <div className="space-y-6">
                 <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
                     <h3 className="text-xl font-bold text-gray-900 mb-6">알림 설정</h3>
-                    
+
                     {notificationLoading ? (
                         <div className="flex items-center justify-center py-8">
-                            <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+                            <div
+                                className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
                             <span className="ml-2">로딩 중...</span>
                         </div>
                     ) : (
@@ -559,38 +572,42 @@ const SettingsPage: React.FC = () => {
                                 const setting = settings[key as keyof typeof settings];
 
                                 return (
-                                    <div key={key} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                                    <div key={key}
+                                         className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                                         <div>
                                             <h4 className="font-medium text-gray-900">{setting.label}</h4>
                                             <p className="text-sm text-gray-600">{setting.description}</p>
                                         </div>
-                                        
+
                                         {/* 우리집 앱 색상의 모던 iOS 토글 스위치 */}
-<label className="relative inline-flex items-center cursor-pointer group">
+                                        <label className="relative inline-flex items-center cursor-pointer group">
                                             <input
                                                 type="checkbox"
                                                 checked={value}
-                                                onChange={(e) => setNotifications(prev => ({...prev, [key]: e.target.checked}))}
+                                                onChange={(e) => setNotifications(prev => ({
+                                                    ...prev,
+                                                    [key]: e.target.checked
+                                                }))}
                                                 disabled={notificationLoading}
                                                 className="sr-only peer"
                                             />
                                             <div className={`
                                                 relative w-14 h-8 transition-all duration-300 ease-in-out rounded-full
-                                                ${value 
-                                                    ? 'bg-gradient-to-r from-primary-500 to-primary-600' 
-                                                    : 'bg-gray-300 hover:bg-gray-400'
-                                                }
+                                                ${value
+                                                ? 'bg-gradient-to-r from-primary-500 to-primary-600'
+                                                : 'bg-gray-300 hover:bg-gray-400'
+                                            }
                                                 ${notificationLoading ? 'opacity-50 cursor-not-allowed' : ''}
                                                 peer-focus:ring-2 peer-focus:ring-primary-500/30
                                             `}>
                                                 <div className={`
                                                     absolute top-1 w-6 h-6 bg-white rounded-full 
                                                     shadow-sm transition-all duration-300 ease-in-out
-                                                    ${value 
-                                                        ? 'right-1' 
-                                                        : 'left-1'
-                                                    }
-                                                `} />
+                                                    ${value
+                                                    ? 'right-1'
+                                                    : 'left-1'
+                                                }
+                                                `}/>
                                             </div>
                                         </label>
                                     </div>
@@ -833,17 +850,27 @@ const SettingsPage: React.FC = () => {
                     <div className="flex justify-end mt-8">
                         <motion.button
                             onClick={handleSave}
-                            disabled={!nicknameState.available && profileData.nickname !== user?.nickname}
+                            disabled={isSaving || (!nicknameState.available && profileData.nickname !== user?.nickname)}
                             className={`flex items-center space-x-3 px-6 py-3 rounded-xl font-medium transition-colors shadow-lg ${
-                                !nicknameState.available && profileData.nickname !== user?.nickname
+                                isSaving || (!nicknameState.available && profileData.nickname !== user?.nickname)
                                     ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
                                     : 'bg-primary-600 text-white hover:bg-primary-700'
                             }`}
-                            whileHover={nicknameState.available ? {scale: 1.02} : {}}
-                            whileTap={nicknameState.available ? {scale: 0.98} : {}}
+                            whileHover={!isSaving && nicknameState.available ? {scale: 1.02} : {}}
+                            whileTap={!isSaving && nicknameState.available ? {scale: 0.98} : {}}
                         >
-                            <Save className="w-5 h-5"/>
-                            <span>변경사항 저장</span>
+                            {isSaving ? (
+                                <>
+                                    <div
+                                        className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"/>
+                                    <span>저장 중...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Save className="w-5 h-5"/>
+                                    <span>변경사항 저장</span>
+                                </>
+                            )}
                         </motion.button>
                     </div>
                 </motion.div>

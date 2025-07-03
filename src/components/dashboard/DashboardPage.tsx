@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {motion} from 'framer-motion';
 import {
     Calendar,
@@ -52,11 +52,31 @@ import {ko} from 'date-fns/locale';
 
 const DashboardPage: React.FC = () => {
     const {user} = useAuthStore();
-    const {mode, currentGroup, expenses, events} = useAppStore();
+    const {mode, currentGroup, expenses, events, loadExpenses} = useAppStore();
     const {checklists, toggleChecklist} = useChecklist(); // toggleChecklist 추가
     const navigate = useNavigate();
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [calendarDate, setCalendarDate] = useState(new Date());
+
+    // 가계부 데이터 로딩
+    useEffect(() => {
+        const fetchExpenses = async () => {
+            try {
+                const currentMonth = new Date();
+                const params = {
+                    mode,
+                    year: currentMonth.getFullYear(),
+                    month: currentMonth.getMonth() + 1,
+                    groupId: mode === 'group' ? currentGroup?.id : null,
+                };
+                await loadExpenses(params);
+            } catch (error) {
+                console.error('대시보드 지출 로드 실패: ', error);
+            }
+        };
+
+        fetchExpenses();
+    }, [mode, currentGroup, loadExpenses]);
 
     // Expense categories matching ExpensesPage
     const categoryData = [

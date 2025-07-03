@@ -58,7 +58,8 @@ const ExpensesPage: React.FC = () => {
         loadExpenses,
         groupShares,
         loadGroupShares,
-        joinedGroups
+        joinedGroups,
+        loadMyGroups
     } = useAppStore();
     const {user} = useAuthStore();
     const [showExpenseModal, setShowExpenseModal] = useState(false);
@@ -80,6 +81,12 @@ const ExpensesPage: React.FC = () => {
         const fetchExpenses = async () => {
             setLoading(true);
             try {
+
+                // 그룹 정보 새로고침
+                if (mode === 'group') {
+                    await loadMyGroups();
+                }
+
                 const params = {
                     mode,
                     year: currentMonth.getFullYear(),
@@ -103,7 +110,7 @@ const ExpensesPage: React.FC = () => {
         };
 
         fetchExpenses();
-    }, [mode, currentMonth, currentGroup?.id, loadExpenses, loadGroupShares]);
+    }, [mode, currentMonth, currentGroup?.id, loadExpenses, loadGroupShares, loadMyGroups]);
 
     const categoryData = [
         {category: 'FOOD', label: '식비', color: '#FF6B6B'},

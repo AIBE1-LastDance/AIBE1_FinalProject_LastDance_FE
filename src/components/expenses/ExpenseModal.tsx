@@ -15,6 +15,8 @@ interface ExpenseModalProps {
 const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
     const {addExpense, updateExpense, deleteExpense, mode, currentGroup} = useAppStore();
     const {user} = useAuthStore();
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     // splitData 변환
     const convertSplitDataToObject = (splitData: any) => {
@@ -68,6 +70,13 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
         }
     }, [expense]);
 
+    const getDisplayNickname = (member: any) => {
+        if (member.userId === user?.id) {
+            return user?.nickname || member.nickname;
+        }
+        return member.nickname;
+    };
+
     const categories = [
         {value: 'FOOD', label: '식비', color: '#FF6B6B'},
         {value: 'UTILITIES', label: '공과금', color: '#4ECDC4'},
@@ -85,6 +94,7 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (isSubmitting) return;
 
         const amount = Number(formData.amount.replace(/[^0-9]/g, ''));
 
@@ -131,6 +141,8 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
 
         if (!user) return;
 
+        setIsSubmitting(true)
+
         const expenseData = {
             title: formData.title,
             amount: amount,
@@ -138,7 +150,6 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
             date: formData.date,
             memo: formData.memo || undefined,
             groupId: mode === 'group' && currentGroup ? currentGroup.id : null,  // 개인 모드에서는 null
-            userId: user.id,
             splitType: mode === 'group' ? formData.splitType : undefined,
             splitData: splitDataArray,
             receipt: formData.receipt,
@@ -172,6 +183,8 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
             onClose();
         } catch (error) {
             console.error('지출 처리 실패: ', error);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -427,7 +440,7 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                                     <div className="space-y-3">
                                         {currentGroup.members.map((member) => (
                                             <div key={member.userId} className="flex items-center justify-between">
-                                                <span className="text-sm text-gray-600">{member.nickname}</span>
+                                                <span className="text-sm text-gray-600">{getDisplayNickname(member)}</span>
                                                 <input
                                                     type="text"  // number → text로 변경
                                                     value={formData.splitData[member.userId] ?
@@ -523,7 +536,7 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                                                                             }}
                                                                             className="px-2 py-1 bg-purple-100 text-purple-600 rounded text-xs hover:bg-purple-200 transition-colors"
                                                                         >
-                                                                            {member.nickname}가 부담
+                                                                            {getDisplayNickname(member)}가 부담
                                                                         </button>
                                                                     ))}
                                                                 </div>
@@ -574,7 +587,7 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                                                         }}
                                                         className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                                                     />
-                                                    <span className="text-sm text-gray-700">{member.nickname}</span>
+                                                    <span className="text-sm text-gray-700">{getDisplayNickname(member)}</span>
                                                     {formData.splitData[member.userId] !== undefined && (
                                                         <span className="text-sm text-blue-600 ml-auto">
                                 {new Intl.NumberFormat('ko-KR', {style: 'currency', currency: 'KRW'}).format(
@@ -628,20 +641,34 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                         {expense && !expense.isGroupShare && (
                             <motion.button
                                 type="button"
-                                className="px-4 py-2 border border-red-300 text-red-700 rounded-lg font-medium hover:bg-red-50 transition-colors"
-                                whileHover={{scale: 1.02}}
-                                whileTap={{scale: 0.98}}
+                                className={`px-4 py-2 border border-red-300 text-red-700 rounded-lg font-medium transition-colors ${
+                                    isDeleting
+                                        ? 'opacity-50 cursor-not-allowed'
+                                        : 'hover:bg-red-50'
+                                }`}
+                                whileHover={isDeleting ? {} : {scale: 1.02}}
+                                whileTap={isDeleting ? {} : {scale: 0.98}}
                                 onClick={handleDelete}
+                                disabled={isDeleting || isSubmitting}
                             >
-                                삭제
+                                {isDeleting ? (
+                                    <div className="flex items-center space-x-2">
+                                        <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin"/>
+                                        <span>삭제 중...</span>
+                                    </div>
+                                ) : (
+                                    '삭제'
+                                )}
                             </motion.button>
                         )}
+
                         <motion.button
                             type="button"
                             className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
                             whileHover={{scale: 1.02}}
                             whileTap={{scale: 0.98}}
                             onClick={onClose}
+                            disabled={isSubmitting || isDeleting}
                         >
                             취소
                         </motion.button>
@@ -649,11 +676,23 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                         {!expense?.isGroupShare && (
                             <motion.button
                                 type="submit"
-                                className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
-                                whileHover={{scale: 1.02}}
-                                whileTap={{scale: 0.98}}
+                                className={`px-4 py-2 bg-blue-600 text-white rounded-lg font-medium transition-colors ${
+                                    isSubmitting
+                                        ? 'opacity-50 cursor-not-allowed'
+                                        : 'hover:bg-blue-700'
+                                }`}
+                                whileHover={isSubmitting ? {} : {scale: 1.02}}
+                                whileTap={isSubmitting ? {} : {scale: 0.98}}
+                                disabled={isSubmitting || isDeleting}
                             >
-                                {expense ? '수정' : '추가'}
+                                {isSubmitting ? (
+                                    <div className="flex items-center space-x-2">
+                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"/>
+                                        <span>{expense ? '수정 중...' : '추가 중...'}</span>
+                                    </div>
+                                ) : (
+                                    expense ? '수정' : '추가'
+                                )}
                             </motion.button>
                         )}
                     </div>
