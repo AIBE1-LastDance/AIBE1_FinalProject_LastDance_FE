@@ -10,6 +10,11 @@ export const useAuth = () => {
     // 공통 인증 상태 정리 함수
     const clearAuthState = () => {
         console.log('인증 상태 정리 시작')
+
+        // 현재 사용자 모드 설정 백업
+        const currentUser = useAuthStore.getState().user;
+        const currentMode = currentUser?.id ? localStorage.getItem(`userMode_${currentUser.id}`) : null;
+
         // 먼저 스토어의 로그아웃 함수 실행
         storeLogout();
 
@@ -19,7 +24,7 @@ export const useAuth = () => {
 
         // 추가적으로 다른 모든 auth 관련 스토리지도 확인하여 제거
         Object.keys(localStorage).forEach(key => {
-            if (key.includes('auth') || key.includes('app-storage')) {
+            if ((key.includes('auth') || key.includes('app-storage')) && !key.startsWith('userMode_')) {
                 localStorage.removeItem(key);
             }
         });

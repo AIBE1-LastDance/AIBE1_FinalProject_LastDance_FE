@@ -208,10 +208,6 @@ const ExpensesPage: React.FC = () => {
                     .filter(expense => expense.category === cat.category)
                     .reduce((sum, expense) => sum + expense.amount, 0);
                 monthData[cat.category] = categoryAmount;
-
-                if (categoryAmount > 0) {
-                    console.log(`💰 ${monthLabel} ${cat.label}: ${categoryAmount}원`);
-                }
             });
         } else {
             const categoryAmount = monthExpenses

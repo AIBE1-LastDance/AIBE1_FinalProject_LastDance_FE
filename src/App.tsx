@@ -23,12 +23,14 @@ import {useAuth} from './hooks/useAuth';
 import {useEffect, useState} from "react";
 import AdminRouter from './components/admin/AdminRouter';
 // SSE 관리를 위해 추가
-import { useNotifications } from './hooks/useNotifications';
+import {useNotifications} from './hooks/useNotifications';
+import {useAppStore} from "./store/appStore.ts";
 
 function App() {
     const {isAuthenticated, user} = useAuthStore();
-    const { getCurrentUser } = useAuth();
-    const [ isInitialized, setIsInitialized ] = useState(false);
+    const {getCurrentUser} = useAuth();
+    const [isInitialized, setIsInitialized] = useState(false);
+    const setMode = useAppStore((state) => state.setMode);
 
     // 🔥 앱 최상위에서 SSE 연결 관리 (한 번만 실행)
     useNotifications();
@@ -49,7 +51,31 @@ function App() {
             try {
                 console.log('인증 상태 초기화 중...');
                 const user = await getCurrentUser();
-                
+
+                if (user) {
+                    const savedData = localStorage.getItem(`userMode_${user.id}`);
+                    if (savedData) {
+                        try {
+                            const data = JSON.parse(savedData);
+                            const thirtyDays = 30 * 24 * 60 * 60 * 1000; // 30일
+
+                            if (Date.now() - data.timestamp < thirtyDays) {
+                                // 만료되지 않은 경우
+                                useAppStore.getState().setMode(data.mode as 'personal' | 'group');
+                                if (data.mode === 'group') {
+                                    await useAppStore.getState().loadMyGroups();
+                                }
+                            } else {
+                                localStorage.removeItem(`userMode_${user.id}`);
+                            }
+                        } catch (error) {
+                            console.error('저장된 데이터 파싱 오류, 삭제합니다: ', error);
+                            localStorage.removeItem(`userMode_${user.id}`);
+                        }
+
+                    }
+                }
+
                 if (!user) {
                     // 유저 정보가 없으면 로컬 스토리지 정리
                     console.log('유효한 사용자 정보가 없습니다. 로컬 스토리지 정리');
@@ -72,9 +98,11 @@ function App() {
     // 초기화 완료되기 전에는 로딩 표시
     if (!isInitialized) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-100 flex items-center justify-center">
+            <div
+                className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-100 flex items-center justify-center">
                 <div className="text-center">
-                    <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <div
+                        className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                     <p className="text-primary-600 font-medium">로딩 중...</p>
                 </div>
             </div>
@@ -114,19 +142,19 @@ function App() {
                 />
                 <Route
                     path="/oauth2/authorization/*"
-                    element={<OAuthCallback />}
+                    element={<OAuthCallback/>}
                 />
                 <Route
                     path="/login/oauth2/code/*"
-                    element={<OAuthCallback />}
+                    element={<OAuthCallback/>}
                 />
                 <Route
                     path="/oauth2/code/*"
-                    element={<OAuthCallback />}
+                    element={<OAuthCallback/>}
                 />
                 <Route
                     path="/auth/callback/*"
-                    element={<OAuthCallback />}
+                    element={<OAuthCallback/>}
                 />
                 <Route
                     path="/dashboard"
@@ -253,7 +281,7 @@ function App() {
                     path="/admin/*"
                     element={
                         <ProtectedRoute>
-                            <AdminRouter />
+                            <AdminRouter/>
                         </ProtectedRoute>
                     }
                 />
