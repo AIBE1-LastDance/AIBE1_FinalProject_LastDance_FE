@@ -30,12 +30,12 @@ const GamesPage: React.FC = () => {
             difficulty: 'Easy'
         },
         {
-            id: 'yatzy',
-            title: 'YATZY (주사위)',
+            id: 'yahtzee',
+            title: 'YAHTZEE (주사위)',
             description: '최고의 주사위 조합을 만드는 전략형 점수 게임',
             icon: Dice6,
             color: 'bg-gradient-to-br from-orange-300 to-orange-400',
-            path: '/games/yatzy',
+            path: '/games/yahtzee',
             players: '1~6명',
             duration: '5~15분',
             difficulty: 'Normal'
@@ -170,7 +170,7 @@ const GamesPage: React.FC = () => {
                                 <Dice6 className="w-4 h-4 text-primary-600"/>
                             </div>
                             <div>
-                                <h4 className="font-medium text-gray-800">YATZY (주사위)</h4>
+                                <h4 className="font-medium text-gray-800">YAHTZEE (주사위)</h4>
                                 <p className="text-sm text-gray-600">
                                     5개의 주사위를 최대 3번까지 굴려 조합을 완성하고 점수를 채우는 전략형 주사위 게임입니다.
                                 </p>
@@ -201,7 +201,7 @@ const GamesPage: React.FC = () => {
                     {[
                         {game: '룰렛', winner: '김우리', task: '설거지', time: '1시간 전'},
                         {game: '사다리타기', winner: '박집사', task: '청소', time: '3시간 전'},
-                        {game: 'YATZY', winner: '이하우스', task: '쓰레기 배출', time: '1일 전'},
+                        {game: 'YAHTZEE', winner: '이하우스', task: '쓰레기 배출', time: '1일 전'},
                     ].map((result, index) => (
                         <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                             <div className="flex items-center space-x-3">

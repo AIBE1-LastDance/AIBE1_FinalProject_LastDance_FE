@@ -3,14 +3,9 @@ import { motion } from "framer-motion";
 import { Send, Bot, User, ThumbsUp, ThumbsDown, Copy } from "lucide-react";
 import toast from "react-hot-toast";
 import { judgeConflict } from "../../api/aijudgment/aiJudgment";
-
-interface Message {
-  id: string;
-  type: "user" | "ai";
-  content: string;
-  timestamp: Date;
-  rating?: "up" | "down" | null;
-}
+import { sendFeedback } from "../../api/aijudgment/aiJudgment";
+import type { Message } from "../../types/aijudgment/aiMessage";
+import type { AiJudgmentResponse } from "../../types/aijudgment/aiMessage";
 
 const AIAssistantPage: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([
@@ -18,7 +13,7 @@ const AIAssistantPage: React.FC = () => {
       id: "1",
       type: "ai",
       content:
-        "안녕하세요! 저는 우리.zip AI 도우미입니다. 하우스메이트 생활에서 궁금한 것이 있으시면 언제든 물어보세요! 🏠✨",
+        "안녕하세요! 저는 룸메이트 갈등을 전문적으로 판단하는 우리.zip 도우미입니다. A: (A의 입장), B: (B의 입장) 형식으로 상황을 설명해 주시면 최대한 공정하게 판단해드릴게요. 모두가 납득할 수 있는 결과를 드리는 것이 제 역할입니다! 🏠✨",
       timestamp: new Date(),
       rating: null,
     },
@@ -69,6 +64,7 @@ const AIAssistantPage: React.FC = () => {
         content: response.judgmentResult,
         timestamp: new Date(),
         rating: null,
+        judgmentId: response.judgmentId, // ✅ 저장
       };
       setMessages((prev) => [...prev, aiResponse]);
     } catch (error: any) {
@@ -89,14 +85,34 @@ const AIAssistantPage: React.FC = () => {
     }
   };
 
-  const handleRating = (messageId: string, rating: "up" | "down") => {
-    setMessages((prev) =>
-      prev.map((msg) =>
-        msg.id === messageId
-          ? { ...msg, rating: msg.rating === rating ? null : rating }
-          : msg
-      )
-    );
+  const handleRating = async (messageId: string, rating: "up" | "down") => {
+    const targetMessage = messages.find((msg) => msg.id === messageId);
+    if (!targetMessage || !targetMessage.judgmentId) return;
+
+    const isSame = targetMessage.rating === rating;
+    const newRating: "up" | "down" | null = isSame ? null : rating;
+
+    try {
+      if (newRating) {
+        await sendFeedback(targetMessage.judgmentId, newRating);
+        toast.success(
+          newRating === "up" ? "좋아요를 남겼습니다." : "싫어요를 남겼습니다."
+        );
+      } else {
+        // 양쪽 다 false로 만들기 위한 비워진 toggle
+        await sendFeedback(targetMessage.judgmentId, rating); // 재전송하면 서버에서 취소됨
+        toast.success("피드백을 취소했습니다.");
+      }
+
+      // UI 상태 업데이트
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === messageId ? { ...msg, rating: newRating } : msg
+        )
+      );
+    } catch (error: any) {
+      toast.error(error.message || "피드백 처리 중 오류가 발생했습니다.");
+    }
   };
 
   const handleCopy = async (content: string) => {

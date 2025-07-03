@@ -203,27 +203,39 @@ const AISystemManagement: React.FC = () => {
     );
   };
 
-  const StatCard = ({ title, value, change, icon: Icon, color }: any) => (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-gray-600">{title}</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{safeString(value)}</p>
-          {change && (
-            <div className={`flex items-center mt-2 text-sm ${
-              safeNumber(change) > 0 ? 'text-green-600' : 'text-red-600'
-            }`}>
-              {safeNumber(change) > 0 ? <TrendingUp className="w-4 h-4 mr-1" /> : <TrendingDown className="w-4 h-4 mr-1" />}
-              {safeString(Math.abs(safeNumber(change)))}% vs 지난주
-            </div>
-          )}
-        </div>
-        <div className={`p-3 rounded-full ${color}`}>
-          <Icon className="w-6 h-6 text-white" />
+  const StatCard = ({ title, value, change, icon: Icon, color }: any) => {
+    // 디버깅을 위한 로그
+    if (title === "만족도") {
+      console.log('만족도 StatCard 값:', {
+        title,
+        value,
+        overallStats,
+        stats
+      });
+    }
+    
+    return (
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-gray-600">{title}</p>
+            <p className="text-2xl font-bold text-gray-900 mt-1">{value || '0'}</p>
+            {change && (
+              <div className={`flex items-center mt-2 text-sm ${
+                safeNumber(change) > 0 ? 'text-green-600' : 'text-red-600'
+              }`}>
+                {safeNumber(change) > 0 ? <TrendingUp className="w-4 h-4 mr-1" /> : <TrendingDown className="w-4 h-4 mr-1" />}
+                {safeString(Math.abs(safeNumber(change)))}% vs 지난주
+              </div>
+            )}
+          </div>
+          <div className={`p-3 rounded-full ${color}`}>
+            <Icon className="w-6 h-6 text-white" />
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   if (error) {
     return (
@@ -300,9 +312,9 @@ const AISystemManagement: React.FC = () => {
         <StatCard
           title="만족도"
           value={
-            overallStats?.satisfactionRate ? 
+            overallStats?.satisfactionRate !== undefined ? 
               formatPercentage(overallStats.satisfactionRate) : 
-              (stats?.satisfactionRate ? formatPercentage(stats.satisfactionRate) : '0%')
+              (stats?.satisfactionRate !== undefined ? formatPercentage(stats.satisfactionRate) : '0%')
           }
           icon={TrendingUp}
           color="bg-blue-500"

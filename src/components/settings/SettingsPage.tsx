@@ -1,15 +1,26 @@
 import React, {useEffect, useState} from 'react';
 import {motion} from 'framer-motion';
-import {Settings, User, Bell, Save, Camera, Trash2} from 'lucide-react';
+import {Settings, User, Bell, Save, Camera, Trash2, Wifi, WifiOff, Smartphone, TestTube} from 'lucide-react';
 import {useAuthStore} from '../../store/authStore';
 import toast from 'react-hot-toast';
 import {profileApi} from "../../api/profile";
 import {notificationApi, NotificationSettingRequest} from "../../api/notifications";
 import Avatar from "../common/Avatar";
-import {useAppStore} from "../../store/appStore.ts";
+import {useSSEStore} from "../../store/sseStore";
 
 const SettingsPage: React.FC = () => {
     const {user, setProcessingAccountDeletion} = useAuthStore();
+    const {
+        isSSEConnected,
+        isWebPushSupported,
+        isWebPushSubscribed,
+        notificationPermission,
+        requestNotificationPermission,
+        subscribeToWebPush,
+        unsubscribeFromWebPush,
+        connectSSE,
+        disconnectSSE
+    } = useSSEStore();
     const [activeTab, setActiveTab] = useState('profile');
     const [profileData, setProfileData] = useState({
         name: user?.username || '',
@@ -605,47 +616,162 @@ const SettingsPage: React.FC = () => {
                         </div>
                     )}
 
-                    <div className="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
-                        <h4 className="font-medium text-blue-900 mb-2">알림 권한 설정</h4>
-                        <p className="text-sm text-blue-700 mb-3">
-                            브라우저에서 알림을 받으려면 알림 권한을 허용해야 합니다.
+                    {/* 하이브리드 알림 시스템 상태 */}
+                    <div className="mt-6 p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+                        <div className="flex items-center justify-between mb-4">
+                            <h4 className="font-medium text-blue-900">🎯 하이브리드 알림 시스템</h4>
+                            <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
+                                SSE → 웹푸시 → 이메일
+                            </span>
+                        </div>
+                        <p className="text-sm text-blue-700 mb-4">
+                            실시간 연결 → 백그라운드 알림 → 확실한 이메일 전달 순으로 동작합니다.
                         </p>
-                        <div className="flex items-center space-x-3">
+                        
+                        {/* 1단계: SSE 실시간 연결 */}
+                        <div className="mb-3 p-3 bg-white rounded-lg border border-blue-100">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-3">
+                                    <div className={`w-3 h-3 rounded-full ${isSSEConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                                    <div>
+                                        <p className="font-medium text-gray-900 flex items-center">
+                                            <Wifi className="w-4 h-4 mr-2" />
+                                            1단계: 실시간 연결 (SSE)
+                                        </p>
+                                        <p className="text-sm text-gray-600">
+                                            {isSSEConnected ? '✅ 연결됨 - 즉시 알림 수신' : '❌ 연결 끊김 - 2단계로 전환'}
+                                        </p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={isSSEConnected ? disconnectSSE : connectSSE}
+                                    className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                                        isSSEConnected 
+                                            ? 'bg-red-100 text-red-700 hover:bg-red-200' 
+                                            : 'bg-green-100 text-green-700 hover:bg-green-200'
+                                    }`}
+                                >
+                                    {isSSEConnected ? '연결 해제' : '다시 연결'}
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* 2단계: 웹푸시 백그라운드 알림 */}
+                        <div className="mb-3 p-3 bg-white rounded-lg border border-blue-100">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-3">
+                                    <div className={`w-3 h-3 rounded-full ${
+                                        !isWebPushSupported ? 'bg-gray-400' :
+                                        isWebPushSubscribed ? 'bg-green-500' : 
+                                        notificationPermission === 'granted' ? 'bg-yellow-500' : 'bg-red-500'
+                                    }`}></div>
+                                    <div>
+                                        <p className="font-medium text-gray-900 flex items-center">
+                                            <Smartphone className="w-4 h-4 mr-2" />
+                                            2단계: 백그라운드 알림 (웹푸시)
+                                        </p>
+                                        <p className="text-sm text-gray-600">
+                                            {!isWebPushSupported ? '❌ 브라우저 미지원' :
+                                             isWebPushSubscribed ? '✅ 구독됨 - 백그라운드 알림 가능' :
+                                             notificationPermission === 'granted' ? '⚠️ 권한 있음 - 구독 필요' :
+                                             '❌ 권한 필요 - 구독 불가'}
+                                        </p>
+                                        {!import.meta.env.VITE_VAPID_PUBLIC_KEY || 
+                                         import.meta.env.VITE_VAPID_PUBLIC_KEY === 'your_vapid_public_key_here' ? (
+                                            <p className="text-xs text-orange-600 mt-1">
+                                                ⚠️ VAPID 키가 설정되지 않음 - 관리자가 백엔드에서 키를 생성해야 합니다
+                                            </p>
+                                        ) : null}
+                                    </div>
+                                </div>
+                                <div className="flex space-x-2">
+                                    {notificationPermission !== 'granted' && (
+                                        <button
+                                            onClick={() => requestNotificationPermission?.()}
+                                            className="px-3 py-1 rounded-lg text-sm font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
+                                        >
+                                            권한 요청
+                                        </button>
+                                    )}
+                                    {isWebPushSupported && notificationPermission === 'granted' && (
+                                        <button
+                                            onClick={() => isWebPushSubscribed ? unsubscribeFromWebPush?.() : subscribeToWebPush?.()}
+                                            disabled={!import.meta.env.VITE_VAPID_PUBLIC_KEY || 
+                                                     import.meta.env.VITE_VAPID_PUBLIC_KEY === 'your_vapid_public_key_here'}
+                                            className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                                                !import.meta.env.VITE_VAPID_PUBLIC_KEY || 
+                                                import.meta.env.VITE_VAPID_PUBLIC_KEY === 'your_vapid_public_key_here'
+                                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                                    : isWebPushSubscribed 
+                                                        ? 'bg-red-100 text-red-700 hover:bg-red-200' 
+                                                        : 'bg-green-100 text-green-700 hover:bg-green-200'
+                                            }`}
+                                        >
+                                            {isWebPushSubscribed ? '구독 해제' : '구독하기'}
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 3단계: 이메일 확실한 전달 */}
+                        <div className="mb-4 p-3 bg-white rounded-lg border border-blue-100">
+                            <div className="flex items-center space-x-3">
+                                <div className={`w-3 h-3 rounded-full ${notifications.emailEnabled ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+                                <div className="flex-1">
+                                    <p className="font-medium text-gray-900 flex items-center">
+                                        <Bell className="w-4 h-4 mr-2" />
+                                        3단계: 확실한 전달 (이메일)
+                                    </p>
+                                    <p className="text-sm text-gray-600">
+                                        {notifications.emailEnabled ? '✅ 활성화 - 모든 알림이 이메일로 전송됨' : '❌ 비활성화 - 이메일 전송 안함'}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 테스트 알림 버튼 */}
+                        <div className="pt-3 border-t border-blue-200">
                             <button
-                                onClick={() => {
-                                    if ('Notification' in window) {
-                                        Notification.requestPermission().then(permission => {
-                                            if (permission === 'granted') {
-                                                toast.success('알림 권한이 허용되었습니다.');
-                                            } else {
-                                                toast.error('알림 권한이 거부되었습니다.');
-                                            }
+                                onClick={async () => {
+                                    try {
+                                        await notificationApi.sendTestNotification({
+                                            type: 'SCHEDULE',
+                                            title: '테스트 알림',
+                                            content: '하이브리드 알림 시스템이 정상적으로 작동합니다! 🎉',
+                                            relatedId: 'test-' + Date.now()
                                         });
+                                        toast.success('테스트 알림을 전송했습니다.');
+                                    } catch (error) {
+                                        console.error('테스트 알림 전송 실패:', error);
+                                        toast.error('테스트 알림 전송에 실패했습니다.');
                                     }
                                 }}
-                                className="text-sm bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                                className="w-full py-2 rounded-lg text-sm font-medium bg-primary-600 text-white hover:bg-primary-700 transition-colors flex items-center justify-center space-x-2"
                             >
-                                알림 권한 요청
+                                <TestTube className="w-4 h-4" />
+                                <span>하이브리드 알림 테스트</span>
                             </button>
-                            <button
-                                onClick={handleNotificationSave}
-                                disabled={isNotificationSaving || notificationLoading}
-                                className={`text-sm px-3 py-2 rounded-lg transition-colors ${
-                                    isNotificationSaving || notificationLoading
-                                        ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                                        : 'bg-primary-600 text-white hover:bg-primary-700'
-                                }`}
-                            >
-                                {isNotificationSaving ? (
-                                    <div className="flex items-center space-x-2">
-                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"/>
-                                        <span>저장 중...</span>
-                                    </div>
-                                ) : (
-                                    '알림 설정 저장'
-                                )}
-                            </button>
+                            <p className="text-xs text-gray-500 mt-2 text-center">
+                                연결된 모든 알림 방식으로 테스트 메시지를 보냅니다
+                            </p>
                         </div>
+                    </div>
+
+                    {/* 기존 알림 권한 설정 부분을 간소화 */}
+                    <div className="mt-4 p-4 bg-gray-50 rounded-xl">
+                        <h4 className="font-medium text-gray-900 mb-2">📧 이메일 알림 설정</h4>
+                        <p className="text-sm text-gray-600 mb-3">
+                            위 하이브리드 시스템과 별개로 항상 이메일로 알림을 받으려면 이메일 알림을 활성화하세요.
+                        </p>
+                        <button
+                            onClick={handleNotificationSave}
+                            disabled={notificationLoading}
+                            className="w-full bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                        >
+                            <Save className="w-4 h-4" />
+                            <span>알림 설정 저장</span>
+                        </button>
                     </div>
                 </div>
             </div>
