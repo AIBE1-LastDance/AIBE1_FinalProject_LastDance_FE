@@ -122,7 +122,7 @@ const AdminLayout: React.FC = () => {
         </header>
 
         {/* Page Content */}
-        <main className="p-6">
+        <main className="p-4 lg:p-6 max-w-full overflow-hidden">
           <Outlet />
         </main>
       </div>

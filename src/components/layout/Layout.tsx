@@ -3,12 +3,17 @@ import Header from './Header';
 import MobileNav from './MobileNav';
 import Footer from './Footer';
 import { Toaster } from 'react-hot-toast';
+// ❌ useNotifications import 제거
+// import { useNotifications } from '../../hooks/useNotifications';
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
+  // ❌ SSE 연결 관리 코드 제거 (App.tsx로 이동)
+  // useNotifications();
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header />
