@@ -76,6 +76,37 @@ const ExpensesPage: React.FC = () => {
     const [currentCardIndex, setCurrentCardIndex] = useState(0);
     const [showReceiptModal, setShowReceiptModal] = useState(false);
     const [currentReceiptUrl, setCurrentReceiptUrl] = useState<string | null>(null);
+    const [monthlyTrendData, setMonthlyTrendData] = useState<any>({});
+
+    // 월별 추이 데이터 로드
+    const loadMonthlyTrendData = async () => {
+        try {
+            const params = {
+                year: currentMonth.getFullYear(),
+                month: currentMonth.getMonth() + 1,
+                months: 6,
+                category: categoryFilter === 'all' ? undefined : categoryFilter
+            };
+
+            let response;
+            if (mode === 'personal') {
+                response = await expenseAPI.getPersonalExpensesTrend(params);
+            } else if (mode === 'group' && currentGroup?.id) {
+                response = await expenseAPI.getGroupExpensesTrend(currentGroup.id, params);
+            }
+
+            if (response?.monthlyData) {
+                setMonthlyTrendData(response.monthlyData);
+            } else if (response?.data?.monthlyData) {
+                setMonthlyTrendData(response.data.monthlyData);
+            } else {
+                console.log('❌ monthlyData를 찾을 수 없음. 전체 응답:', response);
+            }
+        } catch (error) {
+            console.error('❌ 월별 추이 데이터 로드 실패: ', error);
+            setMonthlyTrendData({});
+        }
+    };
 
     useEffect(() => {
         const fetchExpenses = async () => {
@@ -100,6 +131,8 @@ const ExpensesPage: React.FC = () => {
                     year: currentMonth.getFullYear(),
                     month: currentMonth.getMonth() + 1,
                 });
+
+                await loadMonthlyTrendData();
             } catch (error) {
                 console.error('지출 로드 실패: ', error);
             } finally {
@@ -109,6 +142,12 @@ const ExpensesPage: React.FC = () => {
 
         fetchExpenses();
     }, [mode, currentMonth, currentGroup?.id, loadExpenses, loadGroupShares, loadMyGroups]);
+
+    useEffect(() => {
+        if (Object.keys(monthlyTrendData).length > 0) {
+            loadMonthlyTrendData();
+        }
+    }, [categoryFilter]);
 
     const categoryData = [
         {category: 'FOOD', label: '식비', color: '#FF6B6B'},
@@ -120,14 +159,19 @@ const ExpensesPage: React.FC = () => {
     ];
 
     // Category breakdown data (전체 데이터, 필터와 무관)
-    const allCategoryExpenses = expenses.filter(expense => {
-        const isModeMatch = mode === 'personal' ? !expense.groupId : expense.groupId;
-        const isCurrentMonth = isWithinInterval(new Date(expense.date), {
-            start: startOfMonth(currentMonth),
-            end: endOfMonth(currentMonth)
+    const allCategoryExpenses = (() => {
+        // monthlyTrendData에서 현재 달 데이터 가져오기
+        const currentMonthKey = format(currentMonth, 'yyyy-MM');
+        const currentMonthData = monthlyTrendData[currentMonthKey] || [];
+
+        return currentMonthData.filter(expense => {
+            if (mode === 'personal') {
+                return expense.expenseType === 'PERSONAL' || expense.expenseType === 'SHARE';
+            } else {
+                return expense.expenseType === 'GROUP';
+            }
         });
-        return isModeMatch && isCurrentMonth;
-    });
+    })();
 
     const allCategoryData = categoryData.map(cat => {
         const amount = allCategoryExpenses
@@ -143,26 +187,33 @@ const ExpensesPage: React.FC = () => {
     // Monthly trend data (카테고리 필터 적용하되 카테고리별 색상 유지)
     const monthlyData = Array.from({length: 6}, (_, i) => {
         const monthDate = subMonths(currentMonth, 5 - i);
-        const monthStart = startOfMonth(monthDate);
-        const monthEnd = endOfMonth(monthDate);
-        const monthExpenses = expenses.filter(expense => {
-            const expenseDate = new Date(expense.date);
-            const isModeMatch = mode === 'personal' ? !expense.groupId : expense.groupId;
-            return expenseDate >= monthStart && expenseDate <= monthEnd && isModeMatch;
+        const monthKey = format(monthDate, 'yyyy-MM');
+        const monthLabel = format(monthDate, 'M월');
+
+        const apiMonthData = monthlyTrendData[monthKey] || [];
+
+        const monthExpenses = apiMonthData.filter(expense => {
+            if (mode === 'personal') {
+                return expense.expenseType === 'PERSONAL' || expense.expenseType === 'SHARE';
+            } else {
+                return expense.expenseType === 'GROUP';
+            }
         });
 
-        const monthData: { [key: string]: any } = {month: format(monthDate, 'M월')};
+        const monthData: { [key: string]: any } = { month: monthLabel };
 
         if (categoryFilter === 'all') {
-            // 전체 카테고리별로 분리
             categoryData.forEach(cat => {
                 const categoryAmount = monthExpenses
                     .filter(expense => expense.category === cat.category)
                     .reduce((sum, expense) => sum + expense.amount, 0);
                 monthData[cat.category] = categoryAmount;
+
+                if (categoryAmount > 0) {
+                    console.log(`💰 ${monthLabel} ${cat.label}: ${categoryAmount}원`);
+                }
             });
         } else {
-            // 선택된 카테고리만
             const categoryAmount = monthExpenses
                 .filter(expense => expense.category === categoryFilter)
                 .reduce((sum, expense) => sum + expense.amount, 0);
@@ -1121,7 +1172,8 @@ const ExpensesPage: React.FC = () => {
                                                     </div>
                                                     <div>
                                                         <h4 className="font-medium text-gray-900">{share.title}</h4>
-                                                        <div className="flex items-center space-x-2 text-sm text-gray-500">
+                                                        <div
+                                                            className="flex items-center space-x-2 text-sm text-gray-500">
                                                             <span>{categoryData.find(cat => cat.category === share.category)?.label}</span>
                                                             <span>•</span>
                                                             <span>전체: {formatCurrency(share.amount)}</span>
