@@ -446,14 +446,6 @@ export const useAppStore = create<AppState>()(
             hasReceipt: expense.hasReceipt
           }));
 
-          // 중복 데이터 체크
-          const uniqueExpenses = expenses.filter((expense, index, arr) =>
-              arr.findIndex(e => e.id === expense.id) === index
-          );
-          if (uniqueExpenses.length > 0) {
-            console.warn('중복 데이터 발견:', uniqueExpenses);
-          }
-
           set({ expenses });
         } catch (error: any) {
           console.error('지출 목록 로드 실패:', error);
