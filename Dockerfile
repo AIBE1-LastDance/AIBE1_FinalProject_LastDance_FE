@@ -1,6 +1,8 @@
 # Build stage
 FROM node:18-alpine AS builder
 
+ARG VITE_API_BASE_URL
+
 WORKDIR /app
 
 # Copy package files
@@ -13,7 +15,7 @@ RUN npm ci
 COPY . .
 
 # Build the application
-RUN npm run build
+RUN npm run build -- --mode production --base-url $VITE_API_BASE_URL
 
 # Production stage
 FROM nginx:alpine
