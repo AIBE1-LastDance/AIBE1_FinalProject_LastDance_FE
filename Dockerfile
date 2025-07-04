@@ -1,6 +1,8 @@
 # Build stage
 FROM node:18-alpine AS builder
 
+ARG VITE_API_BASE_URL
+
 WORKDIR /app
 
 # Copy package files

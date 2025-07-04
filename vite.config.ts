@@ -1,18 +1,21 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
+const BASE_URL = 'http://localhost:8080';
+// const BASE_URL = 'https://api.woori-zip.lastdance.store/';
+
 export default defineConfig({
   plugins: [react()],
   server: {
     // port: 3000,
       proxy: {
       '/api': {
-        target: 'https://api.woori-zip.lastdance.store',
+        target: BASE_URL,
         changeOrigin: true,
         secure: false
       },
       '/oauth2': {
-        target: 'https://api.woori-zip.lastdance.store',
+        target: BASE_URL,
         changeOrigin: true,
         secure: false
       },
