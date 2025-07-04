@@ -11,7 +11,7 @@ const getApiBaseUrl = () => {
     }
 
     // 운영환경: 절대 URL 사용
-    return envUrl || 'https://woori-zip.lastdance.store';
+    return envUrl || 'https://api.woori-zip.lastdance.store';
 };
 
 export const apiClient = axios.create({
