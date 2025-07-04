@@ -233,7 +233,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onSave }) => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 disabled={isSubmitting}
               >
-                <option value="">담당자를 선택하세요 (선택사항)</option>
+                <option value="">담당자를 선택하세요</option>
                 {currentGroup.members.map((member) => (
                   <option key={member.userId} value={member.userId}>
                     {member.nickname}
