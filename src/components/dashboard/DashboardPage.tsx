@@ -49,10 +49,11 @@ import {
     isToday
 } from 'date-fns';
 import {ko} from 'date-fns/locale';
+import {expenseAPI} from "../../api/expense.ts";
 
 const DashboardPage: React.FC = () => {
     const {user} = useAuthStore();
-    const {mode, currentGroup, expenses, events, loadExpenses} = useAppStore();
+    const {mode, currentGroup, expenses, events} = useAppStore();
     const {checklists, toggleChecklist} = useChecklist(); // toggleChecklist 추가
     const navigate = useNavigate();
     const [selectedDate, setSelectedDate] = useState(new Date());
@@ -62,21 +63,34 @@ const DashboardPage: React.FC = () => {
     useEffect(() => {
         const fetchExpenses = async () => {
             try {
-                const currentMonth = new Date();
+                const currentDate = new Date();
                 const params = {
-                    mode,
-                    year: currentMonth.getFullYear(),
-                    month: currentMonth.getMonth() + 1,
-                    groupId: mode === 'group' ? currentGroup?.id : null,
+                    year: currentDate.getFullYear(),
+                    month: currentDate.getMonth() + 1,
+                    months: 6,
                 };
-                await loadExpenses(params);
+
+                let response;
+                if (mode === 'personal') {
+                    response = await expenseAPI.getPersonalExpensesTrend(params);
+                } else if (currentGroup?.id) {
+                    response = await expenseAPI.getGroupExpensesTrend(currentGroup.id, params);
+                }
+
+                if (response) {
+                    // 🔥 monthlyData를 flat한 배열로 변환
+                    const monthlyData = response.data.monthlyData || {};
+                    const allExpenses = Object.values(monthlyData).flat();
+
+                    // appStore의 expenses 직접 업데이트
+                    useAppStore.setState({ expenses: allExpenses });
+                }
             } catch (error) {
                 console.error('대시보드 지출 로드 실패: ', error);
             }
         };
-
         fetchExpenses();
-    }, [mode, currentGroup, loadExpenses]);
+    }, [mode, currentGroup]);
 
     // Expense categories matching ExpensesPage
     const categoryData = [
@@ -89,9 +103,13 @@ const DashboardPage: React.FC = () => {
     ];
 
     // Filter expenses for current mode
-    const filteredExpenses = expenses.filter(expense =>
-        mode === 'personal' ? !expense.groupId : expense.groupId
-    );
+    const filteredExpenses = expenses.filter(expense => {
+        if (mode === 'personal') {
+            return expense.expenseType === 'PERSONAL' || expense.expenseType === 'SHARE';
+        } else {
+            return expense.groupId && expense.expenseType === 'GROUP';
+        }
+    });
 
     // Expense chart data
     const expenseChartData = categoryData.map(cat => {
@@ -111,10 +129,20 @@ const DashboardPage: React.FC = () => {
         const monthDate = subMonths(currentMonth, 5 - i);
         const monthStart = startOfMonth(monthDate);
         const monthEnd = endOfMonth(monthDate);
+
         const monthExpenses = expenses.filter(expense => {
             const expenseDate = new Date(expense.date);
-            const isModeMatch = mode === 'personal' ? !expense.groupId : expense.groupId;
-            return expenseDate >= monthStart && expenseDate <= monthEnd && isModeMatch;
+            const isDateMatch = expenseDate >= monthStart && expenseDate <= monthEnd;
+
+            // 모드에 따른 필터링
+            let isModeMatch = false;
+            if (mode === 'personal') {
+                isModeMatch = expense.expenseType === 'PERSONAL' || expense.expenseType === 'SHARE';
+            } else {
+                isModeMatch = expense.groupId && expense.expenseType === 'GROUP'
+            }
+
+            return isDateMatch && isModeMatch;
         });
 
         // Calculate category amounts for this month
@@ -229,7 +257,8 @@ const DashboardPage: React.FC = () => {
             description: '개인 지출 관리',
             color: 'from-purple-500 to-purple-600',
             path: '/expenses',
-            count: expenses.filter(e => !e.groupId).length,
+            count: expenses.filter(e => e.expenseType === 'PERSONAL' || e.expenseType === 'SHARE').length,
+
         },
     ];
 
@@ -241,7 +270,17 @@ const DashboardPage: React.FC = () => {
     const completedTasks = checklists.filter(t => t.isCompleted).length;
     const totalTasks = checklists.length;
     const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-    const monthlyExpenses = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
+
+    const currentDate = new Date();
+    const currentMonthStart = startOfMonth(currentDate);
+    const currentMonthEnd = endOfMonth(currentDate);
+
+    const monthlyExpenses = filteredExpenses.filter(expense => {
+        const expenseDate = new Date(expense.date);
+        return expenseDate >= currentMonthStart && expenseDate <= currentMonthEnd;
+    })
+        .reduce((sum, expense) => sum + expense.amount, 0);
+
     const upcomingEvents = events
         .filter(e => mode === 'personal' ? !e.groupId : e.groupId)
         .filter(e => new Date(e.date) >= new Date()).length;
