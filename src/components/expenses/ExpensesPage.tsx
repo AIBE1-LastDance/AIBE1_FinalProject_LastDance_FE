@@ -30,7 +30,8 @@ import {
     XAxis,
     YAxis,
     CartesianGrid,
-    Tooltip
+    Tooltip,
+    Sector
 } from 'recharts';
 import {useAppStore} from '../../store/appStore';
 import {useAuthStore} from '../../store/authStore';
@@ -76,10 +77,11 @@ const ExpensesPage: React.FC = () => {
     const [currentCardIndex, setCurrentCardIndex] = useState(0);
     const [showReceiptModal, setShowReceiptModal] = useState(false);
     const [currentReceiptUrl, setCurrentReceiptUrl] = useState<string | null>(null);
+    const [activeIndex, setActiveIndex] = useState<number | null>(null);
     const [monthlyTrendData, setMonthlyTrendData] = useState<any>({});
 
     // 월별 추이 데이터 로드
-    const loadMonthlyTrendData = async () => {
+    const loadMonthlyTrendData = React.useCallback(async () => {
         try {
             const params = {
                 year: currentMonth.getFullYear(),
@@ -106,48 +108,49 @@ const ExpensesPage: React.FC = () => {
             console.error('❌ 월별 추이 데이터 로드 실패: ', error);
             setMonthlyTrendData({});
         }
-    };
+    }, [currentMonth, categoryFilter, mode, currentGroup?.id]);
+
+    const refreshAllData = React.useCallback(async () => {
+        setLoading(true);
+        try {
+            const promises = [];
+
+            if (mode === 'group') {
+                promises.push(loadMyGroups());
+            }
+
+            const expenseParams = {
+                mode,
+                year: currentMonth.getFullYear(),
+                month: currentMonth.getMonth() + 1,
+                groupId: mode === 'group' ? currentGroup?.id : null
+            };
+            promises.push(loadExpenses(expenseParams));
+
+            promises.push(loadGroupShares({
+                year: currentMonth.getFullYear(),
+                month: currentMonth.getMonth() + 1,
+            }));
+
+            promises.push(loadMonthlyTrendData());
+
+            await Promise.all(promises);
+        } catch (error) {
+            console.error('지출 로드 실패: ', error);
+        } finally {
+            setLoading(false);
+        }
+    }, [mode, currentMonth, currentGroup?.id, loadExpenses, loadGroupShares, loadMyGroups, loadMonthlyTrendData]);
 
     useEffect(() => {
-        const fetchExpenses = async () => {
-            setLoading(true);
-            try {
-
-                // 그룹 정보 새로고침
-                if (mode === 'group') {
-                    await loadMyGroups();
-                }
-
-                const params = {
-                    mode,
-                    year: currentMonth.getFullYear(),
-                    month: currentMonth.getMonth() + 1,
-                    groupId: mode === 'group' ? currentGroup?.id : null
-                };
-                await loadExpenses(params);
-
-                // 모든 모드일 때 그룹 분담금도 로드
-                await loadGroupShares({
-                    year: currentMonth.getFullYear(),
-                    month: currentMonth.getMonth() + 1,
-                });
-
-                await loadMonthlyTrendData();
-            } catch (error) {
-                console.error('지출 로드 실패: ', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchExpenses();
-    }, [mode, currentMonth, currentGroup?.id, loadExpenses, loadGroupShares, loadMyGroups]);
+        refreshAllData();
+    }, [refreshAllData]);
 
     useEffect(() => {
         if (Object.keys(monthlyTrendData).length > 0) {
             loadMonthlyTrendData();
         }
-    }, [categoryFilter]);
+    }, [categoryFilter, loadMonthlyTrendData]);
 
     const categoryData = [
         {category: 'FOOD', label: '식비', color: '#FF6B6B'},
@@ -173,16 +176,27 @@ const ExpensesPage: React.FC = () => {
         });
     })();
 
-    const allCategoryData = categoryData.map(cat => {
+    const categoryBreakdown = categoryData.map(cat => {
         const amount = allCategoryExpenses
             .filter(expense => expense.category === cat.category)
             .reduce((sum, expense) => sum + expense.amount, 0);
         return {
-            name: cat.label,
-            value: amount,
-            color: cat.color,
+            ...cat,
+            amount,
         };
-    }).filter(item => item.value > 0);
+    }).filter(item => item.amount > 0);
+
+    const totalBreakdownAmount = categoryBreakdown.reduce((sum, cat) => sum + cat.amount, 0);
+
+    const allCategoryData = categoryBreakdown.map(cat => ({
+        name: cat.label,
+        value: cat.amount,
+        color: cat.color,
+        label: cat.label,
+        amount: cat.amount,
+        category: cat.category,
+        percentage: totalBreakdownAmount > 0 ? (cat.amount / totalBreakdownAmount) * 100 : 0,
+    })).sort((a, b) => b.amount - a.amount);
 
     // Monthly trend data (카테고리 필터 적용하되 카테고리별 색상 유지)
     const monthlyData = Array.from({length: 6}, (_, i) => {
@@ -516,6 +530,45 @@ const ExpensesPage: React.FC = () => {
     };
 
     const aiAnalysis = getAIAnalysis();
+
+    const renderActiveShape = (props) => {
+        const RADIAN = Math.PI / 180;
+        const { cx, cy, midAngle, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent, value } = props;
+        const sin = Math.sin(-RADIAN * midAngle);
+        const cos = Math.cos(-RADIAN * midAngle);
+        const sx = cx + (outerRadius + 10) * cos;
+        const sy = cy + (outerRadius + 10) * sin;
+        const mx = cx + (outerRadius + 30) * cos;
+        const my = cy + (outerRadius + 30) * sin;
+        const ex = mx + (cos >= 0 ? 1 : -1) * 22;
+        const ey = my;
+        const textAnchor = cos >= 0 ? 'start' : 'end';
+
+        return (
+            <g>
+                <text x={cx} y={cy} dy={-10} textAnchor="middle" fill="#333" style={{ fontSize: '16px', fontWeight: 'bold' }}>
+                    {payload.name}
+                </text>
+                <text x={cx} y={cy} dy={15} textAnchor="middle" fill="#666" style={{ fontSize: '14px' }}>
+                    {formatCurrency(value)}
+                </text>
+                <text x={cx} y={cy} dy={40} textAnchor="middle" fill={fill} style={{ fontSize: '18px', fontWeight: 'bold' }}>
+                    {`${(percent * 100).toFixed(1)}%`}
+                </text>
+                <Sector
+                    cx={cx}
+                    cy={cy}
+                    innerRadius={innerRadius}
+                    outerRadius={outerRadius + 5} // 활성 조각을 더 크게
+                    startAngle={startAngle}
+                    endAngle={endAngle}
+                    fill={fill}
+                    stroke="#fff"
+                    strokeWidth={2}
+                />
+            </g>
+        );
+    };
 
     if (loading) {
         return (
@@ -904,49 +957,69 @@ const ExpensesPage: React.FC = () => {
                     animate={{opacity: 1, y: 0}}
                     transition={{duration: 0.5}}
                 >
-                    <h3 className="text-lg font-semibold text-gray-900 mb-6">카테고리별 지출</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">카테고리별 지출</h3>
                     {allCategoryData.length > 0 ? (
-                        <div className="h-64">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <RechartsPieChart>
-                                    <Pie
-                                        data={allCategoryData}
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={60}
-                                        outerRadius={80}
-                                        paddingAngle={5}
-                                        dataKey="value"
-                                        label={({name, percent}) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                            <div className="h-64 md:h-80">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <RechartsPieChart>
+                                        <Pie
+                                            activeIndex={activeIndex}
+                                            activeShape={renderActiveShape}
+                                            data={allCategoryData}
+                                            cx="50%"
+                                            cy="50%"
+                                            innerRadius={70}
+                                            outerRadius={90}
+                                            paddingAngle={5}
+                                            dataKey="value"
+                                            onMouseEnter={(_, index) => setActiveIndex(index)}
+                                            onMouseLeave={() => setActiveIndex(null)}
+                                        >
+                                            {allCategoryData.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={entry.color} />
+                                            ))}
+                                        </Pie>
+                                    </RechartsPieChart>
+                                </ResponsiveContainer>
+                            </div>
+                            <div className="space-y-3 pr-4">
+                                {analytics.categoryBreakdown.map((cat, index) => (
+                                    <motion.div
+                                        key={cat.category}
+                                        className={`p-3 rounded-lg cursor-pointer transition-all duration-300 ${activeIndex === index ? 'bg-gray-100 shadow-md' : 'bg-white'}`}
+                                        onMouseEnter={() => setActiveIndex(index)}
+                                        onMouseLeave={() => setActiveIndex(null)}
+                                        whileHover={{ scale: 1.03 }}
                                     >
-                                        {allCategoryData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.color}/>
-                                        ))}
-                                    </Pie>
-                                    <Tooltip
-                                        formatter={(value) => [formatCurrency(value), '금액']}
-                                    />
-                                </RechartsPieChart>
-                            </ResponsiveContainer>
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center space-x-3">
+                                                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: cat.color }}></div>
+                                                <span className="text-sm font-medium text-gray-800">{cat.label}</span>
+                                            </div>
+                                            <div className="text-right">
+                                                <div className="text-sm font-bold text-gray-900">{formatCurrency(cat.amount)}</div>
+                                                <div className="text-xs text-gray-500">{cat.percentage.toFixed(1)}%</div>
+                                            </div>
+                                        </div>
+                                        <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
+                                            <div
+                                                className="h-1.5 rounded-full transition-all duration-500"
+                                                style={{
+                                                    backgroundColor: cat.color,
+                                                    width: `${cat.percentage}%`
+                                                }}
+                                            />
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </div>
                         </div>
                     ) : (
                         <div className="h-64 flex items-center justify-center">
                             <p className="text-gray-500">데이터가 없습니다</p>
                         </div>
                     )}
-                    <div className="mt-4 space-y-2">
-                        {analytics.categoryBreakdown.map((cat) => (
-                            <div key={cat.category} className="flex items-center justify-between">
-                                <div className="flex items-center space-x-2">
-                                    <div className="w-3 h-3 rounded-full" style={{backgroundColor: cat.color}}></div>
-                                    <span className="text-sm text-gray-700">{cat.label}</span>
-                                </div>
-                                <div className="text-sm font-medium text-gray-900">
-                                    {formatCurrency(cat.amount)}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
                 </motion.div>
 
                 <motion.div
@@ -1661,12 +1734,13 @@ const ExpensesPage: React.FC = () => {
             {/* Expense Modal */}
             {showExpenseModal && (
                 <ExpenseModal
-                    expense={selectedExpense}
-                    onClose={() => {
-                        setShowExpenseModal(false);
-                        setSelectedExpense(null);
-                    }}
-                />
+                        expense={selectedExpense}
+                        onClose={() => {
+                            setShowExpenseModal(false);
+                            setSelectedExpense(null);
+                            refreshAllData();
+                        }}
+                    />
             )}
 
             {/* Receipt Modal */}
