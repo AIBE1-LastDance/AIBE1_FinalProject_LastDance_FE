@@ -4,6 +4,7 @@ import {X, Users, Hash, Check} from 'lucide-react';
 import toast from 'react-hot-toast';
 import {useAppStore} from '../../store/appStore';
 import {useAuthStore} from '../../store/authStore';
+import {groupsAPI} from '../../api/groups';
 import {Group} from '../../types';
 
 interface CreateGroupModalProps {
@@ -13,7 +14,7 @@ interface CreateGroupModalProps {
 
 const CreateGroupModal: React.FC<CreateGroupModalProps> = ({isOpen, onClose}) => {
     const {user} = useAuthStore();
-    const {createGroup} = useAppStore();
+    const {createGroup, loadMyGroups} = useAppStore();
     const [groupName, setGroupName] = useState('');
     const [description, setDescription] = useState('');
     const [maxMembers, setMaxMembers] = useState(4);
@@ -38,22 +39,22 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({isOpen, onClose}) =>
         setIsCreating(true);
 
         try {
-            const groupData = {
-                name: groupName.trim(),
-                description: description.trim(),
-                members: [user],
-                createdBy: user.id,
+            // API를 통해 그룹 생성
+            const groupResponse = await groupsAPI.createGroup({
+                groupName: groupName.trim(),
                 maxMembers,
-                monthlyBudget: monthlyBudget || undefined,
-            };
+                groupBudget: monthlyBudget || 0,
+            });
 
-            createGroup(groupData);
+            // 그룹 목록 새로고침
+            await loadMyGroups();
 
-            toast.success(`그룹 "${groupName}"이 생성되었습니다!`);
+            toast.success(`그룹 "${groupResponse.groupName}"이 생성되었습니다!`);
             onClose();
             resetForm();
-        } catch (error) {
-            toast.error('그룹 생성 중 오류가 발생했습니다.');
+        } catch (error: any) {
+            console.error('그룹 생성 오류:', error);
+            toast.error(error.message || '그룹 생성 중 오류가 발생했습니다.');
         } finally {
             setIsCreating(false);
         }

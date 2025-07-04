@@ -1,97 +1,101 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  X, Hash, Send, MapPin,
-  Lightbulb, MessageSquare, HelpCircle, Star, Users
-} from 'lucide-react';
-import { useAppStore } from '../../store/appStore';
-import { useAuthStore } from '../../store/authStore';
-import { Post } from '../../types';
-import toast from 'react-hot-toast';
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  X,
+  Hash,
+  Send,
+  Users,
+  Lightbulb,
+  MessageSquare,
+  HelpCircle,
+  Star,
+} from "lucide-react";
+import { useAuthStore } from "../../store/authStore";
+import toast from "react-hot-toast";
+import { Post } from "../../types/community/community";
+import { createPost, updatePost } from "../../api/community/community";
 
 interface CreatePostModalProps {
   post?: Post | null;
   onClose: () => void;
 }
 
+const frontendToBackendCategory: Record<string, string> = {
+  roommate: "FIND_MATE",
+  tip: "LIFE_TIPS",
+  free: "FREE_BOARD",
+  question: "QNA",
+  policy: "POLICY",
+};
+
 const CreatePostModal: React.FC<CreatePostModalProps> = ({ post, onClose }) => {
-  const { addPost, updatePost, mode, currentGroup } = useAppStore();
   const { user } = useAuthStore();
-  const [title, setTitle] = useState(post?.title || '');
-  const [content, setContent] = useState(post?.content || '');
-  const [category, setCategory] = useState(post?.category || 'free');
+  const [title, setTitle] = useState(post?.title || "");
+  const [content, setContent] = useState(post?.content || "");
+  const [category, setCategory] = useState(post?.category || "free");
   const [tags, setTags] = useState<string[]>(post?.tags || []);
-  const [tagInput, setTagInput] = useState('');
+  const [tagInput, setTagInput] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isEditing = !!post;
 
   const categories = [
-    { id: 'roommate', name: '메이트 구하기', icon: Users },
-    { id: 'tip', name: '생활팁', icon: Lightbulb },
-    { id: 'free', name: '자유게시판', icon: MessageSquare },
-    { id: 'question', name: '질문/답변', icon: HelpCircle },
-    { id: 'policy', name: '정책', icon: Star },
+    { id: "roommate", name: "메이트 구하기", icon: Users },
+    { id: "tip", name: "생활팁", icon: Lightbulb },
+    { id: "free", name: "자유게시판", icon: MessageSquare },
+    { id: "question", name: "질문/답변", icon: HelpCircle },
+    { id: "policy", name: "정책", icon: Star },
   ];
 
   const handleAddTag = () => {
     if (tagInput.trim() && !tags.includes(tagInput.trim()) && tags.length < 5) {
       setTags([...tags, tagInput.trim()]);
-      setTagInput('');
+      setTagInput("");
     }
   };
 
   const handleRemoveTag = (tagToRemove: string) => {
-    setTags(tags.filter(tag => tag !== tagToRemove));
+    setTags(tags.filter((tag) => tag !== tagToRemove));
   };
 
   const handleSubmit = async () => {
     if (!title.trim() || !content.trim()) {
-      toast.error('제목과 내용을 모두 입력해주세요.');
+      toast.error("제목과 내용을 모두 입력해주세요.");
       return;
     }
 
     if (!user) {
-      toast.error('로그인이 필요합니다.');
+      toast.error("로그인이 필요합니다.");
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      if (isEditing && post) {
-        // 편집 모드
-        updatePost(post.id, {
-          title: title.trim(),
-          content: content.trim(),
-          category,
-          tags: tags.length > 0 ? tags : undefined,
-          updatedAt: new Date(),
-        });
-        toast.success('게시글이 수정되었습니다!');
-      } else {
-        // 새 게시글 작성
-        const newPost: Omit<Post, 'id' | 'createdAt'> = {
-          title: title.trim(),
-          content: content.trim(),
-          category,
-          tags: tags.length > 0 ? tags : undefined,
-          userId: user.id,
-          author: user,
-          groupId: mode === 'group' ? currentGroup?.id : undefined,
-          likes: 0,
-          likedBy: [],
-          bookmarkedBy: [],
-          comments: [],
-          updatedAt: new Date(),
-        };
+      const requestData = {
+        title: title.trim(),
+        content: content.trim(),
+        category: frontendToBackendCategory[category],
+        // tags는 백엔드에 보내는 데이터에 포함되지 않았으므로 제거하거나 백엔드 API에 맞게 추가해야 합니다.
+        // tags: tags,
+      };
 
-        addPost(newPost);
-        toast.success('게시글이 성공적으로 작성되었습니다!');
+      if (isEditing && post) {
+        await updatePost(post.postId, requestData);
+        toast.success("게시글이 수정되었습니다!");
+      } else {
+        await createPost(requestData);
+        toast.success("게시글이 성공적으로 작성되었습니다!");
       }
-      onClose();
-    } catch (error) {
-      toast.error(isEditing ? '게시글 수정 중 오류가 발생했습니다.' : '게시글 작성 중 오류가 발생했습니다.');
+
+      onClose(); // 게시글 작성/수정 성공 후 모달 닫기
+    } catch (error: any) {
+      // 에러 객체의 message 속성에 접근하기 위해 any 타입 명시
+      console.error("게시글 처리 중 오류 발생:", error);
+      toast.error(
+        error.message ||
+          (isEditing ? "게시글 수정 중 오류 발생" : "게시글 작성 중 오류 발생")
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -109,7 +113,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ post, onClose }) => {
           {/* 헤더 */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200">
             <h2 className="text-xl font-bold text-gray-900">
-              {isEditing ? '게시글 수정' : '새 게시글 작성'}
+              {isEditing ? "게시글 수정" : "새 게시글 작성"}
             </h2>
             <button
               onClick={onClose}
@@ -134,8 +138,8 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ post, onClose }) => {
                       onClick={() => setCategory(cat.id)}
                       className={`flex flex-col items-center p-3 rounded-xl border-2 transition-colors ${
                         category === cat.id
-                          ? 'border-purple-500 bg-purple-50 text-purple-700'
-                          : 'border-gray-200 hover:border-gray-300'
+                          ? "border-purple-500 bg-purple-50 text-purple-700"
+                          : "border-gray-200 hover:border-gray-300"
                       }`}
                     >
                       <cat.icon className="w-6 h-6 mb-1" />
@@ -181,8 +185,8 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ post, onClose }) => {
                 </div>
               </div>
 
-              {/* 태그 */}
-              <div>
+              {/* 태그 (현재 백엔드 API에 tags가 포함되지 않아 주석 처리) */}
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   태그 (최대 5개)
                 </label>
@@ -194,7 +198,10 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ post, onClose }) => {
                         type="text"
                         value={tagInput}
                         onChange={(e) => setTagInput(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
+                        onKeyDown={(e) =>
+                          e.key === "Enter" &&
+                          (e.preventDefault(), handleAddTag())
+                        }
                         placeholder="태그 입력..."
                         className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                         maxLength={20}
@@ -209,7 +216,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ post, onClose }) => {
                       추가
                     </button>
                   </div>
-                  
+
                   {tags.length > 0 && (
                     <div className="flex flex-wrap gap-2">
                       {tags.map((tag, index) => (
@@ -229,26 +236,14 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ post, onClose }) => {
                     </div>
                   )}
                 </div>
-              </div>
-
-              {/* 공개 범위 */}
-              {mode === 'group' && currentGroup && !isEditing && (
-                <div className="bg-blue-50 rounded-xl p-4">
-                  <div className="flex items-center space-x-2 text-blue-700">
-                    <MapPin className="w-4 h-4" />
-                    <span className="text-sm font-medium">
-                      {currentGroup.name} 그룹에 게시됩니다
-                    </span>
-                  </div>
-                </div>
-              )}
+              </div> */}
             </div>
           </div>
 
           {/* 푸터 */}
           <div className="flex items-center justify-between p-6 border-t border-gray-200 bg-gray-50">
             <div className="text-sm text-gray-500">
-              {isEditing ? '게시글을 수정합니다' : (mode === 'personal' ? '전체 공개' : '그룹 내 공개')}
+              {isEditing ? "게시글을 수정합니다" : "전체 공개"}
             </div>
             <div className="flex space-x-3">
               <button
@@ -267,12 +262,12 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ post, onClose }) => {
                 {isSubmitting ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>{isEditing ? '수정 중...' : '작성 중...'}</span>
+                    <span>{isEditing ? "수정 중..." : "작성 중..."}</span>
                   </>
                 ) : (
                   <>
                     <Send className="w-4 h-4" />
-                    <span>{isEditing ? '수정하기' : '게시하기'}</span>
+                    <span>{isEditing ? "수정하기" : "게시하기"}</span>
                   </>
                 )}
               </motion.button>

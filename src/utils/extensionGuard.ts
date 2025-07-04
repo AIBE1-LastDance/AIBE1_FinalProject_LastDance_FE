@@ -112,8 +112,8 @@ export const initExtensionGuard = () => {
         '[id*="translate"]',
         '[class*="chrome-extension"]',
         '[id*="chrome-extension"]',
-        'div[style*="position: fixed"][style*="z-index: 2147483647"]',
-        'div[style*="position: fixed"][style*="top: 0px"][style*="left: 0px"]'
+        'div[style*="position: fixed"][style*="z-index: 2147483647"]:not([data-react-hot-toast])',
+        'div[style*="position: fixed"][style*="top: 0px"][style*="left: 0px"]:not([data-react-hot-toast])'
       ];
 
       selectors.forEach(selector => {

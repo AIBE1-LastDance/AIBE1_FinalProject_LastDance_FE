@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {motion, AnimatePresence} from 'framer-motion';
 import {
     Plus,
@@ -16,7 +16,9 @@ import {
     TrendingDown,
     ChevronLeft,
     ChevronRight,
-    Share2
+    Share2,
+    RefreshCw,
+    Users, Image, Eye, Trash2, X
 } from 'lucide-react';
 import {
     PieChart as RechartsPieChart,
@@ -35,9 +37,30 @@ import {useAuthStore} from '../../store/authStore';
 import {format, startOfMonth, endOfMonth, isWithinInterval, subMonths} from 'date-fns';
 import {ko} from 'date-fns/locale';
 import ExpenseModal from './ExpenseModal';
+import {expenseAPI} from "../../api/expense";
+import toast from "react-hot-toast";
+
+interface GroupSummary {
+    groupId: string;
+    groupName: string;
+    myShareAmount: number;
+    totalAmount: number;
+    expenseCount: number;
+}
 
 const ExpensesPage: React.FC = () => {
-    const {expenses, mode, currentGroup, savedAnalyses, saveAnalysis} = useAppStore();
+    const {
+        expenses,
+        mode,
+        currentGroup,
+        savedAnalyses,
+        saveAnalysis,
+        loadExpenses,
+        groupShares,
+        loadGroupShares,
+        joinedGroups,
+        loadMyGroups
+    } = useAppStore();
     const {user} = useAuthStore();
     const [showExpenseModal, setShowExpenseModal] = useState(false);
     const [selectedExpense, setSelectedExpense] = useState(null);
@@ -49,42 +72,106 @@ const ExpensesPage: React.FC = () => {
     const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
     const [activeTab, setActiveTab] = useState<'expenses' | 'analyses'>('expenses');
     const [selectedAnalysis, setSelectedAnalysis] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [currentCardIndex, setCurrentCardIndex] = useState(0);
+    const [showReceiptModal, setShowReceiptModal] = useState(false);
+    const [currentReceiptUrl, setCurrentReceiptUrl] = useState<string | null>(null);
+    const [monthlyTrendData, setMonthlyTrendData] = useState<any>({});
 
-    const filteredExpenses = expenses.filter(expense => {
-        const isModeMatch = mode === 'personal' ? !expense.groupId : expense.groupId;
-        const isCurrentMonth = isWithinInterval(new Date(expense.date), {
-            start: startOfMonth(currentMonth),
-            end: endOfMonth(currentMonth)
-        });
-        const matchesSearch = expense.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            expense.memo?.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesCategory = categoryFilter === 'all' || expense.category === categoryFilter;
+    // 월별 추이 데이터 로드
+    const loadMonthlyTrendData = async () => {
+        try {
+            const params = {
+                year: currentMonth.getFullYear(),
+                month: currentMonth.getMonth() + 1,
+                months: 6,
+                category: categoryFilter === 'all' ? undefined : categoryFilter
+            };
 
-        return isModeMatch && isCurrentMonth && matchesSearch && matchesCategory;
-    });
+            let response;
+            if (mode === 'personal') {
+                response = await expenseAPI.getPersonalExpensesTrend(params);
+            } else if (mode === 'group' && currentGroup?.id) {
+                response = await expenseAPI.getGroupExpensesTrend(currentGroup.id, params);
+            }
 
-    const totalAmount = filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0);
-    const avgAmount = filteredExpenses.length > 0 ? totalAmount / filteredExpenses.length : 0;
-    const maxAmount = Math.max(...filteredExpenses.map(e => e.amount), 0);
+            if (response?.monthlyData) {
+                setMonthlyTrendData(response.monthlyData);
+            } else if (response?.data?.monthlyData) {
+                setMonthlyTrendData(response.data.monthlyData);
+            } else {
+                console.log('❌ monthlyData를 찾을 수 없음. 전체 응답:', response);
+            }
+        } catch (error) {
+            console.error('❌ 월별 추이 데이터 로드 실패: ', error);
+            setMonthlyTrendData({});
+        }
+    };
+
+    useEffect(() => {
+        const fetchExpenses = async () => {
+            setLoading(true);
+            try {
+
+                // 그룹 정보 새로고침
+                if (mode === 'group') {
+                    await loadMyGroups();
+                }
+
+                const params = {
+                    mode,
+                    year: currentMonth.getFullYear(),
+                    month: currentMonth.getMonth() + 1,
+                    groupId: mode === 'group' ? currentGroup?.id : null
+                };
+                await loadExpenses(params);
+
+                // 모든 모드일 때 그룹 분담금도 로드
+                await loadGroupShares({
+                    year: currentMonth.getFullYear(),
+                    month: currentMonth.getMonth() + 1,
+                });
+
+                await loadMonthlyTrendData();
+            } catch (error) {
+                console.error('지출 로드 실패: ', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchExpenses();
+    }, [mode, currentMonth, currentGroup?.id, loadExpenses, loadGroupShares, loadMyGroups]);
+
+    useEffect(() => {
+        if (Object.keys(monthlyTrendData).length > 0) {
+            loadMonthlyTrendData();
+        }
+    }, [categoryFilter]);
 
     const categoryData = [
-        {category: 'food', label: '식비', color: '#FF6B6B'},
-        {category: 'utilities', label: '공과금', color: '#4ECDC4'},
-        {category: 'transport', label: '교통비', color: '#45B7D1'},
-        {category: 'shopping', label: '쇼핑', color: '#96CEB4'},
-        {category: 'entertainment', label: '유흥', color: '#FFEAA7'},
-        {category: 'other', label: '기타', color: '#DDA0DD'},
+        {category: 'FOOD', label: '식비', color: '#FF6B6B'},
+        {category: 'UTILITIES', label: '공과금', color: '#4ECDC4'},
+        {category: 'TRANSPORT', label: '교통비', color: '#45B7D1'},
+        {category: 'SHOPPING', label: '쇼핑', color: '#96CEB4'},
+        {category: 'ENTERTAINMENT', label: '유흥', color: '#FFEAA7'},
+        {category: 'OTHER', label: '기타', color: '#DDA0DD'},
     ];
 
     // Category breakdown data (전체 데이터, 필터와 무관)
-    const allCategoryExpenses = expenses.filter(expense => {
-        const isModeMatch = mode === 'personal' ? !expense.groupId : expense.groupId;
-        const isCurrentMonth = isWithinInterval(new Date(expense.date), {
-            start: startOfMonth(currentMonth),
-            end: endOfMonth(currentMonth)
+    const allCategoryExpenses = (() => {
+        // monthlyTrendData에서 현재 달 데이터 가져오기
+        const currentMonthKey = format(currentMonth, 'yyyy-MM');
+        const currentMonthData = monthlyTrendData[currentMonthKey] || [];
+
+        return currentMonthData.filter(expense => {
+            if (mode === 'personal') {
+                return expense.expenseType === 'PERSONAL' || expense.expenseType === 'SHARE';
+            } else {
+                return expense.expenseType === 'GROUP';
+            }
         });
-        return isModeMatch && isCurrentMonth;
-    });
+    })();
 
     const allCategoryData = categoryData.map(cat => {
         const amount = allCategoryExpenses
@@ -100,18 +187,22 @@ const ExpensesPage: React.FC = () => {
     // Monthly trend data (카테고리 필터 적용하되 카테고리별 색상 유지)
     const monthlyData = Array.from({length: 6}, (_, i) => {
         const monthDate = subMonths(currentMonth, 5 - i);
-        const monthStart = startOfMonth(monthDate);
-        const monthEnd = endOfMonth(monthDate);
-        const monthExpenses = expenses.filter(expense => {
-            const expenseDate = new Date(expense.date);
-            const isModeMatch = mode === 'personal' ? !expense.groupId : expense.groupId;
-            return expenseDate >= monthStart && expenseDate <= monthEnd && isModeMatch;
+        const monthKey = format(monthDate, 'yyyy-MM');
+        const monthLabel = format(monthDate, 'M월');
+
+        const apiMonthData = monthlyTrendData[monthKey] || [];
+
+        const monthExpenses = apiMonthData.filter(expense => {
+            if (mode === 'personal') {
+                return expense.expenseType === 'PERSONAL' || expense.expenseType === 'SHARE';
+            } else {
+                return expense.expenseType === 'GROUP';
+            }
         });
 
-        const monthData = {month: format(monthDate, 'M월')};
+        const monthData: { [key: string]: any } = { month: monthLabel };
 
         if (categoryFilter === 'all') {
-            // 전체 카테고리별로 분리
             categoryData.forEach(cat => {
                 const categoryAmount = monthExpenses
                     .filter(expense => expense.category === cat.category)
@@ -119,7 +210,6 @@ const ExpensesPage: React.FC = () => {
                 monthData[cat.category] = categoryAmount;
             });
         } else {
-            // 선택된 카테고리만
             const categoryAmount = monthExpenses
                 .filter(expense => expense.category === categoryFilter)
                 .reduce((sum, expense) => sum + expense.amount, 0);
@@ -141,6 +231,89 @@ const ExpensesPage: React.FC = () => {
         ...categoryData.map(cat => ({value: cat.category, label: cat.label}))
     ];
 
+    const handleExpenseClick = (expense) => {
+        setSelectedExpense(expense);
+        setShowExpenseModal(true);
+
+        // 그룹 분담금인 경우 수정 불가 - 조회만 가능
+        if (expense.isGroupShare) {
+            toast('그룹 지출은 그룹 페이지에서만 수정할 수 있습니다.', {
+                duration: 3000
+            });
+            return;
+        }
+    };
+
+    // 영수증 조회 함수
+    const handleReceiptClick = async (expense: any, e: React.MouseEvent) => {
+        e.stopPropagation();
+
+        try {
+            const targetId = expense.originalExpenseId || expense.id;
+            const response = await expenseAPI.getReceiptUrl(targetId);
+            if (response.data) {
+                setCurrentReceiptUrl(response.data);
+                setShowReceiptModal(true);
+            } else {
+                toast.error('영수증이 없습니다.')
+            }
+        } catch (error) {
+            console.error('영수증 조회 실패: ', error);
+            toast.error('영수증을 불러 올 수 없습니다.');
+        }
+    }
+
+    const combinedExpenses = mode === 'personal'
+        ? (() => {
+            // groupShares는 이미 내 분담금만 포함하므로 그대로 사용
+            return [...expenses, ...groupShares]
+                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        })()
+        : expenses;
+
+    const filteredExpenses = combinedExpenses.filter(expense => {
+        const isModeMatch = mode === 'personal'
+            ? (!expense.groupId || expense.isGroupShare)
+            : expense.groupId;
+
+        const isCurrentMonth = isWithinInterval(new Date(expense.date), {
+            start: startOfMonth(currentMonth),
+            end: endOfMonth(currentMonth)
+        });
+        const matchesSearch = expense.title.toLowerCase().includes(searchTerm.toLowerCase()) || expense.memo?.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesCategory = categoryFilter === 'all' || expense.category === categoryFilter
+
+        return isModeMatch && isCurrentMonth && matchesSearch && matchesCategory;
+    });
+
+    const totalAmount = filteredExpenses.reduce((sum, expense) =>
+        sum + (expense.myShareAmount || expense.amount), 0
+    );
+    const avgAmount = filteredExpenses.length > 0 ? totalAmount / filteredExpenses.length : 0;
+    const maxAmount = Math.max(...filteredExpenses.map(e => e.myShareAmount || e.amount), 0);
+
+    // 그룹별 분담금 요약 계산
+    const groupSummary: GroupSummary[] = mode === 'personal' ? (() => {
+        const groups: { [key: string]: GroupSummary } = {};
+        groupShares.forEach((share: any) => {
+            if (!groups[share.groupId]) {
+                groups[share.groupId] = {
+                    groupId: share.groupId,
+                    groupName: share.groupName,
+                    myShareAmount: 0,
+                    totalAmount: 0,
+                    expenseCount: 0,
+                };
+            }
+            groups[share.groupId].myShareAmount += share.myShareAmount;
+            groups[share.groupId].totalAmount += share.amount;
+            groups[share.groupId].expenseCount += 1;
+        });
+        return Object.values(groups);
+    })() : [];
+
+    const totalGroupShares = groupSummary.reduce((sum, group) => sum + group.myShareAmount, 0);
+
     // Analytics data (전체 카테고리 데이터 사용)
     const analytics = {
         totalAmount,
@@ -148,8 +321,12 @@ const ExpensesPage: React.FC = () => {
         maxAmount,
         totalCount: filteredExpenses.length,
         categoryBreakdown: categoryData.map(cat => {
-            const catExpenses = allCategoryExpenses.filter(e => e.category === cat.category);
-            const amount = catExpenses.reduce((sum, e) => sum + e.amount, 0);
+            const catExpenses = mode === 'personal'
+                ? filteredExpenses.filter(e => e.category === cat.category)
+                : allCategoryExpenses.filter(e => e.category === cat.category);
+            const amount = catExpenses.reduce((sum, e) =>
+                sum + (e.myShareAmount || e.amount), 0
+            );
             const totalAllAmount = allCategoryExpenses.reduce((sum, e) => sum + e.amount, 0);
             return {
                 category: cat.category,
@@ -161,49 +338,6 @@ const ExpensesPage: React.FC = () => {
             };
         }).filter(item => item.amount > 0).sort((a, b) => b.amount - a.amount),
     };
-
-    const handleExpenseClick = (expense) => {
-        setSelectedExpense(expense);
-        setShowExpenseModal(true);
-    };
-
-    // 그룹 모드에서 개인 분담금 계산
-    const calculatePersonalShare = () => {
-        if (mode !== 'group' || !currentGroup || !user) return null;
-
-        const groupExpenses = allCategoryExpenses.filter(expense => expense.groupId);
-        const personalShares = [];
-
-        groupExpenses.forEach(expense => {
-            let personalAmount = 0;
-
-            if (expense.splitType === 'equal') {
-                // 균등 분할
-                personalAmount = expense.amount / currentGroup.members.length;
-            } else if (expense.splitType === 'specific' && expense.splitData) {
-                // 특정 분할
-                personalAmount = expense.splitData[user.id] || 0;
-            } else if (expense.splitType === 'custom' && expense.splitData) {
-                // 사용자 정의 분할
-                personalAmount = expense.splitData[user.id] || 0;
-            } else {
-                // 기본적으로 균등 분할
-                personalAmount = expense.amount / currentGroup.members.length;
-            }
-
-            if (personalAmount > 0) {
-                personalShares.push({
-                    ...expense,
-                    personalAmount,
-                    percentage: (personalAmount / expense.amount) * 100
-                });
-            }
-        });
-
-        return personalShares;
-    };
-
-    const personalShares = calculatePersonalShare();
 
     // AI 분석 생성 함수
     const generateAIAnalysis = () => {
@@ -235,20 +369,43 @@ const ExpensesPage: React.FC = () => {
     };
 
     // 이전/다음 달 이동
-    const handlePreviousMonth = () => {
-        setCurrentMonth(prev => subMonths(prev, 1));
+    const handlePreviousMonth = async () => {
+        setLoading(true);
+        const newMonth = subMonths(currentMonth, 1);
+        setCurrentMonth(newMonth);
+
+        try {
+            const params = {
+                mode,
+                year: newMonth.getFullYear(),
+                month: newMonth.getMonth() + 1,
+                groupId: mode === 'group' ? currentGroup?.id : undefined
+            };
+            await loadExpenses(params);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const handleNextMonth = () => {
-        setCurrentMonth(prev => {
-            const nextMonth = new Date(prev.getFullYear(), prev.getMonth() + 1, 1);
-            const today = new Date();
-            // 미래 월로는 이동하지 않음
-            if (nextMonth <= today) {
-                return nextMonth;
+    const handleNextMonth = async () => {
+        const nextMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1);
+        const today = new Date();
+        if (nextMonth <= today) {
+            setLoading(true);
+            setCurrentMonth(nextMonth);
+
+            try {
+                const params = {
+                    mode,
+                    year: nextMonth.getFullYear(),
+                    month: nextMonth.getMonth() + 1,
+                    groupId: mode === 'group' ? currentGroup?.id : undefined
+                };
+                await loadExpenses(params);
+            } finally {
+                setLoading(false);
             }
-            return prev;
-        });
+        }
     };
 
     // AI 분석 데이터 생성 (현재 또는 선택된 분석)
@@ -360,66 +517,91 @@ const ExpensesPage: React.FC = () => {
 
     const aiAnalysis = getAIAnalysis();
 
+    if (loading) {
+        return (
+            <div className="space-y-8">
+                <div className="flex items-center justify-center py-12">
+                    <div className="flex items-center space-x-3">
+                        <RefreshCw className="w-6 h-6 animate-spin text-primary-600"/>
+                        <span className="text-gray-600">지출 내역을 불러오는 중...</span>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-8">
             {/* Header */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0">
+            <div className="flex flex-col xl:flex-row xl:items-center justify-between space-y-4 xl:space-y-0">
                 <div>
-                    <div className="flex items-center space-x-4">
-                        <h1 className="text-3xl font-bold text-gray-900">
-                            {mode === 'personal' ? '내 가계부' : '공동 가계부'}
+                    <div className="flex flex-col lg:flex-row lg:items-center space-y-2 lg:space-y-0 lg:space-x-4">
+                        <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">
+                            {mode === 'personal' ? '내 가계부' : (
+                                <div className="flex items-center space-x-2 lg:space-x-3 flex-wrap">
+                                    <span className="whitespace-nowrap">공동 가계부</span>
+                                    <span className="text-lg lg:text-xl text-primary-600">•</span>
+                                    <span
+                                        className="text-lg lg:text-2xl text-primary-600 font-semibold whitespace-nowrap">
+                            {currentGroup?.name || '그룹 선택 필요'}
+                        </span>
+                                </div>
+                            )}
                         </h1>
 
-                        <motion.button
-                            whileHover={{scale: 1.1}}
-                            whileTap={{scale: 0.9}}
-                            onClick={handlePreviousMonth}
-                            className="p-2 rounded-lg hover:bg-gray-100"
-                        >
-                            <ChevronLeft className="w-5 h-5"/>
-                        </motion.button>
+                        <div className="flex items-center space-x-2">
+                            <motion.button
+                                whileHover={{scale: 1.1}}
+                                whileTap={{scale: 0.9}}
+                                onClick={handlePreviousMonth}
+                                className="p-2 rounded-lg hover:bg-gray-100"
+                            >
+                                <ChevronLeft className="w-5 h-5"/>
+                            </motion.button>
 
-                        <p className="text-gray-600">
-                            {format(currentMonth, 'yyyy년 M월', {locale: ko})} 지출 현황
-                        </p>
+                            <p className="text-gray-600 whitespace-nowrap">
+                                {format(currentMonth, 'yyyy년 M월', {locale: ko})} 지출 현황
+                            </p>
 
-                        <motion.button
-                            whileHover={{scale: 1.1}}
-                            whileTap={{scale: 0.9}}
-                            onClick={handleNextMonth}
-                            className="p-2 rounded-lg hover:bg-gray-100"
-                            disabled={new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1) > new Date()}
-                        >
-                            <ChevronRight className="w-5 h-5"/>
-                        </motion.button>
+                            <motion.button
+                                whileHover={{scale: 1.1}}
+                                whileTap={{scale: 0.9}}
+                                onClick={handleNextMonth}
+                                className="p-2 rounded-lg hover:bg-gray-100"
+                                disabled={new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1) > new Date()}
+                            >
+                                <ChevronRight className="w-5 h-5"/>
+                            </motion.button>
+                        </div>
                     </div>
                 </div>
 
-                <div className="flex items-center space-x-4">
+                <div
+                    className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
                     {/* Search */}
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4"/>
                         <input
                             type="text"
                             placeholder="지출 검색..."
-                            className="pl-10 pr-4 py-3 border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white hover:bg-gray-50 transition-colors font-medium text-gray-700 placeholder-gray-400 shadow-sm"
+                            className="pl-10 pr-4 py-3 border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white hover:bg-gray-50 transition-colors font-medium text-gray-700 placeholder-gray-400 shadow-sm w-full sm:w-auto"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
 
-                    {/* Category Filter - Custom Dropdown */}
+                    {/* Category Filter */}
                     <div className="relative">
                         <motion.button
-                            className="flex items-center space-x-3 pl-3 pr-4 py-3 border border-gray-200 rounded-2xl text-sm bg-white hover:bg-gray-50 transition-colors font-medium text-gray-700 cursor-pointer shadow-sm min-w-[140px]"
+                            className="flex items-center space-x-3 pl-3 pr-4 py-3 border border-gray-200 rounded-2xl text-sm bg-white hover:bg-gray-50 transition-colors font-medium text-gray-700 cursor-pointer shadow-sm w-full sm:w-auto whitespace-nowrap"
                             whileHover={{scale: 1.02}}
                             whileTap={{scale: 0.98}}
                             onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
                         >
                             <Filter className="w-4 h-4 text-gray-400"/>
                             <span className="flex-1 text-left">
-                                {categories.find(cat => cat.value === categoryFilter)?.label}
-                            </span>
+                    {categories.find(cat => cat.value === categoryFilter)?.label}
+                </span>
                             <motion.svg
                                 className="w-4 h-4 text-gray-400"
                                 fill="none"
@@ -432,17 +614,14 @@ const ExpensesPage: React.FC = () => {
                             </motion.svg>
                         </motion.button>
 
-                        {/* Custom Dropdown Menu */}
+                        {/* Dropdown은 그대로 유지 */}
                         <AnimatePresence>
                             {showCategoryDropdown && (
                                 <>
-                                    {/* Backdrop */}
                                     <div
                                         className="fixed inset-0 z-10"
                                         onClick={() => setShowCategoryDropdown(false)}
                                     />
-
-                                    {/* Dropdown */}
                                     <motion.div
                                         initial={{opacity: 0, y: -10, scale: 0.95}}
                                         animate={{opacity: 1, y: 0, scale: 1}}
@@ -464,11 +643,11 @@ const ExpensesPage: React.FC = () => {
                                             >
                                                 <div className={`w-2 h-2 rounded-full ${
                                                     cat.value === 'all' ? 'bg-gray-400' :
-                                                        cat.value === 'food' ? 'bg-red-400' :
-                                                            cat.value === 'utilities' ? 'bg-teal-400' :
-                                                                cat.value === 'transport' ? 'bg-blue-400' :
-                                                                    cat.value === 'shopping' ? 'bg-green-400' :
-                                                                        cat.value === 'entertainment' ? 'bg-yellow-400' :
+                                                        cat.value === 'FOOD' ? 'bg-red-400' :
+                                                            cat.value === 'UTILITIES' ? 'bg-teal-400' :
+                                                                cat.value === 'TRANSPORT' ? 'bg-blue-400' :
+                                                                    cat.value === 'SHOPPING' ? 'bg-green-400' :
+                                                                        cat.value === 'ENTERTAINMENT' ? 'bg-yellow-400' :
                                                                             'bg-purple-400'
                                                 }`}/>
                                                 <span>{cat.label}</span>
@@ -494,60 +673,56 @@ const ExpensesPage: React.FC = () => {
                         </AnimatePresence>
                     </div>
 
-                    {/* AI Analysis Button - 개인 모드에서만 표시 */}
-                    {mode === 'personal' && (
+                    <div className="flex space-x-4">
+                        {/* AI Analysis Button */}
+                        {mode === 'personal' && (
+                            <motion.button
+                                className="flex items-center space-x-2 px-6 py-3 bg-primary-500 text-white rounded-2xl font-medium hover:bg-primary-700 transition-colors shadow-md hover:shadow-lg whitespace-nowrap"
+                                whileHover={{scale: 1.05}}
+                                whileTap={{scale: 0.95}}
+                                onClick={generateAIAnalysis}
+                                disabled={analysisLoading}
+                            >
+                                {analysisLoading ? (
+                                    <div
+                                        className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"/>
+                                ) : (
+                                    <Bot className="w-5 h-5"/>
+                                )}
+                                <span>{analysisLoading ? '분석 중...' : 'AI 분석'}</span>
+                            </motion.button>
+                        )}
+
+                        {/* Add Expense Button */}
                         <motion.button
-                            className="flex items-center space-x-2 px-6 py-3 bg-primary-500 text-white rounded-2xl font-medium hover:bg-primary-700 transition-colors shadow-md hover:shadow-lg"
+                            className="flex items-center space-x-2 px-6 py-3 bg-primary-600 text-white rounded-2xl font-medium hover:bg-primary-700 transition-colors shadow-md hover:shadow-lg whitespace-nowrap"
                             whileHover={{scale: 1.05}}
                             whileTap={{scale: 0.95}}
-                            onClick={generateAIAnalysis}
-                            disabled={analysisLoading}
+                            onClick={() => {
+                                setSelectedExpense(null);
+                                setShowExpenseModal(true);
+                            }}
                         >
-                            {analysisLoading ? (
-                                <div
-                                    className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"/>
-                            ) : (
-                                <Bot className="w-5 h-5"/>
-                            )}
-                            <span>{analysisLoading ? '분석 중...' : 'AI 분석'}</span>
+                            <Plus className="w-5 h-5"/>
+                            <span>지출 추가</span>
                         </motion.button>
-                    )}
-
-                    {/* Add Expense Button */}
-                    <motion.button
-                        className="flex items-center space-x-2 px-6 py-3 bg-primary-600 text-white rounded-2xl font-medium hover:bg-primary-700 transition-colors shadow-md hover:shadow-lg"
-                        whileHover={{scale: 1.05}}
-                        whileTap={{scale: 0.95}}
-                        onClick={() => {
-                            setSelectedExpense(null);
-                            setShowExpenseModal(true);
-                        }}
-                    >
-                        <Plus className="w-5 h-5"/>
-                        <span>지출 추가</span>
-                    </motion.button>
+                    </div>
                 </div>
             </div>
 
-            {/* Analytics Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <motion.div
-                    className="bg-white rounded-2xl shadow-sm border border-gray-200 p-3"
-                    whileHover={{y: -5, transition: {duration: 0.2}}}
-                >
-                    <div className="flex items-center justify-between mb-2">
-                        <div
-                            className="w-8 h-8 rounded-lg bg-primary-100 flex items-center justify-center text-primary-600">
-                            <Receipt className="w-4 h-4"/>
-                        </div>
-                        <div className="text-lg font-bold text-gray-900">{analytics.totalCount}건</div>
-                    </div>
-                    <div className="text-xs font-medium text-gray-700 mb-1">총 지출</div>
-                    <div className="flex items-center justify-between">
-                        <div className="text-lg font-bold text-gray-900">{formatCurrency(analytics.totalAmount)}</div>
-
-                        {/* 한 달 예산 표시 - 총 지출과 같은 라인에 */}
-                        {(() => {
+            {/* Analytics Cards - 버튼식 슬라이더 */}
+            {(() => {
+                // 카드 데이터 준비 (동일)
+                const analyticsCards = [
+                    {
+                        id: 'total',
+                        icon: Receipt,
+                        bgColor: 'bg-primary-100',
+                        textColor: 'text-primary-600',
+                        badgeText: `${analytics.totalCount}건`,
+                        title: '총 지출',
+                        value: formatCurrency(analytics.totalAmount),
+                        extra: (() => {
                             const budget = mode === 'personal' ? user?.monthlyBudget : currentGroup?.monthlyBudget;
                             if (budget) {
                                 const isOverBudget = analytics.totalAmount > budget;
@@ -562,63 +737,163 @@ const ExpensesPage: React.FC = () => {
                                 );
                             }
                             return null;
-                        })()}
-                    </div>
-                </motion.div>
+                        })()
+                    },
+                    {
+                        id: 'average',
+                        icon: BarChart3,
+                        bgColor: 'bg-primary-100',
+                        textColor: 'text-primary-600',
+                        badgeIcon: TrendingUp,
+                        badgeIconColor: 'text-green-500',
+                        title: '평균 지출',
+                        value: formatCurrency(analytics.avgAmount)
+                    },
+                    {
+                        id: 'max',
+                        icon: TrendingUp,
+                        bgColor: 'bg-primary-100',
+                        textColor: 'text-primary-600',
+                        badgeText: '최고',
+                        badgeTextColor: 'text-green-500',
+                        title: '최대 지출',
+                        value: formatCurrency(analytics.maxAmount)
+                    },
+                    {
+                        id: 'category',
+                        icon: PieChart,
+                        bgColor: 'bg-primary-100',
+                        textColor: 'text-primary-600',
+                        badgeText: analytics.categoryBreakdown.length > 0 ? `${analytics.categoryBreakdown[0].percentage.toFixed(1)}%` : '0%',
+                        badgeTextColor: analytics.categoryBreakdown[0]?.color || 'text-gray-500',
+                        title: '주요 카테고리',
+                        value: analytics.categoryBreakdown.length > 0 ? analytics.categoryBreakdown[0].label : '데이터 없음'
+                    }
+                ];
 
-                <motion.div
-                    className="bg-white rounded-2xl shadow-sm border border-gray-200 p-3"
-                    whileHover={{y: -5, transition: {duration: 0.2}}}
-                >
-                    <div className="flex items-center justify-between mb-2">
-                        <div
-                            className="w-8 h-8 rounded-lg bg-primary-100 flex items-center justify-center text-primary-600">
-                            <BarChart3 className="w-4 h-4"/>
-                        </div>
-                        <TrendingUp className="w-3 h-3 text-green-500"/>
-                    </div>
-                    <div className="text-xs font-medium text-gray-700 mb-1">평균 지출</div>
-                    <div className="text-lg font-bold text-gray-900">{formatCurrency(analytics.avgAmount)}</div>
-                </motion.div>
+                // 그룹 분담금 카드 추가 (개인 모드)
+                if (mode === 'personal' && totalGroupShares > 0) {
+                    analyticsCards.push({
+                        id: 'groupShare',
+                        icon: Users,
+                        bgColor: 'bg-blue-100',
+                        textColor: 'text-blue-600',
+                        badgeText: `${groupSummary.length}개 그룹`,
+                        badgeTextColor: 'text-blue-500',
+                        title: '그룹 분담금',
+                        value: formatCurrency(totalGroupShares)
+                    });
+                }
 
-                <motion.div
-                    className="bg-white rounded-2xl shadow-sm border border-gray-200 p-3"
-                    whileHover={{y: -5, transition: {duration: 0.2}}}
-                >
-                    <div className="flex items-center justify-between mb-2">
-                        <div
-                            className="w-8 h-8 rounded-lg bg-primary-100 flex items-center justify-center text-primary-600">
-                            <TrendingUp className="w-4 h-4"/>
-                        </div>
-                        <div className="text-green-500 text-xs font-medium">최고</div>
-                    </div>
-                    <div className="text-xs font-medium text-gray-700 mb-1">최대 지출</div>
-                    <div className="text-lg font-bold text-gray-900">{formatCurrency(analytics.maxAmount)}</div>
-                </motion.div>
+                const cardsPerPage = 4;
+                const totalPages = Math.ceil(analyticsCards.length / cardsPerPage);
+                const canGoPrev = currentCardIndex > 0;
+                const canGoNext = currentCardIndex < totalPages - 1;
 
-                <motion.div
-                    className="bg-white rounded-2xl shadow-sm border border-gray-200 p-3"
-                    whileHover={{y: -5, transition: {duration: 0.2}}}
-                >
-                    <div className="flex items-center justify-between mb-2">
-                        <div
-                            className="w-8 h-8 rounded-lg bg-primary-100 flex items-center justify-center text-primary-600">
-                            <PieChart className="w-4 h-4"/>
+                const handlePrev = () => {
+                    if (canGoPrev) {
+                        setCurrentCardIndex(currentCardIndex - 1);
+                    }
+                };
+
+                const handleNext = () => {
+                    if (canGoNext) {
+                        setCurrentCardIndex(currentCardIndex + 1);
+                    }
+                };
+
+                const visibleCards = analyticsCards.slice(
+                    currentCardIndex * cardsPerPage,
+                    (currentCardIndex + 1) * cardsPerPage
+                );
+
+                return (
+                    <div className="relative">
+                        {/* 좌측 버튼 */}
+                        {canGoPrev && (
+                            <motion.button
+                                className="absolute -left-4 top-1/2 -translate-y-1/2 z-20 w-8 h-8 bg-white rounded-full shadow-md border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors"
+                                whileHover={{scale: 1.1}}
+                                whileTap={{scale: 0.9}}
+                                onClick={handlePrev}
+                            >
+                                <ChevronLeft className="w-4 h-4 text-gray-600"/>
+                            </motion.button>
+                        )}
+
+                        {/* 우측 버튼 */}
+                        {canGoNext && (
+                            <motion.button
+                                className="absolute -right-4 top-1/2 -translate-y-1/2 z-20 w-8 h-8 bg-white rounded-full shadow-md border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors"
+                                whileHover={{scale: 1.1}}
+                                whileTap={{scale: 0.9}}
+                                onClick={handleNext}
+                            >
+                                <ChevronRight className="w-4 h-4 text-gray-600"/>
+                            </motion.button>
+                        )}
+
+                        {/* 카드 컨테이너 */}
+                        <div>
+                            <motion.div
+                                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+                                key={currentCardIndex}
+                                initial={{opacity: 0, x: 50}}
+                                animate={{opacity: 1, x: 0}}
+                                transition={{duration: 0.3}}
+                            >
+                                {visibleCards.map((card, index) => (
+                                    <motion.div
+                                        key={card.id}
+                                        className="bg-white rounded-2xl shadow-sm border border-gray-200 p-3"
+                                        initial={{opacity: 0, y: 20}}
+                                        animate={{opacity: 1, y: 0}}
+                                        transition={{delay: index * 0.1, duration: 0.3}}
+                                        whileHover={{y: -5, transition: {duration: 0.2}}}
+                                    >
+                                        <div className="flex items-center justify-between mb-2">
+                                            <div
+                                                className={`w-8 h-8 rounded-lg ${card.bgColor} flex items-center justify-center ${card.textColor}`}>
+                                                <card.icon className="w-4 h-4"/>
+                                            </div>
+                                            {card.badgeIcon ? (
+                                                <card.badgeIcon className={`w-3 h-3 ${card.badgeIconColor}`}/>
+                                            ) : card.badgeText ? (
+                                                <div
+                                                    className={`text-xs font-medium ${card.badgeTextColor || 'text-gray-900'}`}
+                                                    style={card.badgeTextColor?.startsWith('#') ? {color: card.badgeTextColor} : {}}
+                                                >
+                                                    {card.badgeText}
+                                                </div>
+                                            ) : null}
+                                        </div>
+                                        <div className="text-xs font-medium text-gray-700 mb-1">{card.title}</div>
+                                        <div className="flex items-center justify-between">
+                                            <div className="text-lg font-bold text-gray-900">{card.value}</div>
+                                            {card.extra}
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </motion.div>
                         </div>
-                        <div className="text-xs font-medium" style={{color: analytics.categoryBreakdown[0]?.color}}>
-                            {analytics.categoryBreakdown[0]?.percentage.toFixed(1)}%
-                        </div>
+
+                        {/* 페이지 인디케이터 (5개 이상일 때만) */}
+                        {totalPages > 1 && (
+                            <div className="flex justify-center space-x-2 mt-4">
+                                {Array.from({length: totalPages}).map((_, index) => (
+                                    <button
+                                        key={index}
+                                        className={`w-2 h-2 rounded-full transition-colors ${
+                                            index === currentCardIndex ? 'bg-primary-600' : 'bg-gray-300'
+                                        }`}
+                                        onClick={() => setCurrentCardIndex(index)}
+                                    />
+                                ))}
+                            </div>
+                        )}
                     </div>
-                    <div className="text-xs font-medium text-gray-700 mb-1">주요 카테고리</div>
-                    {analytics.categoryBreakdown.length > 0 ? (
-                        <div className="text-lg font-bold text-gray-900">
-                            {analytics.categoryBreakdown[0].label}
-                        </div>
-                    ) : (
-                        <div className="text-lg font-bold text-gray-900">데이터 없음</div>
-                    )}
-                </motion.div>
-            </div>
+                );
+            })()}
 
             {/* Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -696,7 +971,13 @@ const ExpensesPage: React.FC = () => {
                                 <YAxis
                                     axisLine={false}
                                     tickLine={false}
-                                    tickFormatter={(value) => `${value / 10000}만`}
+                                    tickFormatter={(value) => {
+                                        if (value >= 10000) {
+                                            return `${Math.round(value / 10000)}만`;
+                                        } else {
+                                            return `${Math.round(value / 1000)}천`;
+                                        }
+                                    }}
                                 />
                                 <Tooltip
                                     content={({active, payload, label}) => {
@@ -710,7 +991,10 @@ const ExpensesPage: React.FC = () => {
                                                         return (
                                                             <p key={index} className="text-sm"
                                                                style={{color: entry.color}}>
-                                                                {categoryInfo?.label || '기타'}: {formatCurrency(entry.value)}
+                                                                {categoryInfo?.label || '기타'}: {new Intl.NumberFormat('ko-KR', {
+                                                                style: 'currency',
+                                                                currency: 'KRW'
+                                                            }).format(entry.value)}
                                                             </p>
                                                         );
                                                     })}
@@ -755,8 +1039,86 @@ const ExpensesPage: React.FC = () => {
                 </motion.div>
             </div>
 
+            {mode === 'personal' && groupSummary.length > 0 && (
+                <motion.div
+                    className="bg-white rounded-2xl shadow-sm border border-gray-200"
+                    initial={{opacity: 0, y: 20}}
+                    animate={{opacity: 1, y: 0}}
+                    transition={{duration: 0.5, delay: 0.3}}
+                >
+                    <div className="p-6 border-b border-gray-200">
+                        <h3 className="text-lg font-semibold text-gray-900">그룹별 분담금 현황</h3>
+                        <p className="text-sm text-gray-600 mt-1">
+                            이번 달 참여 중인 그룹에서의 분담금입니다
+                        </p>
+                    </div>
+
+                    <div className="p-6">
+                        <div className="mb-6">
+                            <div className="text-2xl font-bold text-blue-600">
+                                총 분담금: {formatCurrency(totalGroupShares)}
+                            </div>
+                            <div className="text-sm text-gray-500 mt-1">
+                                {groupSummary.length}개
+                                그룹에서 {groupSummary.reduce((sum, group) => sum + group.expenseCount, 0)}건의 지출
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            {groupSummary.map((group) => (
+                                <div key={group.groupId}
+                                     className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                                    <div className="flex items-center space-x-3">
+                                        <div
+                                            className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                                            <Users className="w-5 h-5 text-blue-600"/>
+                                        </div>
+                                        <div>
+                                            <h4 className="font-medium text-gray-900">{group.groupName}</h4>
+                                            <div className="flex items-center space-x-2 text-sm text-gray-500">
+                                                <span>{group.expenseCount}건의 지출</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="text-lg font-bold text-blue-600">
+                                            {formatCurrency(group.myShareAmount)}
+                                        </div>
+                                        <div className="text-xs text-gray-500">
+                                            전체: {formatCurrency(group.totalAmount)}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="mt-6 pt-6 border-t border-gray-200">
+                            <h4 className="text-sm font-medium text-gray-700 mb-3">그룹별 분담 비율</h4>
+                            <div className="space-y-2">
+                                {groupSummary.map((group) => (
+                                    <div key={group.groupId} className="flex items-center justify-between">
+                                        <span className="text-sm text-gray-600">{group.groupName}</span>
+                                        <div className="flex items-center space-x-2">
+                                            <div className="w-20 bg-gray-200 rounded-full h-2">
+                                                <div
+                                                    className="bg-blue-500 h-2 rounded-full"
+                                                    style={{width: `${(group.myShareAmount / totalGroupShares) * 100}%`}}
+                                                />
+                                            </div>
+                                            <span className="text-sm text-gray-500">
+                  {((group.myShareAmount / totalGroupShares) * 100).toFixed(1)}%
+                </span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </motion.div>
+            )}
+
             {/* Personal Share in Group Mode */}
-            {mode === 'group' && personalShares && personalShares.length > 0 && (
+            {mode === 'group' && groupShares && groupShares.some(share => share.groupId === currentGroup?.id) && (
                 <motion.div
                     className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden"
                     initial={{opacity: 0, y: 20}}
@@ -771,59 +1133,68 @@ const ExpensesPage: React.FC = () => {
                     </div>
 
                     <div className="p-6">
-                        <div className="mb-6">
-                            <div className="text-2xl font-bold text-primary-600">
-                                총
-                                분담금: {formatCurrency(personalShares.reduce((sum, share) => sum + share.personalAmount, 0))}
-                            </div>
-                            <div className="text-sm text-gray-500 mt-1">
-                                {personalShares.length}건의 그룹 지출
-                            </div>
-                        </div>
+                        {(() => {
+                            const currentGroupShares = groupShares.filter(share => share.groupId === currentGroup?.id);
+                            const totalShare = currentGroupShares.reduce((sum, share) => sum + share.myShareAmount, 0);
 
-                        <div className="space-y-4">
-                            {personalShares.map((share) => (
-                                <div key={share.id}
-                                     className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                                    <div className="flex items-center space-x-3">
-                                        <div
-                                            className="w-10 h-10 rounded-lg flex items-center justify-center"
-                                            style={{
-                                                backgroundColor: categoryData.find(cat => cat.category === share.category)?.color + '20'
-                                            }}
-                                        >
-                                            <Receipt
-                                                className="w-5 h-5"
-                                                style={{
-                                                    color: categoryData.find(cat => cat.category === share.category)?.color || '#df6d14'
-                                                }}
-                                            />
+                            return (
+                                <>
+                                    <div className="mb-6">
+                                        <div className="text-2xl font-bold text-primary-600">
+                                            총 분담금: {formatCurrency(totalShare)}
                                         </div>
-                                        <div>
-                                            <h4 className="font-medium text-gray-900">{share.title}</h4>
-                                            <div className="flex items-center space-x-2 text-sm text-gray-500">
-                                                <span>{categoryData.find(cat => cat.category === share.category)?.label}</span>
-                                                <span>•</span>
-                                                <span>전체: {formatCurrency(share.amount)}</span>
-                                                <span>•</span>
-                                                <span>
-                                                    {share.splitType === 'equal' ? '균등분할' :
-                                                        share.splitType === 'specific' ? '지정분할' : '사용자정의'}
+                                        <div className="text-sm text-gray-500 mt-1">
+                                            {currentGroupShares.length}건의 그룹 지출
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        {currentGroupShares.map((share) => (
+                                            <div key={share.id}
+                                                 className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                                                <div className="flex items-center space-x-3">
+                                                    <div
+                                                        className="w-10 h-10 rounded-lg flex items-center justify-center"
+                                                        style={{
+                                                            backgroundColor: categoryData.find(cat => cat.category === share.category)?.color + '20'
+                                                        }}
+                                                    >
+                                                        <Receipt
+                                                            className="w-5 h-5"
+                                                            style={{
+                                                                color: categoryData.find(cat => cat.category === share.category)?.color || '#df6d14'
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="font-medium text-gray-900">{share.title}</h4>
+                                                        <div
+                                                            className="flex items-center space-x-2 text-sm text-gray-500">
+                                                            <span>{categoryData.find(cat => cat.category === share.category)?.label}</span>
+                                                            <span>•</span>
+                                                            <span>전체: {formatCurrency(share.amount)}</span>
+                                                            <span>•</span>
+                                                            <span>
+                                                    {share.splitType === 'EQUAL' ? '균등분할' :
+                                                        share.splitType === 'SPECIFIC' ? '지정분할' : '사용자정의'}
                                                 </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <div className="text-lg font-bold text-primary-600">
+                                                        {formatCurrency(share.myShareAmount)}
+                                                    </div>
+                                                    <div className="text-xs text-gray-500">
+                                                        ({((share.myShareAmount / share.amount) * 100).toFixed(1)}%)
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
+                                        ))}
                                     </div>
-                                    <div className="text-right">
-                                        <div className="text-lg font-bold text-primary-600">
-                                            {formatCurrency(share.personalAmount)}
-                                        </div>
-                                        <div className="text-xs text-gray-500">
-                                            ({share.percentage.toFixed(1)}%)
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+                                </>
+                            );
+                        })()}
                     </div>
                 </motion.div>
             )}
@@ -867,73 +1238,105 @@ const ExpensesPage: React.FC = () => {
                 </div>
 
                 {activeTab === 'expenses' ? (
-                    <div className="divide-y divide-gray-100">
-                        {filteredExpenses.length > 0 ? (
-                            filteredExpenses.map((expense) => (
-                                <motion.div
-                                    key={expense.id}
-                                    className="p-6 hover:bg-gray-50 transition-all duration-200 cursor-pointer group"
-                                    whileHover={{x: 5}}
-                                    onClick={() => handleExpenseClick(expense)}
-                                >
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center space-x-4">
-                                            <div
-                                                className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all group-hover:scale-110`}
-                                                style={{
-                                                    backgroundColor: categoryData.find(cat => cat.category === expense.category)?.color + '20'
-                                                }}
-                                            >
-                                                <Receipt
-                                                    className="w-6 h-6"
+                    filteredExpenses.length > 0 ? (
+                        <div className="divide-y divide-gray-100">
+                            {filteredExpenses.map((expense) => {
+                                return (
+                                    <motion.div
+                                        key={`${expense.id}-${expense.groupId ? 'group' : 'personal'}`}
+                                        className="p-6 hover:bg-gray-50 transition-all duration-200 cursor-pointer group"
+                                        whileHover={{x: 5}}
+                                        onClick={() => handleExpenseClick(expense)}
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center space-x-4">
+                                                <div
+                                                    className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all group-hover:scale-110`}
                                                     style={{
-                                                        color: categoryData.find(cat => cat.category === expense.category)?.color || '#df6d14'
+                                                        backgroundColor: categoryData.find(cat => cat.category === expense.category)?.color + '20'
                                                     }}
-                                                />
-                                            </div>
-                                            <div>
-                                                <h4 className="font-semibold text-gray-900 group-hover:text-[#df6d14] transition-colors">{expense.title}</h4>
-                                                <div className="flex items-center space-x-3 text-sm text-gray-500">
-                                                    <span>{categoryData.find(cat => cat.category === expense.category)?.label}</span>
-                                                    <span>•</span>
-                                                    <div className="flex items-center space-x-1">
-                                                        <Calendar className="w-3 h-3"/>
-                                                        <span>{format(new Date(expense.date), 'M월 d일 HH:mm', {locale: ko})}</span>
+                                                >
+                                                    {mode === 'personal' && expense.groupId ? (
+                                                        <Users className="w-6 h-6 text-blue-600"/>
+                                                    ) : (
+                                                        <Receipt
+                                                            className="w-6 h-6"
+                                                            style={{
+                                                                color: categoryData.find(cat => cat.category === expense.category)?.color || '#df6d14'
+                                                            }}
+                                                        />
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-semibold text-gray-900 group-hover:text-[#df6d14] transition-colors">
+                                                        {expense.title}
+                                                    </h4>
+                                                    <div className="flex items-center space-x-3 text-sm text-gray-500">
+                                                        <span>{categoryData.find(cat => cat.category === expense.category)?.label}</span>
+                                                        {mode === 'personal' && expense.groupId && expense.groupName && (
+                                                            <>
+                                                                <span>•</span>
+                                                                <span
+                                                                    className="text-blue-600">👥 {expense.groupName}</span>
+                                                            </>
+                                                        )}
+                                                        <span>•</span>
+                                                        <div className="flex items-center space-x-1">
+                                                            <Calendar className="w-3 h-3"/>
+                                                            <span>{format(new Date(expense.date), 'M월 d일 (E)', {locale: ko})}</span>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-lg font-bold text-gray-900">{formatCurrency(expense.amount)}</p>
-                                            {expense.memo && (
-                                                <p className="text-sm text-gray-500 truncate max-w-32">{expense.memo}</p>
-                                            )}
-                                            <div className="text-xs text-[#df6d14] mt-1">
-                                                전체의 {((expense.amount / (allCategoryExpenses.reduce((sum, e) => sum + e.amount, 0) || 1)) * 100).toFixed(1)}%
+                                            <div className="flex items-center space-x-3">
+                                                {expense.hasReceipt && (
+                                                    <motion.button
+                                                        className="p-2 bg-gray-100 hover:bg-blue-100 rounded-lg transition-colors group"
+                                                        whileHover={{scale: 1.1}}
+                                                        whileTap={{scale: 0.9}}
+                                                        onClick={(e) => handleReceiptClick(expense, e)}
+                                                        title="영수증 보기"
+                                                    >
+                                                        <Image
+                                                            className="w-4 h-4 text-gray-600 group-hover:text-blue-600"/>
+                                                    </motion.button>
+                                                )}
+
+                                                <div className="text-right">
+                                                    <p className="text-lg font-bold text-gray-900">
+                                                        {formatCurrency(expense.myShareAmount || expense.amount)}
+                                                    </p>
+                                                    {mode === 'personal' && expense.groupId && (
+                                                        <p className="text-xs text-blue-600">그룹 지출</p>
+                                                    )}
+                                                    {expense.memo && (
+                                                        <p className="text-sm text-gray-500 truncate max-w-32">{expense.memo}</p>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </motion.div>
-                            ))
-                        ) : (
-                            <div className="text-center py-16">
-                                <div
-                                    className="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                                    <Receipt className="w-10 h-10 text-gray-400"/>
-                                </div>
-                                <h3 className="text-xl font-semibold text-gray-900 mb-2">지출 내역이 없습니다</h3>
-                                <p className="text-gray-600 mb-6">새로운 지출을 추가해보세요!</p>
-                                <motion.button
-                                    className="px-6 py-3 bg-[#df6d14] text-white rounded-xl font-medium hover:bg-[#df6d14]/90 transition-colors"
-                                    whileHover={{scale: 1.05}}
-                                    whileTap={{scale: 0.95}}
-                                    onClick={() => setShowExpenseModal(true)}
-                                >
-                                    첫 지출 추가하기
-                                </motion.button>
+                                    </motion.div>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <div className="text-center py-16">
+                            <div
+                                className="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                                <Receipt className="w-10 h-10 text-gray-400"/>
                             </div>
-                        )}
-                    </div>
+                            <h3 className="text-xl font-semibold text-gray-900 mb-2">지출 내역이 없습니다</h3>
+                            <p className="text-gray-600 mb-6">새로운 지출을 추가해보세요!</p>
+                            <motion.button
+                                className="px-6 py-3 bg-[#df6d14] text-white rounded-xl font-medium hover:bg-[#df6d14]/90 transition-colors"
+                                whileHover={{scale: 1.05}}
+                                whileTap={{scale: 0.95}}
+                                onClick={() => setShowExpenseModal(true)}
+                            >
+                                첫 지출 추가하기
+                            </motion.button>
+                        </div>
+                    )
                 ) : (
                     <div className="divide-y divide-gray-100">
                         {savedAnalyses.length > 0 ? (
@@ -943,7 +1346,6 @@ const ExpensesPage: React.FC = () => {
                                     className="p-6 hover:bg-gray-50 transition-all duration-200 cursor-pointer group"
                                     whileHover={{x: 5}}
                                     onClick={() => {
-                                        // 저장된 분석 결과를 모달로 표시
                                         setSelectedAnalysis(analysis);
                                         setShowAnalysis(true);
                                     }}
@@ -1240,7 +1642,6 @@ const ExpensesPage: React.FC = () => {
                                         {selectedAnalysis && (
                                             <button
                                                 onClick={() => {
-                                                    // 공유 기능 구현
                                                     alert('분석 결과를 공유했습니다!');
                                                 }}
                                                 className="px-6 py-3 bg-primary-600 text-white rounded-2xl hover:bg-primary-700 transition-colors flex items-center space-x-2"
@@ -1266,6 +1667,41 @@ const ExpensesPage: React.FC = () => {
                         setSelectedExpense(null);
                     }}
                 />
+            )}
+
+            {/* Receipt Modal */}
+            {showReceiptModal && currentReceiptUrl && (
+                <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+                    <motion.div
+                        initial={{opacity: 0, scale: 0.8}}
+                        animate={{opacity: 1, scale: 1}}
+                        exit={{opacity: 0, scale: 0.8}}
+                        className="bg-white rounded-2xl max-w-4xl max-h-[90vh] overflow-hidden"
+                    >
+                        {/* 모달 헤더 */}
+                        <div className="flex items-center justify-between p-4 border-b">
+                            <h3 className="text-lg font-semibold text-gray-900">영수증</h3>
+                            <button
+                                onClick={() => {
+                                    setShowReceiptModal(false);
+                                    setCurrentReceiptUrl(null);
+                                }}
+                                className="p-2 hover:bg-gray-100 rounded-lg"
+                            >
+                                <X className="w-5 h-5"/>
+                            </button>
+                        </div>
+
+                        {/* 영수증 이미지 */}
+                        <div className="p-4">
+                            <img
+                                src={currentReceiptUrl}
+                                alt="영수증"
+                                className="w-full h-auto max-h-[70vh] object-contain rounded-lg"
+                            />
+                        </div>
+                    </motion.div>
+                </div>
             )}
         </div>
     );
