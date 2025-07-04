@@ -15,7 +15,7 @@ RUN npm ci
 COPY . .
 
 # Build the application
-RUN npm run build -- --mode production --base-url $VITE_API_BASE_URL
+RUN npm run build
 
 # Production stage
 FROM nginx:alpine
