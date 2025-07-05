@@ -1,14 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Plus, Grid, List, Calendar as CalendarIcon, BarChart3, Repeat, Users, User } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, startOfWeek, endOfWeek, addDays, startOfYear, endOfYear, eachMonthOfInterval } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { useCalendar } from '../../hooks/useCalendar';
 import { useAppStore } from '../../store/appStore';
+import { useLocation, useNavigate } from 'react-router-dom';
 import EventModal from './EventModal';
 
 const CalendarPage: React.FC = () => {
   const { mode, currentGroup } = useAppStore();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [showEventModal, setShowEventModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
@@ -33,6 +36,27 @@ const CalendarPage: React.FC = () => {
     initialView: 'month',
     groupId: mode === 'group' && currentGroup ? currentGroup.id : undefined, // 그룹 ID 전달
   });
+
+  // URL 쿼리 파라미터에서 eventId 확인하여 상세 모달 열기
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.search);
+    const eventId = urlParams.get('eventId');
+    
+    if (eventId && events.length > 0 && !showEventModal) {
+      // 해당 이벤트 찾기
+      const targetEvent = events.find(event => event.id === eventId);
+      if (targetEvent) {
+        setSelectedEvent(targetEvent);
+        setSelectedDate(new Date(targetEvent.date));
+        setShowEventModal(true);
+        
+        // URL에서 eventId 파라미터 제거 (모달을 닫았을 때 재열리지 않도록)
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.delete('eventId');
+        navigate(newUrl.pathname + newUrl.search, { replace: true });
+      }
+    }
+  }, [events, location.search, showEventModal, navigate]);
 
   // 뷰에 따른 제목 표시
   const getViewTitle = () => {
