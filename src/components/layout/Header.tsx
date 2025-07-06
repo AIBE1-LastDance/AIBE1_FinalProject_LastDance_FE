@@ -14,7 +14,8 @@ import {
     BarChart3,
     ToggleLeft,
     ToggleRight,
-    Bell
+    Bell,
+    ExternalLink
 } from 'lucide-react';
 import {FaGoogle, FaComment} from 'react-icons/fa';
 import {SiNaver} from 'react-icons/si';
@@ -131,13 +132,54 @@ const Header: React.FC = () => {
         toast.success('모든 알림을 읽음 처리했습니다.');
     };
 
-    const handleNotificationClick = (notificationId: string, url?: string) => {
+    const handleNotificationClick = (notificationId: string, url?: string, relatedId?: string, type?: string) => {
         // 알림을 읽음 처리
         markAsRead(notificationId);
         
         // URL이 있으면 해당 페이지로 이동
         if (url) {
             navigate(url);
+        } else if (relatedId && type) {
+            // relatedId와 type을 사용해서 상세 페이지로 이동
+            let detailUrl = '/dashboard';
+            switch (type) {
+                case 'SCHEDULE': 
+                    detailUrl = `/calendar?eventId=${relatedId}`;
+                    break;
+                case 'PAYMENT': 
+                    detailUrl = `/expenses?splitId=${relatedId}`;
+                    break;
+                case 'CHECKLIST': 
+                    detailUrl = `/tasks?taskId=${relatedId}`;
+                    break;
+                default: 
+                    // type이 있지만 relatedId만 있는 경우에도 해당 페이지로 이동
+                    switch (type) {
+                        case 'SCHEDULE': detailUrl = '/calendar'; break;
+                        case 'PAYMENT': detailUrl = '/expenses'; break;
+                        case 'CHECKLIST': detailUrl = '/tasks'; break;
+                        default: detailUrl = '/dashboard';
+                    }
+            }
+            navigate(detailUrl);
+        } else if (type) {
+            // relatedId는 없지만 type만 있는 경우 해당 페이지의 메인으로 이동
+            switch (type) {
+                case 'SCHEDULE': 
+                    navigate('/calendar');
+                    break;
+                case 'PAYMENT': 
+                    navigate('/expenses');
+                    break;
+                case 'CHECKLIST': 
+                    navigate('/tasks');
+                    break;
+                default: 
+                    navigate('/dashboard');
+            }
+        } else {
+            // 아무 정보도 없으면 대시보드로 이동
+            navigate('/dashboard');
         }
         
         // 알림 드롭다운 닫기
@@ -305,13 +347,14 @@ const Header: React.FC = () => {
                                                         return (
                                                             <motion.div
                                                                 key={notification.id}
-                                                                className={`px-4 py-4 sm:py-3 hover:bg-gray-50 active:bg-gray-100 transition-colors cursor-pointer border-l-4 ${
+                                                                className={`px-4 py-4 sm:py-3 hover:bg-gray-50 active:bg-gray-100 transition-all duration-200 cursor-pointer border-l-4 group ${
                                                                     notification.read
-                                                                        ? 'border-transparent bg-white'
-                                                                        : `${typeConfig.borderColor} ${typeConfig.bgColor}`
-                                                                }`}
-                                                                whileHover={{x: 2}}
-                                                                onClick={() => handleNotificationClick(notification.id, notification.url)}
+                                                                        ? 'border-transparent bg-white hover:shadow-sm'
+                                                                        : `${typeConfig.borderColor} ${typeConfig.bgColor} hover:shadow-md`
+                                                                } ${(notification.url || notification.relatedId || notification.type) ? 'hover:border-blue-300' : ''}`}
+                                                                whileHover={{x: 4, scale: 1.01}}
+                                                                whileTap={{scale: 0.99}}
+                                                                onClick={() => handleNotificationClick(notification.id, notification.url, notification.relatedId, notification.type)}
                                                             >
                                                                 <div className="flex items-start space-x-3">
                                                                     <div
@@ -325,15 +368,26 @@ const Header: React.FC = () => {
                                                                             }`}>
                                                                                 {notification.title}
                                                                             </p>
-                                                                            {!notification.read && (
-                                                                                <div
-                                                                                    className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 ml-2"/>
-                                                                            )}
+                                                                            <div className="flex items-center space-x-2">
+                                                                                {(notification.url || notification.relatedId || notification.type) && (
+                                                                                    <div className="flex items-center space-x-1">
+                                                                                        <ExternalLink className="w-3 h-3 text-blue-500" />
+                                                                                        <span className="text-xs text-blue-500 font-medium">보기</span>
+                                                                                    </div>
+                                                                                )}
+                                                                                {!notification.read && (
+                                                                                    <div
+                                                                                        className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"/>
+                                                                                )}
+                                                                            </div>
                                                                         </div>
                                                                         <p className={`text-sm mt-1 ${
                                                                             notification.read ? 'text-gray-500' : 'text-gray-700'
-                                                                        }`}>
+                                                                        } group-hover:text-gray-800 transition-colors`}>
                                                                             {notification.content}
+                                                                            {(notification.url || notification.relatedId || notification.type) && (
+                                                                                <span className="text-blue-600 font-medium ml-1">→ 자세히 보기</span>
+                                                                            )}
                                                                         </p>
                                                                         <div className="flex items-center justify-between mt-1">
                                                                             <p className="text-xs text-gray-400">

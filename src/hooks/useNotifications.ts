@@ -14,6 +14,7 @@ interface NotificationData {
     type: 'SCHEDULE' | 'PAYMENT' | 'CHECKLIST';
     icon: string;
     timestamp: string;
+    relatedId?: string; // relatedId 추가
 }
 
 // 웹푸시 구독 요청 타입
@@ -139,13 +140,28 @@ class SSEManager {
                 const notification: NotificationData = JSON.parse(event.data);
                 console.log('[SSEManager] SSE 알림 수신:', notification);
 
-                // 알림 타입에 따른 URL 결정
-                const getUrl = (type: string) => {
+                // 알림 타입과 relatedId에 따른 상세 URL 결정
+                const getDetailUrl = (type: string, relatedId?: string) => {
+                    if (!relatedId) {
+                        // relatedId가 없으면 기본 페이지로
+                        switch (type) {
+                            case 'SCHEDULE': return '/calendar';
+                            case 'PAYMENT': return '/expenses';
+                            case 'CHECKLIST': return '/tasks';
+                            default: return '/dashboard';
+                        }
+                    }
+                    
+                    // relatedId가 있으면 상세 페이지로
                     switch (type) {
-                        case 'SCHEDULE': return '/calendar';
-                        case 'PAYMENT': return '/expenses';
-                        case 'CHECKLIST': return '/tasks';
-                        default: return '/dashboard';
+                        case 'SCHEDULE': 
+                            return `/calendar?eventId=${relatedId}`;
+                        case 'PAYMENT': 
+                            return `/expenses?splitId=${relatedId}`;
+                        case 'CHECKLIST': 
+                            return `/tasks?taskId=${relatedId}`;
+                        default: 
+                            return '/dashboard';
                     }
                 };
 
@@ -155,11 +171,11 @@ class SSEManager {
                     title: notification.title,
                     content: notification.content,
                     icon: notification.icon,
-                    relatedId: notification.id,
-                    url: getUrl(notification.type)
+                    relatedId: notification.relatedId,
+                    url: getDetailUrl(notification.type, notification.relatedId)
                 });
 
-                // 인앱 토스트 알림 표시
+                // 인앱 토스트 알림 표시 (클릭 시 상세 페이지 이동)
                 const typeConfig = {
                     SCHEDULE: { emoji: '📅', color: '#3B82F6' },
                     PAYMENT: { emoji: '💳', color: '#10B981' },
@@ -167,6 +183,7 @@ class SSEManager {
                 };
 
                 const config = typeConfig[notification.type as keyof typeof typeConfig] || typeConfig.SCHEDULE;
+                const detailUrl = getDetailUrl(notification.type, notification.relatedId);
 
                 toast(
                     `${config.emoji} ${notification.title}\n${notification.content}`,
@@ -179,7 +196,12 @@ class SSEManager {
                             backgroundColor: 'white',
                             boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
                             borderRadius: '12px',
-                            maxWidth: '400px'
+                            maxWidth: '400px',
+                            cursor: 'pointer'
+                        },
+                        onClick: () => {
+                            // 토스트 클릭 시 상세 페이지로 이동
+                            window.location.href = detailUrl;
                         }
                     }
                 );
