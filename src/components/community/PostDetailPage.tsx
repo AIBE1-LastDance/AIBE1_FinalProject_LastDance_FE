@@ -7,11 +7,13 @@ import { Post } from "../../types/community/community";
 import { fetchPostById } from "../../api/community/community";
 import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
+import toast from "react-hot-toast"; // 토스트 메시지를 위해 추가
 
 const PostDetailPage: React.FC = () => {
   const { postId } = useParams<{ postId: string }>();
   const navigate = useNavigate();
-  const { posts, deletePost } = useAppStore();
+  // `addPost`도 필요할 수 있어 추가, `updatePost`는 `handlePostUpdated`에서 사용 예정
+  const { posts, deletePost, updatePost, addPost } = useAppStore(); // updatePost, addPost 추가
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -19,44 +21,84 @@ const PostDetailPage: React.FC = () => {
   const [editingPost, setEditingPost] = useState<Post | null>(null);
 
   useEffect(() => {
-    // 로컬 스토어의 posts에서 먼저 찾기 (선택 사항, API 호출이 우선이라면 제거 가능)
-    const localPost = posts.find((p) => p.postId === postId); // `p.id` 대신 `p.postId` 사용 (타입에 맞춰)
+    // postId가 없으면 처리 중단
+    if (!postId) {
+      setNotFound(true);
+      setLoading(false);
+      return;
+    }
+
+    // 로컬 스토어의 posts에서 먼저 찾기 (옵션: 항상 API 호출이 최신이라면 이 부분 제거 가능)
+    const localPost = posts.find((p) => p.postId === postId);
     if (localPost) {
       setPost(localPost);
       setLoading(false);
-    } else if (postId) {
+    } else {
+      // 로컬에 없으면 API 호출
       fetchPostById(postId)
         .then((data) => {
-          // ✅ 백엔드 응답(data)이 이미 Post 타입에 맞게 comments와 authorNickname을 가지고 있다고 가정합니다.
-          // 따라서 여기서는 `author` 객체를 수동으로 만들 필요가 없습니다.
-          // data 자체를 Post 타입으로 타입 캐스팅하여 사용합니다.
+          // 백엔드 응답 `data`가 이미 `Post` 인터페이스와 일치한다고 가정
           const fetchedPost: Post = {
             ...data,
-            // 백엔드에서 내려주는 필드를 여기에 명시적으로 적지 않습니다.
-            // data에 이미 포함되어 있을 것으로 예상합니다.
-            // 만약 likedBy, bookmarkedBy가 백엔드 응답에 없다면 아래처럼 기본값 설정
+            // 백엔드에서 null이나 undefined로 올 수 있는 필드에 대한 기본값 설정
             likedBy: data.likedBy || [],
             bookmarkedBy: data.bookmarkedBy || [],
             comments: data.comments || [],
+            // userLiked, userBookmarked는 백엔드에서 정확한 boolean 값으로 오도록 보장되어야 합니다.
           };
           setPost(fetchedPost);
+          // 전역 스토어에도 추가 (만약 목록에서 이전에 없던 게시글을 상세 조회한 경우)
+          // 또는 기존 게시글을 업데이트 (이미 목록에 있다면)
+          if (!localPost) {
+            // 로컬 스토어에 없던 게시글이라면 추가
+            addPost(fetchedPost); // appStore에 addPost 액션이 없다면 추가
+          } else {
+            // 이미 있던 게시글이라면 업데이트 (불필요한 업데이트 방지를 위해 조건부 사용)
+            // updatePost(fetchedPost.postId, fetchedPost); // useEffect의 의존성 때문에 주석 처리
+          }
         })
         .catch((error) => {
           console.error("게시글 불러오기 실패:", error);
           setNotFound(true);
+          toast.error("게시글을 불러오는 데 실패했습니다.");
         })
         .finally(() => setLoading(false));
     }
-  }, [postId, posts]); // 의존성 배열에 posts 추가 (로컬 스토어 사용 시)
+  }, [postId, posts, addPost]); // addPost도 의존성 추가 (useCallback으로 감싸지 않았다면)
 
-  // handleEdit 함수 정의 (누락되어 있어서 추가했습니다. 로직은 이전 대화 내용 기반)
+  // handleEdit 함수 정의
   const handleEdit = (postToEdit: Post) => {
     setEditingPost(postToEdit);
     setIsEditModalOpen(true);
   };
 
+  // 삭제 처리
+  const handleDelete = (idToDelete: string) => {
+    deletePost(idToDelete); // useAppStore의 deletePost 액션 호출
+    toast.success("게시글이 성공적으로 삭제되었습니다.");
+    navigate("/community"); // 삭제 후 목록 페이지로 이동
+  };
+
+  const handleBack = () => {
+    navigate("/community");
+  };
+
+  // handlePostUpdated 함수 (CreatePostModal의 onSuccess prop을 위해 필요)
+  const handlePostUpdated = (updatedPost: Post) => {
+    setPost(updatedPost); // PostDetail에 표시되는 게시글 업데이트
+    updatePost(updatedPost.postId, updatedPost); // ⭐ 전역 스토어의 게시글 업데이트
+    setIsEditModalOpen(false);
+    setEditingPost(null);
+    toast.success("게시글이 성공적으로 수정되었습니다.");
+  };
+
   if (loading) {
-    return <div className="text-center py-20">로딩 중...</div>;
+    return (
+      <div className="flex justify-center items-center h-screen bg-gray-50">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-purple-500"></div>
+        <p className="ml-4 text-lg text-gray-700">게시글 로딩 중...</p>
+      </div>
+    );
   }
 
   if (notFound || !post) {
@@ -78,7 +120,7 @@ const PostDetailPage: React.FC = () => {
           </p>
           <button
             onClick={() => navigate("/community")}
-            className="bg-primary-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-primary-700 transition-colors"
+            className="bg-purple-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-purple-700 transition-colors" // 색상 통일
           >
             커뮤니티로 돌아가기
           </button>
@@ -87,26 +129,6 @@ const PostDetailPage: React.FC = () => {
     );
   }
 
-  const handleDelete = (idToDelete: string) => {
-    // 매개변수 이름을 겹치지 않게 변경
-    deletePost(idToDelete);
-    navigate("/community");
-  };
-
-  const handleBack = () => {
-    navigate("/community");
-  };
-
-  // handlePostUpdated 함수 (CreatePostModal의 onSuccess prop을 위해 필요)
-  const handlePostUpdated = (updatedPost: Post) => {
-    setPost(updatedPost); // PostDetail에 표시되는 게시글 업데이트
-    // 전역 스토어 업데이트 로직이 필요하다면 여기에 추가
-    // 예: updatePost(updatedPost.postId, updatedPost);
-    setIsEditModalOpen(false);
-    setEditingPost(null);
-    // toast.success("게시글이 성공적으로 수정되었습니다."); (필요하다면 토스트 추가)
-  };
-
   return (
     <>
       <PostDetail
@@ -114,16 +136,17 @@ const PostDetailPage: React.FC = () => {
         onBack={handleBack}
         onEdit={handleEdit}
         onDelete={handleDelete}
-        // onToggleLike, onToggleBookmark prop이 PostDetail에 필요하다면 여기에 추가 (현재 코드에는 없음)
+        // PostDetail에 onToggleLike, onToggleBookmark prop이 있다면 여기에 추가해야 합니다.
+        // PostDetail의 구현을 확인해보고 필요시 추가해주세요.
       />
       {isEditModalOpen && (
         <CreatePostModal
-          post={editingPost} // editingPost를 prop으로 전달
+          post={editingPost} // editingPost를 prop으로 전달하여 수정 모드로
           onClose={() => {
             setIsEditModalOpen(false);
             setEditingPost(null);
           }}
-          onSuccess={handlePostUpdated} // 모달 닫기 및 게시글 업데이트 후 처리
+          onSuccess={handlePostUpdated} // 모달에서 게시글 수정 성공 시 호출될 콜백
         />
       )}
     </>
