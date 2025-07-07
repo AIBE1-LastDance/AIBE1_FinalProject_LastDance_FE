@@ -284,17 +284,29 @@ function App() {
             </ProtectedRoute>
           }
         />
-        {/* ⭐ 청년 정책 페이지 라우트 추가 */}
+        {/* ⭐ 청년 정책 페이지 라우트 (목록) */}
         <Route
           path="/youth-policy"
           element={
             <ProtectedRoute>
               <Layout>
-                <YouthPolicyList /> {/* YouthPolicyList 컴포넌트 렌더링 */}
+                <YouthPolicyList />
               </Layout>
             </ProtectedRoute>
           }
         />
+        {/* ⭐ 청년 정책 상세 페이지 라우트 (추가된 부분) */}
+        <Route
+          path="/youth-policy/:plcyNo"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <YouthPolicyDetailPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
         {/* Admin Routes - 관리자만 접근 가능 */}
         <Route
           path="/admin/*"
