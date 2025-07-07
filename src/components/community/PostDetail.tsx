@@ -17,7 +17,7 @@ import {
   MoreVertical,
   Pencil,
 } from "lucide-react";
-import { Comment } from "../../types/community/comment";
+import { Comment } from "../../types/community/comment"; // 수정된 Comment 인터페이스 임포트
 import { Post } from "../../types/community/community";
 import { useAuthStore } from "../../store/authStore";
 import { useAppStore } from "../../store/appStore";
@@ -26,12 +26,10 @@ import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
 import toast from "react-hot-toast";
 import ReportModal from "./ReportModal";
-// commentApi 함수들을 임포트합니다.
 import {
   fetchCommentsByPostId,
   createComment,
   deleteComment,
-  // updateComment // 댓글 수정 기능을 사용하지 않으므로 필요하지 않습니다.
 } from "../../api/community/comment";
 
 interface PostDetailProps {
@@ -49,8 +47,8 @@ const PostDetail: React.FC<PostDetailProps> = ({
 }) => {
   const { user } = useAuthStore();
   const { updatePost, deletePost, posts } = useAppStore();
-  const [post, setPost] = useState<Post>(initialPost); // 게시글 자체의 상태
-  const [comments, setComments] = useState<Comment[]>([]); // 댓글 목록을 별도로 관리하는 상태
+  const [post, setPost] = useState<Post>(initialPost);
+  const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [reportModal, setReportModal] = useState<{
@@ -67,42 +65,37 @@ const PostDetail: React.FC<PostDetailProps> = ({
   const [showPostActions, setShowPostActions] = useState(false);
   const postActionsRef = useRef<HTMLDivElement>(null);
 
-  // 삭제 확인 훅 사용
   const { isDeleting: isDeletingPost, handleDelete: triggerDeletePost } =
     useDeleteConfirmation({
       onConfirm: () => {
-        deletePost(post.postId); // post.id 대신 post.postId 사용
+        deletePost(post.postId);
         toast.success("게시글이 삭제되었습니다.");
         onBack();
       },
       message: "정말로 이 게시글을 삭제하시겠습니까?",
     });
 
-  // posts 상태가 변경될 때마다 현재 post를 업데이트
   useEffect(() => {
     const updatedPost = posts.find((p) => p.postId === post.postId);
     if (updatedPost) {
       setPost(updatedPost);
-      // 이 시점에서는 댓글을 업데이트하지 않습니다. 댓글은 아래의 별도 useEffect에서 불러옵니다.
     }
   }, [posts, post.postId]);
 
-  // 게시글 ID가 변경될 때마다 댓글을 백엔드에서 불러오는 useEffect
   useEffect(() => {
     const loadComments = async () => {
       try {
         const fetchedComments = await fetchCommentsByPostId(post.postId);
-        setComments(fetchedComments); // 불러온 댓글로 comments 상태 업데이트
+        setComments(fetchedComments);
       } catch (error) {
         console.error("댓글 로드 실패:", error);
         toast.error("댓글을 불러오는 데 실패했습니다.");
-        setComments([]); // 오류 발생 시 댓글 목록을 비웁니다.
+        setComments([]);
       }
     };
     loadComments();
-  }, [post.postId]); // post.postId가 변경될 때마다 실행
+  }, [post.postId]);
 
-  // 외부 클릭 시 액션 메뉴 닫기
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -172,17 +165,14 @@ const PostDetail: React.FC<PostDetailProps> = ({
     setIsSubmittingComment(true);
 
     try {
-      // 댓글 생성
       await createComment({
         postId: post.postId,
         content: newComment.trim(),
       });
 
-      // ✅ 댓글 목록을 다시 백엔드에서 불러오기 (닉네임 포함됨)
       const refreshedComments = await fetchCommentsByPostId(post.postId);
       setComments(refreshedComments);
 
-      // 댓글 수 반영
       updatePost(post.postId, {
         commentCount: (post.commentCount || 0) + 1,
       });
@@ -198,19 +188,15 @@ const PostDetail: React.FC<PostDetailProps> = ({
   };
 
   const handleDeleteComment = (commentId: string) => {
-    // 즉시 실행하지 않고 다음 렌더링 사이클에서 실행 (requestAnimationFrame)
     requestAnimationFrame(async () => {
-      // async 추가
       if (window.confirm("정말로 이 댓글을 삭제하시겠습니까?")) {
         try {
-          // 백엔드 API 호출하여 댓글 삭제
           await deleteComment(commentId);
 
-          // 성공 시 프론트엔드 comments 상태 업데이트
-          setComments((prevComments) =>
-            prevComments.filter((c) => c.id !== commentId)
+          setComments(
+            (prevComments) =>
+              prevComments.filter((c) => c.commentId !== commentId) // <-- comment.id 대신 comment.commentId 사용
           );
-          // 게시글의 commentCount도 업데이트 (useAppStore의 updatePost 활용)
           updatePost(post.postId, {
             commentCount: Math.max(0, (post.commentCount || 0) - 1),
           });
@@ -235,12 +221,10 @@ const PostDetail: React.FC<PostDetailProps> = ({
           url: window.location.href,
         });
       } else {
-        // 폴백: URL을 클립보드에 복사
         await navigator.clipboard.writeText(window.location.href);
         toast.success("링크가 클립보드에 복사되었습니다.");
       }
     } catch (error) {
-      // 클립보드 복사 시도
       try {
         await navigator.clipboard.writeText(window.location.href);
         toast.success("링크가 클립보드에 복사되었습니다.");
@@ -256,7 +240,7 @@ const PostDetail: React.FC<PostDetailProps> = ({
     setReportModal({
       isOpen: true,
       type: "post",
-      targetId: post.postId, // post.id 대신 post.postId 사용
+      targetId: post.postId,
       targetTitle: post.title,
     });
   };
@@ -427,7 +411,6 @@ const PostDetail: React.FC<PostDetailProps> = ({
             </div>
             <div className="flex items-center space-x-2 text-gray-500">
               <MessageCircle className="w-5 h-5" />
-              {/* comments 상태의 길이를 사용합니다. */}
               <span>{comments.length || 0}</span>
             </div>
           </div>
@@ -465,7 +448,6 @@ const PostDetail: React.FC<PostDetailProps> = ({
       >
         <h3 className="text-lg font-semibold text-gray-900 mb-6">
           댓글 {comments.length || 0}개{" "}
-          {/* comments 상태의 길이를 사용합니다. */}
         </h3>
 
         {/* 댓글 작성 */}
@@ -513,7 +495,7 @@ const PostDetail: React.FC<PostDetailProps> = ({
 
         {/* 댓글 목록 */}
         <div className="space-y-4">
-          {comments && comments.length > 0 ? ( // comments 상태를 사용합니다.
+          {comments && comments.length > 0 ? (
             comments
               .sort(
                 (a, b) =>
@@ -525,7 +507,7 @@ const PostDetail: React.FC<PostDetailProps> = ({
 
                 return (
                   <motion.div
-                    key={comment.id}
+                    key={comment.commentId} // <-- 수정된 comment.commentId 사용
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.1 }}
@@ -561,7 +543,9 @@ const PostDetail: React.FC<PostDetailProps> = ({
                             <motion.button
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
-                              onClick={() => handleDeleteComment(comment.id)}
+                              onClick={() =>
+                                handleDeleteComment(comment.commentId)
+                              } // <-- comment.id 대신 comment.commentId 사용
                               className="flex items-center space-x-1 px-2 py-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
                             >
                               <Trash2 className="w-3 h-3" />
@@ -572,7 +556,9 @@ const PostDetail: React.FC<PostDetailProps> = ({
                             <motion.button
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
-                              onClick={() => handleReportComment(comment.id)}
+                              onClick={() =>
+                                handleReportComment(comment.commentId)
+                              } // <-- comment.id 대신 comment.commentId 사용
                               className="flex items-center space-x-1 px-2 py-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
                             >
                               <Flag className="w-3 h-3" />

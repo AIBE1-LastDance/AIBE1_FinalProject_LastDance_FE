@@ -115,13 +115,9 @@ export const useCalendar = (options: UseCalendarOptions = {}): UseCalendarReturn
                 query.viewType = 'YEARLY';
                 break;
             case 'month':
+            case 'week':   // 🔥 MONTHLY 데이터 사용
+            case 'day':    // 🔥 MONTHLY 데이터 사용
                 query.viewType = 'MONTHLY';
-                break;
-            case 'week':
-                query.viewType = 'WEEKLY';
-                break;
-            case 'day':
-                query.viewType = 'DAILY';
                 break;
         }
 
@@ -376,13 +372,9 @@ export const useCalendar = (options: UseCalendarOptions = {}): UseCalendarReturn
                     query.viewType = 'YEARLY';
                     break;
                 case 'month':
+                case 'week':   // 🔥 MONTHLY 데이터 사용
+                case 'day':    // 🔥 MONTHLY 데이터 사용
                     query.viewType = 'MONTHLY';
-                    break;
-                case 'week':
-                    query.viewType = 'WEEKLY';
-                    break;
-                case 'day':
-                    query.viewType = 'DAILY';
                     break;
             }
 
