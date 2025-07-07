@@ -1,0 +1,20 @@
+User-agent: *
+Disallow: /
+
+# Block common vulnerability scanners
+User-agent: ffuf
+Disallow: /
+
+User-agent: sqlmap
+Disallow: /
+
+User-agent: nikto
+Disallow: /
+
+User-agent: dirb
+Disallow: /
+
+User-agent: dirbuster
+Disallow: /
+
+Crawl-delay: 10

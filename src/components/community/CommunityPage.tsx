@@ -12,7 +12,7 @@ import {
   Lightbulb,
   MessageSquare,
   HelpCircle,
-  FileText, // 정책게시판 아이콘 추가
+  FileText,
   Clock,
   ThumbsUp,
   ChevronLeft,
@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/authStore";
+import { usePostStore } from "../../store/community/postStore";
 import PostCard from "./PostCard";
 import CreatePostModal from "./CreatePostModal";
 import { Post } from "../../types/community/community";
@@ -27,13 +28,25 @@ import {
   fetchAllPosts,
   togglePostLike,
   togglePostBookmark,
-  deletePost,
+  deletePost as deletePostApi,
+  createPost as createPostApi,
+  updatePost as updatePostApi,
 } from "../../api/community/community";
 
 const CommunityPage: React.FC = () => {
   const { user } = useAuthStore();
   const navigate = useNavigate();
-  const [posts, setPosts] = useState<Post[]>([]);
+
+  const {
+    posts,
+    setPosts,
+    addPost,
+    updatePost,
+    deletePost: deletePostFromStore,
+    lastFetched,
+    setLastFetched,
+  } = usePostStore();
+
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -44,7 +57,6 @@ const CommunityPage: React.FC = () => {
     "all"
   );
   const [editingPost, setEditingPost] = useState<Post | null>(null);
-  const [totalLikes, setTotalLikes] = useState<number>(0);
 
   const [isLoading, setIsLoading] = useState(true);
 
@@ -52,8 +64,21 @@ const CommunityPage: React.FC = () => {
   const postsPerPage = 15;
 
   const loadPosts = async () => {
+    const CACHE_DURATION = 5 * 60 * 1000;
+
+    if (
+      user?.id &&
+      posts.length > 0 &&
+      Date.now() - lastFetched < CACHE_DURATION
+    ) {
+      console.log("[✅ 캐시된 게시글 데이터 사용]");
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     try {
+      console.log("[🌐 백엔드에서 게시글 로딩 시작]");
       const data: any[] = await fetchAllPosts();
       console.log("백엔드에서 받은 원본 게시글 데이터:", data);
 
@@ -64,11 +89,12 @@ const CommunityPage: React.FC = () => {
         category: item.category,
         categoryName: item.categoryName,
         likeCount: item.likeCount,
-        reportCount: item.reportCount,
+        reportCount: item.reportCount, // 백엔드 DTO에 reportCount가 없다면 삭제
         createdAt: item.createdAt,
         updatedAt: item.updatedAt ?? item.createdAt,
         userId: item.authorId,
         authorNickname: item.authorNickname,
+        authorProfileImageUrl: item.authorProfileImageUrl, // ⭐ 이 줄을 추가합니다.
         userLiked: item.userLiked,
         commentCount: item.commentCount || 0,
         comments: item.comments || [],
@@ -76,9 +102,10 @@ const CommunityPage: React.FC = () => {
       }));
 
       setPosts(mappedPosts);
-      setCurrentPage(1);
+      setLastFetched(Date.now()); // ⭐ 데이터 로드 후 마지막 페치 시간 업데이트
     } catch (err) {
       console.error("[❌ 게시글 로딩 실패]", err);
+      setPosts([]);
     } finally {
       setIsLoading(false);
     }
@@ -86,14 +113,10 @@ const CommunityPage: React.FC = () => {
 
   useEffect(() => {
     loadPosts();
-  }, [user]);
+  }, [user?.id]);
 
-  useEffect(() => {
-    const calculatedTotalLikes = posts.reduce(
-      (sum, post) => sum + (post.likeCount || 0),
-      0
-    );
-    setTotalLikes(calculatedTotalLikes);
+  const totalLikes = useMemo(() => {
+    return posts.reduce((sum, post) => sum + (post.likeCount || 0), 0);
   }, [posts]);
 
   const handleToggleLike = async (postId: string) => {
@@ -104,18 +127,15 @@ const CommunityPage: React.FC = () => {
     }
     try {
       const isLiked = await togglePostLike(postId);
-
-      setPosts((prevPosts) =>
-        prevPosts.map((post) =>
-          post.postId === postId
-            ? {
-                ...post,
-                userLiked: isLiked,
-                likeCount: isLiked ? post.likeCount + 1 : post.likeCount - 1,
-              }
-            : post
-        )
-      );
+      const currentPost = posts.find((p) => p.postId === postId);
+      if (currentPost) {
+        updatePost(postId, {
+          userLiked: isLiked,
+          likeCount: isLiked
+            ? currentPost.likeCount + 1
+            : currentPost.likeCount - 1,
+        });
+      }
     } catch (error) {
       console.error(`[❌ 좋아요 토글 실패] PostId: ${postId}`, error);
       alert("좋아요 처리에 실패했습니다.");
@@ -130,14 +150,7 @@ const CommunityPage: React.FC = () => {
     }
     try {
       const isBookmarked = await togglePostBookmark(postId);
-
-      setPosts((prevPosts) =>
-        prevPosts.map((post) =>
-          post.postId === postId
-            ? { ...post, userBookmarked: isBookmarked }
-            : post
-        )
-      );
+      updatePost(postId, { userBookmarked: isBookmarked });
     } catch (error) {
       console.error(`[❌ 북마크 토글 실패] PostId: ${postId}`, error);
       alert("북마크 처리에 실패했습니다.");
@@ -175,7 +188,6 @@ const CommunityPage: React.FC = () => {
       name: "정책게시판",
       icon: FileText,
       color: "text-green-600",
-      // ⭐ 정책게시판 클릭 시 navigate 함수 호출
       onClick: () => {
         navigate("/youth-policy");
       },
@@ -261,8 +273,9 @@ const CommunityPage: React.FC = () => {
       return;
     }
     try {
-      await deletePost(postId);
-      await loadPosts();
+      await deletePostApi(postId);
+      deletePostFromStore(postId);
+      alert("게시글이 삭제되었습니다.");
     } catch (error) {
       console.error(`[❌ 게시글 삭제 실패] PostId: ${postId}`, error);
       alert("게시글 삭제에 실패했습니다.");
@@ -275,7 +288,6 @@ const CommunityPage: React.FC = () => {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
-      {/* 헤더 */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -312,7 +324,6 @@ const CommunityPage: React.FC = () => {
         </div>
       </motion.div>
 
-      {/* 검색 및 필터 */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -335,23 +346,20 @@ const CommunityPage: React.FC = () => {
           </div>
         </div>
 
-        {/* 카테고리 필터 */}
         <div className="mt-4 flex flex-wrap gap-2">
           {categories.map((category) => (
             <button
               key={category.id}
               onClick={() => {
-                // POLICY 카테고리인 경우 미리 정의된 onClick 함수를 실행
                 if (category.id === "POLICY" && category.onClick) {
                   category.onClick();
                 } else {
-                  // 그 외 카테고리는 기존 방식대로 selectedCategory 업데이트
                   setSelectedCategory(category.id);
                   setCurrentPage(1);
                 }
               }}
               className={`flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                selectedCategory === category.id && category.id !== "POLICY" // 정책게시판은 현재 카테고리 선택 상태에 포함되지 않음
+                selectedCategory === category.id && category.id !== "POLICY"
                   ? "bg-primary-100 text-primary-700 border-2 border-primary-200"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
@@ -369,7 +377,6 @@ const CommunityPage: React.FC = () => {
         </div>
       </motion.div>
 
-      {/* 정렬 및 필터 옵션 */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -443,7 +450,6 @@ const CommunityPage: React.FC = () => {
         </div>
       </motion.div>
 
-      {/* 게시글 목록 또는 스피너 */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -503,7 +509,6 @@ const CommunityPage: React.FC = () => {
         )}
       </motion.div>
 
-      {/* 페이지네이션 컨트롤 */}
       {!isLoading && totalPages > 1 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -543,14 +548,21 @@ const CommunityPage: React.FC = () => {
           </button>
         </motion.div>
       )}
-      {/* 글쓰기 모달 */}
       {isCreateModalOpen && (
         <CreatePostModal
           post={editingPost}
-          onClose={async () => {
+          onClose={async (postData?: Post | null) => {
             setIsCreateModalOpen(false);
             setEditingPost(null);
-            await loadPosts();
+            if (postData) {
+              if (editingPost) {
+                updatePost(postData.postId, postData);
+              } else {
+                addPost(postData);
+              }
+            } else {
+              await loadPosts();
+            }
           }}
         />
       )}

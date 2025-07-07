@@ -298,11 +298,20 @@ const PostDetail: React.FC<PostDetailProps> = ({
 
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-              <span className="text-white font-medium text-sm">
-                {post.authorNickname?.charAt(0) || "U"}
-              </span>
-            </div>
+            {/* 게시글 작성자 프로필 이미지 */}
+            {post.authorProfileImageUrl ? (
+              <img
+                src={post.authorProfileImageUrl}
+                alt={`${post.authorNickname || "익명"}의 프로필`}
+                className="w-10 h-10 rounded-full object-cover"
+              />
+            ) : (
+              <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                <span className="text-white font-medium text-sm">
+                  {post.authorNickname?.charAt(0) || "U"}
+                </span>
+              </div>
+            )}
             <div>
               <span className="font-medium text-gray-900">
                 {post.authorNickname || "익명"}
@@ -452,11 +461,6 @@ const PostDetail: React.FC<PostDetailProps> = ({
 
         {/* 댓글 작성 */}
         <div className="flex space-x-4 mb-6">
-          <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-            <span className="text-white font-medium text-sm">
-              {user?.username?.charAt(0) || "U"}{" "}
-            </span>
-          </div>
           <div className="flex-1">
             <textarea
               value={newComment}
@@ -513,11 +517,20 @@ const PostDetail: React.FC<PostDetailProps> = ({
                     transition={{ delay: index * 0.1 }}
                     className="flex space-x-4 p-4 bg-gray-50 rounded-xl"
                   >
-                    <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center">
-                      <span className="text-white font-medium text-xs">
-                        {comment.authorNickname?.charAt(0) || "U"}
-                      </span>
-                    </div>
+                    {/* 댓글 작성자 프로필 이미지 */}
+                    {comment.authorProfileImageUrl ? (
+                      <img
+                        src={comment.authorProfileImageUrl}
+                        alt={`${comment.authorNickname || "익명"}의 프로필`}
+                        className="w-8 h-8 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center">
+                        <span className="text-white font-medium text-xs">
+                          {comment.authorNickname?.charAt(0) || "U"}
+                        </span>
+                      </div>
+                    )}
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center space-x-2">
