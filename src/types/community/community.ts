@@ -16,4 +16,5 @@ export interface Post {
   userBookmarked: boolean; // 현재 사용자가 이 게시글을 '북마크'했는지 여부
   likedBy?: string[];
   bookmarkedBy?: string[];
+  authorProfileImageUrl?: string; // ✅ 추가: 게시글 작성자의 프로필 이미지 URL (Optional)
 }
