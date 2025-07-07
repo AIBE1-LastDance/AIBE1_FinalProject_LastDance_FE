@@ -34,6 +34,7 @@ import {
 } from 'recharts';
 import {useAppStore} from '../../store/appStore';
 import {useAuthStore} from '../../store/authStore';
+import {useLocation, useNavigate} from 'react-router-dom';
 import {format, startOfMonth, endOfMonth, isWithinInterval, subMonths} from 'date-fns';
 import {ko} from 'date-fns/locale';
 import ExpenseModal from './ExpenseModal';
@@ -62,6 +63,8 @@ const ExpensesPage: React.FC = () => {
         loadMyGroups
     } = useAppStore();
     const {user} = useAuthStore();
+    const location = useLocation();
+    const navigate = useNavigate();
     const [showExpenseModal, setShowExpenseModal] = useState(false);
     const [selectedExpense, setSelectedExpense] = useState(null);
     const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -76,6 +79,63 @@ const ExpensesPage: React.FC = () => {
     const [currentCardIndex, setCurrentCardIndex] = useState(0);
     const [showReceiptModal, setShowReceiptModal] = useState(false);
     const [currentReceiptUrl, setCurrentReceiptUrl] = useState<string | null>(null);
+    const [monthlyTrendData, setMonthlyTrendData] = useState<any>({});
+
+    // URL 쿼리 파라미터에서 splitId 확인하여 상세 모달 열기
+    useEffect(() => {
+        const urlParams = new URLSearchParams(location.search);
+        const splitId = urlParams.get('splitId');
+        
+        if (splitId && (expenses.length > 0 || groupShares.length > 0) && !showExpenseModal) {
+            // 해당 지출/분담금 찾기
+            const allExpenses = [...expenses, ...groupShares];
+            const targetExpense = allExpenses.find(expense => 
+                expense.id === splitId || 
+                expense.originalExpenseId === splitId ||
+                expense.expenseId === splitId
+            );
+            
+            if (targetExpense) {
+                setSelectedExpense(targetExpense);
+                setShowExpenseModal(true);
+                
+                // URL에서 splitId 파라미터 제거 (모달을 닫았을 때 재열리지 않도록)
+                const newUrl = new URL(window.location.href);
+                newUrl.searchParams.delete('splitId');
+                navigate(newUrl.pathname + newUrl.search, { replace: true });
+            }
+        }
+    }, [expenses, groupShares, location.search, showExpenseModal, navigate]);
+
+    // 월별 추이 데이터 로드
+    const loadMonthlyTrendData = async () => {
+        try {
+            const params = {
+                year: currentMonth.getFullYear(),
+                month: currentMonth.getMonth() + 1,
+                months: 6,
+                category: categoryFilter === 'all' ? undefined : categoryFilter
+            };
+
+            let response;
+            if (mode === 'personal') {
+                response = await expenseAPI.getPersonalExpensesTrend(params);
+            } else if (mode === 'group' && currentGroup?.id) {
+                response = await expenseAPI.getGroupExpensesTrend(currentGroup.id, params);
+            }
+
+            if (response?.monthlyData) {
+                setMonthlyTrendData(response.monthlyData);
+            } else if (response?.data?.monthlyData) {
+                setMonthlyTrendData(response.data.monthlyData);
+            } else {
+                console.log('❌ monthlyData를 찾을 수 없음. 전체 응답:', response);
+            }
+        } catch (error) {
+            console.error('❌ 월별 추이 데이터 로드 실패: ', error);
+            setMonthlyTrendData({});
+        }
+    };
 
     useEffect(() => {
         const fetchExpenses = async () => {
@@ -95,13 +155,13 @@ const ExpensesPage: React.FC = () => {
                 };
                 await loadExpenses(params);
 
-                // 개인 모드일 때 그룹 분담금도 로드
-                if (mode === 'personal') {
-                    await loadGroupShares({
-                        year: currentMonth.getFullYear(),
-                        month: currentMonth.getMonth() + 1,
-                    });
-                }
+                // 모든 모드일 때 그룹 분담금도 로드
+                await loadGroupShares({
+                    year: currentMonth.getFullYear(),
+                    month: currentMonth.getMonth() + 1,
+                });
+
+                await loadMonthlyTrendData();
             } catch (error) {
                 console.error('지출 로드 실패: ', error);
             } finally {
@@ -111,6 +171,12 @@ const ExpensesPage: React.FC = () => {
 
         fetchExpenses();
     }, [mode, currentMonth, currentGroup?.id, loadExpenses, loadGroupShares, loadMyGroups]);
+
+    useEffect(() => {
+        if (Object.keys(monthlyTrendData).length > 0) {
+            loadMonthlyTrendData();
+        }
+    }, [categoryFilter]);
 
     const categoryData = [
         {category: 'FOOD', label: '식비', color: '#FF6B6B'},
@@ -122,14 +188,19 @@ const ExpensesPage: React.FC = () => {
     ];
 
     // Category breakdown data (전체 데이터, 필터와 무관)
-    const allCategoryExpenses = expenses.filter(expense => {
-        const isModeMatch = mode === 'personal' ? !expense.groupId : expense.groupId;
-        const isCurrentMonth = isWithinInterval(new Date(expense.date), {
-            start: startOfMonth(currentMonth),
-            end: endOfMonth(currentMonth)
+    const allCategoryExpenses = (() => {
+        // monthlyTrendData에서 현재 달 데이터 가져오기
+        const currentMonthKey = format(currentMonth, 'yyyy-MM');
+        const currentMonthData = monthlyTrendData[currentMonthKey] || [];
+
+        return currentMonthData.filter(expense => {
+            if (mode === 'personal') {
+                return expense.expenseType === 'PERSONAL' || expense.expenseType === 'SHARE';
+            } else {
+                return expense.expenseType === 'GROUP';
+            }
         });
-        return isModeMatch && isCurrentMonth;
-    });
+    })();
 
     const allCategoryData = categoryData.map(cat => {
         const amount = allCategoryExpenses
@@ -145,18 +216,22 @@ const ExpensesPage: React.FC = () => {
     // Monthly trend data (카테고리 필터 적용하되 카테고리별 색상 유지)
     const monthlyData = Array.from({length: 6}, (_, i) => {
         const monthDate = subMonths(currentMonth, 5 - i);
-        const monthStart = startOfMonth(monthDate);
-        const monthEnd = endOfMonth(monthDate);
-        const monthExpenses = expenses.filter(expense => {
-            const expenseDate = new Date(expense.date);
-            const isModeMatch = mode === 'personal' ? !expense.groupId : expense.groupId;
-            return expenseDate >= monthStart && expenseDate <= monthEnd && isModeMatch;
+        const monthKey = format(monthDate, 'yyyy-MM');
+        const monthLabel = format(monthDate, 'M월');
+
+        const apiMonthData = monthlyTrendData[monthKey] || [];
+
+        const monthExpenses = apiMonthData.filter(expense => {
+            if (mode === 'personal') {
+                return expense.expenseType === 'PERSONAL' || expense.expenseType === 'SHARE';
+            } else {
+                return expense.expenseType === 'GROUP';
+            }
         });
 
-        const monthData: { [key: string]: any } = {month: format(monthDate, 'M월')};
+        const monthData: { [key: string]: any } = { month: monthLabel };
 
         if (categoryFilter === 'all') {
-            // 전체 카테고리별로 분리
             categoryData.forEach(cat => {
                 const categoryAmount = monthExpenses
                     .filter(expense => expense.category === cat.category)
@@ -164,7 +239,6 @@ const ExpensesPage: React.FC = () => {
                 monthData[cat.category] = categoryAmount;
             });
         } else {
-            // 선택된 카테고리만
             const categoryAmount = monthExpenses
                 .filter(expense => expense.category === categoryFilter)
                 .reduce((sum, expense) => sum + expense.amount, 0);
@@ -218,41 +292,6 @@ const ExpensesPage: React.FC = () => {
         }
     }
 
-    // 그룹 모드에서 개인 분담금 계산
-    const calculatePersonalShare = () => {
-        if (mode !== 'group' || !currentGroup || !user) return null;
-
-        const groupExpenses = allCategoryExpenses.filter(expense => expense.groupId);
-        const personalShares = [];
-
-        groupExpenses.forEach(expense => {
-            let personalAmount = 0;
-
-            // EQUAL, CUSTOM으로 대문자 타입에 맞춰 수정
-            if (expense.splitType === 'EQUAL') {
-                personalAmount = expense.amount / currentGroup.members.length;
-            } else if (expense.splitType === 'CUSTOM' && expense.splitData && expense.splitData.length > 0) {
-                const userSplit = expense.splitData.find(split => split.userId === user.id);
-                personalAmount = userSplit ? userSplit.amount : 0;
-            } else if (expense.splitType === 'SPECIFIC' && expense.splitData && expense.splitData.length > 0) {
-                const userSplit = expense.splitData.find(split => split.userId === user.id);
-                personalAmount = userSplit ? userSplit.amount : 0;
-            } else {
-                personalAmount = expense.amount / currentGroup.members.length;
-            }
-
-            if (personalAmount > 0) {
-                personalShares.push({
-                    ...expense,
-                    personalAmount,
-                    percentage: (personalAmount / expense.amount) * 100
-                });
-            }
-        });
-
-        return personalShares;
-    };
-
     const combinedExpenses = mode === 'personal'
         ? (() => {
             // groupShares는 이미 내 분담금만 포함하므로 그대로 사용
@@ -303,8 +342,6 @@ const ExpensesPage: React.FC = () => {
     })() : [];
 
     const totalGroupShares = groupSummary.reduce((sum, group) => sum + group.myShareAmount, 0);
-
-    const personalShares = calculatePersonalShare();
 
     // Analytics data (전체 카테고리 데이터 사용)
     const analytics = {
@@ -1110,7 +1147,7 @@ const ExpensesPage: React.FC = () => {
             )}
 
             {/* Personal Share in Group Mode */}
-            {mode === 'group' && personalShares && personalShares.length > 0 && (
+            {mode === 'group' && groupShares && groupShares.some(share => share.groupId === currentGroup?.id) && (
                 <motion.div
                     className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden"
                     initial={{opacity: 0, y: 20}}
@@ -1125,59 +1162,68 @@ const ExpensesPage: React.FC = () => {
                     </div>
 
                     <div className="p-6">
-                        <div className="mb-6">
-                            <div className="text-2xl font-bold text-primary-600">
-                                총
-                                분담금: {formatCurrency(personalShares.reduce((sum, share) => sum + share.personalAmount, 0))}
-                            </div>
-                            <div className="text-sm text-gray-500 mt-1">
-                                {personalShares.length}건의 그룹 지출
-                            </div>
-                        </div>
+                        {(() => {
+                            const currentGroupShares = groupShares.filter(share => share.groupId === currentGroup?.id);
+                            const totalShare = currentGroupShares.reduce((sum, share) => sum + share.myShareAmount, 0);
 
-                        <div className="space-y-4">
-                            {personalShares.map((share) => (
-                                <div key={share.id}
-                                     className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                                    <div className="flex items-center space-x-3">
-                                        <div
-                                            className="w-10 h-10 rounded-lg flex items-center justify-center"
-                                            style={{
-                                                backgroundColor: categoryData.find(cat => cat.category === share.category)?.color + '20'
-                                            }}
-                                        >
-                                            <Receipt
-                                                className="w-5 h-5"
-                                                style={{
-                                                    color: categoryData.find(cat => cat.category === share.category)?.color || '#df6d14'
-                                                }}
-                                            />
+                            return (
+                                <>
+                                    <div className="mb-6">
+                                        <div className="text-2xl font-bold text-primary-600">
+                                            총 분담금: {formatCurrency(totalShare)}
                                         </div>
-                                        <div>
-                                            <h4 className="font-medium text-gray-900">{share.title}</h4>
-                                            <div className="flex items-center space-x-2 text-sm text-gray-500">
-                                                <span>{categoryData.find(cat => cat.category === share.category)?.label}</span>
-                                                <span>•</span>
-                                                <span>전체: {formatCurrency(share.amount)}</span>
-                                                <span>•</span>
-                                                <span>
+                                        <div className="text-sm text-gray-500 mt-1">
+                                            {currentGroupShares.length}건의 그룹 지출
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        {currentGroupShares.map((share) => (
+                                            <div key={share.id}
+                                                 className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                                                <div className="flex items-center space-x-3">
+                                                    <div
+                                                        className="w-10 h-10 rounded-lg flex items-center justify-center"
+                                                        style={{
+                                                            backgroundColor: categoryData.find(cat => cat.category === share.category)?.color + '20'
+                                                        }}
+                                                    >
+                                                        <Receipt
+                                                            className="w-5 h-5"
+                                                            style={{
+                                                                color: categoryData.find(cat => cat.category === share.category)?.color || '#df6d14'
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="font-medium text-gray-900">{share.title}</h4>
+                                                        <div
+                                                            className="flex items-center space-x-2 text-sm text-gray-500">
+                                                            <span>{categoryData.find(cat => cat.category === share.category)?.label}</span>
+                                                            <span>•</span>
+                                                            <span>전체: {formatCurrency(share.amount)}</span>
+                                                            <span>•</span>
+                                                            <span>
                                                     {share.splitType === 'EQUAL' ? '균등분할' :
                                                         share.splitType === 'SPECIFIC' ? '지정분할' : '사용자정의'}
                                                 </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <div className="text-lg font-bold text-primary-600">
+                                                        {formatCurrency(share.myShareAmount)}
+                                                    </div>
+                                                    <div className="text-xs text-gray-500">
+                                                        ({((share.myShareAmount / share.amount) * 100).toFixed(1)}%)
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
+                                        ))}
                                     </div>
-                                    <div className="text-right">
-                                        <div className="text-lg font-bold text-primary-600">
-                                            {formatCurrency(share.personalAmount)}
-                                        </div>
-                                        <div className="text-xs text-gray-500">
-                                            ({share.percentage.toFixed(1)}%)
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+                                </>
+                            );
+                        })()}
                     </div>
                 </motion.div>
             )}

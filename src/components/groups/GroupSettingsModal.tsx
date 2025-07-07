@@ -35,8 +35,10 @@ const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({isOpen, onClose,
     const [activeTab, setActiveTab] = useState(isGroupLeader ? 'info' : 'members');
     const [editedGroupName, setEditedGroupName] = useState(group.name);
     const [editedMonthlyBudget, setEditedMonthlyBudget] = useState(group.monthlyBudget || 0);
+    const [editedMaxMembers, setEditedMaxMembers] = useState(group.maxMembers || 2);
     const [isEditing, setIsEditing] = useState(false);
     const [isEditingBudget, setIsEditingBudget] = useState(false);
+    const [isEditingMaxMembers, setIsEditingMaxMembers] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
     const [promotingMember, setPromotingMember] = useState<string | null>(null);
@@ -167,6 +169,30 @@ const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({isOpen, onClose,
             toast.error(error.message || '예산 변경에 실패했습니다.');
             // 에러 시 원래 값으로 되돌리기
             setEditedMonthlyBudget(group.monthlyBudget || 0);
+        }
+    };
+
+    const handleSaveMaxMembers = async () => {
+        if (editedMaxMembers < 2) {
+            toast.error('그룹 최대 인원은 2명 이상이어야 합니다.');
+            return;
+        }
+
+        try {
+            const fullUpdateData = {
+                groupName: group.name,
+                maxMembers: editedMaxMembers,
+                groupBudget: group.monthlyBudget || 0
+            };
+
+            await groupsAPI.updateGroup(group.id, fullUpdateData);
+            updateGroup(group.id, { maxMembers: editedMaxMembers });
+            setIsEditingMaxMembers(false);
+            toast.success('그룹 최대 인원이 변경되었습니다.');
+        } catch (error: any) {
+            console.error('최대 인원 수정 오류:', error);
+            toast.error(error.message || '최대 인원 변경에 실패했습니다.');
+            setEditedMaxMembers(group.maxMembers || 2);
         }
     };
 
@@ -454,6 +480,70 @@ const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({isOpen, onClose,
                 </div>
                 <p className="text-xs text-gray-500 mt-2">
                     이 코드를 통해 다른 사람들이 그룹에 참여할 수 있습니다.
+                </p>
+            </div>
+
+            {/* 최대 인원수 수정 */}
+            <div className="bg-gray-50 rounded-xl p-4">
+                <div className="flex items-center justify-between mb-3">
+                    <label className="text-sm font-medium text-gray-700">그룹 최대 인원</label>
+                    {isGroupLeader && !isEditingMaxMembers ? (
+                        <button
+                            onClick={() => setIsEditingMaxMembers(true)}
+                            className="text-blue-600 hover:text-blue-700 p-1 rounded hover:bg-blue-50 transition-colors"
+                        >
+                            <Edit3 className="w-4 h-4"/>
+                        </button>
+                    ) : isGroupLeader && isEditingMaxMembers ? (
+                        <div className="flex items-center space-x-2">
+                            <button
+                                onClick={handleSaveMaxMembers}
+                                className="text-green-600 hover:text-green-700 p-1 rounded hover:bg-green-50 transition-colors"
+                            >
+                                <Save className="w-4 h-4"/>
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setIsEditingMaxMembers(false);
+                                    setEditedMaxMembers(group.maxMembers || 2);
+                                }}
+                                className="text-gray-600 hover:text-gray-700 p-1 rounded hover:bg-gray-100 transition-colors"
+                            >
+                                <X className="w-4 h-4"/>
+                            </button>
+                        </div>
+                    ) : null}
+                </div>
+                {isGroupLeader && isEditingMaxMembers ? (
+                    <div className="relative">
+                        <input
+                            type="number"
+                            value={editedMaxMembers}
+                            onChange={(e) => setEditedMaxMembers(parseInt(e.target.value) || 2)}
+                            className="w-full px-3 py-2 pr-8 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            min="2"
+                            max="100"
+                            placeholder="최대 인원을 입력하세요"
+                        />
+                        <span className="absolute right-3 top-2 text-gray-500">명</span>
+                    </div>
+                ) : (
+                    <div className="flex items-center justify-between">
+                        <p className="text-gray-900 font-medium">
+                            {group.maxMembers ? `${group.maxMembers}명` : '설정되지 않음'}
+                        </p>
+                        {!isGroupLeader && (
+                            <span className="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded">
+                                그룹장만 수정 가능
+                            </span>
+                        )}
+                    </div>
+                )}
+                <p className="text-xs text-gray-500 mt-2">
+                    {isGroupLeader
+                        ? '그룹의 최대 인원을 설정하세요 (최소 2명).'
+                        : '그룹장이 설정한 최대 인원입니다.'
+                    }
                 </p>
             </div>
 

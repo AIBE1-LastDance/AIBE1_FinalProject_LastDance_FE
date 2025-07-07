@@ -12,7 +12,6 @@ const PostDetailPage: React.FC = () => {
   const { postId } = useParams<{ postId: string }>();
   const navigate = useNavigate();
   const { posts, deletePost } = useAppStore();
-
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -50,6 +49,12 @@ const PostDetailPage: React.FC = () => {
     }
   }, [postId, posts]); // 의존성 배열에 posts 추가 (로컬 스토어 사용 시)
 
+  // handleEdit 함수 정의 (누락되어 있어서 추가했습니다. 로직은 이전 대화 내용 기반)
+  const handleEdit = (postToEdit: Post) => {
+    setEditingPost(postToEdit);
+    setIsEditModalOpen(true);
+  };
+
   if (loading) {
     return <div className="text-center py-20">로딩 중...</div>;
   }
@@ -82,12 +87,6 @@ const PostDetailPage: React.FC = () => {
     );
   }
 
-  const handleEdit = (postToEdit: Post) => {
-    // 매개변수 이름을 겹치지 않게 변경
-    setEditingPost(postToEdit);
-    setIsEditModalOpen(true);
-  };
-
   const handleDelete = (idToDelete: string) => {
     // 매개변수 이름을 겹치지 않게 변경
     deletePost(idToDelete);
@@ -98,6 +97,16 @@ const PostDetailPage: React.FC = () => {
     navigate("/community");
   };
 
+  // handlePostUpdated 함수 (CreatePostModal의 onSuccess prop을 위해 필요)
+  const handlePostUpdated = (updatedPost: Post) => {
+    setPost(updatedPost); // PostDetail에 표시되는 게시글 업데이트
+    // 전역 스토어 업데이트 로직이 필요하다면 여기에 추가
+    // 예: updatePost(updatedPost.postId, updatedPost);
+    setIsEditModalOpen(false);
+    setEditingPost(null);
+    // toast.success("게시글이 성공적으로 수정되었습니다."); (필요하다면 토스트 추가)
+  };
+
   return (
     <>
       <PostDetail
@@ -105,14 +114,16 @@ const PostDetailPage: React.FC = () => {
         onBack={handleBack}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        // onToggleLike, onToggleBookmark prop이 PostDetail에 필요하다면 여기에 추가 (현재 코드에는 없음)
       />
       {isEditModalOpen && (
         <CreatePostModal
-          post={editingPost}
+          post={editingPost} // editingPost를 prop으로 전달
           onClose={() => {
             setIsEditModalOpen(false);
             setEditingPost(null);
           }}
+          onSuccess={handlePostUpdated} // 모달 닫기 및 게시글 업데이트 후 처리
         />
       )}
     </>

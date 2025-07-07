@@ -2,7 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Users, Play, RotateCcw, Trophy, HelpCircle, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import GameSetupModal from './GameSetupModal';
+import { gameApi, GameResultRequest } from '../../api/games';
+import { useAppStore } from '../../store/appStore';
 
 interface LadderLine {
   from: number;
@@ -12,6 +15,7 @@ interface LadderLine {
 
 const LadderGamePage: React.FC = () => {
   const navigate = useNavigate();
+  const { mode, currentGroup } = useAppStore();
   const [showSetup, setShowSetup] = useState(true);
   const [players, setPlayers] = useState<string[]>([]);
   const [penalty, setPenalty] = useState('');
@@ -172,6 +176,31 @@ const LadderGamePage: React.FC = () => {
     }, 100);
   };
 
+  // 게임 결과 저장 함수
+  const saveGameResult = async (winner: string) => {
+    try {
+      const gameData: GameResultRequest = {
+        gameType: "LADDER",
+        participants: players,
+        result: winner,
+        penalty: penalty
+      };
+
+      if (mode === 'group' && currentGroup) {
+        // 그룹 모드: 그룹 결과만 저장
+        await gameApi.saveGroupResult(currentGroup.id, gameData);
+        toast.success(`그룹(${currentGroup.name})에 게임 결과가 저장되었습니다!`);
+      } else {
+        // 개인 모드: 개인 결과만 저장
+        await gameApi.saveMyResult(gameData);
+        toast.success('개인 게임 결과가 저장되었습니다!');
+      }
+    } catch (error) {
+      console.error('게임 결과 저장 실패:', error);
+      toast.error('게임 결과 저장에 실패했습니다.');
+    }
+  };
+
   const playGame = (playerIndex: number) => {
     if (isPlaying || playedPlayers.includes(playerIndex) || gameFinished) return;
     
@@ -189,13 +218,17 @@ const LadderGamePage: React.FC = () => {
     setTimeout(() => {
       if (isPenalty) {
         // 벌칙에 당첨된 경우: 게임 종료
+        const winner = players[playerIndex];
         setResult({
-          player: players[playerIndex],
+          player: winner,
           penalty: penalty
         });
         setGameFinished(true);
         setIsPlaying(false);
         setShowAnimation(false);
+        
+        // 게임 결과 저장
+        saveGameResult(winner);
       } else {
         // 통과한 경우: 플레이어를 사용됨 목록에 추가하고 게임 계속
         setPlayedPlayers(prev => [...prev, playerIndex]);
