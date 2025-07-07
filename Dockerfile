@@ -32,10 +32,8 @@ COPY nginx.conf /etc/nginx/nginx.conf
 # Copy additional files (robots.txt, sw.js already in public folder)
 # These will be copied with the dist folder
 
-# Create nginx user and set permissions
-RUN addgroup -g 1001 -S nginx && \
-    adduser -S nginx -u 1001 && \
-    chown -R nginx:nginx /usr/share/nginx/html && \
+# Set permissions for existing nginx user
+RUN chown -R nginx:nginx /usr/share/nginx/html && \
     chown -R nginx:nginx /var/cache/nginx && \
     touch /var/run/nginx.pid && \
     chown -R nginx:nginx /var/run/nginx.pid
