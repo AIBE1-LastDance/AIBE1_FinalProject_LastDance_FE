@@ -57,15 +57,6 @@ export const usePostStore = create<PostState>((set, get) => ({
     const CACHE_DURATION = 5 * 60 * 1000; // 5분 캐시
     const { posts, lastFetched, setPosts, setLastFetched } = get();
 
-    // 캐시된 데이터가 있고 유효 기간 내라면 API 호출을 건너뜁니다.
-    // 하지만, 게시글 작성/수정/삭제 후에는 항상 새로고침해야 하므로 이 캐싱 로직은 주의해서 사용해야 합니다.
-    // 여기서는 CommunityPage.tsx에서 명시적으로 loadPosts()를 호출하므로, 캐시 로직은 제거하거나 더 정교하게 구현해야 합니다.
-    // 일단은 항상 API를 호출하도록 수정합니다.
-    // if (posts.length > 0 && Date.now() - lastFetched < CACHE_DURATION) {
-    //   console.log("[usePostStore: 캐시된 게시글 데이터 사용]");
-    //   return;
-    // }
-
     try {
       console.log("[usePostStore: 백엔드에서 게시글 로딩 시작]");
       const data: any[] = await fetchAllPosts();

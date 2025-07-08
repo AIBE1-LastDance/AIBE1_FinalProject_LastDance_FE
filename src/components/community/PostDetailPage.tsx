@@ -1,13 +1,15 @@
+// PostDetailPage.tsx
+
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useAppStore } from "../../store/appStore"; // Zustand 스토어
+import { useAppStore } from "../../store/appStore";
 import PostDetail from "./PostDetail";
 import CreatePostModal from "./CreatePostModal";
-import { Post, PostDetailProps } from "../../types/community/community";
+import { Post } from "../../types/community/community";
 import {
   fetchPostById,
   deletePost as deletePostApi,
-} from "../../api/community/community"; // API 함수 임포트
+} from "../../api/community/community";
 import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import toast from "react-hot-toast";
@@ -15,7 +17,6 @@ import toast from "react-hot-toast";
 const PostDetailPage: React.FC = () => {
   const { postId } = useParams<{ postId: string }>();
   const navigate = useNavigate();
-  // Zustand 스토어에서 필요한 액션들을 가져옵니다.
   const { deletePost: deletePostFromStore, updatePost: updatePostInStore } =
     useAppStore();
 
@@ -23,9 +24,8 @@ const PostDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0); // 데이터 강제 새로고침을 위한 키
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  // 게시글 데이터를 백엔드에서 불러오는 함수
   const loadPost = useCallback(async () => {
     if (!postId) {
       setNotFound(true);
@@ -42,11 +42,10 @@ const PostDetailPage: React.FC = () => {
         likedBy: data.likedBy || [],
         bookmarkedBy: data.bookmarkedBy || [],
         comments: data.comments || [],
-        authorId: data.authorId, // 이미 Post 타입에서 authorId를 가질 것이므로 별도 수정 불필요
+        authorId: data.authorId,
       };
       setPost(fetchedPost);
-      // 게시글 불러오기 성공 시, 전역 스토어에도 업데이트 (옵션: 목록 업데이트 시 필요)
-      updatePostInStore(fetchedPost.postId, fetchedPost);
+      // 이전에 있던 updatePostInStore(fetchedPost.postId, fetchedPost); 줄을 삭제합니다.
     } catch (error: any) {
       console.error("게시글 불러오기 실패:", error);
       setNotFound(true);
@@ -54,22 +53,18 @@ const PostDetailPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [postId, updatePostInStore]); // 의존성 추가
+  }, [postId]); // updatePostInStore는 더 이상 의존성에 필요 없습니다.
 
-  // 컴포넌트 마운트 시 또는 postId/refreshKey 변경 시 게시글 로드
   useEffect(() => {
     loadPost();
-  }, [loadPost, refreshKey]); // refreshKey가 변경되면 loadPost가 다시 호출됩니다.
+  }, [loadPost, refreshKey]);
 
-  // handleEdit 함수 정의
   const handleEdit = () => {
     if (post) {
-      // 수정 모달에 현재 게시글 데이터를 전달합니다.
       setIsEditModalOpen(true);
     }
   };
 
-  // 삭제 처리
   const handleDelete = async () => {
     if (!post) {
       toast.error("삭제할 게시글 정보가 없습니다.");
@@ -81,11 +76,10 @@ const PostDetailPage: React.FC = () => {
     }
 
     try {
-      // 백엔드 API를 호출하여 게시글 삭제
-      await deletePostApi(post.postId); // api/community/community.ts의 deletePost 함수
-      deletePostFromStore(post.postId); // Zustand 스토어에서 게시글 삭제
+      await deletePostApi(post.postId);
+      deletePostFromStore(post.postId);
       toast.success("게시글이 성공적으로 삭제되었습니다.");
-      navigate("/community"); // 삭제 후 목록 페이지로 이동
+      navigate("/community");
     } catch (error: any) {
       console.error("게시글 삭제 실패:", error);
       toast.error(
@@ -99,15 +93,14 @@ const PostDetailPage: React.FC = () => {
     navigate("/community");
   };
 
-  // CreatePostModal에서 게시글 수정이 완료되었을 때 호출될 콜백
   const handlePostUpdated = (updatedPost?: Post | null) => {
-    setIsEditModalOpen(false); // 모달 닫기
+    setIsEditModalOpen(false);
     if (updatedPost) {
-      setPost(updatedPost); // PostDetail 컴포넌트에 표시되는 게시글 상태 즉시 업데이트
-      updatePostInStore(updatedPost.postId, updatedPost); // Zustand 스토어의 게시글 업데이트
+      setPost(updatedPost);
+      updatePostInStore(updatedPost.postId, updatedPost); // 이곳에서는 스토어 업데이트가 맞습니다.
       toast.success("게시글이 성공적으로 수정되었습니다.");
     } else {
-      setRefreshKey((prev) => prev + 1); // refreshKey를 증가시켜 useEffect 재실행 유도
+      setRefreshKey((prev) => prev + 1);
     }
   };
 
@@ -155,16 +148,9 @@ const PostDetailPage: React.FC = () => {
         onBack={handleBack}
         onEdit={handleEdit}
         onDelete={handleDelete}
-        // PostDetail에 onToggleLike, onToggleBookmark prop이 있다면 여기에 추가
-        // PostDetail 컴포넌트가 좋아요/북마크 상태를 업데이트할 책임이 있습니다.
-        // 예를 들어: onToggleLike={() => setRefreshKey(prev => prev + 1)}
-        // 또는 PostDetail 내부에서 직접 API 호출 및 상태 관리
       />
       {isEditModalOpen && (
-        <CreatePostModal
-          post={post} // 현재 post 상태를 모달에 전달
-          onClose={handlePostUpdated} // 수정 성공/실패 모두 이 핸들러로 처리
-        />
+        <CreatePostModal post={post} onClose={handlePostUpdated} />
       )}
     </>
   );
