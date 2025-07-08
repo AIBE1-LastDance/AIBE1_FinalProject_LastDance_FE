@@ -623,14 +623,7 @@ const SettingsPage: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* 활성화 상태 표시줄 */}
-                            {notifications.emailEnabled && (
-                                <motion.div
-                                    initial={{ scaleX: 0 }}
-                                    animate={{ scaleX: 1 }}
-                                    className="h-1 bg-gradient-to-r from-blue-500 to-blue-600 origin-left"
-                                />
-                            )}
+                            {/* 밑줄 제거 */}
                         </motion.div>
                     )}
                 </div>
@@ -752,14 +745,7 @@ const SettingsPage: React.FC = () => {
                                             </div>
                                         </div>
 
-                                        {/* 활성화 상태 표시줄 */}
-                                        {value && (
-                                            <motion.div
-                                                initial={{ scaleX: 0 }}
-                                                animate={{ scaleX: 1 }}
-                                                className={`h-1 bg-gradient-to-r ${setting.color} origin-left`}
-                                            />
-                                        )}
+                                        {/* 밑줄 제거 */}
                                     </motion.div>
                                 );
                             })}
@@ -803,7 +789,7 @@ const SettingsPage: React.FC = () => {
                 <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
                     <div className="flex items-center justify-between mb-6">
                         <div>
-                            <h3 className="text-xl font-bold text-gray-900">🚀 스마트 알림 시스템</h3>
+                            <h3 className="text-xl font-bold text-gray-900">스마트 알림 시스템</h3>
                             <p className="text-sm text-gray-600 mt-1">실시간 연결과 백그라운드 알림으로 놓치는 알림이 없어요</p>
                         </div>
                         <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-3 py-1 rounded-full text-xs font-medium">
