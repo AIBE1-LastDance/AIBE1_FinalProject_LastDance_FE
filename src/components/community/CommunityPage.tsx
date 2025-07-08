@@ -115,15 +115,6 @@ const CommunityPage: React.FC = () => {
       icon: HelpCircle,
       color: "text-red-600",
     },
-    {
-      id: "POLICY",
-      name: "정책게시판",
-      icon: FileText,
-      color: "text-green-600",
-      onClick: () => {
-        navigate("/youth-policy");
-      },
-    },
   ];
 
   const processedPosts = useMemo(() => {
