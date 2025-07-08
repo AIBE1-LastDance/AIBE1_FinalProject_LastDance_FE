@@ -128,6 +128,56 @@ export const expenseAPI = {
         return response.data;
     },
 
+    // 그룹 분담금 페이징 조회
+    getGroupSharesPaginated: async (groupId: string, params: {
+        year: number;
+        month: number;
+        page?: number;
+        size?: number;
+    }) => {
+        const response = await apiClient.get(`/api/v1/expenses/group/${groupId}/shares/paging`, { params });
+        return response.data;
+    },
+
+    // 통합 지출 조회 (개인 + 그룹 분담금)
+    getCombinedExpenses: async (params: {
+        year: number;
+        month: number;
+        page?: number;
+        size?: number;
+        category?: string;
+        search?: string;
+    }) => {
+        const response = await apiClient.get('/api/v1/expenses/personal/combined', {params});
+        return response.data;
+    },
+
+    // 통합 지출 조회 (그룹 + 그룹 분담금)
+    getGroupCombinedExpenses: async (groupId: string, params: {
+        year: number;
+        month: number;
+        page?: number;
+        size?: number;
+        category?: string;
+        search?: string;
+    }) => {
+        const response = await apiClient.get(`/api/v1/expenses/group/${groupId}/combined`, {params});
+        return response.data;
+    },
+
+    // 그룹 지출 (통계 포함)
+    getGroupExpensesWithStats: async (groupId: string, params: {
+        year: number;
+        month: number;
+        page?: number;
+        size?: number;
+        category?: string;
+        search?: string;
+    }) => {
+        const response = await apiClient.get(`/api/v1/expenses/group/${groupId}/with-stats`, {params});
+        return response.data;
+    },
+
     // 지출 수정
     update: async (id: number, data: Partial<ExpenseWithReceiptRequest>) => {
         const formData = new FormData();

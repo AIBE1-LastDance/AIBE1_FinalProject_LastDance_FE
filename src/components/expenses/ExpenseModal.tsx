@@ -96,6 +96,9 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
         e.preventDefault();
         if (isSubmitting) return;
 
+        console.log('expense: ', expense);
+        console.log('expense.id: ', expense?.id);
+
         const amount = Number(formData.amount.replace(/[^0-9]/g, ''));
 
         if (!formData.title.trim()) {
@@ -158,6 +161,7 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
         try {
             if (expense) {
                 updateExpense(expense.id, expenseData);
+
             } else {
                 await addExpense(expenseData);
             }

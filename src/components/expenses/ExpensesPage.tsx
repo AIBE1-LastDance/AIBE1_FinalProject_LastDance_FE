@@ -40,6 +40,7 @@ import {ko} from 'date-fns/locale';
 import ExpenseModal from './ExpenseModal';
 import {expenseAPI} from "../../api/expense";
 import toast from "react-hot-toast";
+import Pagination from '../common/Pagination'
 
 interface GroupSummary {
     groupId: string;
@@ -60,7 +61,18 @@ const ExpensesPage: React.FC = () => {
         groupShares,
         loadGroupShares,
         joinedGroups,
-        loadMyGroups
+        loadMyGroups,
+        combinedExpenses,
+        currentPage,
+        totalPages,
+        loadCombinedExpenses,
+        setCurrentPage,
+        summary,
+        groupSharesCurrentPage,
+        groupSharesTotalPages,
+        setGroupSharesCurrentPage,
+        loadGroupSharesPaginated,
+        groupSharesSummary,
     } = useAppStore();
     const {user} = useAuthStore();
     const [showExpenseModal, setShowExpenseModal] = useState(false);
@@ -79,6 +91,7 @@ const ExpensesPage: React.FC = () => {
     const [currentReceiptUrl, setCurrentReceiptUrl] = useState<string | null>(null);
     const [activeIndex, setActiveIndex] = useState<number | null>(null);
     const [monthlyTrendData, setMonthlyTrendData] = useState<any>({});
+    const [pageLoading, setPageLoading] = useState(false);
 
     // 월별 추이 데이터 로드
     const loadMonthlyTrendData = React.useCallback(async () => {
@@ -117,21 +130,37 @@ const ExpensesPage: React.FC = () => {
 
             if (mode === 'group') {
                 promises.push(loadMyGroups());
+
+                promises.push(loadGroupSharesPaginated({
+                    year: currentMonth.getFullYear(),
+                    month: currentMonth.getMonth() + 1,
+                    groupId: currentGroup?.id,
+                    page: groupSharesCurrentPage,
+                    size: 5,
+                }));
             }
 
+            // 통합 조회 API
             const expenseParams = {
                 mode,
                 year: currentMonth.getFullYear(),
                 month: currentMonth.getMonth() + 1,
-                groupId: mode === 'group' ? currentGroup?.id : null
+                page: currentPage,
+                size: 10,
+                groupId: mode === 'group' ? currentGroup?.id : null,
+                category: categoryFilter === 'all' ? undefined : categoryFilter,
+                search: searchTerm || undefined,
             };
-            promises.push(loadExpenses(expenseParams));
+            promises.push(loadCombinedExpenses(expenseParams));
 
-            promises.push(loadGroupShares({
-                year: currentMonth.getFullYear(),
-                month: currentMonth.getMonth() + 1,
-            }));
+            if (mode === 'personal') {
+                promises.push(loadGroupShares({
+                    year: currentMonth.getFullYear(),
+                    month: currentMonth.getMonth() + 1,
+                }));
+            }
 
+            // 월별 추이 데이터
             promises.push(loadMonthlyTrendData());
 
             await Promise.all(promises);
@@ -140,7 +169,7 @@ const ExpensesPage: React.FC = () => {
         } finally {
             setLoading(false);
         }
-    }, [mode, currentMonth, currentGroup?.id, loadExpenses, loadGroupShares, loadMyGroups, loadMonthlyTrendData]);
+    }, [mode, currentMonth, currentGroup?.id, categoryFilter, searchTerm, loadCombinedExpenses, loadMyGroups, loadMonthlyTrendData, currentPage, groupSharesCurrentPage, loadGroupSharesPaginated]);
 
     useEffect(() => {
         refreshAllData();
@@ -176,7 +205,24 @@ const ExpensesPage: React.FC = () => {
         });
     })();
 
-    const categoryBreakdown = categoryData.map(cat => {
+    // 백엔드 summary 데이터가 있으면 그걸 사용, 없으면 기존 로직
+    const categoryBreakdown = summary?.categoryStats ?
+        Object.entries(summary.categoryStats).map(([category, stats]: [string, any]) => {
+            const categoryInfo = categoryData.find(cat => cat.category === category);
+            return {
+                category,
+                label: categoryInfo?.label || category,
+                amount: stats.amount,
+                count: stats.count,
+                percentage: stats.percentage,
+                color: categoryInfo?.color || '#df6d14',
+                // 파이차트 필수 필드들
+                name: categoryInfo?.label || category,
+                value: stats.amount, // 이게 중요!
+            };
+        }).filter(item => item.amount > 0).sort((a, b) => b.amount - a.amount) : [];
+    // 백업용 기존 로직 (summary가 없을 때만)
+    categoryData.map(cat => {
         const amount = allCategoryExpenses
             .filter(expense => expense.category === cat.category)
             .reduce((sum, expense) => sum + expense.amount, 0);
@@ -186,17 +232,7 @@ const ExpensesPage: React.FC = () => {
         };
     }).filter(item => item.amount > 0);
 
-    const totalBreakdownAmount = categoryBreakdown.reduce((sum, cat) => sum + cat.amount, 0);
-
-    const allCategoryData = categoryBreakdown.map(cat => ({
-        name: cat.label,
-        value: cat.amount,
-        color: cat.color,
-        label: cat.label,
-        amount: cat.amount,
-        category: cat.category,
-        percentage: totalBreakdownAmount > 0 ? (cat.amount / totalBreakdownAmount) * 100 : 0,
-    })).sort((a, b) => b.amount - a.amount);
+    const allCategoryData = categoryBreakdown;
 
     // Monthly trend data (카테고리 필터 적용하되 카테고리별 색상 유지)
     const monthlyData = Array.from({length: 6}, (_, i) => {
@@ -214,7 +250,7 @@ const ExpensesPage: React.FC = () => {
             }
         });
 
-        const monthData: { [key: string]: any } = { month: monthLabel };
+        const monthData: { [key: string]: any } = {month: monthLabel};
 
         if (categoryFilter === 'all') {
             categoryData.forEach(cat => {
@@ -246,6 +282,7 @@ const ExpensesPage: React.FC = () => {
     ];
 
     const handleExpenseClick = (expense) => {
+        console.log('expense.id: ', expense.id);
         setSelectedExpense(expense);
         setShowExpenseModal(true);
 
@@ -277,34 +314,11 @@ const ExpensesPage: React.FC = () => {
         }
     }
 
-    const combinedExpenses = mode === 'personal'
-        ? (() => {
-            // groupShares는 이미 내 분담금만 포함하므로 그대로 사용
-            return [...expenses, ...groupShares]
-                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        })()
-        : expenses;
+    const filteredExpenses = combinedExpenses;
 
-    const filteredExpenses = combinedExpenses.filter(expense => {
-        const isModeMatch = mode === 'personal'
-            ? (!expense.groupId || expense.isGroupShare)
-            : expense.groupId;
-
-        const isCurrentMonth = isWithinInterval(new Date(expense.date), {
-            start: startOfMonth(currentMonth),
-            end: endOfMonth(currentMonth)
-        });
-        const matchesSearch = expense.title.toLowerCase().includes(searchTerm.toLowerCase()) || expense.memo?.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesCategory = categoryFilter === 'all' || expense.category === categoryFilter
-
-        return isModeMatch && isCurrentMonth && matchesSearch && matchesCategory;
-    });
-
-    const totalAmount = filteredExpenses.reduce((sum, expense) =>
-        sum + (expense.myShareAmount || expense.amount), 0
-    );
-    const avgAmount = filteredExpenses.length > 0 ? totalAmount / filteredExpenses.length : 0;
-    const maxAmount = Math.max(...filteredExpenses.map(e => e.myShareAmount || e.amount), 0);
+    const totalAmount = summary?.totalAmount || 0;
+    const avgAmount = summary?.averageAmount || 0;
+    const maxAmount = summary?.maxAmount || 0;
 
     // 그룹별 분담금 요약 계산
     const groupSummary: GroupSummary[] = mode === 'personal' ? (() => {
@@ -334,23 +348,7 @@ const ExpensesPage: React.FC = () => {
         avgAmount,
         maxAmount,
         totalCount: filteredExpenses.length,
-        categoryBreakdown: categoryData.map(cat => {
-            const catExpenses = mode === 'personal'
-                ? filteredExpenses.filter(e => e.category === cat.category)
-                : allCategoryExpenses.filter(e => e.category === cat.category);
-            const amount = catExpenses.reduce((sum, e) =>
-                sum + (e.myShareAmount || e.amount), 0
-            );
-            const totalAllAmount = allCategoryExpenses.reduce((sum, e) => sum + e.amount, 0);
-            return {
-                category: cat.category,
-                label: cat.label,
-                amount,
-                count: catExpenses.length,
-                percentage: totalAllAmount > 0 ? (amount / totalAllAmount) * 100 : 0,
-                color: cat.color,
-            };
-        }).filter(item => item.amount > 0).sort((a, b) => b.amount - a.amount),
+        categoryBreakdown: categoryBreakdown,
     };
 
     // AI 분석 생성 함수
@@ -387,6 +385,7 @@ const ExpensesPage: React.FC = () => {
         setLoading(true);
         const newMonth = subMonths(currentMonth, 1);
         setCurrentMonth(newMonth);
+        setCurrentPage(0);
 
         try {
             const params = {
@@ -407,6 +406,7 @@ const ExpensesPage: React.FC = () => {
         if (nextMonth <= today) {
             setLoading(true);
             setCurrentMonth(nextMonth);
+            setCurrentPage(0);
 
             try {
                 const params = {
@@ -420,6 +420,19 @@ const ExpensesPage: React.FC = () => {
                 setLoading(false);
             }
         }
+    };
+
+    // categoryFilter 변경 핸들러 추가
+    const handleCategoryChange = (newCategory: string) => {
+        setCategoryFilter(newCategory);
+        setCurrentPage(0); // 첫 페이지로 리셋
+        setShowCategoryDropdown(false);
+    };
+
+    // searchTerm 변경 핸들러 추가
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchTerm(e.target.value);
+        setCurrentPage(0); // 첫 페이지로 리셋
     };
 
     // AI 분석 데이터 생성 (현재 또는 선택된 분석)
@@ -531,9 +544,53 @@ const ExpensesPage: React.FC = () => {
 
     const aiAnalysis = getAIAnalysis();
 
+    // 메인 지출 목록 페이징 핸들러
+    const handlePageChange = async (newPage: number) => {
+        // newPage는 1-based이므로 0-based로 변환
+        const zeroBasedPage = newPage - 1;
+
+        if (zeroBasedPage >= 0 && zeroBasedPage < totalPages && zeroBasedPage !== currentPage) {
+            setCurrentPage(zeroBasedPage);
+            setPageLoading(true);
+
+            try {
+                const expenseParams = {
+                    mode,
+                    year: currentMonth.getFullYear(),
+                    month: currentMonth.getMonth() + 1,
+                    page: zeroBasedPage,
+                    size: 10,
+                    groupId: mode === 'group' ? currentGroup?.id : null,
+                    category: categoryFilter === 'all' ? undefined : categoryFilter,
+                    search: searchTerm || undefined,
+                };
+                await loadCombinedExpenses(expenseParams);
+
+            } catch (error) {
+                console.error('페이지 로드 실패:', error);
+            } finally {
+                setPageLoading(false);
+            }
+        }
+    };
+
+    // 분담금 목록 페이징 핸들러
+    const handleSharePageChange = async (newPage: number) => {
+        // newPage는 1-based이므로 0-based로 변환
+        const zeroBasedPage = newPage - 1;
+
+        await loadGroupSharesPaginated({
+            year: currentMonth.getFullYear(),
+            month: currentMonth.getMonth() + 1,
+            groupId: currentGroup?.id,
+            page: zeroBasedPage,
+            size: 5
+        });
+    };
+
     const renderActiveShape = (props) => {
         const RADIAN = Math.PI / 180;
-        const { cx, cy, midAngle, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent, value } = props;
+        const {cx, cy, midAngle, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent, value} = props;
         const sin = Math.sin(-RADIAN * midAngle);
         const cos = Math.cos(-RADIAN * midAngle);
         const sx = cx + (outerRadius + 10) * cos;
@@ -546,13 +603,15 @@ const ExpensesPage: React.FC = () => {
 
         return (
             <g>
-                <text x={cx} y={cy} dy={-10} textAnchor="middle" fill="#333" style={{ fontSize: '16px', fontWeight: 'bold' }}>
+                <text x={cx} y={cy} dy={-10} textAnchor="middle" fill="#333"
+                      style={{fontSize: '16px', fontWeight: 'bold'}}>
                     {payload.name}
                 </text>
-                <text x={cx} y={cy} dy={15} textAnchor="middle" fill="#666" style={{ fontSize: '14px' }}>
+                <text x={cx} y={cy} dy={15} textAnchor="middle" fill="#666" style={{fontSize: '14px'}}>
                     {formatCurrency(value)}
                 </text>
-                <text x={cx} y={cy} dy={40} textAnchor="middle" fill={fill} style={{ fontSize: '18px', fontWeight: 'bold' }}>
+                <text x={cx} y={cy} dy={40} textAnchor="middle" fill={fill}
+                      style={{fontSize: '18px', fontWeight: 'bold'}}>
                     {`${(percent * 100).toFixed(1)}%`}
                 </text>
                 <Sector
@@ -570,7 +629,7 @@ const ExpensesPage: React.FC = () => {
         );
     };
 
-    if (loading) {
+    if (loading && currentPage === 0) {
         return (
             <div className="space-y-8">
                 <div className="flex items-center justify-center py-12">
@@ -639,7 +698,7 @@ const ExpensesPage: React.FC = () => {
                             placeholder="지출 검색..."
                             className="pl-10 pr-4 py-3 border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white hover:bg-gray-50 transition-colors font-medium text-gray-700 placeholder-gray-400 shadow-sm w-full sm:w-auto"
                             value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
+                            onChange={handleSearchChange}
                         />
                     </div>
 
@@ -649,7 +708,7 @@ const ExpensesPage: React.FC = () => {
                             className="flex items-center space-x-3 pl-3 pr-4 py-3 border border-gray-200 rounded-2xl text-sm bg-white hover:bg-gray-50 transition-colors font-medium text-gray-700 cursor-pointer shadow-sm w-full sm:w-auto whitespace-nowrap"
                             whileHover={{scale: 1.02}}
                             whileTap={{scale: 0.98}}
-                            onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                            onClick={() => handleCategoryChange(cat.value)}
                         >
                             <Filter className="w-4 h-4 text-gray-400"/>
                             <span className="flex-1 text-left">
@@ -772,7 +831,7 @@ const ExpensesPage: React.FC = () => {
                         icon: Receipt,
                         bgColor: 'bg-primary-100',
                         textColor: 'text-primary-600',
-                        badgeText: `${analytics.totalCount}건`,
+                        badgeText: `${summary?.totalCount || filteredExpenses.length}건`,
                         title: '총 지출',
                         value: formatCurrency(analytics.totalAmount),
                         extra: (() => {
@@ -977,7 +1036,7 @@ const ExpensesPage: React.FC = () => {
                                             onMouseLeave={() => setActiveIndex(null)}
                                         >
                                             {allCategoryData.map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={entry.color} />
+                                                <Cell key={`cell-${index}`} fill={entry.color}/>
                                             ))}
                                         </Pie>
                                     </RechartsPieChart>
@@ -990,16 +1049,19 @@ const ExpensesPage: React.FC = () => {
                                         className={`p-3 rounded-lg cursor-pointer transition-all duration-300 ${activeIndex === index ? 'bg-gray-100 shadow-md' : 'bg-white'}`}
                                         onMouseEnter={() => setActiveIndex(index)}
                                         onMouseLeave={() => setActiveIndex(null)}
-                                        whileHover={{ scale: 1.03 }}
+                                        whileHover={{scale: 1.03}}
                                     >
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center space-x-3">
-                                                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: cat.color }}></div>
+                                                <div className="w-4 h-4 rounded-full"
+                                                     style={{backgroundColor: cat.color}}></div>
                                                 <span className="text-sm font-medium text-gray-800">{cat.label}</span>
                                             </div>
                                             <div className="text-right">
-                                                <div className="text-sm font-bold text-gray-900">{formatCurrency(cat.amount)}</div>
-                                                <div className="text-xs text-gray-500">{cat.percentage.toFixed(1)}%</div>
+                                                <div
+                                                    className="text-sm font-bold text-gray-900">{formatCurrency(cat.amount)}</div>
+                                                <div className="text-xs text-gray-500">{cat.percentage.toFixed(1)}%
+                                                </div>
                                             </div>
                                         </div>
                                         <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
@@ -1191,7 +1253,7 @@ const ExpensesPage: React.FC = () => {
             )}
 
             {/* Personal Share in Group Mode */}
-            {mode === 'group' && groupShares && groupShares.some(share => share.groupId === currentGroup?.id) && (
+            {mode === 'group' && currentGroup && (summary?.myTotalShareAmount > 0 || groupShares.length > 0) && (
                 <motion.div
                     className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden"
                     initial={{opacity: 0, y: 20}}
@@ -1207,8 +1269,10 @@ const ExpensesPage: React.FC = () => {
 
                     <div className="p-6">
                         {(() => {
-                            const currentGroupShares = groupShares.filter(share => share.groupId === currentGroup?.id);
-                            const totalShare = currentGroupShares.reduce((sum, share) => sum + share.myShareAmount, 0);
+                            const currentGroupShares = groupShares;
+                            const totalShare = groupSharesSummary?.myTotalShareAmount ||
+                                currentGroupShares.reduce((sum, share) => sum + share.myShareAmount, 0);
+                            const shareCount = groupSharesSummary?.myShareCount || currentGroupShares.length;
 
                             return (
                                 <>
@@ -1217,7 +1281,7 @@ const ExpensesPage: React.FC = () => {
                                             총 분담금: {formatCurrency(totalShare)}
                                         </div>
                                         <div className="text-sm text-gray-500 mt-1">
-                                            {currentGroupShares.length}건의 그룹 지출
+                                            {shareCount}건의 그룹 지출
                                         </div>
                                     </div>
 
@@ -1269,6 +1333,14 @@ const ExpensesPage: React.FC = () => {
                             );
                         })()}
                     </div>
+                    {/* 페이징 컴포넌트 */}
+                    <div className="p-4 border-t border-gray-200">
+                        <Pagination
+                            currentPage={groupSharesCurrentPage + 1 }
+                            totalPages={groupSharesTotalPages}
+                            onPageChange={handleSharePageChange}
+                        />
+                    </div>
                 </motion.div>
             )}
 
@@ -1311,105 +1383,128 @@ const ExpensesPage: React.FC = () => {
                 </div>
 
                 {activeTab === 'expenses' ? (
-                    filteredExpenses.length > 0 ? (
-                        <div className="divide-y divide-gray-100">
-                            {filteredExpenses.map((expense) => {
-                                return (
-                                    <motion.div
-                                        key={`${expense.id}-${expense.groupId ? 'group' : 'personal'}`}
-                                        className="p-6 hover:bg-gray-50 transition-all duration-200 cursor-pointer group"
-                                        whileHover={{x: 5}}
-                                        onClick={() => handleExpenseClick(expense)}
-                                    >
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center space-x-4">
-                                                <div
-                                                    className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all group-hover:scale-110`}
-                                                    style={{
-                                                        backgroundColor: categoryData.find(cat => cat.category === expense.category)?.color + '20'
-                                                    }}
-                                                >
-                                                    {mode === 'personal' && expense.groupId ? (
-                                                        <Users className="w-6 h-6 text-blue-600"/>
-                                                    ) : (
-                                                        <Receipt
-                                                            className="w-6 h-6"
+                    <>
+                        {/* 페이징 로딩시에는 반투명 오버레이 */}
+                        <div className="relative">
+                            {pageLoading && (
+                                <div
+                                    className="absolute inset-0 bg-white bg-opacity-50 flex items-center justify-center z-10 rounded-2xl">
+                                    <RefreshCw className="w-6 h-6 animate-spin text-primary-600"/>
+                                </div>
+                            )}
+                            {filteredExpenses.length > 0 ? (
+
+                                <div className="divide-y divide-gray-100">
+                                    {filteredExpenses.map((expense) => {
+                                        const uniqueKey = expense.id ? `expense-${expense.id}` : `temp-${expense.title}-${expense.date}`;
+                                        return (
+                                            <motion.div
+                                                key={uniqueKey}
+                                                className="p-6 hover:bg-gray-50 transition-all duration-200 cursor-pointer group"
+                                                whileHover={{x: 5}}
+                                                onClick={() => handleExpenseClick(expense)}
+                                            >
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center space-x-4">
+                                                        <div
+                                                            className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all group-hover:scale-110`}
                                                             style={{
-                                                                color: categoryData.find(cat => cat.category === expense.category)?.color || '#df6d14'
+                                                                backgroundColor: categoryData.find(cat => cat.category === expense.category)?.color + '20'
                                                             }}
-                                                        />
-                                                    )}
-                                                </div>
-                                                <div>
-                                                    <h4 className="font-semibold text-gray-900 group-hover:text-[#df6d14] transition-colors">
-                                                        {expense.title}
-                                                    </h4>
-                                                    <div className="flex items-center space-x-3 text-sm text-gray-500">
-                                                        <span>{categoryData.find(cat => cat.category === expense.category)?.label}</span>
-                                                        {mode === 'personal' && expense.groupId && expense.groupName && (
-                                                            <>
+                                                        >
+                                                            {mode === 'personal' && expense.groupId ? (
+                                                                <Users className="w-6 h-6 text-blue-600"/>
+                                                            ) : (
+                                                                <Receipt
+                                                                    className="w-6 h-6"
+                                                                    style={{
+                                                                        color: categoryData.find(cat => cat.category === expense.category)?.color || '#df6d14'
+                                                                    }}
+                                                                />
+                                                            )}
+                                                        </div>
+                                                        <div>
+                                                            <h4 className="font-semibold text-gray-900 group-hover:text-[#df6d14] transition-colors">
+                                                                {expense.title}
+                                                            </h4>
+                                                            <div
+                                                                className="flex items-center space-x-3 text-sm text-gray-500">
+                                                                <span>{categoryData.find(cat => cat.category === expense.category)?.label}</span>
+                                                                {mode === 'personal' && expense.groupId && expense.groupName && (
+                                                                    <>
+                                                                        <span>•</span>
+                                                                        <span
+                                                                            className="text-blue-600">👥 {expense.groupName}</span>
+                                                                    </>
+                                                                )}
                                                                 <span>•</span>
-                                                                <span
-                                                                    className="text-blue-600">👥 {expense.groupName}</span>
-                                                            </>
+                                                                <div className="flex items-center space-x-1">
+                                                                    <Calendar className="w-3 h-3"/>
+                                                                    <span>{format(new Date(expense.date), 'M월 d일 (E)', {locale: ko})}</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center space-x-3">
+                                                        {expense.hasReceipt && (
+                                                            <motion.button
+                                                                className="p-2 bg-gray-100 hover:bg-blue-100 rounded-lg transition-colors group"
+                                                                whileHover={{scale: 1.1}}
+                                                                whileTap={{scale: 0.9}}
+                                                                onClick={(e) => handleReceiptClick(expense, e)}
+                                                                title="영수증 보기"
+                                                            >
+                                                                <Image
+                                                                    className="w-4 h-4 text-gray-600 group-hover:text-blue-600"/>
+                                                            </motion.button>
                                                         )}
-                                                        <span>•</span>
-                                                        <div className="flex items-center space-x-1">
-                                                            <Calendar className="w-3 h-3"/>
-                                                            <span>{format(new Date(expense.date), 'M월 d일 (E)', {locale: ko})}</span>
+
+                                                        <div className="text-right">
+                                                            <p className="text-lg font-bold text-gray-900">
+                                                                {formatCurrency(expense.myShareAmount || expense.amount)}
+                                                            </p>
+                                                            {mode === 'personal' && expense.groupId && (
+                                                                <p className="text-xs text-blue-600">그룹 지출</p>
+                                                            )}
+                                                            {expense.memo && (
+                                                                <p className="text-sm text-gray-500 truncate max-w-32">{expense.memo}</p>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                            <div className="flex items-center space-x-3">
-                                                {expense.hasReceipt && (
-                                                    <motion.button
-                                                        className="p-2 bg-gray-100 hover:bg-blue-100 rounded-lg transition-colors group"
-                                                        whileHover={{scale: 1.1}}
-                                                        whileTap={{scale: 0.9}}
-                                                        onClick={(e) => handleReceiptClick(expense, e)}
-                                                        title="영수증 보기"
-                                                    >
-                                                        <Image
-                                                            className="w-4 h-4 text-gray-600 group-hover:text-blue-600"/>
-                                                    </motion.button>
-                                                )}
+                                            </motion.div>
+                                        );
+                                    })}
+                                </div>
 
-                                                <div className="text-right">
-                                                    <p className="text-lg font-bold text-gray-900">
-                                                        {formatCurrency(expense.myShareAmount || expense.amount)}
-                                                    </p>
-                                                    {mode === 'personal' && expense.groupId && (
-                                                        <p className="text-xs text-blue-600">그룹 지출</p>
-                                                    )}
-                                                    {expense.memo && (
-                                                        <p className="text-sm text-gray-500 truncate max-w-32">{expense.memo}</p>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </motion.div>
-                                );
-                            })}
+                            ) : (
+                                <div className="text-center py-16">
+                                    <div
+                                        className="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                                        <Receipt className="w-10 h-10 text-gray-400"/>
+                                    </div>
+                                    <h3 className="text-xl font-semibold text-gray-900 mb-2">지출 내역이 없습니다</h3>
+                                    <p className="text-gray-600 mb-6">새로운 지출을 추가해보세요!</p>
+                                    <motion.button
+                                        className="px-6 py-3 bg-[#df6d14] text-white rounded-xl font-medium hover:bg-[#df6d14]/90 transition-colors"
+                                        whileHover={{scale: 1.05}}
+                                        whileTap={{scale: 0.95}}
+                                        onClick={() => setShowExpenseModal(true)}
+                                    >
+                                        첫 지출 추가하기
+                                    </motion.button>
+                                </div>
+                            )}
                         </div>
-                    ) : (
-                        <div className="text-center py-16">
-                            <div
-                                className="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                                <Receipt className="w-10 h-10 text-gray-400"/>
-                            </div>
-                            <h3 className="text-xl font-semibold text-gray-900 mb-2">지출 내역이 없습니다</h3>
-                            <p className="text-gray-600 mb-6">새로운 지출을 추가해보세요!</p>
-                            <motion.button
-                                className="px-6 py-3 bg-[#df6d14] text-white rounded-xl font-medium hover:bg-[#df6d14]/90 transition-colors"
-                                whileHover={{scale: 1.05}}
-                                whileTap={{scale: 0.95}}
-                                onClick={() => setShowExpenseModal(true)}
-                            >
-                                첫 지출 추가하기
-                            </motion.button>
-                        </div>
-                    )
+
+                        {/* 페이징 컴포넌트 */}
+                        <Pagination
+                            currentPage={currentPage + 1}
+                            totalPages={totalPages}
+                            onPageChange={handlePageChange}
+                        />
+                    </>
+
                 ) : (
                     <div className="divide-y divide-gray-100">
                         {savedAnalyses.length > 0 ? (
@@ -1734,13 +1829,13 @@ const ExpensesPage: React.FC = () => {
             {/* Expense Modal */}
             {showExpenseModal && (
                 <ExpenseModal
-                        expense={selectedExpense}
-                        onClose={() => {
-                            setShowExpenseModal(false);
-                            setSelectedExpense(null);
-                            refreshAllData();
-                        }}
-                    />
+                    expense={selectedExpense}
+                    onClose={() => {
+                        setShowExpenseModal(false);
+                        setSelectedExpense(null);
+                        refreshAllData();
+                    }}
+                />
             )}
 
             {/* Receipt Modal */}
