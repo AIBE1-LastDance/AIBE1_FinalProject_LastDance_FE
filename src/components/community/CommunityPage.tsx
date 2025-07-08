@@ -24,14 +24,7 @@ import { usePostStore } from "../../store/community/postStore";
 import PostCard from "./PostCard";
 import CreatePostModal from "./CreatePostModal";
 import { Post } from "../../types/community/community";
-import {
-  fetchAllPosts,
-  togglePostLike,
-  togglePostBookmark,
-  deletePost as deletePostApi,
-  createPost as createPostApi,
-  updatePost as updatePostApi,
-} from "../../api/community/community";
+// import { fetchAllPosts, togglePostLike, togglePostBookmark, deletePost as deletePostApi, createPost as createPostApi, updatePost as updatePostApi,} from "../../api/community/community"; // 이제 스토어에서 관리
 
 const CommunityPage: React.FC = () => {
   const { user } = useAuthStore();
@@ -39,12 +32,10 @@ const CommunityPage: React.FC = () => {
 
   const {
     posts,
-    setPosts,
-    addPost,
-    updatePost,
-    deletePost: deletePostFromStore,
-    lastFetched,
-    setLastFetched,
+    loadPosts, // usePostStore에서 loadPosts 액션 가져오기
+    deletePost, // usePostStore에서 deletePost 액션 가져오기
+    toggleLike, // usePostStore에서 toggleLike 액션 가져오기
+    toggleBookmark, // usePostStore에서 toggleBookmark 액션 가져오기
   } = usePostStore();
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -63,98 +54,39 @@ const CommunityPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const postsPerPage = 15;
 
-  const loadPosts = async () => {
-    const CACHE_DURATION = 5 * 60 * 1000;
-
-    if (
-      user?.id &&
-      posts.length > 0 &&
-      Date.now() - lastFetched < CACHE_DURATION
-    ) {
-      console.log("[✅ 캐시된 게시글 데이터 사용]");
-      setIsLoading(false);
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      console.log("[🌐 백엔드에서 게시글 로딩 시작]");
-      const data: any[] = await fetchAllPosts();
-      console.log("백엔드에서 받은 원본 게시글 데이터:", data);
-
-      const mappedPosts: Post[] = data.map((item) => ({
-        postId: item.postId,
-        title: item.title,
-        content: item.content,
-        category: item.category,
-        categoryName: item.categoryName,
-        likeCount: item.likeCount,
-        reportCount: item.reportCount, // 백엔드 DTO에 reportCount가 없다면 삭제
-        createdAt: item.createdAt,
-        updatedAt: item.updatedAt ?? item.createdAt,
-        userId: item.authorId,
-        authorNickname: item.authorNickname,
-        authorProfileImageUrl: item.authorProfileImageUrl, // ⭐ 이 줄을 추가합니다.
-        userLiked: item.userLiked,
-        commentCount: item.commentCount || 0,
-        comments: item.comments || [],
-        userBookmarked: item.userBookmarked || false,
-      }));
-
-      setPosts(mappedPosts);
-      setLastFetched(Date.now()); // ⭐ 데이터 로드 후 마지막 페치 시간 업데이트
-    } catch (err) {
-      console.error("[❌ 게시글 로딩 실패]", err);
-      setPosts([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+  // 컴포넌트 마운트 시 게시글 로드 (스토어의 loadPosts 사용)
   useEffect(() => {
-    loadPosts();
-  }, [user?.id]);
+    // loadPosts가 Promise를 반환하므로, isLoading 상태를 여기서 관리
+    const fetchAndSetLoading = async () => {
+      setIsLoading(true);
+      await loadPosts();
+      setIsLoading(false);
+    };
+    fetchAndSetLoading();
+  }, [user?.id, loadPosts]);
 
   const totalLikes = useMemo(() => {
     return posts.reduce((sum, post) => sum + (post.likeCount || 0), 0);
   }, [posts]);
 
+  // 스토어의 toggleLike 액션 사용
   const handleToggleLike = async (postId: string) => {
     if (!user) {
       alert("로그인 후 좋아요를 누를 수 있습니다.");
       navigate("/login");
       return;
     }
-    try {
-      const isLiked = await togglePostLike(postId);
-      const currentPost = posts.find((p) => p.postId === postId);
-      if (currentPost) {
-        updatePost(postId, {
-          userLiked: isLiked,
-          likeCount: isLiked
-            ? currentPost.likeCount + 1
-            : currentPost.likeCount - 1,
-        });
-      }
-    } catch (error) {
-      console.error(`[❌ 좋아요 토글 실패] PostId: ${postId}`, error);
-      alert("좋아요 처리에 실패했습니다.");
-    }
+    await toggleLike(postId);
   };
 
+  // 스토어의 toggleBookmark 액션 사용
   const handleToggleBookmark = async (postId: string) => {
     if (!user) {
       alert("로그인 후 북마크할 수 있습니다.");
       navigate("/login");
       return;
     }
-    try {
-      const isBookmarked = await togglePostBookmark(postId);
-      updatePost(postId, { userBookmarked: isBookmarked });
-    } catch (error) {
-      console.error(`[❌ 북마크 토글 실패] PostId: ${postId}`, error);
-      alert("북마크 처리에 실패했습니다.");
-    }
+    await toggleBookmark(postId);
   };
 
   const categories = [
@@ -268,17 +200,17 @@ const CommunityPage: React.FC = () => {
     setIsCreateModalOpen(true);
   };
 
+  // 스토어의 deletePost 액션 사용
   const handlePostDelete = async (postId: string) => {
     if (!window.confirm("정말로 이 게시글을 삭제하시겠습니까?")) {
       return;
     }
     try {
-      await deletePostApi(postId);
-      deletePostFromStore(postId);
+      await deletePost(postId);
       alert("게시글이 삭제되었습니다.");
     } catch (error) {
-      console.error(`[❌ 게시글 삭제 실패] PostId: ${postId}`, error);
-      alert("게시글 삭제에 실패했습니다.");
+      console.error(`[게시글 삭제 실패] PostId: ${postId}`, error);
+      alert("게시글 삭제에 111실패했습니다.");
     }
   };
 
@@ -554,15 +486,9 @@ const CommunityPage: React.FC = () => {
           onClose={async (postData?: Post | null) => {
             setIsCreateModalOpen(false);
             setEditingPost(null);
-            if (postData) {
-              if (editingPost) {
-                updatePost(postData.postId, postData);
-              } else {
-                addPost(postData);
-              }
-            } else {
-              await loadPosts();
-            }
+            // CreatePostModal 내부에서 API 호출 후, 여기서는 단순히 게시글 목록을 새로고침합니다.
+            // postData가 넘어오지 않아도 (취소 시) 최신 데이터를 다시 불러오는 것이 안전합니다.
+            await loadPosts();
           }}
         />
       )}
