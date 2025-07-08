@@ -33,20 +33,24 @@ import {
 } from "../../api/community/comment";
 
 interface PostDetailProps {
-  post: Post; // 👈 이 prop을 직접 사용합니다.
+  post: Post;
   onBack: () => void;
   onEdit?: (post: Post) => void;
   onDelete?: (postId: string) => void;
+  onCommentCreated?: () => void;
+  onCommentDeleted?: () => void;
 }
 
 const PostDetail: React.FC<PostDetailProps> = ({
-  post, // 👈 initialPost 대신 직접 post prop을 받습니다.
+  post,
   onBack,
   onEdit,
   onDelete,
+  onCommentCreated,
+  onCommentDeleted,
 }) => {
   const { user } = useAuthStore();
-  const { updatePost: updatePostInStore } = useAppStore(); // updatePost만 사용, deletePost는 onDelete prop으로 처리
+  const { updatePost: updatePostInStore } = useAppStore();
 
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
@@ -63,48 +67,15 @@ const PostDetail: React.FC<PostDetailProps> = ({
     targetTitle: "",
   });
 
-  // 🔴 PostDetail 내부에 로컬 post 상태를 두는 대신, prop으로 받은 post를 직접 사용합니다.
-  // const [post, setPost] = useState<Post>(initialPost); // 이 줄은 제거합니다.
-  // useEffect(() => { // 이 useEffect도 제거합니다.
-  //   setPost(initialPost);
-  // }, [initialPost]);
-
   const { isDeleting: isDeletingPost, handleDelete: triggerDeletePost } =
     useDeleteConfirmation({
       onConfirm: () => {
-        // onDelete prop을 통해 부모 컴포넌트(PostDetailPage)에서 삭제를 처리합니다.
-        // PostDetail 컴포넌트가 직접 스토어를 건드리지 않도록 합니다.
-        // PostDetailPage의 handleDelete는 deletePostFromStore를 호출합니다.
         onDelete?.(post.postId);
-        // 삭제 성공 토스트 메시지는 PostDetailPage에서 띄우는 것이 더 일관성 있습니다.
-        // onBack(); // PostDetailPage에서 navigate를 처리하므로 여기서는 필요 없습니다.
       },
       message: "정말로 이 게시글을 삭제하시겠습니까?",
     });
 
   const isAuthor = user?.id === post.authorId;
-
-  // 작성자 여부 로그 (디버깅용 - 배포 시 제거 권장)
-  useEffect(() => {
-    console.log("로그인한 사용자 ID (user?.id):", user?.id);
-    console.log("게시글 작성자 ID (post.authorId):", post.authorId);
-    console.log("작성자 여부 (isAuthor):", isAuthor);
-    if (user?.id && post.authorId) {
-      console.log("ID 타입 비교:", typeof user.id, typeof post.authorId);
-      console.log(
-        "ID 값 일치 여부 (user?.id === post.authorId):",
-        user.id === post.authorId
-      );
-    }
-  }, [user?.id, post.authorId, isAuthor]);
-
-  // 🔴 이 useEffect는 더 이상 필요 없습니다. PostDetailPage에서 최신 post prop을 직접 넘겨주기 때문입니다.
-  // useEffect(() => {
-  //   const updatedPost = posts.find((p) => p.postId === post.postId);
-  //   if (updatedPost) {
-  //     setPost(updatedPost);
-  //   }
-  // }, [posts, post.postId]);
 
   useEffect(() => {
     const loadComments = async () => {
@@ -118,7 +89,7 @@ const PostDetail: React.FC<PostDetailProps> = ({
       }
     };
     loadComments();
-  }, [post.postId]); // 게시글 ID가 변경될 때만 댓글을 다시 불러옵니다.
+  }, [post.postId]);
 
   const getCategoryInfo = (category: string) => {
     const categories: Record<
@@ -178,10 +149,7 @@ const PostDetail: React.FC<PostDetailProps> = ({
       const refreshedComments = await fetchCommentsByPostId(post.postId);
       setComments(refreshedComments);
 
-      // 댓글 수 업데이트는 부모의 updatePostInStore를 사용합니다.
-      updatePostInStore(post.postId, {
-        commentCount: (post.commentCount || 0) + 1,
-      });
+      onCommentCreated?.();
 
       setNewComment("");
       toast.success("댓글이 작성되었습니다.");
@@ -202,10 +170,7 @@ const PostDetail: React.FC<PostDetailProps> = ({
           setComments((prevComments) =>
             prevComments.filter((c) => c.commentId !== commentId)
           );
-          // 댓글 수 업데이트는 부모의 updatePostInStore를 사용합니다.
-          updatePostInStore(post.postId, {
-            commentCount: Math.max(0, (post.commentCount || 0) - 1),
-          });
+          onCommentDeleted?.();
 
           toast.success("댓글이 삭제되었습니다.");
         } catch (error) {
@@ -342,7 +307,6 @@ const PostDetail: React.FC<PostDetailProps> = ({
               );
             })()}
 
-            {/* 작성자 본인인 경우 편집/삭제 버튼을 항상 노출 */}
             {isAuthor && (
               <div className="flex items-center space-x-2">
                 <motion.button
