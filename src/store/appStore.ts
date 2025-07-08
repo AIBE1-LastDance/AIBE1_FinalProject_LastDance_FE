@@ -464,7 +464,7 @@ export const useAppStore = create<AppState>()(
                             year: params.year,
                             month: params.month,
                             page: params.page || 0,
-                            size: params.size || 0,
+                            size: params.size || 10,
                             category: params.category,
                             search: params.search,
                         });
