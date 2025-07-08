@@ -6,6 +6,8 @@ export interface NotificationSettingRequest {
   scheduleReminder: boolean;
   paymentReminder: boolean;
   checklistReminder: boolean;
+  webpushEnabled: boolean;
+  sseEnabled: boolean;
 }
 
 // 알림 설정 응답 DTO - 백엔드와 매칭
@@ -16,6 +18,8 @@ export interface NotificationSettingResponse {
   scheduleReminder: boolean;
   paymentReminder: boolean;
   checklistReminder: boolean;
+  webpushEnabled: boolean;
+  sseEnabled: boolean;
   createdAt: string;
 }
 
@@ -77,5 +81,11 @@ export const notificationApi = {
   markAsRead: async (notificationId: string): Promise<string> => {
     const response = await apiClient.post(`/api/v1/notifications/read/${notificationId}`);
     return response.data;
-  }
+  },
+
+  // 웹푸시 구독 해제
+  unsubscribeWebPush: async (): Promise<{ message: string }> => {
+    const response = await apiClient.post('/api/v1/notifications/webpush/unsubscribe');
+    return response.data;
+  },
 };

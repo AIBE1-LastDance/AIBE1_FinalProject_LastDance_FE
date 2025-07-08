@@ -5,6 +5,7 @@ import { useSSEStore } from '../store/sseStore';
 import { apiClient } from '../utils/api';
 import toast from 'react-hot-toast';
 import { sseDebugger } from '../utils/sseDebugger';
+import {notificationApi} from "../api/notifications.ts";
 
 // 알림 데이터 타입
 interface NotificationData {
@@ -330,18 +331,44 @@ export const useNotifications = () => {
         }
     }, []);
 
-    // SSE 연결 함수 (전역 관리자를 통해)
-    const connectSSE = useCallback(() => {
+    // SSE 연결 함수 (전역 관리자를 통해) - 설정 확인 후 연결
+    const connectSSE = useCallback(async () => {
         const currentUser = useAuthStore.getState().user;
-        if (currentUser?.id) {
-            sseManager.connect(currentUser.id);
+        if (!currentUser?.id) return;
+
+        try {
+            // 🔥 연결 전에 사용자의 SSE 설정 확인
+            const settings = await notificationApi.getMySettings();
+            if (!settings.sseEnabled) {
+                console.log('[connectSSE] SSE가 비활성화되어 있어 연결하지 않음');
+                return;
+            }
+        } catch (error) {
+            console.error('[connectSSE] 설정 확인 실패:', error);
+            // 설정 확인 실패 시에는 기본적으로 연결 시도
         }
+
+        sseManager.connect(currentUser.id);
+        updateSSESetting(true);
     }, [sseManager]);
 
     // SSE 연결 해제 함수 (전역 관리자를 통해)
     const disconnectSSE = useCallback(() => {
         sseManager.disconnect();
+        updateSSESetting(false);
     }, [sseManager]);
+
+    const updateSSESetting = async (enabled: boolean) => {
+        try {
+            const currentSettings = await notificationApi.getMySettings();
+            await notificationApi.updateMySettings({
+                ...currentSettings,
+                sseEnabled: enabled
+            });
+        } catch (error) {
+            console.error('SSE 설정 업데이트 실패:', error);
+        }
+    };
 
     // 알림 권한 요청
     const requestNotificationPermission = useCallback(async (): Promise<boolean> => {
@@ -429,6 +456,16 @@ export const useNotifications = () => {
 
             await apiClient.post('/api/v1/notifications/webpush/subscribe', subscriptionData);
             setWebPushSubscribed(true);
+            try {
+                const currentSettings = await apiClient.get('/api/v1/notification-settings/me');
+                await apiClient.put('/api/v1/notification-settings/me', {
+                    ...currentSettings.data,
+                    webpushEnabled: true
+                });
+            } catch (settingError) {
+                console.error('웹푸시 설정 업데이트 실패:', settingError);
+            }
+
             toast.success('웹푸시 구독이 완료되었습니다.');
 
             return true;
@@ -451,7 +488,24 @@ export const useNotifications = () => {
                 console.log('로컬 웹푸시 구독 해제 완료');
             }
 
+            try {
+                await apiClient.post('/api/v1/notifications/webpush/unsubscribe');
+            } catch (error) {
+                console.warn('백엔드 웹푸시 구독 해제 실패:', error);
+            }
+
             setWebPushSubscribed(false);
+
+            // 👇 백엔드 설정도 업데이트
+            try {
+                const currentSettings = await apiClient.get('/api/v1/notification-settings/me');
+                await apiClient.put('/api/v1/notification-settings/me', {
+                    ...currentSettings.data,
+                    webpushEnabled: false
+                });
+            } catch (settingError) {
+                console.error('웹푸시 설정 업데이트 실패:', settingError);
+            }
             toast.success('웹푸시 구독이 해제되었습니다.');
             return true;
         } catch (error) {
@@ -556,11 +610,11 @@ export const useNotifications = () => {
                 isConnected: sseManager.isConnected()
             }, user.id);
             
-            // 현재 연결된 사용자와 다르면 새로 연결
+            // 현재 연결된 사용자와 다르면 설정 확인 후 연결
             if (sseManager.getCurrentUserId() !== user.id) {
-                // 🔥 중복 방지를 위해 setTimeout 제거하고 직접 호출
-                sseDebugger.log('SSE 연결 호출', { userId: user.id }, user.id);
-                connectSSE();
+                // 🔥 설정 확인 후 연결하도록 수정
+                sseDebugger.log('SSE 연결 호출 (설정 확인 후)', { userId: user.id }, user.id);
+                connectSSE(); // 이제 내부에서 설정을 확인함
             }
         } else {
             console.log('[useNotifications] 사용자 로그아웃됨, SSE 연결 해제');
@@ -573,7 +627,7 @@ export const useNotifications = () => {
             // 컴포넌트 언마운트 시에는 연결을 해제하지 않음
             // 전역 SSEManager가 생명주기를 관리
         };
-    }, [user?.id, setCurrentUser, sseManager]);
+    }, [user?.id, setCurrentUser, sseManager, connectSSE]); // connectSSE dependency 추가
 
     // 반환값 없음 - 모든 상태는 전역 store에서 관리
     return null;

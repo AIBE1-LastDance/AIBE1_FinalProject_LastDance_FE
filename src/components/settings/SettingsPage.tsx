@@ -62,6 +62,8 @@ const SettingsPage: React.FC = () => {
                     scheduleReminder: data.scheduleReminder || false,
                     paymentReminder: data.paymentReminder || false,
                     checklistReminder: data.checklistReminder || false,
+                    webpushEnabled: data.webpushEnabled ?? true,
+                    sseEnabled: data.sseEnabled ?? true,
                 });
 
                 console.log('Notifications set, setting loading to false');
@@ -73,6 +75,8 @@ const SettingsPage: React.FC = () => {
                     scheduleReminder: false,
                     paymentReminder: false,
                     checklistReminder: false,
+                    webpushEnabled: true,
+                    sseEnabled: true
                 });
             } finally {
                 setNotificationLoading(false);
@@ -164,9 +168,49 @@ const SettingsPage: React.FC = () => {
         scheduleReminder: true,
         paymentReminder: true,
         checklistReminder: true,
+        webpushEnabled: true,
+        sseEnabled: true,
     });
     const [notificationLoading, setNotificationLoading] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+    // SSE/웹푸시 특별 처리 함수
+    const handleSpecialMethodToggle = async (methodKey: string, enabled: boolean) => {
+        try {
+            if (methodKey === 'sseEnabled') {
+                setNotifications(prev => ({ ...prev, sseEnabled: enabled }));
+
+                const currentSettings = await notificationApi.getMySettings();
+                await notificationApi.updateMySettings({
+                    ...currentSettings,
+                    sseEnabled: enabled
+                });
+
+                if (enabled) {
+                    connectSSE?.();
+                    toast.success('실시간 알림이 활성화되었습니다.');
+                } else {
+                    disconnectSSE?.();
+                    toast.success('실시간 알림이 비활성화되었습니다.');
+                }
+            } else if (methodKey === 'webpushEnabled') {
+                if (enabled) {
+                    const success = await subscribeToWebPush?.();
+                    if (success) {
+                        setNotifications(prev => ({ ...prev, webpushEnabled: true }));
+                    }
+                } else {
+                    const success = await unsubscribeFromWebPush?.();
+                    if (success) {
+                        setNotifications(prev => ({ ...prev, webpushEnabled: false }));
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('특별 메서드 토글 실패:', error);
+            toast.error('설정 변경에 실패했습니다.');
+        }
+    };
 
     const tabs = [
         {id: 'profile', label: '프로필 정보', icon: User},
@@ -285,6 +329,8 @@ const SettingsPage: React.FC = () => {
                 scheduleReminder: notifications.scheduleReminder,
                 paymentReminder: notifications.paymentReminder,
                 checklistReminder: notifications.checklistReminder,
+                webpushEnabled: notifications.webpushEnabled,
+                sseEnabled: notifications.sseEnabled,
             });
 
             // 전역상태 업데이트
@@ -734,6 +780,33 @@ const SettingsPage: React.FC = () => {
 
 
                 </div>
+                {/* Save Button - 설정 영역 내 우측 하단 */}
+                <div className="flex justify-end mt-8">
+                    <motion.button
+                        onClick={handleSave}
+                        disabled={isSaving || (!nicknameState.available && profileData.nickname !== user?.nickname)}
+                        className={`flex items-center space-x-3 px-6 py-3 rounded-xl font-medium transition-colors shadow-lg ${
+                            isSaving || (!nicknameState.available && profileData.nickname !== user?.nickname)
+                                ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                                : 'bg-primary-600 text-white hover:bg-primary-700'
+                        }`}
+                        whileHover={!isSaving && nicknameState.available ? {scale: 1.02} : {}}
+                        whileTap={!isSaving && nicknameState.available ? {scale: 0.98} : {}}
+                    >
+                        {isSaving ? (
+                            <>
+                                <div
+                                    className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"/>
+                                <span>저장 중...</span>
+                            </>
+                        ) : (
+                            <>
+                                <Save className="w-5 h-5"/>
+                                <span>변경사항 저장</span>
+                            </>
+                        )}
+                    </motion.button>
+                </div>
 
                 {/* 하이브리드 알림 시스템 카드 */}
                 <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
@@ -804,7 +877,34 @@ const SettingsPage: React.FC = () => {
                                     </div>
                                 </div>
                                 <button
-                                    onClick={isSSEConnected ? disconnectSSE : connectSSE}
+                                    onClick={async () => {
+                                        const newSSEEnabled = !isSSEConnected;
+
+                                        // 🔥 설정만 업데이트하고, 실제 연결/해제는 useNotifications에서 감지
+                                        setNotifications(prev => ({ ...prev, sseEnabled: newSSEEnabled }));
+
+                                        try {
+                                            const currentSettings = await notificationApi.getMySettings();
+                                            await notificationApi.updateMySettings({
+                                                ...currentSettings,
+                                                sseEnabled: newSSEEnabled
+                                            });
+
+                                            // 설정 저장 후 SSE 연결 상태에 따라 연결/해제
+                                            if (newSSEEnabled) {
+                                                connectSSE?.();
+                                                toast.success('실시간 알림이 활성화되었습니다.');
+                                            } else {
+                                                disconnectSSE?.();
+                                                toast.success('실시간 알림이 비활성화되었습니다.');
+                                            }
+                                        } catch (error) {
+                                            console.error('SSE 설정 저장 실패:', error);
+                                            toast.error('설정 저장에 실패했습니다.');
+                                            // 에러 시 설정 되돌리기
+                                            setNotifications(prev => ({ ...prev, sseEnabled: !newSSEEnabled }));
+                                        }
+                                    }}
                                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                                         isSSEConnected
                                             ? 'bg-red-100 text-red-700 hover:bg-red-200'
@@ -848,7 +948,45 @@ const SettingsPage: React.FC = () => {
                                     )}
                                     {isWebPushSupported && notificationPermission === 'granted' && (
                                         <button
-                                            onClick={() => isWebPushSubscribed ? unsubscribeFromWebPush?.() : subscribeToWebPush?.()}
+                                            onClick={async () => {
+                                                if (isWebPushSubscribed) {
+                                                    const success = await unsubscribeFromWebPush?.();
+                                                    if (success) {
+                                                        setNotifications(prev => ({ ...prev, webpushEnabled: false }));
+
+                                                        // 👇 즉시 백엔드에 저장
+                                                        try {
+                                                            const currentSettings = await notificationApi.getMySettings();
+                                                            await notificationApi.updateMySettings({
+                                                                ...currentSettings,
+                                                                webpushEnabled: false
+                                                            });
+                                                            toast.success('웹푸시 알림이 비활성화되었습니다.');
+                                                        } catch (error) {
+                                                            console.error('웹푸시 설정 저장 실패:', error);
+                                                            toast.error('설정 저장에 실패했습니다.');
+                                                        }
+                                                    }
+                                                } else {
+                                                    const success = await subscribeToWebPush?.();
+                                                    if (success) {
+                                                        setNotifications(prev => ({ ...prev, webpushEnabled: true }));
+
+                                                        // 👇 즉시 백엔드에 저장
+                                                        try {
+                                                            const currentSettings = await notificationApi.getMySettings();
+                                                            await notificationApi.updateMySettings({
+                                                                ...currentSettings,
+                                                                webpushEnabled: true
+                                                            });
+                                                            toast.success('웹푸시 알림이 활성화되었습니다.');
+                                                        } catch (error) {
+                                                            console.error('웹푸시 설정 저장 실패:', error);
+                                                            toast.error('설정 저장에 실패했습니다.');
+                                                        }
+                                                    }
+                                                }
+                                            }}
                                             disabled={!import.meta.env.VITE_VAPID_PUBLIC_KEY ||
                                                 import.meta.env.VITE_VAPID_PUBLIC_KEY === 'your_vapid_public_key_here'}
                                             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -939,34 +1077,6 @@ const SettingsPage: React.FC = () => {
                     className="lg:col-span-3 relative"
                 >
                     {renderContent()}
-
-                    {/* Save Button - 설정 영역 내 우측 하단 */}
-                    <div className="flex justify-end mt-8">
-                        <motion.button
-                            onClick={handleSave}
-                            disabled={isSaving || (!nicknameState.available && profileData.nickname !== user?.nickname)}
-                            className={`flex items-center space-x-3 px-6 py-3 rounded-xl font-medium transition-colors shadow-lg ${
-                                isSaving || (!nicknameState.available && profileData.nickname !== user?.nickname)
-                                    ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                                    : 'bg-primary-600 text-white hover:bg-primary-700'
-                            }`}
-                            whileHover={!isSaving && nicknameState.available ? {scale: 1.02} : {}}
-                            whileTap={!isSaving && nicknameState.available ? {scale: 0.98} : {}}
-                        >
-                            {isSaving ? (
-                                <>
-                                    <div
-                                        className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"/>
-                                    <span>저장 중...</span>
-                                </>
-                            ) : (
-                                <>
-                                    <Save className="w-5 h-5"/>
-                                    <span>변경사항 저장</span>
-                                </>
-                            )}
-                        </motion.button>
-                    </div>
                 </motion.div>
             </div>
         </div>
