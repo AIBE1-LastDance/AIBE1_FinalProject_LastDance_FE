@@ -536,118 +536,343 @@ const SettingsPage: React.FC = () => {
         console.log('Rendering notification settings, loading:', notificationLoading);
         console.log('Current notifications state:', notifications);
 
+        const specificNotifications = ['scheduleReminder', 'paymentReminder', 'checklistReminder'];
+        const activeSpecificCount = specificNotifications.filter(key => notifications[key as keyof typeof notifications]).length;
+
         return (
             <div className="space-y-6">
+                {/* 이메일 알림 설정 카드 */}
                 <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
-                    <h3 className="text-xl font-bold text-gray-900 mb-6">알림 설정</h3>
+                    <div className="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 className="text-xl font-bold text-gray-900">이메일 알림</h3>
+                            <p className="text-sm text-gray-600 mt-1">중요한 알림을 이메일로 받아보세요</p>
+                        </div>
+                    </div>
 
                     {notificationLoading ? (
                         <div className="flex items-center justify-center py-8">
-                            <div
-                                className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
-                            <span className="ml-2">로딩 중...</span>
+                            <div className="text-center">
+                                <div className="w-8 h-8 border-2 border-primary-200 border-t-primary-600 rounded-full animate-spin mx-auto mb-2"></div>
+                                <p className="text-gray-600 text-sm">설정을 불러오는 중...</p>
+                            </div>
+                        </div>
+                    ) : (
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className={`relative overflow-hidden rounded-xl border-2 transition-all duration-300 ${
+                                notifications.emailEnabled
+                                    ? 'border-blue-200 bg-gradient-to-r from-blue-50 to-blue-100/50'
+                                    : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
+                            }`}
+                        >
+                            <div className="p-5">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center space-x-4">
+                                        {/* 아이콘 영역 */}
+                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl bg-gradient-to-r ${
+                                            notifications.emailEnabled ? 'from-blue-500 to-blue-600' : 'from-gray-400 to-gray-500'
+                                        } text-white shadow-sm`}>
+                                            📧
+                                        </div>
+
+                                        {/* 텍스트 영역 */}
+                                        <div className="flex-1">
+                                            <h4 className={`font-semibold text-lg transition-colors ${
+                                                notifications.emailEnabled ? 'text-gray-900' : 'text-gray-600'
+                                            }`}>
+                                                이메일 알림
+                                            </h4>
+                                            <p className={`text-sm mt-1 transition-colors ${
+                                                notifications.emailEnabled ? 'text-gray-700' : 'text-gray-500'
+                                            }`}>
+                                                아래 선택한 알림들을 이메일로도 받을 수 있어요
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* 토글 스위치 */}
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={notifications.emailEnabled}
+                                            onChange={(e) => setNotifications(prev => ({
+                                                ...prev,
+                                                emailEnabled: e.target.checked
+                                            }))}
+                                            disabled={notificationLoading}
+                                            className="sr-only peer"
+                                        />
+                                        <div className={`relative w-16 h-8 transition-all duration-300 ease-in-out rounded-full shadow-inner ${
+                                            notifications.emailEnabled
+                                                ? 'bg-gradient-to-r from-primary-500 to-primary-600 shadow-primary-200'
+                                                : 'bg-gray-300'
+                                        } ${notificationLoading ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                            <div className={`absolute top-0.5 w-7 h-7 bg-white rounded-full shadow-lg transition-all duration-300 ease-in-out ${
+                                                notifications.emailEnabled ? 'right-0.5' : 'left-0.5'
+                                            }`}>
+                                                <div className={`w-full h-full rounded-full flex items-center justify-center text-xs transition-colors ${
+                                                    notifications.emailEnabled ? 'text-primary-600' : 'text-gray-400'
+                                                }`}>
+                                                    {notifications.emailEnabled ? '✓' : '○'}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            {/* 활성화 상태 표시줄 */}
+                            {notifications.emailEnabled && (
+                                <motion.div
+                                    initial={{ scaleX: 0 }}
+                                    animate={{ scaleX: 1 }}
+                                    className="h-1 bg-gradient-to-r from-blue-500 to-blue-600 origin-left"
+                                />
+                            )}
+                        </motion.div>
+                    )}
+                </div>
+
+                {/* 세부 알림 설정 카드 */}
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+                    <div className="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 className="text-xl font-bold text-gray-900">알림 설정</h3>
+                            <p className="text-sm text-gray-600 mt-1">원하는 알림을 선택하여 받아보세요</p>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <Bell className="w-5 h-5 text-primary-600"/>
+                            <span className="text-sm text-primary-600 font-medium">
+                            {activeSpecificCount}/3 활성화
+                        </span>
+                        </div>
+                    </div>
+
+                    {notificationLoading ? (
+                        <div className="flex items-center justify-center py-8">
+                            <div className="text-center">
+                                <div className="w-8 h-8 border-2 border-primary-200 border-t-primary-600 rounded-full animate-spin mx-auto mb-2"></div>
+                                <p className="text-gray-600 text-sm">설정을 불러오는 중...</p>
+                            </div>
                         </div>
                     ) : (
                         <div className="space-y-4">
-                            {Object.entries(notifications).map(([key, value]) => {
+                            {specificNotifications.map((key, index) => {
+                                const value = notifications[key as keyof typeof notifications];
                                 const settings = {
-                                    emailEnabled: {
-                                        label: '이메일 알림',
-                                        description: '이메일로 알림을 받습니다'
-                                    },
                                     scheduleReminder: {
                                         label: '일정 알림',
-                                        description: '일정 시작 15분 전에 알림을 받습니다'
+                                        description: '일정 시작 15분 전에 미리 알려드려요',
+                                        icon: '📅',
+                                        color: 'from-green-500 to-green-600'
                                     },
                                     paymentReminder: {
                                         label: '정산 알림',
-                                        description: '정산 관련 알림을 받습니다'
+                                        description: '그룹 정산 및 지출 관련 소식을 전해드려요',
+                                        icon: '💰',
+                                        color: 'from-yellow-500 to-orange-500'
                                     },
                                     checklistReminder: {
                                         label: '할일 알림',
-                                        description: '새로운 할일이나 마감일 알림을 받습니다'
+                                        description: '새 할일 등록과 마감일을 놓치지 마세요',
+                                        icon: '✅',
+                                        color: 'from-purple-500 to-purple-600'
                                     }
                                 };
 
                                 const setting = settings[key as keyof typeof settings];
 
                                 return (
-                                    <div key={key}
-                                         className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                                        <div>
-                                            <h4 className="font-medium text-gray-900">{setting.label}</h4>
-                                            <p className="text-sm text-gray-600">{setting.description}</p>
+                                    <motion.div
+                                        key={key}
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: index * 0.1 }}
+                                        className={`relative overflow-hidden rounded-xl border-2 transition-all duration-300 ${
+                                            value
+                                                ? 'border-primary-200 bg-gradient-to-r from-primary-50 to-primary-100/50'
+                                                : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
+                                        }`}
+                                    >
+                                        <div className="p-5">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center space-x-4">
+                                                    {/* 아이콘 영역 */}
+                                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl bg-gradient-to-r ${
+                                                        value ? setting.color : 'from-gray-400 to-gray-500'
+                                                    } text-white shadow-sm`}>
+                                                        {setting.icon}
+                                                    </div>
+
+                                                    {/* 텍스트 영역 */}
+                                                    <div className="flex-1">
+                                                        <h4 className={`font-semibold text-lg transition-colors ${
+                                                            value ? 'text-gray-900' : 'text-gray-600'
+                                                        }`}>
+                                                            {setting.label}
+                                                        </h4>
+                                                        <p className={`text-sm mt-1 transition-colors ${
+                                                            value ? 'text-gray-700' : 'text-gray-500'
+                                                        }`}>
+                                                            {setting.description}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                {/* 토글 스위치 */}
+                                                <label className="relative inline-flex items-center cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={value}
+                                                        onChange={(e) => setNotifications(prev => ({
+                                                            ...prev,
+                                                            [key]: e.target.checked
+                                                        }))}
+                                                        disabled={notificationLoading}
+                                                        className="sr-only peer"
+                                                    />
+                                                    <div className={`relative w-16 h-8 transition-all duration-300 ease-in-out rounded-full shadow-inner ${
+                                                        value
+                                                            ? 'bg-gradient-to-r from-primary-500 to-primary-600 shadow-primary-200'
+                                                            : 'bg-gray-300'
+                                                    } ${notificationLoading ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                                        <div className={`absolute top-0.5 w-7 h-7 bg-white rounded-full shadow-lg transition-all duration-300 ease-in-out ${
+                                                            value ? 'right-0.5' : 'left-0.5'
+                                                        }`}>
+                                                            <div className={`w-full h-full rounded-full flex items-center justify-center text-xs transition-colors ${
+                                                                value ? 'text-primary-600' : 'text-gray-400'
+                                                            }`}>
+                                                                {value ? '✓' : '○'}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </label>
+                                            </div>
                                         </div>
 
-                                        {/* 우리집 앱 색상의 모던 iOS 토글 스위치 */}
-                                        <label className="relative inline-flex items-center cursor-pointer group">
-                                            <input
-                                                type="checkbox"
-                                                checked={value}
-                                                onChange={(e) => setNotifications(prev => ({
-                                                    ...prev,
-                                                    [key]: e.target.checked
-                                                }))}
-                                                disabled={notificationLoading}
-                                                className="sr-only peer"
+                                        {/* 활성화 상태 표시줄 */}
+                                        {value && (
+                                            <motion.div
+                                                initial={{ scaleX: 0 }}
+                                                animate={{ scaleX: 1 }}
+                                                className={`h-1 bg-gradient-to-r ${setting.color} origin-left`}
                                             />
-                                            <div className={`
-                                                relative w-14 h-8 transition-all duration-300 ease-in-out rounded-full
-                                                ${value
-                                                ? 'bg-gradient-to-r from-primary-500 to-primary-600'
-                                                : 'bg-gray-300 hover:bg-gray-400'
-                                            }
-                                                ${notificationLoading ? 'opacity-50 cursor-not-allowed' : ''}
-                                                peer-focus:ring-2 peer-focus:ring-primary-500/30
-                                            `}>
-                                                <div className={`
-                                                    absolute top-1 w-6 h-6 bg-white rounded-full 
-                                                    shadow-sm transition-all duration-300 ease-in-out
-                                                    ${value
-                                                    ? 'right-1'
-                                                    : 'left-1'
-                                                }
-                                                `}/>
-                                            </div>
-                                        </label>
-                                    </div>
+                                        )}
+                                    </motion.div>
                                 );
                             })}
                         </div>
                     )}
 
-                    {/* 하이브리드 알림 시스템 상태 */}
-                    <div className="mt-6 p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
-                        <div className="flex items-center justify-between mb-4">
-                            <h4 className="font-medium text-blue-900">🎯 하이브리드 알림 시스템</h4>
-                            <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
-                                SSE → 웹푸시 → 이메일
-                            </span>
+                    {/* 저장 버튼 */}
+                    {!notificationLoading && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.5 }}
+                            className="mt-6 pt-6 border-t border-gray-200"
+                        >
+                            <button
+                                onClick={handleNotificationSave}
+                                disabled={isNotificationSaving}
+                                className={`w-full py-3 px-4 rounded-xl font-medium transition-all duration-200 flex items-center justify-center space-x-2 ${
+                                    isNotificationSaving
+                                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                        : 'bg-primary-600 text-white hover:bg-primary-700 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]'
+                                }`}
+                            >
+                                {isNotificationSaving ? (
+                                    <>
+                                        <div className="w-5 h-5 border-2 border-gray-300 border-t-transparent rounded-full animate-spin"/>
+                                        <span>저장 중...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Save className="w-5 h-5" />
+                                        <span>알림 설정 저장</span>
+                                    </>
+                                )}
+                            </button>
+                        </motion.div>
+                    )}
+                </div>
+
+                {/* 하이브리드 알림 시스템 카드 */}
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+                    <div className="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 className="text-xl font-bold text-gray-900">🚀 스마트 알림 시스템</h3>
+                            <p className="text-sm text-gray-600 mt-1">실시간 연결과 백그라운드 알림으로 놓치는 알림이 없어요</p>
                         </div>
-                        <p className="text-sm text-blue-700 mb-4">
-                            실시간 연결 → 백그라운드 알림 → 확실한 이메일 전달 순으로 동작합니다.
-                        </p>
-                        
-                        {/* 1단계: SSE 실시간 연결 */}
-                        <div className="mb-3 p-3 bg-white rounded-lg border border-blue-100">
+                        <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-3 py-1 rounded-full text-xs font-medium">
+                            실시간 • 백그라운드
+                        </div>
+                    </div>
+
+                    {/* 시스템 흐름도 */}
+                    <div className="relative mb-6">
+                        <div className="flex items-center justify-between">
+                            {/* 1단계 */}
+                            <div className="flex flex-col items-center space-y-2 flex-1">
+                                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all ${
+                                    isSSEConnected ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                                }`}>
+                                    <Wifi className="w-8 h-8" />
+                                </div>
+                                <div className="text-center">
+                                    <p className="font-medium text-sm">실시간 연결</p>
+                                    <p className={`text-xs ${isSSEConnected ? 'text-green-600' : 'text-red-600'}`}>
+                                        {isSSEConnected ? '연결됨' : '연결 끊김'}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* 화살표 */}
+                            <div className="flex-shrink-0 px-4">
+                                <div className="w-8 h-0.5 bg-gray-300"></div>
+                                <div className="w-0 h-0 border-l-4 border-l-gray-300 border-y-2 border-y-transparent ml-6 -mt-0.5"></div>
+                            </div>
+
+                            {/* 2단계 */}
+                            <div className="flex flex-col items-center space-y-2 flex-1">
+                                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all ${
+                                    isWebPushSubscribed ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400'
+                                }`}>
+                                    <Smartphone className="w-8 h-8" />
+                                </div>
+                                <div className="text-center">
+                                    <p className="font-medium text-sm">백그라운드</p>
+                                    <p className={`text-xs ${isWebPushSubscribed ? 'text-blue-600' : 'text-gray-400'}`}>
+                                        {isWebPushSubscribed ? '구독됨' : '미구독'}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 상세 설정 카드들 */}
+                    <div className="space-y-4">
+                        {/* SSE 연결 설정 */}
+                        <div className={`p-4 rounded-xl border-2 transition-all ${
+                            isSSEConnected ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'
+                        }`}>
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center space-x-3">
                                     <div className={`w-3 h-3 rounded-full ${isSSEConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
                                     <div>
-                                        <p className="font-medium text-gray-900 flex items-center">
-                                            <Wifi className="w-4 h-4 mr-2" />
-                                            1단계: 실시간 연결 (SSE)
-                                        </p>
+                                        <p className="font-medium text-gray-900">실시간 연결 (SSE)</p>
                                         <p className="text-sm text-gray-600">
-                                            {isSSEConnected ? '✅ 연결됨 - 즉시 알림 수신' : '❌ 연결 끊김 - 2단계로 전환'}
+                                            {isSSEConnected ? '웹페이지가 열려있으면 즉시 알림을 받을 수 있어요' : '연결이 끊어져 실시간 알림을 받을 수 없어요'}
                                         </p>
                                     </div>
                                 </div>
                                 <button
                                     onClick={isSSEConnected ? disconnectSSE : connectSSE}
-                                    className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                                        isSSEConnected 
-                                            ? 'bg-red-100 text-red-700 hover:bg-red-200' 
+                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                        isSSEConnected
+                                            ? 'bg-red-100 text-red-700 hover:bg-red-200'
                                             : 'bg-green-100 text-green-700 hover:bg-green-200'
                                     }`}
                                 >
@@ -656,39 +881,32 @@ const SettingsPage: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* 2단계: 웹푸시 백그라운드 알림 */}
-                        <div className="mb-3 p-3 bg-white rounded-lg border border-blue-100">
+                        {/* 웹푸시 설정 */}
+                        <div className={`p-4 rounded-xl border-2 transition-all ${
+                            isWebPushSubscribed ? 'border-blue-200 bg-blue-50' : 'border-gray-200 bg-gray-50'
+                        }`}>
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center space-x-3">
                                     <div className={`w-3 h-3 rounded-full ${
-                                        !isWebPushSupported ? 'bg-gray-400' :
-                                        isWebPushSubscribed ? 'bg-green-500' : 
-                                        notificationPermission === 'granted' ? 'bg-yellow-500' : 'bg-red-500'
+                                        isWebPushSubscribed ? 'bg-blue-500' : 'bg-gray-400'
                                     }`}></div>
                                     <div>
-                                        <p className="font-medium text-gray-900 flex items-center">
-                                            <Smartphone className="w-4 h-4 mr-2" />
-                                            2단계: 백그라운드 알림 (웹푸시)
-                                        </p>
+                                        <p className="font-medium text-gray-900">백그라운드 알림 (웹푸시)</p>
                                         <p className="text-sm text-gray-600">
-                                            {!isWebPushSupported ? '❌ 브라우저 미지원' :
-                                             isWebPushSubscribed ? '✅ 구독됨 - 백그라운드 알림 가능' :
-                                             notificationPermission === 'granted' ? '⚠️ 권한 있음 - 구독 필요' :
-                                             '❌ 권한 필요 - 구독 불가'}
+                                            {isWebPushSubscribed
+                                                ? '웹페이지를 닫아도 브라우저 알림을 받을 수 있어요'
+                                                : '브라우저 알림 권한이 필요해요'}
                                         </p>
-                                        {!import.meta.env.VITE_VAPID_PUBLIC_KEY || 
-                                         import.meta.env.VITE_VAPID_PUBLIC_KEY === 'your_vapid_public_key_here' ? (
-                                            <p className="text-xs text-orange-600 mt-1">
-                                                ⚠️ VAPID 키가 설정되지 않음 - 관리자가 백엔드에서 키를 생성해야 합니다
-                                            </p>
-                                        ) : null}
+                                        {!isWebPushSupported && (
+                                            <p className="text-xs text-orange-600 mt-1">⚠️ 현재 브라우저에서 지원되지 않습니다</p>
+                                        )}
                                     </div>
                                 </div>
                                 <div className="flex space-x-2">
                                     {notificationPermission !== 'granted' && (
                                         <button
                                             onClick={() => requestNotificationPermission?.()}
-                                            className="px-3 py-1 rounded-lg text-sm font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
+                                            className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
                                         >
                                             권한 요청
                                         </button>
@@ -696,15 +914,15 @@ const SettingsPage: React.FC = () => {
                                     {isWebPushSupported && notificationPermission === 'granted' && (
                                         <button
                                             onClick={() => isWebPushSubscribed ? unsubscribeFromWebPush?.() : subscribeToWebPush?.()}
-                                            disabled={!import.meta.env.VITE_VAPID_PUBLIC_KEY || 
-                                                     import.meta.env.VITE_VAPID_PUBLIC_KEY === 'your_vapid_public_key_here'}
-                                            className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                                                !import.meta.env.VITE_VAPID_PUBLIC_KEY || 
+                                            disabled={!import.meta.env.VITE_VAPID_PUBLIC_KEY ||
+                                                import.meta.env.VITE_VAPID_PUBLIC_KEY === 'your_vapid_public_key_here'}
+                                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                                !import.meta.env.VITE_VAPID_PUBLIC_KEY ||
                                                 import.meta.env.VITE_VAPID_PUBLIC_KEY === 'your_vapid_public_key_here'
                                                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                                    : isWebPushSubscribed 
-                                                        ? 'bg-red-100 text-red-700 hover:bg-red-200' 
-                                                        : 'bg-green-100 text-green-700 hover:bg-green-200'
+                                                    : isWebPushSubscribed
+                                                        ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                                                        : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
                                             }`}
                                         >
                                             {isWebPushSubscribed ? '구독 해제' : '구독하기'}
@@ -713,65 +931,6 @@ const SettingsPage: React.FC = () => {
                                 </div>
                             </div>
                         </div>
-
-                        {/* 3단계: 이메일 확실한 전달 */}
-                        <div className="mb-4 p-3 bg-white rounded-lg border border-blue-100">
-                            <div className="flex items-center space-x-3">
-                                <div className={`w-3 h-3 rounded-full ${notifications.emailEnabled ? 'bg-green-500' : 'bg-gray-400'}`}></div>
-                                <div className="flex-1">
-                                    <p className="font-medium text-gray-900 flex items-center">
-                                        <Bell className="w-4 h-4 mr-2" />
-                                        3단계: 확실한 전달 (이메일)
-                                    </p>
-                                    <p className="text-sm text-gray-600">
-                                        {notifications.emailEnabled ? '✅ 활성화 - 모든 알림이 이메일로 전송됨' : '❌ 비활성화 - 이메일 전송 안함'}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* 테스트 알림 버튼 */}
-                        <div className="pt-3 border-t border-blue-200">
-                            <button
-                                onClick={async () => {
-                                    try {
-                                        await notificationApi.sendTestNotification({
-                                            type: 'SCHEDULE',
-                                            title: '테스트 알림',
-                                            content: '하이브리드 알림 시스템이 정상적으로 작동합니다! 🎉',
-                                            relatedId: 'test-' + Date.now()
-                                        });
-                                        toast.success('테스트 알림을 전송했습니다.');
-                                    } catch (error) {
-                                        console.error('테스트 알림 전송 실패:', error);
-                                        toast.error('테스트 알림 전송에 실패했습니다.');
-                                    }
-                                }}
-                                className="w-full py-2 rounded-lg text-sm font-medium bg-primary-600 text-white hover:bg-primary-700 transition-colors flex items-center justify-center space-x-2"
-                            >
-                                <TestTube className="w-4 h-4" />
-                                <span>하이브리드 알림 테스트</span>
-                            </button>
-                            <p className="text-xs text-gray-500 mt-2 text-center">
-                                연결된 모든 알림 방식으로 테스트 메시지를 보냅니다
-                            </p>
-                        </div>
-                    </div>
-
-                    {/* 기존 알림 권한 설정 부분을 간소화 */}
-                    <div className="mt-4 p-4 bg-gray-50 rounded-xl">
-                        <h4 className="font-medium text-gray-900 mb-2">📧 이메일 알림 설정</h4>
-                        <p className="text-sm text-gray-600 mb-3">
-                            위 하이브리드 시스템과 별개로 항상 이메일로 알림을 받으려면 이메일 알림을 활성화하세요.
-                        </p>
-                        <button
-                            onClick={handleNotificationSave}
-                            disabled={notificationLoading}
-                            className="w-full bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-                        >
-                            <Save className="w-4 h-4" />
-                            <span>알림 설정 저장</span>
-                        </button>
                     </div>
                 </div>
             </div>
