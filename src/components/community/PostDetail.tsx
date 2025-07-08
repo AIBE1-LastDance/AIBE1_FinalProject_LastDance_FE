@@ -196,7 +196,7 @@ const PostDetail: React.FC<PostDetailProps> = ({
       POLICY: {
         name: "정책게시판",
         icon: FileText,
-        color: "bg-green-100 text-green-800",
+        color: "bg-green-50 text-green-700 ring-1 ring-inset ring-green-300",
       },
     };
 
