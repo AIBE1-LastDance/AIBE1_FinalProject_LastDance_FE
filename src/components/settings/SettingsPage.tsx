@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {motion} from 'framer-motion';
-import {Settings, User, Bell, Save, Camera, Trash2, Wifi, WifiOff, Smartphone, TestTube} from 'lucide-react';
+import {Settings, User, Bell, Save, Camera, Trash2, Wifi, WifiOff, Smartphone, TestTube, ArrowRight} from 'lucide-react';
 import {useAuthStore} from '../../store/authStore';
 import toast from 'react-hot-toast';
 import {profileApi} from "../../api/profile";
@@ -327,26 +327,6 @@ const SettingsPage: React.FC = () => {
         return parseInt(str.replace(/,/g, '')) || 0;
     };
 
-    // 알림 설정만 저장
-    const handleNotificationSave = async () => {
-        if (isNotificationSaving) return;
-        setIsNotificationSaving(true);
-        try {
-            await notificationApi.updateMySettings({
-                emailEnabled: notifications.emailEnabled,
-                scheduleReminder: notifications.scheduleReminder,
-                paymentReminder: notifications.paymentReminder,
-                checklistReminder: notifications.checklistReminder,
-            });
-            toast.success('알림 설정이 저장되었습니다.');
-        } catch (error) {
-            toast.error('알림 설정 저장에 실패했습니다.');
-            console.error('Notification settings update error:', error);
-        } finally {
-            setIsNotificationSaving(false);
-        }
-    };
-
     const renderProfileSettings = () => (
         <div className="space-y-6">
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
@@ -572,7 +552,7 @@ const SettingsPage: React.FC = () => {
                                     <div className="flex items-center space-x-4">
                                         {/* 아이콘 영역 */}
                                         <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl bg-gradient-to-r ${
-                                            notifications.emailEnabled ? 'from-blue-500 to-blue-600' : 'from-gray-400 to-gray-500'
+                                            notifications.emailEnabled ? 'from-orange-400 to-amber-400' : 'from-gray-400 to-gray-500'
                                         } text-white shadow-sm`}>
                                             📧
                                         </div>
@@ -659,19 +639,19 @@ const SettingsPage: React.FC = () => {
                                         label: '일정 알림',
                                         description: '일정 시작 15분 전에 미리 알려드려요',
                                         icon: '📅',
-                                        color: 'from-green-500 to-green-600'
+                                        color: 'from-orange-400 to-amber-400'
                                     },
                                     paymentReminder: {
                                         label: '정산 알림',
                                         description: '그룹 정산 및 지출 관련 소식을 전해드려요',
                                         icon: '💰',
-                                        color: 'from-yellow-500 to-orange-500'
+                                        color: 'from-orange-400 to-amber-400'
                                     },
                                     checklistReminder: {
                                         label: '할일 알림',
                                         description: '새 할일 등록과 마감일을 놓치지 마세요',
                                         icon: '✅',
-                                        color: 'from-purple-500 to-purple-600'
+                                        color: 'from-orange-400 to-amber-400'
                                     }
                                 };
 
@@ -752,37 +732,7 @@ const SettingsPage: React.FC = () => {
                         </div>
                     )}
 
-                    {/* 저장 버튼 */}
-                    {!notificationLoading && (
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.5 }}
-                            className="mt-6 pt-6 border-t border-gray-200"
-                        >
-                            <button
-                                onClick={handleNotificationSave}
-                                disabled={isNotificationSaving}
-                                className={`w-full py-3 px-4 rounded-xl font-medium transition-all duration-200 flex items-center justify-center space-x-2 ${
-                                    isNotificationSaving
-                                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                        : 'bg-primary-600 text-white hover:bg-primary-700 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]'
-                                }`}
-                            >
-                                {isNotificationSaving ? (
-                                    <>
-                                        <div className="w-5 h-5 border-2 border-gray-300 border-t-transparent rounded-full animate-spin"/>
-                                        <span>저장 중...</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Save className="w-5 h-5" />
-                                        <span>알림 설정 저장</span>
-                                    </>
-                                )}
-                            </button>
-                        </motion.div>
-                    )}
+
                 </div>
 
                 {/* 하이브리드 알림 시스템 카드 */}
@@ -816,9 +766,8 @@ const SettingsPage: React.FC = () => {
                             </div>
 
                             {/* 화살표 */}
-                            <div className="flex-shrink-0 px-4">
-                                <div className="w-8 h-0.5 bg-gray-300"></div>
-                                <div className="w-0 h-0 border-l-4 border-l-gray-300 border-y-2 border-y-transparent ml-6 -mt-0.5"></div>
+                            <div className="flex-shrink-0 px-4 flex items-center">
+                                <ArrowRight className="w-6 h-6 text-gray-400" />
                             </div>
 
                             {/* 2단계 */}
