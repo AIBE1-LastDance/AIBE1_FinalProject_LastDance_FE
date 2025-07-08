@@ -1,4 +1,4 @@
-// src/components/community/PostCard.tsx (수정)
+// src/components/community/PostCard.tsx
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
@@ -103,9 +103,8 @@ const PostCard: React.FC<PostCardProps> = ({
 
   const categoryDisplayInfo = getCategoryDisplayInfo(post.category);
   const isLiked = post.userLiked;
-  // ⭐ post.userBookmarked를 직접 사용합니다.
   const isBookmarked = post.userBookmarked;
-  const isAuthor = user?.id === post.userId;
+  const isAuthor = user?.id === post.authorId;
 
   return (
     <motion.div
@@ -114,10 +113,8 @@ const PostCard: React.FC<PostCardProps> = ({
       onClick={handleCardClick}
       className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 cursor-pointer"
     >
-      {/* 헤더 */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center space-x-3">
-          {/* ⭐ 프로필 이미지 렌더링 로직 추가 */}
           {post.authorProfileImageUrl ? (
             <img
               src={post.authorProfileImageUrl}
@@ -131,7 +128,6 @@ const PostCard: React.FC<PostCardProps> = ({
               </span>
             </div>
           )}
-          {/* ⭐ 프로필 이미지 로직 끝 */}
 
           <div>
             <div className="flex items-center space-x-2">
@@ -236,13 +232,13 @@ const PostCard: React.FC<PostCardProps> = ({
           whileTap={{ scale: 0.9 }}
           onClick={handleBookmark}
           className={`${
-            post.userBookmarked // ⭐ post.userBookmarked 사용
+            post.userBookmarked
               ? "text-yellow-500"
               : "text-gray-400 hover:text-yellow-500"
           } transition-colors`}
         >
           <Bookmark
-            className={`w-5 h-5 ${post.userBookmarked ? "fill-current" : ""}`} // ⭐ post.userBookmarked 사용
+            className={`w-5 h-5 ${post.userBookmarked ? "fill-current" : ""}`}
           />
         </motion.button>
       </div>
