@@ -16,7 +16,9 @@ import {
   Trash2,
   MoreVertical,
   Pencil,
+  Bookmark, // ✅ 북마크 아이콘 추가
 } from "lucide-react";
+
 import { Comment } from "../../types/community/comment";
 import { Post } from "../../types/community/community";
 import { useAuthStore } from "../../store/authStore";
@@ -31,6 +33,7 @@ import {
   createComment,
   deleteComment,
 } from "../../api/community/comment";
+import { usePostStore } from "../../store/community/postStore";
 
 interface PostDetailProps {
   post: Post;
@@ -51,6 +54,12 @@ const PostDetail: React.FC<PostDetailProps> = ({
 }) => {
   const { user } = useAuthStore();
   const { updatePost: updatePostInStore } = useAppStore();
+  const { toggleLike, toggleBookmark } = usePostStore();
+  const [localPost, setLocalPost] = useState<Post>(post);
+
+  useEffect(() => {
+    setLocalPost(post);
+  }, [post]);
 
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
@@ -66,6 +75,42 @@ const PostDetail: React.FC<PostDetailProps> = ({
     targetId: "",
     targetTitle: "",
   });
+
+  const handleToggleLike = async () => {
+    if (!user) {
+      toast.error("로그인 후 좋아요를 누를 수 있습니다.");
+      return;
+    }
+
+    try {
+      await toggleLike(localPost.postId);
+      // 💡 상태 수동 반영
+      setLocalPost((prev) => ({
+        ...prev,
+        userLiked: !prev.userLiked,
+        likeCount: prev.userLiked ? prev.likeCount - 1 : prev.likeCount + 1,
+      }));
+    } catch (error) {
+      toast.error("좋아요 처리 중 오류가 발생했습니다.");
+    }
+  };
+
+  const handleToggleBookmark = async () => {
+    if (!user) {
+      toast.error("로그인 후 북마크할 수 있습니다.");
+      return;
+    }
+
+    try {
+      await toggleBookmark(localPost.postId);
+      setLocalPost((prev) => ({
+        ...prev,
+        userBookmarked: !prev.userBookmarked,
+      }));
+    } catch (error) {
+      toast.error("북마크 처리 중 오류가 발생했습니다.");
+    }
+  };
 
   const { isDeleting: isDeletingPost, handleDelete: triggerDeletePost } =
     useDeleteConfirmation({
@@ -351,10 +396,24 @@ const PostDetail: React.FC<PostDetailProps> = ({
 
         <div className="flex items-center justify-between pt-4 border-t border-gray-100">
           <div className="flex items-center space-x-6">
-            <div className="flex items-center space-x-2 text-gray-500">
-              <Heart className="w-5 h-5" />
-              <span>{post.likeCount || 0}</span>
-            </div>
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleToggleLike}
+              className={`flex items-center space-x-2 transition-colors ${
+                post.userLiked
+                  ? "text-red-500"
+                  : "text-gray-500 hover:text-red-500"
+              }`}
+            >
+              <Heart
+                className={`w-5 h-5 ${
+                  localPost.userLiked ? "fill-current" : ""
+                }`}
+              />
+              <span>{localPost.likeCount || 0}</span>
+            </motion.button>
+
             <div className="flex items-center space-x-2 text-gray-500">
               <MessageCircle className="w-5 h-5" />
               <span>{comments.length || 0}</span>
@@ -370,6 +429,24 @@ const PostDetail: React.FC<PostDetailProps> = ({
             >
               <Share2 className="w-4 h-4" />
               <span className="text-sm">공유</span>
+            </motion.button>
+
+            {/* ✅ 북마크 버튼 여기 추가 */}
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleToggleBookmark}
+              className={`transition-colors ${
+                post.userBookmarked
+                  ? "text-yellow-500"
+                  : "text-gray-400 hover:text-yellow-500"
+              }`}
+            >
+              <Bookmark
+                className={`w-5 h-5 ${
+                  localPost.userBookmarked ? "fill-current" : ""
+                }`}
+              />
             </motion.button>
           </div>
         </div>
