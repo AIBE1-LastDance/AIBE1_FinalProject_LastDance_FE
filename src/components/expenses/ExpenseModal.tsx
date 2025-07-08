@@ -167,8 +167,8 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
             }
 
             // 지출 추가/수정 후 목록 새로고침
-            const {loadExpenses} = useAppStore.getState();
-            await loadExpenses({
+            const {loadCombinedExpenses} = useAppStore.getState();
+            await loadCombinedExpenses({
                 mode,
                 year: new Date().getFullYear(),
                 month: new Date().getMonth() + 1,

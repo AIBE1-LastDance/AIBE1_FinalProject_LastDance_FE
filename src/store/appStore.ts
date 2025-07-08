@@ -61,7 +61,6 @@ interface AppState {
     deleteFutureEvents: (eventId: string) => void;
 
     // Expense actions
-    loadExpenses: (params: any) => Promise<void>;
     addExpense: (expense: Omit<Expense, 'id' | 'createdAt'>) => Promise<Expense>;
     updateExpense: (id: number, updates: Partial<Expense>) => Promise<void>;
     deleteExpense: (id: number) => Promise<void>;
@@ -492,58 +491,6 @@ export const useAppStore = create<AppState>()(
                 }
             },
 
-            loadExpenses: async (params) => {
-                try {
-                    let response;
-
-                    // mode에 따른 적절한 API 호출
-                    if (params.mode === 'personal') {
-                        response = await expenseAPI.getPersonalExpenses({
-                            year: params.year,
-                            month: params.month,
-                            category: params.category,
-                            search: params.search,
-                        });
-                    } else if (params.mode === 'group') {
-                        // 특정 그룹 지출 조회
-                        response = await expenseAPI.getGroupExpensesById(params.groupId, {
-                            year: params.year,
-                            month: params.month,
-                            category: params.category,
-                            search: params.search,
-                        })
-                    } else {
-                        // 전체 그룹 지출 조회
-                        response = await expenseAPI.getGroupExpenses({
-                            year: params.year,
-                            month: params.month,
-                            category: params.category,
-                            search: params.search,
-                        })
-                    }
-                    const expenses = response.data.map((expense: any) => ({
-                        id: expense.expenseId,
-                        title: expense.title,
-                        amount: expense.amount,
-                        category: expense.category,
-                        date: expense.date,
-                        memo: expense.memo,
-                        groupId: expense.groupId,
-                        userId: expense.userId,
-                        splitType: expense.splitType,
-                        splitData: expense.splitData,
-                        expenseType: expense.expenseType,
-                        createdAt: expense.createdAt,
-                        hasReceipt: expense.hasReceipt
-                    }));
-
-                    set({expenses});
-                } catch (error: any) {
-                    console.error('지출 목록 로드 실패:', error);
-                    toast.error('지출 목록을 불러오는데 실패했습니다.');
-                }
-            },
-
             loadGroupShares: async (params) => {
                 try {
                     const response = await expenseAPI.getGroupShares(params);
@@ -666,7 +613,7 @@ export const useAppStore = create<AppState>()(
 
                     // 전체 새로고침으로 확실히 업데이트
                     const state = get();
-                    await state.loadExpenses({
+                    await state.loadCombinedExpenses({
                         mode: state.mode,
                         year: new Date().getFullYear(),
                         month: new Date().getMonth() + 1,

@@ -18,7 +18,7 @@ import {
     ChevronRight,
     Share2,
     RefreshCw,
-    Users, Image, Eye, Trash2, X
+    Users, Image, X
 } from 'lucide-react';
 import {
     PieChart as RechartsPieChart,
@@ -52,15 +52,12 @@ interface GroupSummary {
 
 const ExpensesPage: React.FC = () => {
     const {
-        expenses,
         mode,
         currentGroup,
         savedAnalyses,
         saveAnalysis,
-        loadExpenses,
         groupShares,
         loadGroupShares,
-        joinedGroups,
         loadMyGroups,
         combinedExpenses,
         currentPage,
@@ -70,7 +67,6 @@ const ExpensesPage: React.FC = () => {
         summary,
         groupSharesCurrentPage,
         groupSharesTotalPages,
-        setGroupSharesCurrentPage,
         loadGroupSharesPaginated,
         groupSharesSummary,
     } = useAppStore();
@@ -394,7 +390,7 @@ const ExpensesPage: React.FC = () => {
                 month: newMonth.getMonth() + 1,
                 groupId: mode === 'group' ? currentGroup?.id : undefined
             };
-            await loadExpenses(params);
+            await loadCombinedExpenses(params);
         } finally {
             setLoading(false);
         }
@@ -415,7 +411,7 @@ const ExpensesPage: React.FC = () => {
                     month: nextMonth.getMonth() + 1,
                     groupId: mode === 'group' ? currentGroup?.id : undefined
                 };
-                await loadExpenses(params);
+                await loadCombinedExpenses(params);
             } finally {
                 setLoading(false);
             }

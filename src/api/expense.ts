@@ -21,21 +21,6 @@ export interface ExpenseWithReceiptRequest extends ExpenseRequest {
     receipt?: File;
 }
 
-export interface ExpenseResponse {
-    expenseId: number;
-    title: string;
-    amount: number;
-    category: string;
-    expenseType: 'PERSONAL' | 'GROUP';
-    date: string;
-    memo?: string;
-    userId: string;
-    createdAt: string;
-    groupId?: string;
-    splitType?: string;
-    splitData?: Record<string, number>;
-}
-
 export const expenseAPI = {
     // 지출 생성
     create: async (data: ExpenseWithReceiptRequest) => {
@@ -85,40 +70,6 @@ export const expenseAPI = {
         return response.data;
     },
 
-    // 개인 지출 조회
-    getPersonalExpenses: async (params: {
-        year: number;
-        month: number;
-        category?: string;
-        search?: string;
-    }) => {
-        const response = await apiClient.get('/api/v1/expenses/personal', { params });
-        return response.data;
-    },
-
-    // 그룹 지출 조회
-    getGroupExpenses: async (params: {
-        year: number;
-        month: number;
-        category?: string;
-        search?: string;
-        groupId?: string;
-    }) => {
-        const response = await apiClient.get('/api/v1/expenses/group', { params });
-        return response.data;
-    },
-
-    // 특정 그룹의 지출 조회
-    getGroupExpensesById: async (groupId: string, params: {
-        year: number;
-        month: number;
-        category?: string;
-        search?: string;
-    }) => {
-      const response = await apiClient.get(`/api/v1/expenses/group/${groupId}`, { params });
-      return response.data;
-    },
-
     // 개인의 그룹 분담금 조회
     getGroupShares: async (params: {
         year: number;
@@ -149,19 +100,6 @@ export const expenseAPI = {
         search?: string;
     }) => {
         const response = await apiClient.get('/api/v1/expenses/personal/combined', {params});
-        return response.data;
-    },
-
-    // 통합 지출 조회 (그룹 + 그룹 분담금)
-    getGroupCombinedExpenses: async (groupId: string, params: {
-        year: number;
-        month: number;
-        page?: number;
-        size?: number;
-        category?: string;
-        search?: string;
-    }) => {
-        const response = await apiClient.get(`/api/v1/expenses/group/${groupId}/combined`, {params});
         return response.data;
     },
 
