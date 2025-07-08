@@ -18,6 +18,9 @@ export const createPost = async (data: {
   title: string;
   content: string;
   category: string;
+  authorId: string; // 추가
+  authorNickname: string; // 추가
+  authorProfileImageUrl?: string; // 추가 (optional일 경우)
 }): Promise<Post> => {
   const response = await apiClient.post("/api/v1/community", data);
   return response.data.data;
@@ -26,11 +29,12 @@ export const createPost = async (data: {
 // 게시글 수정
 export const updatePost = async (
   postId: string,
-  data: {
+  data: Partial<{
+    // Partial을 사용하여 모든 필드를 선택적으로 만듭니다.
     title: string;
     content: string;
     category: string;
-  }
+  }>
 ): Promise<Post> => {
   const response = await apiClient.patch(`/api/v1/community/${postId}`, data);
   return response.data.data;
