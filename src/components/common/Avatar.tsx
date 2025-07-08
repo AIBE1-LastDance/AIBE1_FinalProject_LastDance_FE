@@ -49,9 +49,15 @@ export const Avatar: React.FC<AvatarProps> = (
     };
 
     if (user?.avatar) {
-        const avatarUrl = user.avatar.startsWith('http')
-            ? user.avatar
-            : `${import.meta.env.VITE_API_BASE_URL}${user.avatar}`;
+        const avatarUrl = (() => {
+            if (user.avatar.startsWith('http')) {
+                return user.avatar; // HTTP URL
+            }
+            if (user.avatar.startsWith('data:')) {
+                return user.avatar; // Base64 데이터
+            }
+            return `${import.meta.env.VITE_API_BASE_URL}${user.avatar}`; // 상대 경로
+        })();
 
         return (
             <div className={containerClass} onClick={onClick}>
