@@ -132,7 +132,7 @@ export interface Expense {
     userId: string;
     splitType?: 'EQUAL' | 'CUSTOM' | 'SPECIFIC';
     splitData?: { [userId: string]: number };
-    expenseType?: 'PERSONAL' | 'GROUP';
+    expenseType?: 'PERSONAL' | 'GROUP' | 'SHARE';
     createdAt?: string;
     isGroupShare?: boolean;
     groupName?: string;

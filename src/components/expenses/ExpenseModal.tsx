@@ -96,6 +96,9 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
         e.preventDefault();
         if (isSubmitting) return;
 
+        console.log('expense: ', expense);
+        console.log('expense.id: ', expense?.id);
+
         const amount = Number(formData.amount.replace(/[^0-9]/g, ''));
 
         if (!formData.title.trim()) {
@@ -158,13 +161,14 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
         try {
             if (expense) {
                 updateExpense(expense.id, expenseData);
+
             } else {
                 await addExpense(expenseData);
             }
 
             // 지출 추가/수정 후 목록 새로고침
-            const {loadExpenses} = useAppStore.getState();
-            await loadExpenses({
+            const {loadCombinedExpenses} = useAppStore.getState();
+            await loadCombinedExpenses({
                 mode,
                 year: new Date().getFullYear(),
                 month: new Date().getMonth() + 1,

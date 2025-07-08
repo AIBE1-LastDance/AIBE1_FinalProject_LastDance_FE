@@ -218,13 +218,13 @@ const SettingsPage: React.FC = () => {
         setHasImageChange(true);
 
         // 미리보기 이미지 생성
-        const render = new FileReader();
-        render.onload = (e) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
             if (e.target?.result) {
                 setPreviewImage(e.target.result as string);
             }
         };
-        render.readAsDataURL(file);
+        reader.readAsDataURL(file);
     };
 
     const handleDeleteAccount = async () => {
