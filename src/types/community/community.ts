@@ -8,7 +8,7 @@ export interface Post {
   reportCount: number; // 백엔드 DTO에 있다면 유지
   createdAt: string;
   updatedAt?: string;
-  userId: string; // 게시글 작성자의 UUID
+  authorId: string; // 게시글 작성자의 UUID
   authorNickname: string; // 게시글 작성자의 닉네임
   commentCount: number;
   comments?: Comment[]; // 댓글 목록 (게시글 상세 조회 시 제공될 수 있음)
@@ -16,4 +16,12 @@ export interface Post {
   userBookmarked: boolean; // 현재 사용자가 이 게시글을 '북마크'했는지 여부
   likedBy?: string[];
   bookmarkedBy?: string[];
+  authorProfileImageUrl?: string; // ✅ 추가: 게시글 작성자의 프로필 이미지 URL (Optional)
+}
+
+export interface PostDetailProps {
+  post: Post;
+  onBack: () => void;
+  onEdit?: (post: Post) => void;
+  onDelete?: (postId: string) => void;
 }

@@ -1,3 +1,4 @@
+import { apiClient } from "../../utils/api";
 import type { AiJudgmentResponse } from "../../types/aijudgment/aiMessage";
 
 /**
@@ -8,21 +9,8 @@ import type { AiJudgmentResponse } from "../../types/aijudgment/aiMessage";
 export const judgeConflict = async (
   situation: string
 ): Promise<AiJudgmentResponse> => {
-  const response = await fetch("/api/v1/ai/judgments", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ situation }),
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || "갈등 판단 요청에 실패했습니다.");
-  }
-
-  const data = await response.json();
-  return data.data;
+  const response = await apiClient.post("/api/v1/ai/judgments", { situation });
+  return response.data.data;
 };
 
 /**
@@ -34,18 +22,7 @@ export const sendFeedback = async (
   judgmentId: string,
   type: "up" | "down"
 ): Promise<void> => {
-  const response = await fetch(
-    `/api/v1/ai/judgments/${judgmentId}/feedback?type=${type}`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    }
+  await apiClient.post(
+    `/api/v1/ai/judgments/${judgmentId}/feedback?type=${type}`
   );
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || "피드백 전송에 실패했습니다.");
-  }
 };

@@ -1,57 +1,116 @@
-import React, { useState, useEffect } from "react";
+// PostDetailPage.tsx
+
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAppStore } from "../../store/appStore";
 import PostDetail from "./PostDetail";
 import CreatePostModal from "./CreatePostModal";
 import { Post } from "../../types/community/community";
-import { fetchPostById } from "../../api/community/community";
+import {
+  fetchPostById,
+  deletePost as deletePostApi,
+} from "../../api/community/community";
 import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
+import toast from "react-hot-toast";
 
 const PostDetailPage: React.FC = () => {
   const { postId } = useParams<{ postId: string }>();
   const navigate = useNavigate();
-  const { posts, deletePost } = useAppStore();
+  const { deletePost: deletePostFromStore, updatePost: updatePostInStore } =
+    useAppStore();
 
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editingPost, setEditingPost] = useState<Post | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const loadPost = useCallback(async () => {
+    if (!postId) {
+      setNotFound(true);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    setNotFound(false);
+    try {
+      const data = await fetchPostById(postId);
+      const fetchedPost: Post = {
+        ...data,
+        likedBy: data.likedBy || [],
+        bookmarkedBy: data.bookmarkedBy || [],
+        comments: data.comments || [],
+        authorId: data.authorId,
+      };
+      setPost(fetchedPost);
+      // 이전에 있던 updatePostInStore(fetchedPost.postId, fetchedPost); 줄을 삭제합니다.
+    } catch (error: any) {
+      console.error("게시글 불러오기 실패:", error);
+      setNotFound(true);
+      toast.error("게시글을 불러오는 데 실패했습니다.");
+    } finally {
+      setLoading(false);
+    }
+  }, [postId]); // updatePostInStore는 더 이상 의존성에 필요 없습니다.
 
   useEffect(() => {
-    // 로컬 스토어의 posts에서 먼저 찾기 (선택 사항, API 호출이 우선이라면 제거 가능)
-    const localPost = posts.find((p) => p.postId === postId); // `p.id` 대신 `p.postId` 사용 (타입에 맞춰)
-    if (localPost) {
-      setPost(localPost);
-      setLoading(false);
-    } else if (postId) {
-      fetchPostById(postId)
-        .then((data) => {
-          // ✅ 백엔드 응답(data)이 이미 Post 타입에 맞게 comments와 authorNickname을 가지고 있다고 가정합니다.
-          // 따라서 여기서는 `author` 객체를 수동으로 만들 필요가 없습니다.
-          // data 자체를 Post 타입으로 타입 캐스팅하여 사용합니다.
-          const fetchedPost: Post = {
-            ...data,
-            // 백엔드에서 내려주는 필드를 여기에 명시적으로 적지 않습니다.
-            // data에 이미 포함되어 있을 것으로 예상합니다.
-            // 만약 likedBy, bookmarkedBy가 백엔드 응답에 없다면 아래처럼 기본값 설정
-            likedBy: data.likedBy || [],
-            bookmarkedBy: data.bookmarkedBy || [],
-            comments: data.comments || [],
-          };
-          setPost(fetchedPost);
-        })
-        .catch((error) => {
-          console.error("게시글 불러오기 실패:", error);
-          setNotFound(true);
-        })
-        .finally(() => setLoading(false));
+    loadPost();
+  }, [loadPost, refreshKey]);
+
+  const handleEdit = () => {
+    if (post) {
+      setIsEditModalOpen(true);
     }
-  }, [postId, posts]); // 의존성 배열에 posts 추가 (로컬 스토어 사용 시)
+  };
+
+  const handleDelete = async () => {
+    if (!post) {
+      toast.error("삭제할 게시글 정보가 없습니다.");
+      return;
+    }
+
+    if (!window.confirm("정말로 이 게시글을 삭제하시겠습니까?")) {
+      return;
+    }
+
+    try {
+      await deletePostApi(post.postId);
+      deletePostFromStore(post.postId);
+      toast.success("게시글이 성공적으로 삭제되었습니다.");
+      navigate("/community");
+    } catch (error: any) {
+      console.error("게시글 삭제 실패:", error);
+      toast.error(
+        "게시글 삭제에 실패했습니다: " +
+          (error.response?.data?.message || error.message || "알 수 없는 오류")
+      );
+    }
+  };
+
+  const handleBack = () => {
+    navigate("/community");
+  };
+
+  const handlePostUpdated = (updatedPost?: Post | null) => {
+    setIsEditModalOpen(false);
+    if (updatedPost) {
+      setPost(updatedPost);
+      updatePostInStore(updatedPost.postId, updatedPost); // 이곳에서는 스토어 업데이트가 맞습니다.
+      toast.success("게시글이 성공적으로 수정되었습니다.");
+    } else {
+      setRefreshKey((prev) => prev + 1);
+    }
+  };
 
   if (loading) {
-    return <div className="text-center py-20">로딩 중...</div>;
+    return (
+      <div className="flex justify-center items-center h-screen bg-gray-50">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-purple-500"></div>
+        <p className="ml-4 text-lg text-gray-700">게시글 로딩 중...</p>
+      </div>
+    );
   }
 
   if (notFound || !post) {
@@ -73,7 +132,7 @@ const PostDetailPage: React.FC = () => {
           </p>
           <button
             onClick={() => navigate("/community")}
-            className="bg-primary-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-primary-700 transition-colors"
+            className="bg-purple-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-purple-700 transition-colors"
           >
             커뮤니티로 돌아가기
           </button>
@@ -81,22 +140,6 @@ const PostDetailPage: React.FC = () => {
       </div>
     );
   }
-
-  const handleEdit = (postToEdit: Post) => {
-    // 매개변수 이름을 겹치지 않게 변경
-    setEditingPost(postToEdit);
-    setIsEditModalOpen(true);
-  };
-
-  const handleDelete = (idToDelete: string) => {
-    // 매개변수 이름을 겹치지 않게 변경
-    deletePost(idToDelete);
-    navigate("/community");
-  };
-
-  const handleBack = () => {
-    navigate("/community");
-  };
 
   return (
     <>
@@ -107,13 +150,7 @@ const PostDetailPage: React.FC = () => {
         onDelete={handleDelete}
       />
       {isEditModalOpen && (
-        <CreatePostModal
-          post={editingPost}
-          onClose={() => {
-            setIsEditModalOpen(false);
-            setEditingPost(null);
-          }}
-        />
+        <CreatePostModal post={post} onClose={handlePostUpdated} />
       )}
     </>
   );

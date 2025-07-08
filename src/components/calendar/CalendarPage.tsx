@@ -1,17 +1,21 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import {AnimatePresence, motion} from 'framer-motion';
 import { ChevronLeft, ChevronRight, Plus, Grid, List, Calendar as CalendarIcon, BarChart3, Repeat, Users, User } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, startOfWeek, endOfWeek, addDays, startOfYear, endOfYear, eachMonthOfInterval } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { useCalendar } from '../../hooks/useCalendar';
 import { useAppStore } from '../../store/appStore';
+import { useLocation, useNavigate } from 'react-router-dom';
 import EventModal from './EventModal';
 
 const CalendarPage: React.FC = () => {
   const { mode, currentGroup } = useAppStore();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [showEventModal, setShowEventModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [showViewDropdown, setShowViewDropdown] = useState(false);
 
   // useCalendar 훅 사용 - 그룹 모드일 때 currentGroup.id 전달
   const {
@@ -33,6 +37,27 @@ const CalendarPage: React.FC = () => {
     initialView: 'month',
     groupId: mode === 'group' && currentGroup ? currentGroup.id : undefined, // 그룹 ID 전달
   });
+
+  // URL 쿼리 파라미터에서 eventId 확인하여 상세 모달 열기
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.search);
+    const eventId = urlParams.get('eventId');
+    
+    if (eventId && events.length > 0 && !showEventModal) {
+      // 해당 이벤트 찾기
+      const targetEvent = events.find(event => event.id === eventId);
+      if (targetEvent) {
+        setSelectedEvent(targetEvent);
+        setSelectedDate(new Date(targetEvent.date));
+        setShowEventModal(true);
+        
+        // URL에서 eventId 파라미터 제거 (모달을 닫았을 때 재열리지 않도록)
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.delete('eventId');
+        navigate(newUrl.pathname + newUrl.search, { replace: true });
+      }
+    }
+  }, [events, location.search, showEventModal, navigate]);
 
   // 뷰에 따른 제목 표시
   const getViewTitle = () => {
@@ -160,7 +185,7 @@ const CalendarPage: React.FC = () => {
   ];
 
   return (
-      <div className="min-h-screen px-2 sm:px-4 lg:px-6 py-4 space-y-2 sm:space-y-4">
+      <div className="space-y-8">
         {/* Error Display */}
         {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
@@ -183,65 +208,135 @@ const CalendarPage: React.FC = () => {
         )}
 
         {/* Header */}
-        <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
-          <div className="flex flex-row items-center space-x-4">
-            <h1 className="hidden sm:block text-xl sm:text-2xl font-bold text-gray-800">
-              {mode === 'personal' ? '내 캘린더' : '공유 캘린더'}
-            </h1>
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between space-y-2 xl:space-y-0 mb-2">
+          <div>
+            <div className="flex flex-col lg:flex-row lg:items-center space-y-1 lg:space-y-0 lg:space-x-4">
+              <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 leading-tight">
+                {mode === 'personal' ? '내 캘린더' : (
+                    <div className="flex items-center space-x-2 lg:space-x-3 flex-wrap">
+                      <span className="whitespace-nowrap">공유 캘린더</span>
+                      <span className="text-lg lg:text-xl text-primary-600">•</span>
+                      <span className="text-lg lg:text-2xl text-primary-600 font-semibold whitespace-nowrap">
+            {currentGroup?.name || '그룹 선택 필요'}
+          </span>
+                    </div>
+                )}
+              </h1>
+              <div className="flex items-center justify-center space-x-2">
+                <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={goToPrevious}
+                    className="p-2 rounded-lg hover:bg-gray-100"
+                    disabled={loading}
+                >
+                  <ChevronLeft className="w-4 sm:w-5 h-4 sm:h-5" />
+                </motion.button>
+                <h2 className="text-sm sm:text-lg font-medium text-gray-700 min-w-[160px] sm:min-w-[200px] text-center px-2">
+                  {getViewTitle()}
+                </h2>
+                <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={goToNext}
+                    className="p-2 rounded-lg hover:bg-gray-100"
+                    disabled={loading}
+                >
+                  <ChevronRight className="w-4 sm:w-5 h-4 sm:h-5" />
+                </motion.button>
+              </div>
+            </div>
           </div>
 
-          {/* Center - Date Navigation */}
-          <div className="flex items-center justify-center space-x-2">
-            <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={goToPrevious}
-                className="p-2 rounded-lg hover:bg-gray-100"
-                disabled={loading}
-            >
-              <ChevronLeft className="w-4 sm:w-5 h-4 sm:h-5" />
-            </motion.button>
-            <h2 className="text-sm sm:text-lg font-medium text-gray-700 min-w-[160px] sm:min-w-[200px] text-center px-2">
-              {getViewTitle()}
-            </h2>
-            <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={goToNext}
-                className="p-2 rounded-lg hover:bg-gray-100"
-                disabled={loading}
-            >
-              <ChevronRight className="w-4 sm:w-5 h-4 sm:h-5" />
-            </motion.button>
-          </div>
-
-          <div className="flex items-center justify-end space-x-4">
+          <div className="flex items-center space-x-3 justify-end">
             {/* View Selector */}
-            <div className="flex bg-gray-100 rounded-lg p-1 overflow-x-auto">
-              {viewOptions.map((option) => (
-                  <motion.button
-                      key={option.value}
-                      className={`flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${
-                          currentView === option.value
-                              ? 'bg-white text-primary-600 shadow-sm'
-                              : 'text-gray-600 hover:text-gray-800'
-                      }`}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => setCurrentView(option.value as any)}
-                      disabled={loading}
-                  >
-                    <option.icon className="w-4 h-4" />
-                    <span className="hidden sm:inline">{option.label}</span>
-                  </motion.button>
-              ))}
+            <div className="relative">
+              <motion.button
+                  className="flex items-center space-x-2 sm:space-x-3 pl-3 pr-4 py-3 border border-gray-200 rounded-lg text-sm bg-white hover:bg-gray-50 transition-colors font-medium text-gray-700 cursor-pointer shadow-sm w-full sm:w-auto whitespace-nowrap"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setShowViewDropdown(!showViewDropdown)}
+              >
+                <div className="flex items-center space-x-2">
+                  {viewOptions.find(option => option.value === currentView)?.icon && (
+                      React.createElement(viewOptions.find(option => option.value === currentView).icon,
+                          { className: "w-4 h-4 text-gray-400" }
+                      )
+                  )}
+                  <span className="flex-1 text-left">
+        {viewOptions.find(option => option.value === currentView)?.label}
+      </span>
+                </div>
+                <motion.svg
+                    className="w-4 h-4 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    animate={{ rotate: showViewDropdown ? 180 : 0 }}
+                    transition={{ duration: 0.2 }}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </motion.svg>
+              </motion.button>
+
+              {/* 드롭다운 메뉴 */}
+              <AnimatePresence>
+                {showViewDropdown && (
+                    <>
+                      <div
+                          className="fixed inset-0 z-10"
+                          onClick={() => setShowViewDropdown(false)}
+                      />
+                      <motion.div
+                          initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                          transition={{ duration: 0.2 }}
+                          className="absolute top-full mt-2 left-0 right-0 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-20"
+                      >
+                        {viewOptions.map((option) => (
+                            <motion.button
+                                key={option.value}
+                                className={`w-full text-left px-4 py-3 text-sm hover:bg-gray-50 transition-colors flex items-center justify-between ${
+                                    currentView === option.value ? 'bg-primary-50 text-primary-600 font-medium' : 'text-gray-700'
+                                }`}
+                                whileHover={{ x: 4 }}
+                                onClick={() => {
+                                  setCurrentView(option.value as any);
+                                  setShowViewDropdown(false);
+                                }}
+                            >
+                              {/* 좌측: 아이콘 + 텍스트 */}
+                              <div className="flex items-center space-x-3">
+                                <option.icon className="w-4 h-4 flex-shrink-0" />
+                                <span className="whitespace-nowrap">{option.label}</span>
+                              </div>
+
+                              {/* 우측: 체크 아이콘 */}
+                              {currentView === option.value && (
+                                  <motion.div
+                                      initial={{ scale: 0 }}
+                                      animate={{ scale: 1 }}
+                                      className="flex-shrink-0"
+                                  >
+                                    <svg className="w-4 h-4 text-primary-600" fill="currentColor" viewBox="0 0 20 20">
+                                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                    </svg>
+                                  </motion.div>
+                              )}
+                            </motion.button>
+                        ))}
+                      </motion.div>
+                    </>
+                )}
+              </AnimatePresence>
             </div>
 
             {/* Add Event Button */}
             <motion.button
-                className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors disabled:opacity-50"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                className="flex items-center space-x-2 px-4 py-3 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors shadow-sm whitespace-nowrap"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => {
                   setSelectedDate(new Date());
                   setSelectedEvent(null);
@@ -250,8 +345,7 @@ const CalendarPage: React.FC = () => {
                 disabled={loading}
             >
               <Plus className="w-4 h-4" />
-              <span className="hidden sm:inline">일정 추가</span>
-              <span className="sm:hidden">추가</span>
+              <span>일정 추가</span>
             </motion.button>
           </div>
         </div>

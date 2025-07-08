@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
-  Hash,
   Send,
   Users,
   Lightbulb,
@@ -17,22 +16,18 @@ import { createPost, updatePost } from "../../api/community/community";
 
 interface CreatePostModalProps {
   post?: Post | null;
-  onClose: () => void;
+  onClose: (postData?: Post | null) => void;
 }
-
-const frontendToBackendCategory: Record<string, string> = {
-  roommate: "FIND_MATE",
-  tip: "LIFE_TIPS",
-  free: "FREE_BOARD",
-  question: "QNA",
-  policy: "POLICY",
-};
 
 const CreatePostModal: React.FC<CreatePostModalProps> = ({ post, onClose }) => {
   const { user } = useAuthStore();
   const [title, setTitle] = useState(post?.title || "");
   const [content, setContent] = useState(post?.content || "");
-  const [category, setCategory] = useState(post?.category || "free");
+
+  // ✨ category 상태 초기화 로직 변경: 백엔드에서 오는 값을 직접 사용
+  // 기본값은 "FREE_BOARD"로 설정합니다.
+  const [category, setCategory] = useState(post?.category || "FREE_BOARD");
+
   const [tags, setTags] = useState<string[]>(post?.tags || []);
   const [tagInput, setTagInput] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -40,11 +35,21 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ post, onClose }) => {
   const isEditing = !!post;
 
   const categories = [
-    { id: "roommate", name: "메이트 구하기", icon: Users },
-    { id: "tip", name: "생활팁", icon: Lightbulb },
-    { id: "free", name: "자유게시판", icon: MessageSquare },
-    { id: "question", name: "질문/답변", icon: HelpCircle },
-    { id: "policy", name: "정책", icon: Star },
+    {
+      id: "FIND_MATE",
+      name: "메이트 구하기",
+      icon: Users,
+      frontendId: "roommate",
+    }, // ✨ id를 백엔드 값으로 변경, frontendId 추가
+    { id: "LIFE_TIPS", name: "생활팁", icon: Lightbulb, frontendId: "tip" },
+    {
+      id: "FREE_BOARD",
+      name: "자유게시판",
+      icon: MessageSquare,
+      frontendId: "free",
+    },
+    { id: "QNA", name: "질문/답변", icon: HelpCircle, frontendId: "question" },
+    { id: "POLICY", name: "정책", icon: Star, frontendId: "policy" },
   ];
 
   const handleAddTag = () => {
@@ -75,27 +80,51 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ post, onClose }) => {
       const requestData = {
         title: title.trim(),
         content: content.trim(),
-        category: frontendToBackendCategory[category],
-        // tags는 백엔드에 보내는 데이터에 포함되지 않았으므로 제거하거나 백엔드 API에 맞게 추가해야 합니다.
-        // tags: tags,
+        category: category,
       };
 
+      console.log("게시글 요청 데이터:", requestData);
+
+      let resultPost: Post;
+
       if (isEditing && post) {
-        await updatePost(post.postId, requestData);
-        toast.success("게시글이 수정되었습니다!");
+        const updated = await updatePost(post.postId, requestData);
+        resultPost = {
+          ...post,
+          ...updated,
+          updatedAt: new Date().toISOString(),
+        };
       } else {
-        await createPost(requestData);
+        const created = await createPost(requestData);
+        resultPost = {
+          postId: created.postId,
+          title: created.title,
+          content: created.content,
+          category: created.category,
+          categoryName: created.categoryName,
+          likeCount: 0,
+          reportCount: 0,
+          createdAt: created.createdAt,
+          updatedAt: created.updatedAt || created.createdAt,
+          authorId: user.id,
+          authorNickname: user.nickname,
+          userLiked: false,
+          commentCount: 0,
+          comments: [],
+          userBookmarked: false,
+        };
         toast.success("게시글이 성공적으로 작성되었습니다!");
       }
 
-      onClose(); // 게시글 작성/수정 성공 후 모달 닫기
+      onClose(resultPost);
     } catch (error: any) {
-      // 에러 객체의 message 속성에 접근하기 위해 any 타입 명시
       console.error("게시글 처리 중 오류 발생:", error);
       toast.error(
-        error.message ||
+        error.response?.data?.message ||
+          error.message ||
           (isEditing ? "게시글 수정 중 오류 발생" : "게시글 작성 중 오류 발생")
       );
+      onClose(null);
     } finally {
       setIsSubmitting(false);
     }
@@ -116,7 +145,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ post, onClose }) => {
               {isEditing ? "게시글 수정" : "새 게시글 작성"}
             </h2>
             <button
-              onClick={onClose}
+              onClick={() => onClose(null)}
               className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
             >
               <X className="w-5 h-5 text-gray-500" />
@@ -135,9 +164,9 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ post, onClose }) => {
                   {categories.map((cat) => (
                     <button
                       key={cat.id}
-                      onClick={() => setCategory(cat.id)}
+                      onClick={() => setCategory(cat.id)} // ✨ category 상태에 백엔드 id를 직접 저장
                       className={`flex flex-col items-center p-3 rounded-xl border-2 transition-colors ${
-                        category === cat.id
+                        category === cat.id // ✨ category 상태와 cat.id를 직접 비교
                           ? "border-purple-500 bg-purple-50 text-purple-700"
                           : "border-gray-200 hover:border-gray-300"
                       }`}
@@ -184,59 +213,6 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ post, onClose }) => {
                   {content.length}/2000
                 </div>
               </div>
-
-              {/* 태그 (현재 백엔드 API에 tags가 포함되지 않아 주석 처리) */}
-              {/* <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  태그 (최대 5개)
-                </label>
-                <div className="space-y-3">
-                  <div className="flex space-x-2">
-                    <div className="relative flex-1">
-                      <Hash className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <input
-                        type="text"
-                        value={tagInput}
-                        onChange={(e) => setTagInput(e.target.value)}
-                        onKeyDown={(e) =>
-                          e.key === "Enter" &&
-                          (e.preventDefault(), handleAddTag())
-                        }
-                        placeholder="태그 입력..."
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                        maxLength={20}
-                        disabled={tags.length >= 5}
-                      />
-                    </div>
-                    <button
-                      onClick={handleAddTag}
-                      disabled={!tagInput.trim() || tags.length >= 5}
-                      className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                    >
-                      추가
-                    </button>
-                  </div>
-
-                  {tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {tags.map((tag, index) => (
-                        <span
-                          key={index}
-                          className="inline-flex items-center px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm"
-                        >
-                          #{tag}
-                          <button
-                            onClick={() => handleRemoveTag(tag)}
-                            className="ml-2 text-purple-500 hover:text-purple-700"
-                          >
-                            ×
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div> */}
             </div>
           </div>
 
@@ -247,7 +223,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ post, onClose }) => {
             </div>
             <div className="flex space-x-3">
               <button
-                onClick={onClose}
+                onClick={() => onClose(null)}
                 className="px-6 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 취소

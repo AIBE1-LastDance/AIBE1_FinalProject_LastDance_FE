@@ -35,6 +35,7 @@ import {
 } from 'recharts';
 import {useAppStore} from '../../store/appStore';
 import {useAuthStore} from '../../store/authStore';
+import {useLocation, useNavigate} from 'react-router-dom';
 import {format, startOfMonth, endOfMonth, isWithinInterval, subMonths} from 'date-fns';
 import {ko} from 'date-fns/locale';
 import ExpenseModal from './ExpenseModal';
@@ -52,6 +53,7 @@ interface GroupSummary {
 
 const ExpensesPage: React.FC = () => {
     const {
+        expenses,
         mode,
         currentGroup,
         savedAnalyses,
@@ -71,6 +73,8 @@ const ExpensesPage: React.FC = () => {
         groupSharesSummary,
     } = useAppStore();
     const {user} = useAuthStore();
+    const location = useLocation();
+    const navigate = useNavigate();
     const [showExpenseModal, setShowExpenseModal] = useState(false);
     const [selectedExpense, setSelectedExpense] = useState(null);
     const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -88,6 +92,32 @@ const ExpensesPage: React.FC = () => {
     const [activeIndex, setActiveIndex] = useState<number | null>(null);
     const [monthlyTrendData, setMonthlyTrendData] = useState<any>({});
     const [pageLoading, setPageLoading] = useState(false);
+
+    // URL 쿼리 파라미터에서 splitId 확인하여 상세 모달 열기
+    useEffect(() => {
+        const urlParams = new URLSearchParams(location.search);
+        const splitId = urlParams.get('splitId');
+        
+        if (splitId && (expenses.length > 0 || groupShares.length > 0) && !showExpenseModal) {
+            // 해당 지출/분담금 찾기
+            const allExpenses = [...expenses, ...groupShares];
+            const targetExpense = allExpenses.find(expense => 
+                expense.id === splitId || 
+                expense.originalExpenseId === splitId ||
+                expense.expenseId === splitId
+            );
+            
+            if (targetExpense) {
+                setSelectedExpense(targetExpense);
+                setShowExpenseModal(true);
+                
+                // URL에서 splitId 파라미터 제거 (모달을 닫았을 때 재열리지 않도록)
+                const newUrl = new URL(window.location.href);
+                newUrl.searchParams.delete('splitId');
+                navigate(newUrl.pathname + newUrl.search, { replace: true });
+            }
+        }
+    }, [expenses, groupShares, location.search, showExpenseModal, navigate]);
 
     // 월별 추이 데이터 로드
     const loadMonthlyTrendData = React.useCallback(async () => {

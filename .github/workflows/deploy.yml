@@ -38,7 +38,7 @@ jobs:
         tags: |
           type=ref,event=branch
           type=ref,event=pr
-          type=sha,prefix={{branch}}-
+          type=sha,format=short
           type=raw,value=latest,enable={{is_default_branch}}
 
     - name: Set up Docker Buildx
@@ -53,6 +53,8 @@ jobs:
         push: true
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
+        build-args: |
+          VITE_API_BASE_URL=${{ secrets.API_BASE_URL }}
       
     - name: Set output
       run: echo "image=${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKERHUB_REPOSITORY }}:latest" >> $GITHUB_OUTPUT

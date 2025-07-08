@@ -16,7 +16,9 @@ import {
   Trash2,
   MoreVertical,
   Pencil,
+  Bookmark, // ✅ 북마크 아이콘 추가
 } from "lucide-react";
+
 import { Comment } from "../../types/community/comment";
 import { Post } from "../../types/community/community";
 import { useAuthStore } from "../../store/authStore";
@@ -26,31 +28,43 @@ import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
 import toast from "react-hot-toast";
 import ReportModal from "./ReportModal";
-// commentApi 함수들을 임포트합니다.
 import {
   fetchCommentsByPostId,
   createComment,
   deleteComment,
-  // updateComment // 댓글 수정 기능을 사용하지 않으므로 필요하지 않습니다.
 } from "../../api/community/comment";
+import { usePostStore } from "../../store/community/postStore";
+import { updateComment } from "../../api/community/comment"; // 이미 있다면 생략
 
 interface PostDetailProps {
   post: Post;
   onBack: () => void;
   onEdit?: (post: Post) => void;
   onDelete?: (postId: string) => void;
+  onCommentCreated?: () => void;
+  onCommentDeleted?: () => void;
 }
 
 const PostDetail: React.FC<PostDetailProps> = ({
-  post: initialPost,
+  post,
   onBack,
   onEdit,
   onDelete,
+  onCommentCreated,
+  onCommentDeleted,
 }) => {
   const { user } = useAuthStore();
-  const { updatePost, deletePost, posts } = useAppStore();
-  const [post, setPost] = useState<Post>(initialPost); // 게시글 자체의 상태
-  const [comments, setComments] = useState<Comment[]>([]); // 댓글 목록을 별도로 관리하는 상태
+  const { updatePost: updatePostInStore } = useAppStore();
+  const { toggleLike, toggleBookmark } = usePostStore();
+  const [localPost, setLocalPost] = useState<Post>(post);
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editingContent, setEditingContent] = useState<string>("");
+
+  useEffect(() => {
+    setLocalPost(post);
+  }, [post]);
+
+  const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [reportModal, setReportModal] = useState<{
@@ -64,63 +78,95 @@ const PostDetail: React.FC<PostDetailProps> = ({
     targetId: "",
     targetTitle: "",
   });
-  const [showPostActions, setShowPostActions] = useState(false);
-  const postActionsRef = useRef<HTMLDivElement>(null);
 
-  // 삭제 확인 훅 사용
+  const handleToggleLike = async () => {
+    if (!user) {
+      toast.error("로그인 후 좋아요를 누를 수 있습니다.");
+      return;
+    }
+
+    try {
+      await toggleLike(localPost.postId);
+      // 💡 상태 수동 반영
+      setLocalPost((prev) => ({
+        ...prev,
+        userLiked: !prev.userLiked,
+        likeCount: prev.userLiked ? prev.likeCount - 1 : prev.likeCount + 1,
+      }));
+    } catch (error) {
+      toast.error("좋아요 처리 중 오류가 발생했습니다.");
+    }
+  };
+
+  const handleToggleBookmark = async () => {
+    if (!user) {
+      toast.error("로그인 후 북마크할 수 있습니다.");
+      return;
+    }
+
+    try {
+      await toggleBookmark(localPost.postId);
+      setLocalPost((prev) => ({
+        ...prev,
+        userBookmarked: !prev.userBookmarked,
+      }));
+    } catch (error) {
+      toast.error("북마크 처리 중 오류가 발생했습니다.");
+    }
+  };
+
+  const handleSaveEditedComment = async (commentId: string) => {
+    if (!editingContent.trim()) {
+      toast.error("수정할 내용을 입력해주세요.");
+      return;
+    }
+
+    try {
+      await updateComment(commentId, { content: editingContent.trim() });
+
+      setComments((prev) =>
+        prev.map((c) =>
+          c.commentId === commentId
+            ? {
+                ...c,
+                content: editingContent,
+                updatedAt: new Date().toISOString(),
+              }
+            : c
+        )
+      );
+
+      toast.success("댓글이 수정되었습니다.");
+      setEditingCommentId(null);
+      setEditingContent("");
+    } catch (error) {
+      console.error("댓글 수정 실패:", error);
+      toast.error("댓글 수정 중 오류가 발생했습니다.");
+    }
+  };
   const { isDeleting: isDeletingPost, handleDelete: triggerDeletePost } =
     useDeleteConfirmation({
       onConfirm: () => {
-        deletePost(post.postId); // post.id 대신 post.postId 사용
-        toast.success("게시글이 삭제되었습니다.");
-        onBack();
+        onDelete?.(post.postId);
       },
       message: "정말로 이 게시글을 삭제하시겠습니까?",
     });
 
-  // posts 상태가 변경될 때마다 현재 post를 업데이트
-  useEffect(() => {
-    const updatedPost = posts.find((p) => p.postId === post.postId);
-    if (updatedPost) {
-      setPost(updatedPost);
-      // 이 시점에서는 댓글을 업데이트하지 않습니다. 댓글은 아래의 별도 useEffect에서 불러옵니다.
-    }
-  }, [posts, post.postId]);
+  const isAuthor = user?.id === post.authorId;
 
-  // 게시글 ID가 변경될 때마다 댓글을 백엔드에서 불러오는 useEffect
   useEffect(() => {
     const loadComments = async () => {
       try {
         const fetchedComments = await fetchCommentsByPostId(post.postId);
-        setComments(fetchedComments); // 불러온 댓글로 comments 상태 업데이트
+        setComments(fetchedComments);
       } catch (error) {
         console.error("댓글 로드 실패:", error);
         toast.error("댓글을 불러오는 데 실패했습니다.");
-        setComments([]); // 오류 발생 시 댓글 목록을 비웁니다.
+        setComments([]);
       }
     };
     loadComments();
-  }, [post.postId]); // post.postId가 변경될 때마다 실행
-
-  // 외부 클릭 시 액션 메뉴 닫기
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        postActionsRef.current &&
-        !postActionsRef.current.contains(event.target as Node)
-      ) {
-        setShowPostActions(false);
-      }
-    };
-
-    if (showPostActions) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [showPostActions]);
+  }, [post.postId]);
 
   const getCategoryInfo = (category: string) => {
     const categories: Record<
@@ -172,20 +218,15 @@ const PostDetail: React.FC<PostDetailProps> = ({
     setIsSubmittingComment(true);
 
     try {
-      // 댓글 생성
       await createComment({
         postId: post.postId,
         content: newComment.trim(),
       });
 
-      // ✅ 댓글 목록을 다시 백엔드에서 불러오기 (닉네임 포함됨)
       const refreshedComments = await fetchCommentsByPostId(post.postId);
       setComments(refreshedComments);
 
-      // 댓글 수 반영
-      updatePost(post.postId, {
-        commentCount: (post.commentCount || 0) + 1,
-      });
+      onCommentCreated?.();
 
       setNewComment("");
       toast.success("댓글이 작성되었습니다.");
@@ -198,22 +239,15 @@ const PostDetail: React.FC<PostDetailProps> = ({
   };
 
   const handleDeleteComment = (commentId: string) => {
-    // 즉시 실행하지 않고 다음 렌더링 사이클에서 실행 (requestAnimationFrame)
     requestAnimationFrame(async () => {
-      // async 추가
       if (window.confirm("정말로 이 댓글을 삭제하시겠습니까?")) {
         try {
-          // 백엔드 API 호출하여 댓글 삭제
           await deleteComment(commentId);
 
-          // 성공 시 프론트엔드 comments 상태 업데이트
           setComments((prevComments) =>
-            prevComments.filter((c) => c.id !== commentId)
+            prevComments.filter((c) => c.commentId !== commentId)
           );
-          // 게시글의 commentCount도 업데이트 (useAppStore의 updatePost 활용)
-          updatePost(post.postId, {
-            commentCount: Math.max(0, (post.commentCount || 0) - 1),
-          });
+          onCommentDeleted?.();
 
           toast.success("댓글이 삭제되었습니다.");
         } catch (error) {
@@ -235,12 +269,10 @@ const PostDetail: React.FC<PostDetailProps> = ({
           url: window.location.href,
         });
       } else {
-        // 폴백: URL을 클립보드에 복사
         await navigator.clipboard.writeText(window.location.href);
         toast.success("링크가 클립보드에 복사되었습니다.");
       }
     } catch (error) {
-      // 클립보드 복사 시도
       try {
         await navigator.clipboard.writeText(window.location.href);
         toast.success("링크가 클립보드에 복사되었습니다.");
@@ -256,7 +288,7 @@ const PostDetail: React.FC<PostDetailProps> = ({
     setReportModal({
       isOpen: true,
       type: "post",
-      targetId: post.postId, // post.id 대신 post.postId 사용
+      targetId: post.postId,
       targetTitle: post.title,
     });
   };
@@ -272,7 +304,6 @@ const PostDetail: React.FC<PostDetailProps> = ({
 
   const handleEditPost = () => {
     if (isDeletingPost) return;
-    setShowPostActions(false);
     onEdit?.(post);
   };
 
@@ -287,7 +318,6 @@ const PostDetail: React.FC<PostDetailProps> = ({
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      {/* 뒤로가기 헤더 */}
       <motion.div
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
@@ -304,7 +334,6 @@ const PostDetail: React.FC<PostDetailProps> = ({
         </motion.button>
       </motion.div>
 
-      {/* 게시글 상세 */}
       <motion.article
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -314,11 +343,19 @@ const PostDetail: React.FC<PostDetailProps> = ({
 
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-              <span className="text-white font-medium text-sm">
-                {post.authorNickname?.charAt(0) || "U"}
-              </span>
-            </div>
+            {post.authorProfileImageUrl ? (
+              <img
+                src={post.authorProfileImageUrl}
+                alt={`${post.authorNickname || "익명"}의 프로필`}
+                className="w-10 h-10 rounded-full object-cover"
+              />
+            ) : (
+              <div className="w-10 h-10 bg-gradient-to-r from-orange-400 to-amber-500 rounded-full flex items-center justify-center">
+                <span className="text-white font-medium text-sm">
+                  {post.authorNickname?.charAt(0) || "U"}
+                </span>
+              </div>
+            )}
             <div>
               <span className="font-medium text-gray-900">
                 {post.authorNickname || "익명"}
@@ -347,55 +384,40 @@ const PostDetail: React.FC<PostDetailProps> = ({
               );
             })()}
 
-            {/* 작성자 본인인 경우 편집/삭제 버튼 */}
-            {user?.id === post.userId && (
-              <div className="relative" ref={postActionsRef}>
+            {isAuthor && (
+              <div className="flex items-center space-x-2">
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => {
-                    if (isDeletingPost) return;
-                    setShowPostActions(!showPostActions);
-                  }}
-                  className="post-actions-button p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                  onClick={handleEditPost}
+                  className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                   disabled={isDeletingPost}
                 >
-                  <MoreVertical className="w-4 h-4" />
+                  <Pencil className="w-4 h-4" />
+                  <span className="sr-only">편집</span>
                 </motion.button>
-
-                {showPostActions && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    className="post-actions-dropdown absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-10 min-w-[100px]"
-                  >
-                    <button
-                      onClick={() => {
-                        if (isDeletingPost) return;
-                        handleEditPost();
-                      }}
-                      className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                      disabled={isDeletingPost}
-                    >
-                      <Pencil className="w-3 h-3" />
-                      <span>편집</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (isDeletingPost) return;
-                        setShowPostActions(false);
-                        triggerDeletePost();
-                      }}
-                      className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                      disabled={isDeletingPost}
-                    >
-                      <Trash2 className="w-3 h-3" />
-                      <span>삭제</span>
-                    </button>
-                  </motion.div>
-                )}
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={triggerDeletePost}
+                  className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  disabled={isDeletingPost}
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span className="sr-only">삭제</span>
+                </motion.button>
               </div>
+            )}
+            {!isAuthor && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleReportPost}
+                className="flex items-center space-x-1 px-3 py-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              >
+                <Flag className="w-4 h-4" />
+                <span className="text-sm">신고</span>
+              </motion.button>
             )}
           </div>
         </div>
@@ -404,30 +426,28 @@ const PostDetail: React.FC<PostDetailProps> = ({
           {post.content}
         </p>
 
-        {/* 태그 (Post 타입에 tags 속성이 없으므로 주석 처리하거나 타입에 추가 필요) */}
-        {/* {post.tags && post.tags.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-6">
-            {post.tags.map((tag, index) => (
-              <span
-                key={index}
-                className="text-sm text-purple-600 bg-purple-50 px-3 py-1 rounded-full"
-              >
-                #{tag}
-              </span>
-            ))}
-          </div>
-        )} */}
-
-        {/* 액션 버튼들 */}
         <div className="flex items-center justify-between pt-4 border-t border-gray-100">
           <div className="flex items-center space-x-6">
-            <div className="flex items-center space-x-2 text-gray-500">
-              <Heart className="w-5 h-5" />
-              <span>{post.likeCount || 0}</span>{" "}
-            </div>
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleToggleLike}
+              className={`flex items-center space-x-2 transition-colors ${
+                post.userLiked
+                  ? "text-red-500"
+                  : "text-gray-500 hover:text-red-500"
+              }`}
+            >
+              <Heart
+                className={`w-5 h-5 ${
+                  localPost.userLiked ? "fill-current" : ""
+                }`}
+              />
+              <span>{localPost.likeCount || 0}</span>
+            </motion.button>
+
             <div className="flex items-center space-x-2 text-gray-500">
               <MessageCircle className="w-5 h-5" />
-              {/* comments 상태의 길이를 사용합니다. */}
               <span>{comments.length || 0}</span>
             </div>
           </div>
@@ -443,20 +463,27 @@ const PostDetail: React.FC<PostDetailProps> = ({
               <span className="text-sm">공유</span>
             </motion.button>
 
+            {/* ✅ 북마크 버튼 여기 추가 */}
             <motion.button
-              whileHover={{ scale: 1.05 }}
+              whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
-              onClick={handleReportPost}
-              className="flex items-center space-x-1 px-3 py-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              onClick={handleToggleBookmark}
+              className={`transition-colors ${
+                post.userBookmarked
+                  ? "text-yellow-500"
+                  : "text-gray-400 hover:text-yellow-500"
+              }`}
             >
-              <Flag className="w-4 h-4" />
-              <span className="text-sm">신고</span>
+              <Bookmark
+                className={`w-5 h-5 ${
+                  localPost.userBookmarked ? "fill-current" : ""
+                }`}
+              />
             </motion.button>
           </div>
         </div>
       </motion.article>
 
-      {/* 댓글 섹션 */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -464,24 +491,17 @@ const PostDetail: React.FC<PostDetailProps> = ({
         className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6"
       >
         <h3 className="text-lg font-semibold text-gray-900 mb-6">
-          댓글 {comments.length || 0}개{" "}
-          {/* comments 상태의 길이를 사용합니다. */}
+          댓글 {comments.length || 0}개
         </h3>
 
-        {/* 댓글 작성 */}
         <div className="flex space-x-4 mb-6">
-          <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-            <span className="text-white font-medium text-sm">
-              {user?.username?.charAt(0) || "U"}{" "}
-            </span>
-          </div>
           <div className="flex-1">
             <textarea
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
               placeholder="댓글을 작성해보세요..."
               rows={3}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
               maxLength={500}
             />
             <div className="flex items-center justify-between mt-3">
@@ -493,7 +513,7 @@ const PostDetail: React.FC<PostDetailProps> = ({
                 whileTap={{ scale: 0.98 }}
                 onClick={handleSubmitComment}
                 disabled={isSubmittingComment || !newComment.trim()}
-                className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                className="flex items-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
               >
                 {isSubmittingComment ? (
                   <>
@@ -511,9 +531,8 @@ const PostDetail: React.FC<PostDetailProps> = ({
           </div>
         </div>
 
-        {/* 댓글 목록 */}
         <div className="space-y-4">
-          {comments && comments.length > 0 ? ( // comments 상태를 사용합니다.
+          {comments && comments.length > 0 ? (
             comments
               .sort(
                 (a, b) =>
@@ -525,17 +544,28 @@ const PostDetail: React.FC<PostDetailProps> = ({
 
                 return (
                   <motion.div
-                    key={comment.id}
+                    key={comment.commentId}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.1 }}
                     className="flex space-x-4 p-4 bg-gray-50 rounded-xl"
                   >
-                    <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center">
-                      <span className="text-white font-medium text-xs">
-                        {comment.authorNickname?.charAt(0) || "U"}
-                      </span>
-                    </div>
+                    {/* 프로필 이미지 */}
+                    {comment.authorProfileImageUrl ? (
+                      <img
+                        src={comment.authorProfileImageUrl}
+                        alt={`${comment.authorNickname || "익명"}의 프로필`}
+                        className="w-8 h-8 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 bg-gradient-to-r from-orange-400 to-amber-500 rounded-full flex items-center justify-center">
+                        <span className="text-white font-medium text-xs">
+                          {comment.authorNickname?.charAt(0) || "U"}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* 댓글 내용 */}
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center space-x-2">
@@ -556,23 +586,44 @@ const PostDetail: React.FC<PostDetailProps> = ({
                               </span>
                             )}
                         </div>
+
                         <div className="flex items-center space-x-1">
                           {isCommentAuthor && (
-                            <motion.button
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => handleDeleteComment(comment.id)}
-                              className="flex items-center space-x-1 px-2 py-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
-                            >
-                              <Trash2 className="w-3 h-3" />
-                              <span className="text-xs">삭제</span>
-                            </motion.button>
+                            <>
+                              <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() =>
+                                  handleDeleteComment(comment.commentId)
+                                }
+                                className="flex items-center space-x-1 px-2 py-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                                <span className="text-xs">삭제</span>
+                              </motion.button>
+
+                              <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => {
+                                  setEditingCommentId(comment.commentId);
+                                  setEditingContent(comment.content);
+                                }}
+                                className="flex items-center space-x-1 px-2 py-1 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded transition-colors"
+                              >
+                                <Pencil className="w-3 h-3" />
+                                <span className="text-xs">수정</span>
+                              </motion.button>
+                            </>
                           )}
+
                           {!isCommentAuthor && (
                             <motion.button
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}
-                              onClick={() => handleReportComment(comment.id)}
+                              onClick={() =>
+                                handleReportComment(comment.commentId)
+                              }
                               className="flex items-center space-x-1 px-2 py-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
                             >
                               <Flag className="w-3 h-3" />
@@ -581,9 +632,43 @@ const PostDetail: React.FC<PostDetailProps> = ({
                           )}
                         </div>
                       </div>
-                      <p className="text-gray-700 text-sm leading-relaxed">
-                        {comment.content}
-                      </p>
+
+                      {/* 댓글 내용 or 수정 폼 */}
+                      {editingCommentId === comment.commentId ? (
+                        <div>
+                          <textarea
+                            value={editingContent}
+                            onChange={(e) => setEditingContent(e.target.value)}
+                            rows={2}
+                            className="w-full border border-gray-300 rounded-lg p-2 text-sm"
+                            maxLength={500}
+                          />
+                          {/* 이 부분을 수정했습니다. */}
+                          <div className="flex justify-end space-x-2 mt-2">
+                            <button
+                              onClick={() =>
+                                handleSaveEditedComment(comment.commentId)
+                              }
+                              className="px-3 py-1 bg-orange-600 text-white text-sm rounded hover:bg-orange-700"
+                            >
+                              저장
+                            </button>
+                            <button
+                              onClick={() => {
+                                setEditingCommentId(null);
+                                setEditingContent("");
+                              }}
+                              className="px-3 py-1 bg-gray-200 text-sm rounded hover:bg-gray-300"
+                            >
+                              취소
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-gray-700 text-sm leading-relaxed">
+                          {comment.content}
+                        </p>
+                      )}
                     </div>
                   </motion.div>
                 );
@@ -597,7 +682,6 @@ const PostDetail: React.FC<PostDetailProps> = ({
         </div>
       </motion.div>
 
-      {/* 신고 모달 */}
       <ReportModal
         isOpen={reportModal.isOpen}
         onClose={closeReportModal}

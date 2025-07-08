@@ -2,10 +2,14 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Dice1, Dice2, Dice3, Dice4, Dice5, Dice6, RotateCcw, Trophy, HelpCircle, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import GameSetupModal from './GameSetupModal';
+import { gameApi, GameResultRequest } from '../../api/games';
+import { useAppStore } from '../../store/appStore';
 
 const YahtzeeGame: React.FC = () => {
   const navigate = useNavigate();
+  const { mode, currentGroup } = useAppStore();
   const [showSetup, setShowSetup] = useState(true);
   const [players, setPlayers] = useState<string[]>([]);
   const [penalty, setPenalty] = useState('');
@@ -19,6 +23,11 @@ const YahtzeeGame: React.FC = () => {
   const [gameEnded, setGameEnded] = useState(false);
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
   const [showHelpModal, setShowHelpModal] = useState(false);
+  const [showTiebreaker, setShowTiebreaker] = useState(false);
+  const [tiebreakerPlayers, setTiebreakerPlayers] = useState<string[]>([]);
+  const [tiebreakerDice, setTiebreakerDice] = useState<{[key: string]: number}>({});
+  const [isTiebreakerRolling, setIsTiebreakerRolling] = useState(false);
+  const [tiebreakerLoser, setTiebreakerLoser] = useState<string | null>(null);
 
   const DICE_ICONS = [Dice1, Dice2, Dice3, Dice4, Dice5, Dice6];
 
@@ -47,6 +56,31 @@ const YahtzeeGame: React.FC = () => {
     });
     setScores(initialScores);
     setShowSetup(false);
+  };
+
+  // 게임 결과 저장 함수
+  const saveGameResult = async (loser: string) => {
+    try {
+      const gameData: GameResultRequest = {
+        gameType: "YAHTZEE",
+        participants: players,
+        result: loser,
+        penalty: penalty
+      };
+
+      if (mode === 'group' && currentGroup) {
+        // 그룹 모드: 그룹 결과만 저장
+        await gameApi.saveGroupResult(currentGroup.id, gameData);
+        toast.success(`그룹(${currentGroup.name})에 게임 결과가 저장되었습니다!`);
+      } else {
+        // 개인 모드: 개인 결과만 저장
+        await gameApi.saveMyResult(gameData);
+        toast.success('개인 게임 결과가 저장되었습니다!');
+      }
+    } catch (error) {
+      console.error('게임 결과 저장 실패:', error);
+      toast.error('게임 결과 저장에 실패했습니다.');
+    }
   };
 
   const rollDice = () => {
@@ -154,7 +188,14 @@ const YahtzeeGame: React.FC = () => {
     // 모든 플레이어가 한 라운드를 완료했으면 턴 증가
     if (nextPlayerIndex === 0) {
       if (currentTurn >= 13) {
-        setGameEnded(true);
+        // 게임 종료 시 결과 처리
+        const loser = getLoser();
+        if (loser) {
+          // 단독 꼴지인 경우 바로 게임 종료
+          setGameEnded(true);
+          saveGameResult(loser.player);
+        }
+        // 공동 꼴지인 경우는 showTiebreaker가 true로 설정됨
       } else {
         setCurrentTurn(prev => prev + 1);
       }
@@ -177,12 +218,20 @@ const YahtzeeGame: React.FC = () => {
       total: getPlayerTotalScore(player)
     }));
     
-    // 가장 낮은 점수를 가진 플레이어 찾기
-    const loser = playerTotals.reduce((min, current) => 
-      current.total < min.total ? current : min
-    );
+    // 가장 낮은 점수 찾기
+    const minScore = Math.min(...playerTotals.map(p => p.total));
+    const lowestPlayers = playerTotals.filter(p => p.total === minScore);
     
-    return { player: loser.player, penalty };
+    // 공동 꼴지가 있는 경우
+    if (lowestPlayers.length > 1) {
+      const playerNames = lowestPlayers.map(p => p.player);
+      setTiebreakerPlayers(playerNames);
+      setShowTiebreaker(true);
+      return null; // 아직 결정되지 않음
+    }
+    
+    // 꼴지가 한 명인 경우
+    return { player: lowestPlayers[0].player, penalty };
   };
 
   const getPlayerUpperSectionTotal = (player: string) => {
@@ -201,6 +250,46 @@ const YahtzeeGame: React.FC = () => {
 
   const getPlayerTotalScore = (player: string) => {
     return getPlayerUpperSectionTotal(player) + getPlayerUpperSectionBonus(player) + getPlayerLowerSectionTotal(player);
+  };
+
+  // 타이브레이커 주사위 굴리기
+  const rollTiebreakerDice = () => {
+    if (isTiebreakerRolling) return;
+    
+    setIsTiebreakerRolling(true);
+    
+    // 각 플레이어별로 주사위 굴리기
+    const newDice: {[key: string]: number} = {};
+    tiebreakerPlayers.forEach(player => {
+      newDice[player] = Math.floor(Math.random() * 6) + 1;
+    });
+    
+    setTiebreakerDice(newDice);
+    
+    // 2초 후 결과 확정
+    setTimeout(() => {
+      setIsTiebreakerRolling(false);
+      
+      // 가장 낮은 주사위 값을 가진 플레이어 찾기
+      const minDice = Math.min(...Object.values(newDice));
+      const losers = tiebreakerPlayers.filter(player => newDice[player] === minDice);
+      
+      if (losers.length === 1) {
+        // 벌칙자 확정
+        setTiebreakerLoser(losers[0]);
+        setTimeout(() => {
+          setShowTiebreaker(false);
+          setGameEnded(true);
+          saveGameResult(losers[0]);
+        }, 2000);
+      } else {
+        // 또 동점인 경우 다시 굴리기
+        setTimeout(() => {
+          setTiebreakerPlayers(losers);
+          setTiebreakerDice({});
+        }, 2000);
+      }
+    }, 2000);
   };
 
   const resetGame = () => {
@@ -232,6 +321,13 @@ const YahtzeeGame: React.FC = () => {
     setScores(initialScores);
     setGameEnded(false);
     setHoveredCategory(null);
+    
+    // 타이브레이커 상태 초기화
+    setShowTiebreaker(false);
+    setTiebreakerPlayers([]);
+    setTiebreakerDice({});
+    setIsTiebreakerRolling(false);
+    setTiebreakerLoser(null);
   };
 
   const categories = [
@@ -349,8 +445,109 @@ const YahtzeeGame: React.FC = () => {
                     <div><strong>YAHTZEE:</strong> 같은 숫자 5개 → 50점</div>
                   </div>
                 </div>
+
+                {/* 벌칙 규칙 */}
+                <div className="p-4 bg-red-50 rounded-lg">
+                  <h3 className="font-semibold text-red-800 mb-3">🎯 벌칙 규칙</h3>
+                  <div className="text-sm text-red-700 space-y-2">
+                    <div><strong>단독 꼴지:</strong> 가장 낮은 점수를 받은 플레이어가 벌칙</div>
+                    <div><strong>공동 꼴지:</strong> 주사위 굴리기로 가장 낮은 숫자가 나온 플레이어가 벌칙</div>
+                    <div><strong>동점 처리:</strong> 주사위에서도 동점이면 다시 굴리기</div>
+                  </div>
+                </div>
               </div>
             </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Tiebreaker Modal */}
+      <AnimatePresence>
+        {showTiebreaker && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          >
+            <div className="bg-white rounded-2xl p-8 text-center max-w-md w-full">
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.2, type: "spring" }}
+                className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6"
+              >
+                <Dice6 className="w-10 h-10 text-red-600" />
+              </motion.div>
+              
+              <h2 className="text-3xl font-bold text-gray-800 mb-4">동점 결정전!</h2>
+              <p className="text-lg text-gray-600 mb-6">
+                꼴지가 여러 명입니다.<br />
+                주사위를 굴려서 가장 낮은 숫자가 나온 사람이 벌칙을 받습니다.
+              </p>
+              
+              {/* 참여자들의 주사위 */}
+              <div className="mb-6 space-y-4">
+                {tiebreakerPlayers.map(player => {
+                  const playerDice = tiebreakerDice[player];
+                  const DiceIcon = playerDice ? DICE_ICONS[playerDice - 1] : Dice1;
+                  
+                  return (
+                    <div key={player} className={`flex items-center justify-between p-4 rounded-lg ${
+                      tiebreakerLoser === player ? 'bg-red-100 border-2 border-red-300' : 'bg-gray-50'
+                    }`}>
+                      <span className="font-bold text-lg">{player}</span>
+                      <div className="flex items-center space-x-3">
+                        {playerDice && (
+                          <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            className={`w-12 h-12 rounded-lg border-2 flex items-center justify-center ${
+                              tiebreakerLoser === player 
+                                ? 'bg-red-200 border-red-400 text-red-700' 
+                                : 'bg-white border-gray-300 text-gray-700'
+                            }`}
+                          >
+                            <DiceIcon className="w-8 h-8" />
+                          </motion.div>
+                        )}
+                        {playerDice && (
+                          <span className={`font-bold text-2xl ${
+                            tiebreakerLoser === player ? 'text-red-600' : 'text-gray-800'
+                          }`}>
+                            {playerDice}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              
+              {tiebreakerLoser ? (
+                <div className="mb-6 p-4 bg-red-50 rounded-lg">
+                  <p className="text-lg text-gray-600 mb-2">
+                    <span className="font-bold text-red-600">{tiebreakerLoser}</span>님이
+                  </p>
+                  <p className="text-xl font-bold text-red-600 mb-2">
+                    "{penalty}"
+                  </p>
+                  <p className="text-gray-500">을 담당하게 되었습니다!</p>
+                </div>
+              ) : (
+                <button
+                  onClick={rollTiebreakerDice}
+                  disabled={isTiebreakerRolling}
+                  className={`px-8 py-3 rounded-lg font-bold text-lg transition-all ${
+                    isTiebreakerRolling
+                      ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                      : 'bg-red-600 text-white hover:bg-red-700'
+                  }`}
+                >
+                  {isTiebreakerRolling ? '주사위 굴리는 중...' : '주사위 굴리기!'}
+                </button>
+              )}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -408,10 +605,18 @@ const YahtzeeGame: React.FC = () => {
               {/* 벌칙 결과 */}
               <div className="mb-6 p-4 bg-red-50 rounded-lg">
                 <p className="text-lg text-gray-600 mb-2">
-                  <span className="font-bold text-red-600">{getLoser().player}</span>님이
+                  <span className="font-bold text-red-600">{tiebreakerLoser || (() => {
+                    const playerTotals = players.map(player => ({
+                      player,
+                      total: getPlayerTotalScore(player)
+                    }));
+                    const minScore = Math.min(...playerTotals.map(p => p.total));
+                    const lowestPlayer = playerTotals.find(p => p.total === minScore);
+                    return lowestPlayer?.player || '';
+                  })()}</span>님이
                 </p>
                 <p className="text-xl font-bold text-red-600 mb-2">
-                  "{getLoser().penalty}"
+                  "{penalty}"
                 </p>
                 <p className="text-gray-500">을 담당하게 되었습니다!</p>
               </div>
@@ -430,6 +635,97 @@ const YahtzeeGame: React.FC = () => {
                   게임 종료
                 </button>
               </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Tiebreaker Modal */}
+      <AnimatePresence>
+        {showTiebreaker && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          >
+            <div className="bg-white rounded-2xl p-8 text-center max-w-md w-full">
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.2, type: "spring" }}
+                className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6"
+              >
+                <Dice6 className="w-10 h-10 text-red-600" />
+              </motion.div>
+              
+              <h2 className="text-3xl font-bold text-gray-800 mb-4">동점 결정전!</h2>
+              <p className="text-lg text-gray-600 mb-6">
+                꼴지가 여러 명입니다.<br />
+                주사위를 굴려서 가장 낮은 숫자가 나온 사람이 벌칙을 받습니다.
+              </p>
+              
+              {/* 참여자들의 주사위 */}
+              <div className="mb-6 space-y-4">
+                {tiebreakerPlayers.map(player => {
+                  const playerDice = tiebreakerDice[player];
+                  const DiceIcon = playerDice ? DICE_ICONS[playerDice - 1] : Dice1;
+                  
+                  return (
+                    <div key={player} className={`flex items-center justify-between p-4 rounded-lg ${
+                      tiebreakerLoser === player ? 'bg-red-100 border-2 border-red-300' : 'bg-gray-50'
+                    }`}>
+                      <span className="font-bold text-lg">{player}</span>
+                      <div className="flex items-center space-x-3">
+                        {playerDice && (
+                          <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            className={`w-12 h-12 rounded-lg border-2 flex items-center justify-center ${
+                              tiebreakerLoser === player 
+                                ? 'bg-red-200 border-red-400 text-red-700' 
+                                : 'bg-white border-gray-300 text-gray-700'
+                            }`}
+                          >
+                            <DiceIcon className="w-8 h-8" />
+                          </motion.div>
+                        )}
+                        {playerDice && (
+                          <span className={`font-bold text-2xl ${
+                            tiebreakerLoser === player ? 'text-red-600' : 'text-gray-800'
+                          }`}>
+                            {playerDice}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              
+              {tiebreakerLoser ? (
+                <div className="mb-6 p-4 bg-red-50 rounded-lg">
+                  <p className="text-lg text-gray-600 mb-2">
+                    <span className="font-bold text-red-600">{tiebreakerLoser}</span>님이
+                  </p>
+                  <p className="text-xl font-bold text-red-600 mb-2">
+                    "{penalty}"
+                  </p>
+                  <p className="text-gray-500">을 담당하게 되었습니다!</p>
+                </div>
+              ) : (
+                <button
+                  onClick={rollTiebreakerDice}
+                  disabled={isTiebreakerRolling}
+                  className={`px-8 py-3 rounded-lg font-bold text-lg transition-all ${
+                    isTiebreakerRolling
+                      ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                      : 'bg-red-600 text-white hover:bg-red-700'
+                  }`}
+                >
+                  {isTiebreakerRolling ? '주사위 굴리는 중...' : '주사위 굴리기!'}
+                </button>
+              )}
             </div>
           </motion.div>
         )}

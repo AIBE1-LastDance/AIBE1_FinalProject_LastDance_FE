@@ -1,4 +1,4 @@
-// src/components/community/PostCard.tsx (수정)
+// src/components/community/PostCard.tsx
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
@@ -42,13 +42,8 @@ const PostCard: React.FC<PostCardProps> = ({
   const { user } = useAuthStore();
   const [showMenu, setShowMenu] = useState(false);
 
-  // 게시글 카테고리 아이콘 및 색상 정보만 가져오기
-  // categoryName은 이제 post 객체에서 직접 가져옵니다.
   const getCategoryDisplayInfo = (category: string) => {
-    const categories: Record<
-      string,
-      { icon: any; color: string } // name 필드 제거
-    > = {
+    const categories: Record<string, { icon: any; color: string }> = {
       LIFE_TIPS: {
         icon: Lightbulb,
         color: "bg-yellow-100 text-yellow-800",
@@ -69,12 +64,11 @@ const PostCard: React.FC<PostCardProps> = ({
         icon: FileText,
         color: "bg-green-100 text-green-800",
       },
-      // 필요하다면 다른 카테고리들도 백엔드 enum 값에 맞춰 추가
     };
     return (
       categories[category] || {
-        icon: FileText, // 기본 아이콘
-        color: "bg-gray-100 text-gray-800", // 기본 색상
+        icon: FileText,
+        color: "bg-gray-100 text-gray-800",
       }
     );
   };
@@ -107,11 +101,10 @@ const PostCard: React.FC<PostCardProps> = ({
     onClick(post);
   };
 
-  // ✅ post.category를 사용하여 아이콘과 색상 정보를 가져오고, post.categoryName을 직접 표시
   const categoryDisplayInfo = getCategoryDisplayInfo(post.category);
   const isLiked = post.userLiked;
-  const isBookmarked = post.bookmarkedBy; // `userBookmarked` 대신 `bookmarkedBy` 사용 (아마도 오타이거나 기존 코드에 따라야 함)
-  const isAuthor = user?.id === post.userId;
+  const isBookmarked = post.userBookmarked;
+  const isAuthor = user?.id === post.authorId;
 
   return (
     <motion.div
@@ -120,14 +113,22 @@ const PostCard: React.FC<PostCardProps> = ({
       onClick={handleCardClick}
       className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 cursor-pointer"
     >
-      {/* 헤더 */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-            <span className="text-white font-medium text-sm">
-              {post.authorNickname?.charAt(0) || "U"}
-            </span>
-          </div>
+          {post.authorProfileImageUrl ? (
+            <img
+              src={post.authorProfileImageUrl}
+              alt={`${post.authorNickname || "익명"} 프로필`}
+              className="w-10 h-10 rounded-full object-cover border border-gray-200"
+            />
+          ) : (
+            <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+              <span className="text-white font-medium text-sm">
+                {post.authorNickname?.charAt(0) || "U"}
+              </span>
+            </div>
+          )}
+
           <div>
             <div className="flex items-center space-x-2">
               <span className="font-medium text-gray-900">
@@ -150,11 +151,9 @@ const PostCard: React.FC<PostCardProps> = ({
             className={`flex items-center space-x-1 px-3 py-1 rounded-full text-xs font-medium ${categoryDisplayInfo.color}`}
           >
             <categoryDisplayInfo.icon className="w-3 h-3" />
-            {/* ✅ post.categoryName 직접 사용 */}
             <span>{post.categoryName}</span>
           </div>
 
-          {/* 작성자만 보이는 메뉴 */}
           {isAuthor && (
             <div className="relative">
               <motion.button
@@ -192,7 +191,6 @@ const PostCard: React.FC<PostCardProps> = ({
         </div>
       </div>
 
-      {/* 제목 및 내용 */}
       <div className="mb-4">
         <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
           {post.title}
@@ -202,9 +200,6 @@ const PostCard: React.FC<PostCardProps> = ({
         </p>
       </div>
 
-      {/* 이미지 및 태그는 현재 Post 타입에 없으므로 주석 처리 유지 */}
-
-      {/* 액션 버튼들 */}
       <div className="flex items-center justify-between pt-4 border-t border-gray-100">
         <div className="flex items-center space-x-6">
           <motion.button
@@ -237,13 +232,13 @@ const PostCard: React.FC<PostCardProps> = ({
           whileTap={{ scale: 0.9 }}
           onClick={handleBookmark}
           className={`${
-            post.userBookmarked // ✅ `bookmarkedBy` 대신 `userBookmarked` 사용
+            post.userBookmarked
               ? "text-yellow-500"
               : "text-gray-400 hover:text-yellow-500"
           } transition-colors`}
         >
           <Bookmark
-            className={`w-5 h-5 ${post.userBookmarked ? "fill-current" : ""}`} // ✅ `bookmarkedBy` 대신 `userBookmarked` 사용
+            className={`w-5 h-5 ${post.userBookmarked ? "fill-current" : ""}`}
           />
         </motion.button>
       </div>

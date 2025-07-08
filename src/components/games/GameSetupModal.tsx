@@ -44,7 +44,6 @@ const GameSetupModal: React.FC<GameSetupModalProps> = ({
     const validPlayers = players.filter(name => name.trim() !== '');
     if (validPlayers.length >= minPlayers && penalty.trim() !== '') {
       onStart(validPlayers, penalty.trim());
-      // onClose()는 제거 - 각 게임에서 모달을 닫는 것을 처리
     }
   };
 

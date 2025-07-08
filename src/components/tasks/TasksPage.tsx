@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 // import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import { Plus, CheckCircle, Circle, Calendar, User, Clock, Flag, RefreshCw } from 'lucide-react';
 import { useAppStore } from '../../store/appStore';
 import { useChecklist } from '../../hooks/useChecklist';
 import { ChecklistResponseDTO } from '../../types/checklist';
+import { useLocation, useNavigate } from 'react-router-dom';
 import TaskModal from './TaskModal';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
@@ -12,10 +13,32 @@ import toast from 'react-hot-toast';
 
 const TasksPage: React.FC = () => {
   const { mode, currentGroup, joinedGroups } = useAppStore();
+  const location = useLocation();
+  const navigate = useNavigate();
   const { checklists, loading, error, fetchChecklists, toggleChecklist, deleteChecklist } = useChecklist();
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState<ChecklistResponseDTO | null>(null);
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all');
+
+  // URL 쿼리 파라미터에서 taskId 확인하여 상세 모달 열기
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.search);
+    const taskId = urlParams.get('taskId');
+    
+    if (taskId && checklists.length > 0 && !showTaskModal) {
+      // 해당 할일 찾기
+      const targetTask = checklists.find(task => task.checklistId === parseInt(taskId));
+      if (targetTask) {
+        setSelectedTask(targetTask);
+        setShowTaskModal(true);
+        
+        // URL에서 taskId 파라미터 제거 (모달을 닫았을 때 재열리지 않도록)
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.delete('taskId');
+        navigate(newUrl.pathname + newUrl.search, { replace: true });
+      }
+    }
+  }, [checklists, location.search, showTaskModal, navigate]);
 
   // 필터링된 체크리스트 목록 (마감일 순 정렬)
   const filteredChecklists = checklists
@@ -355,9 +378,37 @@ const TasksPage: React.FC = () => {
                                   <div className="flex items-center space-x-1">
                                     <Clock className="w-4 h-4" />
                                     <span>
-                                      {checklist.isCompleted && checklist.completedAt 
-                                        ? `${format(new Date(checklist.completedAt), 'M월 d일 완료', { locale: ko })}`
-                                        : '생성됨'
+                                      {checklist.isCompleted 
+                                        ? (checklist.completedAt 
+                                            ? `${format(new Date(checklist.completedAt), 'M월 d일 완료', { locale: ko })}`
+                                            : '완료됨'
+                                          )
+                                        : (checklist.dueDate 
+                                            ? (() => {
+                                                // 오늘 날짜를 00:00:00으로 설정
+                                                const today = new Date();
+                                                today.setHours(0, 0, 0, 0);
+                                                
+                                                // 마감일을 00:00:00으로 설정
+                                                const dueDate = new Date(checklist.dueDate);
+                                                dueDate.setHours(0, 0, 0, 0);
+                                                
+                                                // 일수 차이 계산
+                                                const diffTime = dueDate.getTime() - today.getTime();
+                                                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                                                
+                                                if (diffDays === 0) {
+                                                  return '오늘 마감';
+                                                } else if (diffDays === 1) {
+                                                  return '내일 마감';
+                                                } else if (diffDays > 0) {
+                                                  return `D-${diffDays}`;
+                                                } else {
+                                                  return `${Math.abs(diffDays)}일 지연`;
+                                                }
+                                              })()
+                                            : '마감일 없음'
+                                          )
                                       }
                                     </span>
                                   </div>

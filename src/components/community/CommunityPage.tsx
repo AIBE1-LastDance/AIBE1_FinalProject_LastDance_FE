@@ -1,3 +1,4 @@
+// src/components/community/CommunityPage.tsx
 import React, { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
@@ -14,25 +15,29 @@ import {
   FileText,
   Clock,
   ThumbsUp,
-  ChevronLeft, // 페이지네이션 이전 버튼 아이콘
-  ChevronRight, // 페이지네이션 다음 버튼 아이콘
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/authStore";
+import { usePostStore } from "../../store/community/postStore";
 import PostCard from "./PostCard";
 import CreatePostModal from "./CreatePostModal";
 import { Post } from "../../types/community/community";
-import {
-  fetchAllPosts,
-  togglePostLike,
-  togglePostBookmark,
-  deletePost,
-} from "../../api/community/community";
+// import { fetchAllPosts, togglePostLike, togglePostBookmark, deletePost as deletePostApi, createPost as createPostApi, updatePost as updatePostApi,} from "../../api/community/community"; // 이제 스토어에서 관리
 
 const CommunityPage: React.FC = () => {
   const { user } = useAuthStore();
   const navigate = useNavigate();
-  const [posts, setPosts] = useState<Post[]>([]);
+
+  const {
+    posts,
+    loadPosts, // usePostStore에서 loadPosts 액션 가져오기
+    deletePost, // usePostStore에서 deletePost 액션 가져오기
+    toggleLike, // usePostStore에서 toggleLike 액션 가져오기
+    toggleBookmark, // usePostStore에서 toggleBookmark 액션 가져오기
+  } = usePostStore();
+
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -43,115 +48,45 @@ const CommunityPage: React.FC = () => {
     "all"
   );
   const [editingPost, setEditingPost] = useState<Post | null>(null);
-  const [totalLikes, setTotalLikes] = useState<number>(0);
 
-  // --- 스피너 상태 추가 ---
-  const [isLoading, setIsLoading] = useState(true); // 초기 로딩 상태 true로 설정
-  // -----------------------
+  const [isLoading, setIsLoading] = useState(true);
 
-  // --- 페이지네이션 상태 추가 ---
   const [currentPage, setCurrentPage] = useState(1);
-  const postsPerPage = 15; // 한 페이지당 게시글 수
-  // -----------------------------
+  const postsPerPage = 15;
 
-  const loadPosts = async () => {
-    setIsLoading(true); // 데이터 로드 시작 전에 true로 설정
-    try {
-      const data: any[] = await fetchAllPosts();
-      console.log("백엔드에서 받은 원본 게시글 데이터:", data);
-
-      const mappedPosts: Post[] = data.map((item) => ({
-        postId: item.postId,
-        title: item.title,
-        content: item.content,
-        category: item.category,
-        categoryName: item.categoryName,
-        likeCount: item.likeCount,
-        reportCount: item.reportCount,
-        createdAt: item.createdAt,
-        updatedAt: item.updatedAt ?? item.createdAt,
-        userId: item.authorId,
-        authorNickname: item.authorNickname,
-        userLiked: item.userLiked,
-        commentCount: item.commentCount || 0,
-        comments: item.comments || [],
-        userBookmarked: item.userBookmarked || false,
-      }));
-
-      setPosts(mappedPosts);
-      setCurrentPage(1); // 게시글이 새로 로드되면 첫 페이지로 리셋
-    } catch (err) {
-      console.error("[❌ 게시글 로딩 실패]", err);
-      // 사용자에게 에러 메시지를 표시하거나 다른 처리를 할 수 있습니다.
-    } finally {
-      setIsLoading(false); // 데이터 로드 완료 후에 false로 설정
-    }
-  };
-
+  // 컴포넌트 마운트 시 게시글 로드 (스토어의 loadPosts 사용)
   useEffect(() => {
-    loadPosts();
-  }, [user]);
+    // loadPosts가 Promise를 반환하므로, isLoading 상태를 여기서 관리
+    const fetchAndSetLoading = async () => {
+      setIsLoading(true);
+      await loadPosts();
+      setIsLoading(false);
+    };
+    fetchAndSetLoading();
+  }, [user?.id, loadPosts]);
 
-  useEffect(() => {
-    const calculatedTotalLikes = posts.reduce(
-      (sum, post) => sum + (post.likeCount || 0),
-      0
-    );
-    setTotalLikes(calculatedTotalLikes);
+  const totalLikes = useMemo(() => {
+    return posts.reduce((sum, post) => sum + (post.likeCount || 0), 0);
   }, [posts]);
 
-  // 좋아요/북마크 토글 함수 수정
+  // 스토어의 toggleLike 액션 사용
   const handleToggleLike = async (postId: string) => {
     if (!user) {
       alert("로그인 후 좋아요를 누를 수 있습니다.");
       navigate("/login");
       return;
     }
-    try {
-      // 서버에 좋아요 요청을 보냅니다.
-      const isLiked = await togglePostLike(postId); // true: 좋아요, false: 좋아요 취소
-
-      // 클라이언트 상태를 즉시 업데이트합니다.
-      setPosts((prevPosts) =>
-        prevPosts.map((post) =>
-          post.postId === postId
-            ? {
-                ...post,
-                userLiked: isLiked, // 서버 응답에 따라 좋아요 상태 업데이트
-                likeCount: isLiked ? post.likeCount + 1 : post.likeCount - 1, // 좋아요 수 업데이트
-              }
-            : post
-        )
-      );
-    } catch (error) {
-      console.error(`[❌ 좋아요 토글 실패] PostId: ${postId}`, error);
-      alert("좋아요 처리에 실패했습니다.");
-    }
+    await toggleLike(postId);
   };
 
-  // 북마크 토글 함수 수정
+  // 스토어의 toggleBookmark 액션 사용
   const handleToggleBookmark = async (postId: string) => {
     if (!user) {
       alert("로그인 후 북마크할 수 있습니다.");
       navigate("/login");
       return;
     }
-    try {
-      // 서버에 북마크 요청을 보냅니다.
-      const isBookmarked = await togglePostBookmark(postId); // true: 북마크, false: 북마크 취소
-
-      // 클라이언트 상태를 즉시 업데이트합니다.
-      setPosts((prevPosts) =>
-        prevPosts.map((post) =>
-          post.postId === postId
-            ? { ...post, userBookmarked: isBookmarked } // 서버 응답에 따라 북마크 상태 업데이트
-            : post
-        )
-      );
-    } catch (error) {
-      console.error(`[❌ 북마크 토글 실패] PostId: ${postId}`, error);
-      alert("북마크 처리에 실패했습니다.");
-    }
+    await toggleBookmark(postId);
   };
 
   const categories = [
@@ -185,14 +120,15 @@ const CommunityPage: React.FC = () => {
       name: "정책게시판",
       icon: FileText,
       color: "text-green-600",
+      onClick: () => {
+        navigate("/youth-policy");
+      },
     },
   ];
 
-  // 필터링 및 정렬 로직을 useMemo로 감싸 성능 최적화
   const processedPosts = useMemo(() => {
     let tempPosts = [...posts];
 
-    // 검색 필터
     if (searchQuery) {
       tempPosts = tempPosts.filter(
         (post) =>
@@ -201,21 +137,18 @@ const CommunityPage: React.FC = () => {
       );
     }
 
-    // 카테고리 필터
     if (selectedCategory !== "all") {
       tempPosts = tempPosts.filter(
         (post) => post.category === selectedCategory
       );
     }
 
-    // 북마크/좋아요 필터
     if (filterBy === "bookmarked") {
       tempPosts = tempPosts.filter((post) => post.userBookmarked);
     } else if (filterBy === "liked") {
       tempPosts = tempPosts.filter((post) => post.userLiked);
     }
 
-    // 정렬
     tempPosts.sort((a, b) => {
       switch (sortBy) {
         case "likes":
@@ -233,7 +166,6 @@ const CommunityPage: React.FC = () => {
     return tempPosts;
   }, [posts, searchQuery, selectedCategory, filterBy, sortBy]);
 
-  // --- 페이지네이션 관련 계산 ---
   const totalPages = Math.ceil(processedPosts.length / postsPerPage);
   const currentPosts = useMemo(() => {
     const indexOfLastPost = currentPage * postsPerPage;
@@ -242,14 +174,14 @@ const CommunityPage: React.FC = () => {
   }, [processedPosts, currentPage, postsPerPage]);
 
   const paginate = (pageNumber: number) => {
-    if (pageNumber < 1 || pageNumber > totalPages) return; // 유효하지 않은 페이지 번호 방지
+    if (pageNumber < 1 || pageNumber > totalPages) return;
     setCurrentPage(pageNumber);
-    window.scrollTo({ top: 0, behavior: "smooth" }); // 페이지 이동 시 맨 위로 스크롤
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const getPageNumbers = () => {
     const pageNumbers = [];
-    const maxPageButtons = 5; // 화면에 보여줄 최대 페이지 버튼 수
+    const maxPageButtons = 5;
     let startPage = Math.max(1, currentPage - Math.floor(maxPageButtons / 2));
     let endPage = Math.min(totalPages, startPage + maxPageButtons - 1);
 
@@ -262,23 +194,23 @@ const CommunityPage: React.FC = () => {
     }
     return pageNumbers;
   };
-  // -----------------------------
 
   const handlePostEdit = (post: Post) => {
     setEditingPost(post);
     setIsCreateModalOpen(true);
   };
 
+  // 스토어의 deletePost 액션 사용
   const handlePostDelete = async (postId: string) => {
     if (!window.confirm("정말로 이 게시글을 삭제하시겠습니까?")) {
       return;
     }
     try {
       await deletePost(postId);
-      await loadPosts(); // 삭제 후 목록 다시 로드 (이때는 스피너가 표시됩니다. 전체 목록을 다시 불러와야 하므로 자연스럽습니다.)
+      alert("게시글이 삭제되었습니다.");
     } catch (error) {
-      console.error(`[❌ 게시글 삭제 실패] PostId: ${postId}`, error);
-      alert("게시글 삭제에 실패했습니다.");
+      console.error(`[게시글 삭제 실패] PostId: ${postId}`, error);
+      alert("게시글 삭제에 111실패했습니다.");
     }
   };
 
@@ -288,7 +220,6 @@ const CommunityPage: React.FC = () => {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
-      {/* 헤더 */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -325,7 +256,6 @@ const CommunityPage: React.FC = () => {
         </div>
       </motion.div>
 
-      {/* 검색 및 필터 */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -341,31 +271,34 @@ const CommunityPage: React.FC = () => {
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
-                setCurrentPage(1); // 검색 시 첫 페이지로 이동
+                setCurrentPage(1);
               }}
               className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             />
           </div>
         </div>
 
-        {/* 카테고리 필터 */}
         <div className="mt-4 flex flex-wrap gap-2">
           {categories.map((category) => (
             <button
               key={category.id}
               onClick={() => {
-                setSelectedCategory(category.id);
-                setCurrentPage(1); // 카테고리 변경 시 첫 페이지로 이동
+                if (category.id === "POLICY" && category.onClick) {
+                  category.onClick();
+                } else {
+                  setSelectedCategory(category.id);
+                  setCurrentPage(1);
+                }
               }}
               className={`flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                selectedCategory === category.id
+                selectedCategory === category.id && category.id !== "POLICY"
                   ? "bg-primary-100 text-primary-700 border-2 border-primary-200"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
               <category.icon
                 className={`w-4 h-4 ${
-                  selectedCategory === category.id
+                  selectedCategory === category.id && category.id !== "POLICY"
                     ? category.color
                     : "text-gray-500"
                 }`}
@@ -376,7 +309,6 @@ const CommunityPage: React.FC = () => {
         </div>
       </motion.div>
 
-      {/* 정렬 및 필터 옵션 */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -389,7 +321,7 @@ const CommunityPage: React.FC = () => {
             whileTap={{ scale: 0.95 }}
             onClick={() => {
               setFilterBy(filterBy === "bookmarked" ? "all" : "bookmarked");
-              setCurrentPage(1); // 필터 변경 시 첫 페이지로 이동
+              setCurrentPage(1);
             }}
             className={`p-2 rounded-lg transition-colors ${
               filterBy === "bookmarked"
@@ -409,7 +341,7 @@ const CommunityPage: React.FC = () => {
             whileTap={{ scale: 0.95 }}
             onClick={() => {
               setFilterBy(filterBy === "liked" ? "all" : "liked");
-              setCurrentPage(1); // 필터 변경 시 첫 페이지로 이동
+              setCurrentPage(1);
             }}
             className={`p-2 rounded-lg transition-colors ${
               filterBy === "liked"
@@ -435,7 +367,7 @@ const CommunityPage: React.FC = () => {
               key={option.key}
               onClick={() => {
                 setSortBy(option.key as any);
-                setCurrentPage(1); // 정렬 변경 시 첫 페이지로 이동
+                setCurrentPage(1);
               }}
               className={`flex items-center space-x-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                 sortBy === option.key
@@ -450,23 +382,20 @@ const CommunityPage: React.FC = () => {
         </div>
       </motion.div>
 
-      {/* 게시글 목록 또는 스피너 */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="space-y-4 min-h-[300px] flex items-center justify-center" // 스피너가 중앙에 오도록 최소 높이와 flex 속성 추가
+        className="space-y-4 min-h-[300px] flex items-center justify-center"
       >
-        {isLoading ? ( // isLoading이 true일 때 스피너 표시
+        {isLoading ? (
           <div className="flex flex-col items-center justify-center">
             <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-primary-500"></div>
             <p className="mt-4 text-gray-600">게시글을 불러오는 중입니다...</p>
           </div>
-        ) : // isLoading이 false일 때 게시글 목록 또는 "게시글 없음" 메시지 표시
-        currentPosts.length === 0 ? (
+        ) : currentPosts.length === 0 ? (
           <div className="bg-white rounded-2xl p-12 text-center shadow-sm border border-gray-200 w-full">
             {" "}
-            {/* w-full 추가 */}
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <MessageCircle className="w-8 h-8 text-gray-400" />
             </div>
@@ -489,10 +418,8 @@ const CommunityPage: React.FC = () => {
             </button>
           </div>
         ) : (
-          // 실제 게시글 목록
           <div className="w-full space-y-4">
             {" "}
-            {/* w-full 추가 */}
             {currentPosts.map((post, index) => (
               <motion.div
                 key={post.postId}
@@ -514,8 +441,6 @@ const CommunityPage: React.FC = () => {
         )}
       </motion.div>
 
-      {/* --- 페이지네이션 컨트롤 --- */}
-      {/* isLoading이 아닐 때만 페이지네이션을 보여줍니다. (선택 사항) */}
       {!isLoading && totalPages > 1 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -555,16 +480,15 @@ const CommunityPage: React.FC = () => {
           </button>
         </motion.div>
       )}
-      {/* --------------------------- */}
-
-      {/* 글쓰기 모달 */}
       {isCreateModalOpen && (
         <CreatePostModal
           post={editingPost}
-          onClose={async () => {
+          onClose={async (postData?: Post | null) => {
             setIsCreateModalOpen(false);
             setEditingPost(null);
-            await loadPosts(); // 모달 닫힐 때 게시글 새로고침 (이때는 스피너가 표시됩니다)
+            // CreatePostModal 내부에서 API 호출 후, 여기서는 단순히 게시글 목록을 새로고침합니다.
+            // postData가 넘어오지 않아도 (취소 시) 최신 데이터를 다시 불러오는 것이 안전합니다.
+            await loadPosts();
           }}
         />
       )}

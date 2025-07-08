@@ -20,6 +20,7 @@ import {
 import {useAuthStore} from '../../store/authStore';
 import {useAppStore} from '../../store/appStore';
 import {useChecklist} from '../../hooks/useChecklist';
+import {useCalendar} from '../../hooks/useCalendar';
 import {useNavigate} from 'react-router-dom';
 import {
     LineChart,
@@ -55,6 +56,11 @@ const DashboardPage: React.FC = () => {
     const {user} = useAuthStore();
     const {mode, currentGroup, expenses, events} = useAppStore();
     const {checklists, toggleChecklist} = useChecklist(); // toggleChecklist 추가
+    const {getEventsForDate: getCalendarEvents} = useCalendar({
+        autoLoad: true,
+        initialView: 'month',
+        groupId: mode === 'group' && currentGroup ? currentGroup.id : undefined,
+    });
     const navigate = useNavigate();
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [calendarDate, setCalendarDate] = useState(new Date());
@@ -91,6 +97,26 @@ const DashboardPage: React.FC = () => {
         };
         fetchExpenses();
     }, [mode, currentGroup]);
+
+    // 대시보드에서 날짜 파라미터로 온 경우 처리
+    useEffect(() => {
+        const urlParams = new URLSearchParams(location.search);
+        const dateParam = urlParams.get('date');
+
+        if (dateParam) { // showEventModal 조건 제거
+            try {
+                const targetDate = new Date(dateParam);
+                if (!isNaN(targetDate.getTime())) {
+                    setSelectedDate(targetDate);
+                    const newUrl = new URL(window.location.href);
+                    newUrl.searchParams.delete('date');
+                    navigate(newUrl.pathname + newUrl.search, { replace: true });
+                }
+            } catch (error) {
+                console.error('날짜 파싱 오류:', error);
+            }
+        }
+    }, [location.search, navigate]); // showEventModal 의존성도 제거
 
     // Expense categories matching ExpensesPage
     const categoryData = [
@@ -179,32 +205,19 @@ const DashboardPage: React.FC = () => {
     };
 
     const getEventsForDate = React.useCallback((date: Date) => {
-        // Ensure date is a valid Date object
-        const safeDate = date instanceof Date ? date : new Date();
-        const targetDate = new Date(safeDate.getFullYear(), safeDate.getMonth(), safeDate.getDate());
+        // useCalendar 훅의 함수 사용
+        const allEvents = getCalendarEvents(date);
 
-        const filteredEvents = events.filter(event => {
-            // Ensure event.date is a valid Date object
-            const eventDate = event.date instanceof Date ? new Date(event.date) : new Date(event.date);
-            const eventDateOnly = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
-
-            const isSameDay = targetDate.getTime() === eventDateOnly.getTime();
-
-            // 모드에 따른 필터링
-            let modeFilter = false;
+        // 캘린더 페이지와 동일한 필터링 적용
+        return allEvents.filter(event => {
             if (mode === 'personal') {
-                // 개인모드: groupId가 없는 일정만 표시
-                modeFilter = !event.groupId;
+                return true; // 개인 모드: 모든 일정 표시 (개인 + 그룹)
             } else {
-                // 그룹모드: groupId가 있는 일정만 표시
-                modeFilter = !!event.groupId;
+                // 그룹 모드: 현재 선택된 그룹의 일정만 표시
+                return event.groupId === currentGroup?.id;
             }
-
-            return isSameDay && modeFilter;
         });
-
-        return filteredEvents;
-    }, [events, mode]);
+    }, [getCalendarEvents, mode, currentGroup]);
 
     const selectedDateEvents = React.useMemo(() => getEventsForDate(selectedDate), [getEventsForDate, selectedDate]);
 
@@ -408,7 +421,10 @@ const DashboardPage: React.FC = () => {
                     className="bg-white rounded-2xl p-3 shadow-sm border border-gray-200 cursor-pointer hover:shadow-lg transition-all duration-200"
                     whileHover={{scale: 1.05}}
                     whileTap={{scale: 0.95}}
-                    onClick={() => navigate('/calendar')}
+                    onClick={() => {
+                        const dateParam = format(selectedDate, 'yyyy-MM-dd');
+                        navigate(`/calendar?date=${dateParam}`);
+                    }}
                 >
                     <div className="flex items-center justify-between mb-2">
                         <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center">
@@ -716,7 +732,7 @@ const DashboardPage: React.FC = () => {
                                             whileTap={{scale: 0.98}}
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                navigate('/calendar');
+                                                navigate(`/calendar?eventId=${event.id}`);
                                             }}
                                         >
                                             <div className="font-medium">{event.title}</div>
