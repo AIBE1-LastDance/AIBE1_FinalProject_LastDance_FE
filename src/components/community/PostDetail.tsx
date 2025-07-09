@@ -17,10 +17,10 @@ import {
   MoreVertical,
   Pencil,
   Bookmark,
-  GraduationCap, // 추가: LIFE_TIPS용 아이콘
-  ScrollText, // 추가: POLICY용 아이콘
-  Handshake, // 추가: QNA용 아이콘
-  Megaphone, // 추가: FIND_MATE용 아이콘
+  GraduationCap,
+  ScrollText,
+  Handshake,
+  Megaphone,
 } from "lucide-react";
 
 import { Comment } from "../../types/community/comment";
@@ -58,8 +58,6 @@ const PostDetail: React.FC<PostDetailProps> = ({
   onCommentDeleted,
 }) => {
   const { user } = useAuthStore();
-  // useAppStore의 updatePost는 PostDetailPage에서만 사용되므로 여기서는 제거하거나 주석 처리합니다.
-  // const { updatePost: updatePostInStore } = useAppStore();
   const { toggleLike, toggleBookmark } = usePostStore();
   const [localPost, setLocalPost] = useState<Post>(post);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
@@ -92,7 +90,6 @@ const PostDetail: React.FC<PostDetailProps> = ({
 
     try {
       await toggleLike(localPost.postId);
-      // 상태 수동 반영
       setLocalPost((prev) => ({
         ...prev,
         userLiked: !prev.userLiked,
@@ -135,7 +132,7 @@ const PostDetail: React.FC<PostDetailProps> = ({
             ? {
                 ...c,
                 content: editingContent,
-                updatedAt: new Date().toISOString(), // 수정 시간 업데이트
+                updatedAt: new Date().toISOString(),
               }
             : c
         )
@@ -164,7 +161,20 @@ const PostDetail: React.FC<PostDetailProps> = ({
     const loadComments = async () => {
       try {
         const fetchedComments = await fetchCommentsByPostId(post.postId);
-        setComments(fetchedComments);
+        const processedComments = fetchedComments.map((comment) => {
+          const isCommentDeletedUser =
+            comment.authorNickname?.startsWith("deleted_");
+          return {
+            ...comment,
+            authorNickname: isCommentDeletedUser
+              ? "탈퇴한 회원입니다."
+              : comment.authorNickname,
+            authorProfileImageUrl: isCommentDeletedUser
+              ? ""
+              : comment.authorProfileImageUrl,
+          };
+        });
+        setComments(processedComments);
       } catch (error) {
         console.error("댓글 로드 실패:", error);
         toast.error("댓글을 불러오는 데 실패했습니다.");
@@ -355,7 +365,11 @@ const PostDetail: React.FC<PostDetailProps> = ({
 
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-3">
-            {post.authorProfileImageUrl ? (
+            {post.authorNickname === "탈퇴한 회원입니다." ? (
+              <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+                <HelpCircle className="w-6 h-6 text-gray-500" />
+              </div>
+            ) : post.authorProfileImageUrl ? (
               <img
                 src={post.authorProfileImageUrl}
                 alt={`${post.authorNickname || "익명"}의 프로필`}
@@ -446,8 +460,8 @@ const PostDetail: React.FC<PostDetailProps> = ({
               onClick={handleToggleLike}
               className={`flex items-center space-x-2 transition-colors ${
                 localPost.userLiked
-                  ? "text-orange-500" // 좋아요 색상 주황
-                  : "text-gray-500 hover:text-orange-600" // 호버 시 주황
+                  ? "text-orange-500"
+                  : "text-gray-500 hover:text-orange-600"
               }`}
             >
               <Heart
@@ -469,7 +483,7 @@ const PostDetail: React.FC<PostDetailProps> = ({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={handleShare}
-              className="flex items-center space-x-1 px-3 py-2 text-gray-500 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors" // 공유 버튼 호버 색상 주황
+              className="flex items-center space-x-1 px-3 py-2 text-gray-500 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
             >
               <Share2 className="w-4 h-4" />
               <span className="text-sm">공유</span>
@@ -481,7 +495,7 @@ const PostDetail: React.FC<PostDetailProps> = ({
               onClick={handleToggleBookmark}
               className={`transition-colors ${
                 localPost.userBookmarked
-                  ? "text-yellow-500" // 북마크 색상은 기존 노란색 유지 (요청에 명시되지 않음)
+                  ? "text-yellow-500"
                   : "text-gray-400 hover:text-yellow-500"
               }`}
             >
@@ -552,6 +566,8 @@ const PostDetail: React.FC<PostDetailProps> = ({
               )
               .map((comment, index) => {
                 const isCommentAuthor = user?.id === comment.userId;
+                const isCommentDeletedUser =
+                  comment.authorNickname === "탈퇴한 회원입니다.";
 
                 return (
                   <motion.div
@@ -561,8 +577,11 @@ const PostDetail: React.FC<PostDetailProps> = ({
                     transition={{ delay: index * 0.1 }}
                     className="flex space-x-4 p-4 bg-gray-50 rounded-xl"
                   >
-                    {/* 프로필 이미지 */}
-                    {comment.authorProfileImageUrl ? (
+                    {isCommentDeletedUser ? (
+                      <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                        <HelpCircle className="w-5 h-5 text-gray-500" />
+                      </div>
+                    ) : comment.authorProfileImageUrl ? (
                       <img
                         src={comment.authorProfileImageUrl}
                         alt={`${comment.authorNickname || "익명"}의 프로필`}
@@ -576,7 +595,6 @@ const PostDetail: React.FC<PostDetailProps> = ({
                       </div>
                     )}
 
-                    {/* 댓글 내용 */}
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center space-x-2">
@@ -644,7 +662,6 @@ const PostDetail: React.FC<PostDetailProps> = ({
                         </div>
                       </div>
 
-                      {/* 댓글 내용 or 수정 폼 */}
                       {editingCommentId === comment.commentId ? (
                         <div>
                           <textarea
