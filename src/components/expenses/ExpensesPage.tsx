@@ -482,7 +482,9 @@ const ExpensesPage: React.FC = () => {
     // AI 분석 생성 함수
     const handleAnalysis = async () => {
         setAnalysisLoading(true);
-        setSelectedAnalysis(null);
+        setSelectedAnalysis(null); // Clear selected analysis
+        setAnalysisResult(null); // Clear previous analysis result
+        setIsAnalysisSaved(false); // Reset save state for new analysis
         try {
             const startDate = format(startOfMonth(currentMonth), 'yyyy-MM-dd');
             const endDate = format(endOfMonth(currentMonth), 'yyyy-MM-dd');
@@ -494,7 +496,7 @@ const ExpensesPage: React.FC = () => {
             setShowAnalysis(true);
         } catch (error) {
             console.error('AI 분석 실패:', error);
-            toast.error('AI 분석에 실패했습니다. 잠시 후 다시 시도해주세요.');
+            toast.error('AI 분석 요청이 너무 잦습니다. 잠시 후 다시 시도해주세요.');
         } finally {
             setAnalysisLoading(false);
         }
@@ -575,8 +577,8 @@ const ExpensesPage: React.FC = () => {
             );
             toast.success('AI 분석 결과가 성공적으로 저장되었습니다!');
             setIsAnalysisSaved(true); // Set state to true on success
-            // Optionally, refresh saved analyses list if needed
-            // loadSavedAnalyses(); // Assuming such a function exists or can be added to appStore
+            // Refresh saved analyses list
+            await loadSavedAnalysesPaginated({ page: 0, size: 10 }); // Refresh the list after saving
         } catch (error) {
             console.error('AI 분석 결과 저장 실패:', error);
             toast.error('AI 분석 결과 저장에 실패했습니다. 다시 시도해주세요.');
