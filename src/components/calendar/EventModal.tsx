@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Calendar, Clock, Repeat, Trash2, Save } from 'lucide-react';
 import { format } from 'date-fns';
 import {Event, Group} from '../../types';
+import toast from 'react-hot-toast';
 
 interface EventModalProps {
   selectedDate: Date | null;
@@ -71,11 +72,50 @@ const EventModal: React.FC<EventModalProps> = ({
     }
   }, [mode, currentGroup, event]);
 
+  // 새 일정 생성 시 기본값 검증 및 설정
+  useEffect(() => {
+    if (!event && !formData.isAllDay) {
+      // 시작시간이 종료시간보다 늦은 경우 자동 조정
+      if (formData.startTime && formData.endTime && formData.startTime >= formData.endTime) {
+        const [hours, minutes] = formData.startTime.split(':').map(Number);
+        const endHours = hours + 1;
+        const endTime = endHours < 24 ?
+            `${endHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}` :
+            '23:59';
+
+        setFormData(prev => ({
+          ...prev,
+          endTime: endTime
+        }));
+      }
+    }
+  }, [event, formData.startTime, formData.endTime, formData.isAllDay]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.title?.trim()) {
-      alert('제목을 입력해주세요.');
+      toast.error('제목을 입력해주세요.');
+      return;
+    }
+
+    // 하루 종일이 아닌 경우 시간 검증
+    if (!formData.isAllDay && formData.startTime && formData.endTime) {
+      if (formData.startTime >= formData.endTime) {
+        toast.error('시작 시간은 종료 시간보다 이전이어야 합니다.');
+        return;
+      }
+    }
+
+    // 종료 날짜가 시작 날짜보다 이전인지 검증
+    if (formData.endDate && formData.date && formData.endDate < formData.date) {
+      toast.error('종료 날짜는 시작 날짜보다 이후여야 합니다.');
+      return;
+    }
+
+    // 반복 종료 날짜가 시작 날짜보다 이전인지 검증
+    if (formData.repeatEndDate && formData.date && formData.repeatEndDate < formData.date) {
+      toast.error('반복 종료 날짜는 시작 날짜보다 이후여야 합니다.');
       return;
     }
 
@@ -95,7 +135,7 @@ const EventModal: React.FC<EventModalProps> = ({
         onClose();
       }
     } catch (error) {
-      alert('저장 중 오류가 발생했습니다.');
+      toast.error('저장 중 오류가 발생했습니다.');
     } finally {
       setIsSubmitting(false);
     }
@@ -109,7 +149,7 @@ const EventModal: React.FC<EventModalProps> = ({
       ? '모든 반복 일정이 삭제됩니다. 정말 삭제하시겠습니까?' 
       : '정말 삭제하시겠습니까?';
 
-    if (!confirm(confirmMessage)) return;
+    if (!window.confirm(confirmMessage)) return;
 
     setIsSubmitting(true);
 
@@ -119,7 +159,7 @@ const EventModal: React.FC<EventModalProps> = ({
         onClose();
       }
     } catch (error) {
-      alert('삭제 중 오류가 발생했습니다.');
+      toast.error('삭제 중 오류가 발생했습니다.');
     } finally {
       setIsSubmitting(false);
     }
@@ -157,25 +197,26 @@ const EventModal: React.FC<EventModalProps> = ({
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto"
+              className="bg-white rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-800">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-800">
                 {event ? '일정 수정' : '새 일정'}
               </h2>
-              <button
+              <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
                   onClick={onClose}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                  disabled={isSubmitting}
+                  className="p-2 rounded-full hover:bg-gray-100"
               >
                 <X className="w-5 h-5" />
-              </button>
+              </motion.button>
             </div>
 
             {/* Form */}
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
               {/* Title */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -267,7 +308,29 @@ const EventModal: React.FC<EventModalProps> = ({
                       <input
                           type="time"
                           value={formData.startTime}
-                          onChange={(e) => setFormData(prev => ({ ...prev, startTime: e.target.value }))}
+                          onChange={(e) => {
+                            const startTime = e.target.value;
+                            // 시작 시간에서 1시간 후로 종료 시간 자동 설정
+                            const [hours, minutes] = startTime.split(':').map(Number);
+                            const endHours = hours + 1;
+                            let endTime;
+                            if (endHours < 24) {
+                              endTime = `${endHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+                            } else {
+                              // 23시 이후인 경우, 종료시간을 23:59로 설정하고 사용자에게 알림
+                              endTime = '23:59';
+                              // 잠시 후 toast 표시 (상태 업데이트 후)
+                              setTimeout(() => {
+                                toast.success('시작 시간이 23시 이후여서 종료 시간을 23:59로 설정했습니다.');
+                              }, 100);
+                            }
+
+                            setFormData(prev => ({
+                              ...prev,
+                              startTime: startTime,
+                              endTime: endTime
+                            }));
+                          }}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                           disabled={isSubmitting}
                       />
@@ -348,46 +411,55 @@ const EventModal: React.FC<EventModalProps> = ({
               {/* Delete Options - 제거됨 (모든 반복 일정 삭제만 지원) */}
 
               {/* Action Buttons */}
-              <div className="flex justify-between pt-4">
+              <div className="flex space-x-3 pt-4">
                 {event && (
                     <motion.button
                         type="button"
+                        className={`px-4 py-2 border border-red-300 text-red-700 rounded-lg font-medium transition-colors ${
+                            isSubmitting
+                                ? 'opacity-50 cursor-not-allowed'
+                                : 'hover:bg-red-50'
+                        }`}
+                        whileHover={isSubmitting ? {} : { scale: 1.02 }}
+                        whileTap={isSubmitting ? {} : { scale: 0.98 }}
                         onClick={handleDelete}
-                        className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
                         disabled={isSubmitting}
                     >
-                      <Trash2 className="w-4 h-4" />
-                      <span>삭제</span>
+                      삭제
                     </motion.button>
                 )}
 
-                <div className="flex space-x-2 ml-auto">
-                  <button
-                      type="button"
-                      onClick={onClose}
-                      className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors disabled:opacity-50"
-                      disabled={isSubmitting}
-                  >
-                    취소
-                  </button>
-                  <motion.button
-                      type="submit"
-                      className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      disabled={isSubmitting}
-                  >
-                    {isSubmitting ? (
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    ) : (
-                        <Save className="w-4 h-4" />
-                    )}
-                    <span>{isSubmitting ? '저장 중...' : '저장'}</span>
-                  </motion.button>
+                <motion.button
+                    type="button"
+                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={onClose}
+                    disabled={isSubmitting}
+                >
+                  취소
+                </motion.button>
+                <motion.button
+                    type="submit"
+                    className={`px-4 py-2 bg-primary-600 text-white rounded-lg font-medium transition-colors ${
+                        isSubmitting
+                            ? 'opacity-50 cursor-not-allowed'
+                            : 'hover:bg-primary-700'
+                    }`}
+                    whileHover={isSubmitting ? {} : { scale: 1.02 }}
+                    whileTap={isSubmitting ? {} : { scale: 0.98 }}
+                    disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                      <div className="flex items-center space-x-2">
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"/>
+                        <span>저장 중...</span>
+                      </div>
+                  ) : (
+                      '저장'
+                  )}
+                </motion.button>
                 </div>
-              </div>
             </form>
           </motion.div>
         </motion.div>

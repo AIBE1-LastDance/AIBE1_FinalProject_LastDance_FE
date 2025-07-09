@@ -2,6 +2,7 @@
 FROM node:18-alpine AS builder
 
 ARG VITE_API_BASE_URL
+ARG VITE_VAPID_PUBLIC_KEY
 
 WORKDIR /app
 
