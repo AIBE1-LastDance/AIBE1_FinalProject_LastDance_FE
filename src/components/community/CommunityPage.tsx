@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
+import toast from "react-hot-toast";
+
 import {
   Plus,
   Search,
@@ -196,10 +198,9 @@ const CommunityPage: React.FC = () => {
     }
     try {
       await deletePost(postId);
-      alert("게시글이 삭제되었습니다.");
+      toast.success("게시글이 성공적으로 삭제되었습니다!");
     } catch (error) {
       console.error(`[게시글 삭제 실패] PostId: ${postId}`, error);
-      alert("게시글 삭제에 실패했습니다.");
     }
   };
 

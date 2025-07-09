@@ -75,7 +75,7 @@ const PostDetailPage: React.FC = () => {
     try {
       await deletePostApi(post.postId);
       deletePostFromStore(post.postId); // 전역 스토어에서 게시글 삭제
-      toast.success("게시글이 성공적으로 삭제되었습니다.");
+      toast.success("게시글이 성공적으로 삭제되었습니다!");
       navigate("/community"); // 목록 페이지로 이동
     } catch (error: any) {
       console.error("게시글 삭제 실패:", error);
@@ -96,7 +96,6 @@ const PostDetailPage: React.FC = () => {
       if (updatedPost) {
         setPost(updatedPost); // 현재 상세 페이지의 게시글 상태 업데이트
         updatePostInStore(updatedPost.postId, updatedPost); // 전역 스토어 업데이트
-        toast.success("게시글이 성공적으로 수정되었습니다.");
       } else {
         setRefreshKey((prev) => prev + 1); // 게시글이 수정되지 않았지만 새로고침이 필요한 경우
       }
