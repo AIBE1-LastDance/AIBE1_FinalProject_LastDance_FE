@@ -185,5 +185,70 @@ export const expenseAPI = {
     }) => {
         const response = await apiClient.get(`/api/v1/expenses/group/${groupId}/trend`, { params });
         return response.data;
+    },
+
+    // AI 지출 분석
+    analyze: async (params: {
+        startDate: string;
+        endDate: string;
+    }) => {
+        const response = await apiClient.post<AnalyzeExpenseResponse>('/api/v1/expenses/analyze', params);
+        return response.data;
+    },
+
+    saveAnalysis: async (requestDTO: { startDate: string; endDate: string; }, analysisResponseDTO: AnalyzeExpenseResponse) => {
+        const response = await apiClient.post('/api/v1/expenses/analyze/save', {
+            requestDTO,
+            analysisResponseDTO
+        });
+        return response.data;
+    },
+
+    // 저장된 AI 분석 목록 페이징 조회
+    getSavedAnalysesPaginated: async (params: {
+        page?: number;
+        size?: number;
+        sortBy?: string;
+        sortDirection?: 'asc' | 'desc';
+    }) => {
+        const response = await apiClient.get('/api/v1/expenses/analyze/history', { params });
+        return response.data;
     }
+}
+
+export interface BudgetUsage {
+    percentage: number;
+    currentSpending: number;
+    totalBudget: number;
+}
+
+export interface DailySpending {
+    averageSoFar: number;
+    estimatedEom: number;
+}
+
+export interface Suggestion {
+    title: string;
+    effect: string;
+    difficulty: '쉬움' | '보통' | '어려움';
+    description: string;
+}
+
+export interface AnalysisResult {
+    mainFinding: string;
+    suggestion: Suggestion;
+}
+
+export interface CategoryDetail {
+    category: string;
+    percentage: number;
+    totalAmount: number;
+    transactionCount: number;
+}
+
+export interface AnalyzeExpenseResponse {
+    budgetUsage: BudgetUsage;
+    dailySpending: DailySpending;
+    analysisResult: AnalysisResult;
+    categoryDetails: CategoryDetail[];
 }
