@@ -166,31 +166,7 @@ const YouthPolicyList: React.FC = () => {
           </div>
         </div>
 
-        <div className="mt-4 flex flex-wrap gap-2">
-          {categories.map((category) => (
-            <button
-              key={category.id}
-              onClick={() => {
-                setSelectedCategory(category.id);
-                setCurrentPage(1);
-              }}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                selectedCategory === category.id
-                  ? "bg-teal-100 text-teal-700 border-2 border-teal-200"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
-            >
-              <Filter
-                className={`w-4 h-4 ${
-                  selectedCategory === category.id
-                    ? "text-teal-500"
-                    : "text-gray-500"
-                }`}
-              />
-              <span>{category.name}</span>
-            </button>
-          ))}
-        </div>
+        <div className="mt-4 flex flex-wrap gap-2"></div>
       </motion.div>
 
       {/* 정책 목록 또는 스피너 */}
