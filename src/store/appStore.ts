@@ -41,6 +41,8 @@ interface AppState {
   posts: Post[];
   comments?: Comment[];
   savedAnalyses: any[]; // AI 분석 결과 저장
+  aiAnalysesCurrentPage: number; // AI 분석 페이지네이션 현재 페이지
+  aiAnalysesTotalPages: number; // AI 분석 페이지네이션 전체 페이지 수
   currentDate: Date;
   currentView: "year" | "month" | "week" | "day";
   version?: number; // 버전 관리용
@@ -109,8 +111,8 @@ interface AppState {
   deletePost: (id: string) => Promise<void>;
 
   // Analysis actions
-  saveAnalysis: (analysis: any) => void;
-  deleteAnalysis: (id: string) => void;
+  // saveAnalysis: (analysis: any) => void;
+  // deleteAnalysis: (id: string) => void;
 }
 
 const generateId = () => Math.random().toString(36).substr(2, 9);
@@ -170,6 +172,8 @@ export const useAppStore = create<AppState>()(
           groupSharesSummary: null,
 
           savedAnalyses: [],
+          aiAnalysesCurrentPage: 0,
+          aiAnalysesTotalPages: 0,
 
           setMode: (mode) => {
             set({ mode });
@@ -753,19 +757,35 @@ export const useAppStore = create<AppState>()(
           },
 
           // Analysis actions
-          saveAnalysis: (analysis) => {
-            set((state) => ({
-              savedAnalyses: [analysis, ...state.savedAnalyses],
-            }));
+          setAiAnalysesCurrentPage: (page: number) => set({aiAnalysesCurrentPage: page}),
+          loadSavedAnalysesPaginated: async (params) => {
+            try {
+              const response = await expenseAPI.getSavedAnalysesPaginated(params);
+              if (response?.data) {
+                set({
+                  savedAnalyses: response.data.content,
+                  aiAnalysesCurrentPage: response.data.number,
+                  aiAnalysesTotalPages: response.data.totalPages,
+                });
+              }
+            } catch (error) {
+              console.error('저장된 AI 분석 로드 실패:', error);
+              toast.error('저장된 AI 분석을 불러오는데 실패했습니다.');
+            }
           },
+          // saveAnalysis: (analysis) => {
+          //   set((state) => ({
+          //     savedAnalyses: [analysis, ...state.savedAnalyses],
+          //   }));
+          // },
 
-          deleteAnalysis: (id) => {
-            set((state) => ({
-              savedAnalyses: state.savedAnalyses.filter(
-                  (analysis) => analysis.id !== id
-              ),
-            }));
-          },
+          // deleteAnalysis: (id) => {
+          //   set((state) => ({
+          //     savedAnalyses: state.savedAnalyses.filter(
+          //         (analysis) => analysis.id !== id
+          //     ),
+          //   }));
+          // },
         }),
         {
           name: "app-storage-v4", // 키 이름 변경으로 강제 리셋
@@ -777,7 +797,7 @@ export const useAppStore = create<AppState>()(
             events: state.events,
             expenses: state.expenses,
             posts: state.posts,
-            savedAnalyses: state.savedAnalyses,
+            // savedAnalyses: state.savedAnalyses,
             currentDate: state.currentDate,
             currentView: state.currentView,
             version: state.version,
@@ -845,11 +865,11 @@ export const useAppStore = create<AppState>()(
                               : new Date(),
                           date: expense.date ? new Date(expense.date) : new Date(),
                         })) || [],
-                    savedAnalyses:
-                        parsed.state.savedAnalyses?.map((analysis: any) => ({
-                          ...analysis,
-                          date: analysis.date ? new Date(analysis.date) : new Date(),
-                        })) || [],
+                    // savedAnalyses:
+                    //     parsed.state.savedAnalyses?.map((analysis: any) => ({
+                    //       ...analysis,
+                    //       date: analysis.date ? new Date(analysis.date) : new Date(),
+                    //     })) || [],
                     posts:
                         parsed.state.posts?.map((post: any) => ({
                           ...post,

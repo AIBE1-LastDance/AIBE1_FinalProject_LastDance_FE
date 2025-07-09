@@ -18,7 +18,7 @@ import {
     ChevronRight,
     Share2,
     RefreshCw,
-    Users, Image, X
+    Users, Image, X, Save
 } from 'lucide-react';
 import {
     PieChart as RechartsPieChart,
@@ -85,6 +85,8 @@ const ExpensesPage: React.FC = () => {
     const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
     const [activeTab, setActiveTab] = useState<'expenses' | 'analyses'>('expenses');
     const [selectedAnalysis, setSelectedAnalysis] = useState(null);
+    const [analysisResult, setAnalysisResult] = useState(null);
+    const [isAnalysisSaved, setIsAnalysisSaved] = useState(false); // New state
     const [loading, setLoading] = useState(false);
     const [currentCardIndex, setCurrentCardIndex] = useState(0);
     const [showReceiptModal, setShowReceiptModal] = useState(false);
@@ -378,32 +380,24 @@ const ExpensesPage: React.FC = () => {
     };
 
     // AI 분석 생성 함수
-    const generateAIAnalysis = () => {
+    const handleAnalysis = async () => {
         setAnalysisLoading(true);
-        setSelectedAnalysis(null); // 새로운 분석이므로 선택된 분석 초기화
-
-        // 실제로는 LLM API를 호출하지만, 여기서는 시뮬레이션
-        setTimeout(() => {
-            setAnalysisLoading(false);
+        setSelectedAnalysis(null);
+        try {
+            const startDate = format(startOfMonth(currentMonth), 'yyyy-MM-dd');
+            const endDate = format(endOfMonth(currentMonth), 'yyyy-MM-dd');
+            console.log('AI 분석 요청 시작. 기간:', startDate, '~', endDate);
+            const result = await expenseAPI.analyze({ startDate, endDate });
+            console.log('AI 분석 API 응답 (result.data):', result.data);
+            setAnalysisResult(result.data);
+            console.log('analysisResult 상태 설정 완료:', result.data); // Log the value being set
             setShowAnalysis(true);
-        }, 2000);
-    };
-
-    // 분석 저장 함수
-    const saveAnalysisResult = () => {
-        const analysis = getAIAnalysis();
-        const savedAnalysis = {
-            id: Date.now().toString(),
-            month: format(currentMonth, 'yyyy년 M월', {locale: ko}),
-            date: new Date(),
-            data: analysis,
-            totalAmount,
-            categoryBreakdown: analytics.categoryBreakdown
-        };
-
-        saveAnalysis(savedAnalysis);
-        setShowAnalysis(false);
-        alert('분석 결과를 저장했습니다!');
+        } catch (error) {
+            console.error('AI 분석 실패:', error);
+            toast.error('AI 분석에 실패했습니다. 잠시 후 다시 시도해주세요.');
+        } finally {
+            setAnalysisLoading(false);
+        }
     };
 
     // 이전/다음 달 이동
@@ -461,6 +455,30 @@ const ExpensesPage: React.FC = () => {
         setCurrentPage(0); // 첫 페이지로 리셋
     };
 
+    const handleSaveAnalysis = async () => {
+        if (!analysisResult) {
+            toast.error('저장할 분석 결과가 없습니다. 먼저 AI 분석을 실행해주세요.');
+            return;
+        }
+
+        try {
+            const startDate = format(startOfMonth(currentMonth), 'yyyy-MM-dd');
+            const endDate = format(endOfMonth(currentMonth), 'yyyy-MM-dd');
+
+            await expenseAPI.saveAnalysis(
+                { startDate, endDate },
+                analysisResult
+            );
+            toast.success('AI 분석 결과가 성공적으로 저장되었습니다!');
+            setIsAnalysisSaved(true); // Set state to true on success
+            // Optionally, refresh saved analyses list if needed
+            // loadSavedAnalyses(); // Assuming such a function exists or can be added to appStore
+        } catch (error) {
+            console.error('AI 분석 결과 저장 실패:', error);
+            toast.error('AI 분석 결과 저장에 실패했습니다. 다시 시도해주세요.');
+        }
+    };
+
     // AI 분석 데이터 생성 (현재 또는 선택된 분석)
     const getAIAnalysis = () => {
         // 선택된 분석이 있으면 그것을 반환
@@ -469,7 +487,7 @@ const ExpensesPage: React.FC = () => {
         }
 
         // 새로운 분석 생성
-        const totalBudget = 2000000; // 200만원 예산 가정
+        const totalBudget = parseFloat(analysisResult?.budgetUsage?.totalBudget) || 0;
         const spendingRate = (totalAmount / totalBudget) * 100;
         const previousMonthAmount = totalAmount * 0.85; // 이전 달 대비 가정
         const changeRate = ((totalAmount - previousMonthAmount) / previousMonthAmount) * 100;
@@ -568,7 +586,45 @@ const ExpensesPage: React.FC = () => {
         };
     };
 
-    const aiAnalysis = getAIAnalysis();
+    const aiAnalysis = analysisResult ? {
+        insights: [
+            {
+                type: 'mainFinding',
+                title: analysisResult.analysisResult.mainFinding,
+                message: '',
+                icon: Bot,
+                color: 'text-blue-500'
+            }
+        ],
+        recommendations: [
+            {
+                title: analysisResult.analysisResult.suggestion.title,
+                message: analysisResult.analysisResult.suggestion.description,
+                impact: analysisResult.analysisResult.suggestion.effect,
+                difficulty: analysisResult.analysisResult.suggestion.difficulty
+            }
+        ],
+        warnings: [], // 백엔드에서 직접 제공하지 않으므로 빈 배열
+        summary: {
+            totalAmount: analysisResult.budgetUsage.currentSpending,
+            spendingRate: analysisResult.budgetUsage.percentage,
+            totalBudget: analysisResult.budgetUsage.totalBudget,
+            changeRate: 0, // 백엔드에서 직접 제공하지 않으므로 0
+            topCategory: analysisResult.categoryDetails[0]?.category || '없음',
+            avgDaily: analysisResult.dailySpending.averageSoFar,
+            prediction: analysisResult.dailySpending.estimatedEom
+        },
+        categoryBreakdown: analysisResult.categoryDetails.map(cat => ({
+            category: cat.category,
+            label: categoryData.find(c => c.category === cat.category)?.label || cat.category,
+            amount: cat.totalAmount,
+            count: cat.transactionCount,
+            percentage: cat.percentage,
+            color: categoryData.find(c => c.category === cat.category)?.color || '#df6d14',
+            name: categoryData.find(c => c.category === cat.category)?.label || cat.category,
+            value: cat.totalAmount,
+        }))
+    } : null;
 
     // 메인 지출 목록 페이징 핸들러
     const handlePageChange = async (newPage: number) => {
@@ -818,7 +874,7 @@ const ExpensesPage: React.FC = () => {
                                 className="flex items-center space-x-2 px-6 py-3 bg-primary-500 text-white rounded-2xl font-medium hover:bg-primary-700 transition-colors shadow-md hover:shadow-lg whitespace-nowrap"
                                 whileHover={{scale: 1.05}}
                                 whileTap={{scale: 0.95}}
-                                onClick={generateAIAnalysis}
+                                onClick={handleAnalysis}
                                 disabled={analysisLoading}
                             >
                                 {analysisLoading ? (
@@ -1586,7 +1642,7 @@ const ExpensesPage: React.FC = () => {
                                     className="px-6 py-3 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 transition-colors"
                                     whileHover={{scale: 1.05}}
                                     whileTap={{scale: 0.95}}
-                                    onClick={generateAIAnalysis}
+                                    onClick={handleAnalysis}
                                 >
                                     첫 AI 분석 실행하기
                                 </motion.button>
@@ -1618,9 +1674,9 @@ const ExpensesPage: React.FC = () => {
                                         <div>
                                             <h2 className="text-xl font-bold">AI 가계부 분석</h2>
                                             <p className="text-purple-100">
-                                                {selectedAnalysis
-                                                    ? `${selectedAnalysis.month} 지출 패턴 분석 결과`
-                                                    : `${format(currentMonth, 'yyyy년 M월', {locale: ko})} 지출 패턴 분석 결과`
+                                                {analysisResult
+                                                    ? `${format(currentMonth, 'yyyy년 M월', {locale: ko})} 지출 패턴 분석 결과`
+                                                    : '분석 결과 로딩 중...'
                                                 }
                                             </p>
                                         </div>
@@ -1635,7 +1691,8 @@ const ExpensesPage: React.FC = () => {
                             </div>
 
                             {/* Modal Content */}
-                            <div className="p-6 overflow-y-auto flex-1">
+                            {aiAnalysis ? (
+                                <div className="p-6 overflow-y-auto flex-1">
                                 {/* Summary Cards */}
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                                     <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4">
@@ -1647,7 +1704,7 @@ const ExpensesPage: React.FC = () => {
                                             {aiAnalysis.summary.spendingRate.toFixed(1)}%
                                         </div>
                                         <div className="text-sm text-blue-600">
-                                            {formatCurrency(aiAnalysis.summary.totalAmount)} / {formatCurrency(2000000)}
+                                            {formatCurrency(aiAnalysis.summary.totalAmount)} / {formatCurrency(aiAnalysis.summary.totalBudget)}
                                         </div>
                                     </div>
 
@@ -1808,6 +1865,13 @@ const ExpensesPage: React.FC = () => {
                                     </div>
                                 </div>
                             </div>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center h-full text-gray-600">
+                                    <RefreshCw className="w-12 h-12 animate-spin text-primary-600 mb-4" />
+                                    <p className="text-lg font-medium">AI 분석 결과를 불러오는 중입니다...</p>
+                                    <p className="text-sm mt-2">잠시만 기다려 주세요.</p>
+                                </div>
+                            )}
 
                             {/* Modal Footer */}
                             <div className="bg-gray-50 p-6 border-t border-gray-200 flex-shrink-0 rounded-b-3xl">
@@ -1827,22 +1891,17 @@ const ExpensesPage: React.FC = () => {
                                         </button>
                                         {!selectedAnalysis && (
                                             <button
-                                                onClick={saveAnalysisResult}
-                                                className="px-6 py-3 bg-primary-600 text-white rounded-2xl hover:bg-primary-700 transition-colors"
-                                            >
-                                                결과 저장
-                                            </button>
-                                        )}
-                                        {selectedAnalysis && (
-                                            <button
-                                                onClick={() => {
-                                                    alert('분석 결과를 공유했습니다!');
-                                                }}
-                                                className="px-6 py-3 bg-primary-600 text-white rounded-2xl hover:bg-primary-700 transition-colors flex items-center space-x-2"
-                                            >
-                                                <Share2 className="w-4 h-4"/>
-                                                <span>공유</span>
-                                            </button>
+                                            onClick={handleSaveAnalysis}
+                                            disabled={isAnalysisSaved}
+                                            className={`px-6 py-3 rounded-2xl transition-colors flex items-center space-x-2 ${
+                                                isAnalysisSaved
+                                                    ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
+                                                    : 'bg-primary-600 text-white hover:bg-primary-700 shadow-md hover:shadow-lg'
+                                            }`}
+                                        >
+                                            <Save className="w-4 h-4"/>
+                                            <span>{isAnalysisSaved ? '저장됨' : '저장'}</span>
+                                        </button>
                                         )}
                                     </div>
                                 </div>
