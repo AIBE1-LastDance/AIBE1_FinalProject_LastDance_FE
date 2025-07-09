@@ -1,8 +1,17 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { BarChart3, Calendar, CheckSquare, CreditCard, Users, Gamepad2, Bot } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useAppStore } from '../../store/appStore';
+import React from "react";
+import { motion } from "framer-motion";
+import {
+  BarChart3,
+  Calendar,
+  CheckSquare,
+  CreditCard,
+  Users,
+  Gamepad2,
+  Bot,
+  ExternalLink,
+} from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useAppStore } from "../../store/appStore";
 
 const MobileNav: React.FC = () => {
   const navigate = useNavigate();
@@ -10,13 +19,14 @@ const MobileNav: React.FC = () => {
   const { mode } = useAppStore();
 
   const navigationItems = [
-    { icon: BarChart3, label: '대시보드', path: '/dashboard' },
-    { icon: Calendar, label: '캘린더', path: '/calendar' },
-    { icon: CheckSquare, label: '할일', path: '/tasks' },
-    { icon: CreditCard, label: '가계부', path: '/expenses' },
-    { icon: Gamepad2, label: '게임', path: '/games' },
-    { icon: Bot, label: 'AI', path: '/ai-assistant' },
-    { icon: Users, label: '커뮤니티', path: '/community' },
+    { icon: BarChart3, label: "대시보드", path: "/dashboard" },
+    { icon: Calendar, label: "캘린더", path: "/calendar" },
+    { icon: CheckSquare, label: "할일", path: "/tasks" },
+    { icon: CreditCard, label: "가계부", path: "/expenses" },
+    { icon: Gamepad2, label: "게임", path: "/games" },
+    { icon: Bot, label: "AI", path: "/ai-assistant" },
+    { icon: Users, label: "커뮤니티", path: "/community" },
+    { icon: ExternalLink, label: "청년정책", path: "/youth-policy" },
   ];
 
   return (
@@ -28,16 +38,22 @@ const MobileNav: React.FC = () => {
             <motion.button
               key={item.path}
               className={`flex flex-col items-center justify-center p-2 rounded-lg transition-colors ${
-                isActive
-                  ? 'text-primary-600'
-                  : 'text-gray-600'
+                isActive ? "text-primary-600" : "text-gray-600"
               }`}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => navigate(item.path)}
             >
-              <item.icon className={`w-6 h-6 ${isActive ? 'text-primary-600' : 'text-gray-600'}`} />
-              <span className={`text-xs mt-1 ${isActive ? 'text-primary-600 font-medium' : 'text-gray-600'}`}>
+              <item.icon
+                className={`w-6 h-6 ${
+                  isActive ? "text-primary-600" : "text-gray-600"
+                }`}
+              />
+              <span
+                className={`text-xs mt-1 ${
+                  isActive ? "text-primary-600 font-medium" : "text-gray-600"
+                }`}
+              >
                 {item.label}
               </span>
             </motion.button>

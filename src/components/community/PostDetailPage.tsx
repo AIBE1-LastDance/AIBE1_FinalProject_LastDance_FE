@@ -1,8 +1,6 @@
-// PostDetailPage.tsx
-
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useAppStore } from "../../store/appStore"; // 필요 여부 재검토 가능
+import { useAppStore } from "../../store/appStore";
 import PostDetail from "./PostDetail";
 import CreatePostModal from "./CreatePostModal";
 import { Post } from "../../types/community/community";
@@ -17,7 +15,6 @@ import toast from "react-hot-toast";
 const PostDetailPage: React.FC = () => {
   const { postId } = useParams<{ postId: string }>();
   const navigate = useNavigate();
-  // `deletePost`는 스토어에서 게시글을 제거하는 데 사용. `updatePost`는 모달에서 수정 후 스토어 업데이트에 사용.
   const { deletePost: deletePostFromStore, updatePost: updatePostInStore } =
     useAppStore();
 
@@ -25,7 +22,7 @@ const PostDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0); // 게시글 새로고침 트리거
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const loadPost = useCallback(async () => {
     if (!postId) {
@@ -38,12 +35,22 @@ const PostDetailPage: React.FC = () => {
     setNotFound(false);
     try {
       const data = await fetchPostById(postId);
+      // authorNickname이 "deleted_"로 시작하는 경우 탈퇴한 회원으로 간주
+      const isDeletedUser = data.authorNickname?.startsWith("deleted_");
+
       const fetchedPost: Post = {
         ...data,
         likedBy: data.likedBy || [],
         bookmarkedBy: data.bookmarkedBy || [],
         comments: data.comments || [],
         authorId: data.authorId,
+        // 탈퇴한 회원인 경우 닉네임을 "탈퇴한 회원입니다."로 설정
+        authorNickname: isDeletedUser
+          ? "탈퇴한 회원입니다."
+          : data.authorNickname,
+        // 탈퇴한 회원인 경우 프로필 이미지 URL을 비워둠.
+        // 이렇게 하면 PostCard에서 이 값을 받아 기본 이미지 로직을 따르게 됩니다.
+        authorProfileImageUrl: isDeletedUser ? "" : data.authorProfileImageUrl,
       };
       setPost(fetchedPost);
     } catch (error: any) {
@@ -71,12 +78,11 @@ const PostDetailPage: React.FC = () => {
       return;
     }
 
-    // PostDetail 컴포넌트의 useDeleteConfirmation 훅에서 이미 확인 처리
     try {
       await deletePostApi(post.postId);
-      deletePostFromStore(post.postId); // 전역 스토어에서 게시글 삭제
+      deletePostFromStore(post.postId);
       toast.success("게시글이 성공적으로 삭제되었습니다!");
-      navigate("/community"); // 목록 페이지로 이동
+      navigate("/community");
     } catch (error: any) {
       console.error("게시글 삭제 실패:", error);
       toast.error(
@@ -94,10 +100,10 @@ const PostDetailPage: React.FC = () => {
     (updatedPost?: Post | null) => {
       setIsEditModalOpen(false);
       if (updatedPost) {
-        setPost(updatedPost); // 현재 상세 페이지의 게시글 상태 업데이트
-        updatePostInStore(updatedPost.postId, updatedPost); // 전역 스토어 업데이트
+        setPost(updatedPost);
+        updatePostInStore(updatedPost.postId, updatedPost);
       } else {
-        setRefreshKey((prev) => prev + 1); // 게시글이 수정되지 않았지만 새로고침이 필요한 경우
+        setRefreshKey((prev) => prev + 1);
       }
     },
     [updatePostInStore]
@@ -147,8 +153,6 @@ const PostDetailPage: React.FC = () => {
         onBack={handleBack}
         onEdit={handleEdit}
         onDelete={handleDelete}
-        // 댓글 생성/삭제 시 PostDetail에서 자체적으로 댓글을 새로 불러오므로
-        // onCommentCreated, onCommentDeleted는 여기서는 특별한 추가 로직이 없어도 됩니다.
       />
       {isEditModalOpen && (
         <CreatePostModal post={post} onClose={handlePostUpdated} />

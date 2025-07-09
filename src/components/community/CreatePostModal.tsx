@@ -3,11 +3,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
   Send,
-  Users,
-  Lightbulb,
-  MessageSquare,
-  HelpCircle,
-  Star,
+  Megaphone, // FIND_MATE
+  GraduationCap, // LIFE_TIPS
+  MessageSquare, // FREE_BOARD
+  Handshake, // QNA
 } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
 import toast from "react-hot-toast";
@@ -23,13 +22,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ post, onClose }) => {
   const { user } = useAuthStore();
   const [title, setTitle] = useState(post?.title || "");
   const [content, setContent] = useState(post?.content || "");
-
-  // ✨ category 상태 초기화 로직 변경: 백엔드에서 오는 값을 직접 사용
-  // 기본값은 "FREE_BOARD"로 설정합니다.
   const [category, setCategory] = useState(post?.category || "FREE_BOARD");
-
-  const [tags, setTags] = useState<string[]>(post?.tags || []);
-  const [tagInput, setTagInput] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isEditing = !!post;
@@ -38,30 +31,16 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ post, onClose }) => {
     {
       id: "FIND_MATE",
       name: "메이트 구하기",
-      icon: Users,
-      frontendId: "roommate",
-    }, // ✨ id를 백엔드 값으로 변경, frontendId 추가
-    { id: "LIFE_TIPS", name: "생활팁", icon: Lightbulb, frontendId: "tip" },
+      icon: Megaphone,
+    },
+    { id: "LIFE_TIPS", name: "생활팁", icon: GraduationCap },
     {
       id: "FREE_BOARD",
       name: "자유게시판",
       icon: MessageSquare,
-      frontendId: "free",
     },
-    { id: "QNA", name: "질문/답변", icon: HelpCircle, frontendId: "question" },
-    { id: "POLICY", name: "정책", icon: Star, frontendId: "policy" },
+    { id: "QNA", name: "질문/답변", icon: Handshake },
   ];
-
-  const handleAddTag = () => {
-    if (tagInput.trim() && !tags.includes(tagInput.trim()) && tags.length < 5) {
-      setTags([...tags, tagInput.trim()]);
-      setTagInput("");
-    }
-  };
-
-  const handleRemoveTag = (tagToRemove: string) => {
-    setTags(tags.filter((tag) => tag !== tagToRemove));
-  };
 
   const handleSubmit = async () => {
     if (!title.trim() || !content.trim()) {
@@ -94,7 +73,6 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ post, onClose }) => {
           ...updated,
           updatedAt: new Date().toISOString(),
         };
-        // ✨ 게시글 수정 성공 토스트 메시지 추가
         toast.success("게시글이 성공적으로 수정되었습니다!");
       } else {
         const created = await createPost(requestData);
@@ -166,10 +144,10 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ post, onClose }) => {
                   {categories.map((cat) => (
                     <button
                       key={cat.id}
-                      onClick={() => setCategory(cat.id)} // ✨ category 상태에 백엔드 id를 직접 저장
+                      onClick={() => setCategory(cat.id)}
                       className={`flex flex-col items-center p-3 rounded-xl border-2 transition-colors ${
-                        category === cat.id // ✨ category 상태와 cat.id를 직접 비교
-                          ? "border-purple-500 bg-purple-50 text-purple-700"
+                        category === cat.id
+                          ? "border-orange-500 bg-orange-50 text-orange-700"
                           : "border-gray-200 hover:border-gray-300"
                       }`}
                     >
@@ -190,7 +168,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ post, onClose }) => {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="제목을 입력하세요..."
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   maxLength={100}
                 />
                 <div className="text-xs text-gray-500 mt-1">
@@ -208,7 +186,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ post, onClose }) => {
                   onChange={(e) => setContent(e.target.value)}
                   placeholder="내용을 입력하세요..."
                   rows={8}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
                   maxLength={2000}
                 />
                 <div className="text-xs text-gray-500 mt-1">
@@ -235,7 +213,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ post, onClose }) => {
                 whileTap={{ scale: 0.98 }}
                 onClick={handleSubmit}
                 disabled={isSubmitting || !title.trim() || !content.trim()}
-                className="flex items-center space-x-2 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                className="flex items-center space-x-2 px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
               >
                 {isSubmitting ? (
                   <>

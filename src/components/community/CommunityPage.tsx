@@ -1,3 +1,4 @@
+// src/components/community/CommunityPage.tsx
 import React, { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
@@ -18,10 +19,10 @@ import {
   ThumbsUp,
   ChevronLeft,
   ChevronRight,
-  GraduationCap, // LIFE_TIPS
-  Megaphone, // FIND_MATE
-  Handshake, // QNA
-  ScrollText, // POLICY
+  GraduationCap,
+  Megaphone,
+  Handshake,
+  ScrollText,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/authStore";
@@ -50,7 +51,10 @@ const CommunityPage: React.FC = () => {
 
   const [isLoading, setIsLoading] = useState(true);
 
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(() => {
+    const savedPage = localStorage.getItem("communityCurrentPage");
+    return savedPage ? parseInt(savedPage, 10) : 1;
+  });
   const postsPerPage = 15;
 
   useEffect(() => {
@@ -61,6 +65,10 @@ const CommunityPage: React.FC = () => {
     };
     fetchAndSetLoading();
   }, [user?.id, loadPosts]);
+
+  useEffect(() => {
+    localStorage.setItem("communityCurrentPage", currentPage.toString());
+  }, [currentPage]);
 
   const totalLikes = useMemo(() => {
     return posts.reduce((sum, post) => sum + (post.likeCount || 0), 0);
@@ -89,13 +97,13 @@ const CommunityPage: React.FC = () => {
     {
       id: "FIND_MATE",
       name: "메이트구하기",
-      icon: Megaphone, // 주황톤 아이콘으로 변경
+      icon: Megaphone,
       color: "text-orange-600",
     },
     {
       id: "LIFE_TIPS",
       name: "생활팁",
-      icon: GraduationCap, // 주황톤 아이콘으로 변경
+      icon: GraduationCap,
       color: "text-orange-600",
     },
     {
@@ -107,13 +115,7 @@ const CommunityPage: React.FC = () => {
     {
       id: "QNA",
       name: "질문답변",
-      icon: Handshake, // 주황톤 아이콘으로 변경
-      color: "text-orange-600",
-    },
-    {
-      id: "POLICY",
-      name: "정책",
-      icon: ScrollText, // 주황톤 아이콘으로 변경
+      icon: Handshake,
       color: "text-orange-600",
     },
   ];
@@ -273,21 +275,20 @@ const CommunityPage: React.FC = () => {
             <button
               key={category.id}
               onClick={() => {
-                // 정책 카테고리는 별도의 onClick이 없으므로, 그냥 setSelectedCategory만 수행
                 setSelectedCategory(category.id);
                 setCurrentPage(1);
               }}
               className={`flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                 selectedCategory === category.id
-                  ? "bg-orange-100 text-orange-700 border-2 border-orange-200" // 선택 시 주황 강조
+                  ? "bg-orange-100 text-orange-700 border-2 border-orange-200"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
               <category.icon
                 className={`w-4 h-4 ${
                   selectedCategory === category.id
-                    ? category.color // 선택 시 주황톤 아이콘 색상
-                    : "text-gray-500" // 미선택 시 기본 회색 아이콘 색상
+                    ? category.color
+                    : "text-gray-500"
                 }`}
               />
               <span>{category.name}</span>
@@ -358,7 +359,7 @@ const CommunityPage: React.FC = () => {
               }}
               className={`flex items-center space-x-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                 sortBy === option.key
-                  ? "bg-white text-orange-600 shadow-sm" // 정렬 버튼 선택 시 주황색 강조
+                  ? "bg-white text-orange-600 shadow-sm"
                   : "text-gray-600 hover:text-gray-800"
               }`}
             >
@@ -447,7 +448,7 @@ const CommunityPage: React.FC = () => {
               onClick={() => paginate(number)}
               className={`px-4 py-2 rounded-full font-medium transition-colors ${
                 currentPage === number
-                  ? "bg-orange-600 text-white shadow-md" // 페이지네이션 선택 시 주황색 강조
+                  ? "bg-orange-600 text-white shadow-md"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
               aria-current={currentPage === number ? "page" : undefined}

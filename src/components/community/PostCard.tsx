@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   Heart,
   MessageCircle,
@@ -9,15 +9,12 @@ import {
   MoreVertical,
   Edit,
   Trash2,
-  Lightbulb,
-  Users,
   MessageSquare,
   HelpCircle,
   FileText,
   Megaphone,
   GraduationCap,
   Handshake,
-  ScrollText,
 } from "lucide-react";
 import { Post } from "../../types/community/community";
 import { useAuthStore } from "../../store/authStore";
@@ -45,35 +42,29 @@ const PostCard: React.FC<PostCardProps> = ({
   const [showMenu, setShowMenu] = useState(false);
 
   const getCategoryDisplayInfo = (category: string) => {
-    // 배경색을 없애고 테두리 색상과 텍스트 색상으로 변경
     const categories: Record<
       string,
       { icon: any; borderColor: string; textColor: string }
     > = {
       LIFE_TIPS: {
         icon: GraduationCap,
-        borderColor: "border-orange-500", // 테두리 색상
-        textColor: "text-orange-600", // 텍스트 색상
-      },
-      FREE_BOARD: {
-        icon: MessageSquare,
         borderColor: "border-orange-600",
         textColor: "text-orange-700",
       },
-      FIND_MATE: {
-        icon: Megaphone,
+      FREE_BOARD: {
+        icon: MessageSquare,
         borderColor: "border-orange-700",
         textColor: "text-orange-800",
+      },
+      FIND_MATE: {
+        icon: Megaphone,
+        borderColor: "border-orange-500",
+        textColor: "text-orange-600",
       },
       QNA: {
         icon: Handshake,
         borderColor: "border-orange-800",
         textColor: "text-orange-900",
-      },
-      POLICY: {
-        icon: ScrollText,
-        borderColor: "border-orange-900",
-        textColor: "text-orange-950", // 가장 진한 오렌지 계열
       },
     };
     return (
@@ -118,6 +109,11 @@ const PostCard: React.FC<PostCardProps> = ({
   const isBookmarked = post.userBookmarked;
   const isAuthor = user?.id === post.authorId;
 
+  const isDeletedUser = post.authorNickname?.startsWith("deleted_");
+  const displayAuthorNickname = isDeletedUser
+    ? "탈퇴한 회원입니다."
+    : post.authorNickname || "익명";
+
   return (
     <motion.div
       whileHover={{ scale: 1.01 }}
@@ -127,16 +123,20 @@ const PostCard: React.FC<PostCardProps> = ({
     >
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center space-x-3">
-          {post.authorProfileImageUrl ? (
+          {isDeletedUser ? (
+            <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
+              <HelpCircle className="w-6 h-6 text-gray-600" />
+            </div>
+          ) : post.authorProfileImageUrl ? (
             <img
               src={post.authorProfileImageUrl}
-              alt={`${post.authorNickname || "익명"} 프로필`}
+              alt={`${displayAuthorNickname} 프로필`}
               className="w-10 h-10 rounded-full object-cover border border-gray-200"
             />
           ) : (
-            <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-r from-orange-400 to-amber-500 rounded-full flex items-center justify-center">
               <span className="text-white font-medium text-sm">
-                {post.authorNickname?.charAt(0) || "U"}
+                {displayAuthorNickname.charAt(0)}
               </span>
             </div>
           )}
@@ -144,7 +144,7 @@ const PostCard: React.FC<PostCardProps> = ({
           <div>
             <div className="flex items-center space-x-2">
               <span className="font-medium text-gray-900">
-                {post.authorNickname || "익명"}
+                {displayAuthorNickname}
               </span>
             </div>
             <div className="flex items-center space-x-2 text-sm text-gray-500">
@@ -218,15 +218,13 @@ const PostCard: React.FC<PostCardProps> = ({
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={handleLike}
-            // 좋아요(하트) 색상 변경: isLiked 상태에 따라 주황색으로
             className={`flex items-center space-x-2 ${
               isLiked
                 ? "text-orange-500"
                 : "text-gray-500 hover:text-orange-500"
             } transition-colors`}
           >
-            <Heart className={`w-5 h-5 ${isLiked ? "fill-orange-500" : ""}`} />{" "}
-            {/* 채워지는 하트도 주황색으로 */}
+            <Heart className={`w-5 h-5 ${isLiked ? "fill-orange-500" : ""}`} />
             <span className="text-sm font-medium">{post.likeCount || 0}</span>
           </motion.button>
 
