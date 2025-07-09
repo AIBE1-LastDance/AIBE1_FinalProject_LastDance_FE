@@ -11,15 +11,13 @@ import {
   Heart,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import { reportContent } from "../../api/community/report";
-import { ReportType } from "../../types/community/communityReport";
 
 interface ReportModalProps {
   isOpen: boolean;
   onClose: () => void;
-  type: ReportType.POST | ReportType.COMMENT;
+  type: "post" | "comment";
   targetId: string;
-  targetContent?: string;
+  targetTitle?: string;
 }
 
 const ReportModal: React.FC<ReportModalProps> = ({
@@ -27,57 +25,57 @@ const ReportModal: React.FC<ReportModalProps> = ({
   onClose,
   type,
   targetId,
-  targetContent,
+  targetTitle,
 }) => {
-  const [selectedReason, setSelectedReason] = useState<ReportType | "">("");
+  const [selectedReason, setSelectedReason] = useState<string>("");
   const [customReason, setCustomReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const reportReasons = [
     {
-      id: ReportType.SPAM,
+      id: "spam",
       label: "스팸/도배",
       description: "반복적인 광고나 의미없는 내용",
       icon: Trash2,
       color: "text-orange-600",
     },
     {
-      id: ReportType.INAPPROPRIATE,
+      id: "inappropriate",
       label: "부적절한 내용",
       description: "선정적이거나 폭력적인 내용",
       icon: AlertTriangle,
       color: "text-red-600",
     },
     {
-      id: ReportType.HARASSMENT,
+      id: "harassment",
       label: "괴롭힘/욕설",
       description: "다른 사용자를 향한 괴롭힘이나 욕설",
       icon: User,
       color: "text-purple-600",
     },
     {
-      id: ReportType.MISINFORMATION,
+      id: "misinformation",
       label: "허위정보",
       description: "거짓되거나 오해를 불러일으키는 정보",
       icon: Shield,
       color: "text-blue-600",
     },
     {
-      id: ReportType.COPYRIGHT,
+      id: "copyright",
       label: "저작권 침해",
       description: "다른 사람의 저작물을 무단 사용",
       icon: MessageSquare,
       color: "text-green-600",
     },
     {
-      id: ReportType.HATE_SPEECH,
+      id: "hate",
       label: "혐오 발언",
       description: "특정 집단에 대한 차별이나 혐오 표현",
       icon: Heart,
       color: "text-pink-600",
     },
     {
-      id: ReportType.OTHER,
+      id: "other",
       label: "기타",
       description: "위에 해당하지 않는 기타 사유",
       icon: Flag,
@@ -91,56 +89,34 @@ const ReportModal: React.FC<ReportModalProps> = ({
       return;
     }
 
-    if (!targetId) {
-      toast.error("신고 대상 ID가 유효하지 않습니다.");
+    if (selectedReason === "other" && !customReason.trim()) {
+      toast.error("기타 사유를 작성해주세요.");
       return;
-    }
-
-    let reasonToSend: string;
-
-    if (selectedReason === ReportType.OTHER) {
-      reasonToSend = customReason.trim();
-      if (!reasonToSend) {
-        toast.error("기타 사유를 작성해주세요.");
-        return;
-      }
-    } else {
-      const selectedReasonObject = reportReasons.find(
-        (r) => r.id === selectedReason
-      );
-      reasonToSend = selectedReasonObject ? selectedReasonObject.label : "";
-      if (!reasonToSend) {
-        toast.error("선택된 신고 사유의 설명을 찾을 수 없습니다.");
-        return;
-      }
     }
 
     setIsSubmitting(true);
 
-    const payload = {
-      reportType: type.toUpperCase() as ReportType, // 이 부분에서 type을 대문자로 변환합니다.
-      targetId: targetId,
-      reason: reasonToSend,
-    };
-
-    console.log(
-      "Sending report data payload:",
-      JSON.stringify(payload, null, 2)
-    );
-
     try {
-      await reportContent(payload);
+      // 실제로는 서버에 신고 데이터를 전송
+      const reportData = {
+        targetType: type,
+        targetId,
+        reason: selectedReason,
+        customReason: selectedReason === "other" ? customReason.trim() : "",
+        timestamp: new Date(),
+      };
+
+      // 시뮬레이션: 1초 후 성공
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       toast.success(
         `${
-          type === ReportType.POST ? "게시글" : "댓글"
+          type === "post" ? "게시글" : "댓글"
         }이 신고되었습니다. 검토 후 조치하겠습니다.`
       );
       onClose();
-    } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.message || "신고 처리 중 오류가 발생했습니다.";
-      toast.error(errorMessage);
+    } catch (error) {
+      toast.error("신고 처리 중 오류가 발생했습니다.");
     } finally {
       setIsSubmitting(false);
     }
@@ -165,6 +141,7 @@ const ReportModal: React.FC<ReportModalProps> = ({
           exit={{ opacity: 0, scale: 0.95 }}
           className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-hidden"
         >
+          {/* 헤더 */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
@@ -172,11 +149,11 @@ const ReportModal: React.FC<ReportModalProps> = ({
               </div>
               <div>
                 <h2 className="text-lg font-bold text-gray-900">
-                  {type === ReportType.POST ? "게시글" : "댓글"} 신고하기
+                  {type === "post" ? "게시글" : "댓글"} 신고하기
                 </h2>
-                {targetContent && (
+                {targetTitle && (
                   <p className="text-sm text-gray-500 truncate max-w-48">
-                    "{targetContent}"
+                    "{targetTitle}"
                   </p>
                 )}
               </div>
@@ -190,6 +167,7 @@ const ReportModal: React.FC<ReportModalProps> = ({
             </button>
           </div>
 
+          {/* 내용 */}
           <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
             <div className="space-y-4">
               <div>
@@ -227,7 +205,8 @@ const ReportModal: React.FC<ReportModalProps> = ({
                 </div>
               </div>
 
-              {selectedReason === ReportType.OTHER && (
+              {/* 기타 사유 작성 */}
+              {selectedReason === "other" && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
@@ -242,17 +221,18 @@ const ReportModal: React.FC<ReportModalProps> = ({
                     onChange={(e) => setCustomReason(e.target.value)}
                     placeholder="신고 사유를 상세히 작성해주세요..."
                     rows={4}
-                    maxLength={300}
+                    maxLength={500}
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
                   />
                   <div className="text-xs text-gray-500 text-right">
-                    {customReason.length}/300
+                    {customReason.length}/500
                   </div>
                 </motion.div>
               )}
             </div>
           </div>
 
+          {/* 푸터 */}
           <div className="flex items-center justify-between p-6 border-t border-gray-200 bg-gray-50">
             <div className="text-sm text-gray-500">
               허위 신고 시 제재를 받을 수 있습니다.
@@ -291,5 +271,5 @@ const ReportModal: React.FC<ReportModalProps> = ({
     </AnimatePresence>
   );
 };
-
+//
 export default ReportModal;
