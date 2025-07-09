@@ -19,18 +19,35 @@ const Pagination: React.FC<PaginationProps> = ({
     if (totalPages <= 1) return null;
 
     const getPageNumbers = () => {
-        const pageNumbers = [];
-        const maxPageButtons = 5;
-        let startPage = Math.max(1, currentPage - Math.floor(maxPageButtons / 2));
-        let endPage = Math.min(totalPages, startPage + maxPageButtons - 1);
+        const pageNumbers: (number | null)[] = [];
+        const pageRange = 2; // 현재 페이지 양옆으로 보여줄 페이지 수
+        const pagesToShow = new Set<number>();
 
-        if (endPage - startPage + 1 < maxPageButtons) {
-            startPage = Math.max(1, endPage - maxPageButtons + 1);
+        // 1. 항상 첫 페이지와 마지막 페이지는 포함
+        pagesToShow.add(1);
+        pagesToShow.add(totalPages);
+
+        // 2. 현재 페이지와 주변 페이지들 포함
+        for (let i = -pageRange; i <= pageRange; i++) {
+            const page = currentPage + i;
+            if (page > 0 && page <= totalPages) {
+                pagesToShow.add(page);
+            }
         }
 
-        for (let i = startPage; i <= endPage; i++) {
-            pageNumbers.push(i);
+        // 3. 정렬된 페이지 번호 배열 생성
+        const sortedPages = Array.from(pagesToShow).sort((a, b) => a - b);
+
+        // 4. 생략(...) 기호 추가
+        let lastPage: number | null = null;
+        for (const page of sortedPages) {
+            if (lastPage !== null && page - lastPage > 1) {
+                pageNumbers.push(null); // 연속되지 않으면 생략 기호 추가
+            }
+            pageNumbers.push(page);
+            lastPage = page;
         }
+
         return pageNumbers;
     };
 
@@ -48,46 +65,24 @@ const Pagination: React.FC<PaginationProps> = ({
                 <ChevronLeft className="w-5 h-5 text-gray-600"/>
             </button>
 
-            {/* 첫 페이지 바로가기 */}
-            {currentPage > 3 && (
-                <>
-                    <button
-                        onClick={() => onPageChange(1)}
-                        className="px-4 py-2 rounded-full font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
-                    >
-                        1
-                    </button>
-                    {currentPage > 4 && <span className="text-gray-400">...</span>}
-                </>
-            )}
-
             {/* 페이지 번호들 */}
-            {pageNumbers.map((number) => (
-                <button
-                    key={number}
-                    onClick={() => onPageChange(number)}
-                    className={`px-4 py-2 rounded-full font-medium transition-colors ${
-                        currentPage === number
-                            ? "bg-primary-600 text-white shadow-md"
-                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
-                    aria-current={currentPage === number ? "page" : undefined}
-                >
-                    {number}
-                </button>
-            ))}
-
-            {/* 마지막 페이지 바로가기 */}
-            {currentPage < totalPages - 2 && (
-                <>
-                    {currentPage < totalPages - 3 && <span className="text-gray-400">...</span>}
+            {pageNumbers.map((number, index) =>
+                number ? (
                     <button
-                        onClick={() => onPageChange(totalPages)}
-                        className="px-4 py-2 rounded-full font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+                        key={number}
+                        onClick={() => onPageChange(number)}
+                        className={`px-4 py-2 rounded-full font-medium transition-colors ${
+                            currentPage === number
+                                ? "bg-primary-600 text-white shadow-md"
+                                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        }`}
+                        aria-current={currentPage === number ? "page" : undefined}
                     >
-                        {totalPages}
+                        {number}
                     </button>
-                </>
+                ) : (
+                    <span key={`ellipsis-${index}`} className="text-gray-400 px-2">...</span>
+                )
             )}
 
             {/* 다음 버튼 */}
