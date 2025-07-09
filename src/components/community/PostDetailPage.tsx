@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useAppStore } from "../../store/appStore";
+import { useAppStore } from "../../store/appStore"; // 필요 여부 재검토 가능
 import PostDetail from "./PostDetail";
 import CreatePostModal from "./CreatePostModal";
 import { Post } from "../../types/community/community";
@@ -17,6 +17,7 @@ import toast from "react-hot-toast";
 const PostDetailPage: React.FC = () => {
   const { postId } = useParams<{ postId: string }>();
   const navigate = useNavigate();
+  // `deletePost`는 스토어에서 게시글을 제거하는 데 사용. `updatePost`는 모달에서 수정 후 스토어 업데이트에 사용.
   const { deletePost: deletePostFromStore, updatePost: updatePostInStore } =
     useAppStore();
 
@@ -24,7 +25,7 @@ const PostDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0); // 게시글 새로고침 트리거
 
   const loadPost = useCallback(async () => {
     if (!postId) {
@@ -45,7 +46,6 @@ const PostDetailPage: React.FC = () => {
         authorId: data.authorId,
       };
       setPost(fetchedPost);
-      // 이전에 있던 updatePostInStore(fetchedPost.postId, fetchedPost); 줄을 삭제합니다.
     } catch (error: any) {
       console.error("게시글 불러오기 실패:", error);
       setNotFound(true);
@@ -53,33 +53,30 @@ const PostDetailPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [postId]); // updatePostInStore는 더 이상 의존성에 필요 없습니다.
+  }, [postId]);
 
   useEffect(() => {
     loadPost();
   }, [loadPost, refreshKey]);
 
-  const handleEdit = () => {
+  const handleEdit = useCallback(() => {
     if (post) {
       setIsEditModalOpen(true);
     }
-  };
+  }, [post]);
 
-  const handleDelete = async () => {
+  const handleDelete = useCallback(async () => {
     if (!post) {
       toast.error("삭제할 게시글 정보가 없습니다.");
       return;
     }
 
-    if (!window.confirm("정말로 이 게시글을 삭제하시겠습니까?")) {
-      return;
-    }
-
+    // PostDetail 컴포넌트의 useDeleteConfirmation 훅에서 이미 확인 처리
     try {
       await deletePostApi(post.postId);
-      deletePostFromStore(post.postId);
+      deletePostFromStore(post.postId); // 전역 스토어에서 게시글 삭제
       toast.success("게시글이 성공적으로 삭제되었습니다.");
-      navigate("/community");
+      navigate("/community"); // 목록 페이지로 이동
     } catch (error: any) {
       console.error("게시글 삭제 실패:", error);
       toast.error(
@@ -87,22 +84,25 @@ const PostDetailPage: React.FC = () => {
           (error.response?.data?.message || error.message || "알 수 없는 오류")
       );
     }
-  };
+  }, [post, deletePostFromStore, navigate]);
 
-  const handleBack = () => {
+  const handleBack = useCallback(() => {
     navigate("/community");
-  };
+  }, [navigate]);
 
-  const handlePostUpdated = (updatedPost?: Post | null) => {
-    setIsEditModalOpen(false);
-    if (updatedPost) {
-      setPost(updatedPost);
-      updatePostInStore(updatedPost.postId, updatedPost); // 이곳에서는 스토어 업데이트가 맞습니다.
-      toast.success("게시글이 성공적으로 수정되었습니다.");
-    } else {
-      setRefreshKey((prev) => prev + 1);
-    }
-  };
+  const handlePostUpdated = useCallback(
+    (updatedPost?: Post | null) => {
+      setIsEditModalOpen(false);
+      if (updatedPost) {
+        setPost(updatedPost); // 현재 상세 페이지의 게시글 상태 업데이트
+        updatePostInStore(updatedPost.postId, updatedPost); // 전역 스토어 업데이트
+        toast.success("게시글이 성공적으로 수정되었습니다.");
+      } else {
+        setRefreshKey((prev) => prev + 1); // 게시글이 수정되지 않았지만 새로고침이 필요한 경우
+      }
+    },
+    [updatePostInStore]
+  );
 
   if (loading) {
     return (
@@ -148,6 +148,8 @@ const PostDetailPage: React.FC = () => {
         onBack={handleBack}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        // 댓글 생성/삭제 시 PostDetail에서 자체적으로 댓글을 새로 불러오므로
+        // onCommentCreated, onCommentDeleted는 여기서는 특별한 추가 로직이 없어도 됩니다.
       />
       {isEditModalOpen && (
         <CreatePostModal post={post} onClose={handlePostUpdated} />

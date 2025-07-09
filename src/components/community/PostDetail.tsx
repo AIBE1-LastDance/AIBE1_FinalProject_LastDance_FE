@@ -16,7 +16,11 @@ import {
   Trash2,
   MoreVertical,
   Pencil,
-  Bookmark, // ✅ 북마크 아이콘 추가
+  Bookmark,
+  GraduationCap, // 추가: LIFE_TIPS용 아이콘
+  ScrollText, // 추가: POLICY용 아이콘
+  Handshake, // 추가: QNA용 아이콘
+  Megaphone, // 추가: FIND_MATE용 아이콘
 } from "lucide-react";
 
 import { Comment } from "../../types/community/comment";
@@ -32,9 +36,9 @@ import {
   fetchCommentsByPostId,
   createComment,
   deleteComment,
+  updateComment,
 } from "../../api/community/comment";
 import { usePostStore } from "../../store/community/postStore";
-import { updateComment } from "../../api/community/comment"; // 이미 있다면 생략
 
 interface PostDetailProps {
   post: Post;
@@ -54,7 +58,8 @@ const PostDetail: React.FC<PostDetailProps> = ({
   onCommentDeleted,
 }) => {
   const { user } = useAuthStore();
-  const { updatePost: updatePostInStore } = useAppStore();
+  // useAppStore의 updatePost는 PostDetailPage에서만 사용되므로 여기서는 제거하거나 주석 처리합니다.
+  // const { updatePost: updatePostInStore } = useAppStore();
   const { toggleLike, toggleBookmark } = usePostStore();
   const [localPost, setLocalPost] = useState<Post>(post);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
@@ -87,7 +92,7 @@ const PostDetail: React.FC<PostDetailProps> = ({
 
     try {
       await toggleLike(localPost.postId);
-      // 💡 상태 수동 반영
+      // 상태 수동 반영
       setLocalPost((prev) => ({
         ...prev,
         userLiked: !prev.userLiked,
@@ -130,7 +135,7 @@ const PostDetail: React.FC<PostDetailProps> = ({
             ? {
                 ...c,
                 content: editingContent,
-                updatedAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(), // 수정 시간 업데이트
               }
             : c
         )
@@ -144,6 +149,7 @@ const PostDetail: React.FC<PostDetailProps> = ({
       toast.error("댓글 수정 중 오류가 발생했습니다.");
     }
   };
+
   const { isDeleting: isDeletingPost, handleDelete: triggerDeletePost } =
     useDeleteConfirmation({
       onConfirm: () => {
@@ -171,32 +177,37 @@ const PostDetail: React.FC<PostDetailProps> = ({
   const getCategoryInfo = (category: string) => {
     const categories: Record<
       string,
-      { name: string; icon: any; color: string }
+      { name: string; icon: any; borderColor: string; textColor: string }
     > = {
-      FIND_MATE: {
-        name: "메이트구하기",
-        icon: Users,
-        color: "bg-blue-100 text-blue-800",
-      },
       LIFE_TIPS: {
         name: "생활팁",
-        icon: Lightbulb,
-        color: "bg-yellow-100 text-yellow-800",
+        icon: GraduationCap,
+        borderColor: "border-orange-500",
+        textColor: "text-orange-600",
       },
       FREE_BOARD: {
         name: "자유게시판",
         icon: MessageSquare,
-        color: "bg-purple-100 text-purple-800",
+        borderColor: "border-orange-600",
+        textColor: "text-orange-700",
+      },
+      FIND_MATE: {
+        name: "메이트구하기",
+        icon: Megaphone,
+        borderColor: "border-orange-700",
+        textColor: "text-orange-800",
       },
       QNA: {
         name: "질문답변",
-        icon: HelpCircle,
-        color: "bg-red-100 text-red-800",
+        icon: Handshake,
+        borderColor: "border-orange-800",
+        textColor: "text-orange-900",
       },
       POLICY: {
         name: "정책게시판",
-        icon: FileText,
-        color: "bg-green-50 text-green-700 ring-1 ring-inset ring-green-300",
+        icon: ScrollText,
+        borderColor: "border-orange-900",
+        textColor: "text-orange-950",
       },
     };
 
@@ -204,7 +215,8 @@ const PostDetail: React.FC<PostDetailProps> = ({
       categories[category] || {
         name: "기타",
         icon: FileText,
-        color: "bg-gray-100 text-gray-800",
+        borderColor: "border-gray-500",
+        textColor: "text-gray-800",
       }
     );
   };
@@ -376,7 +388,7 @@ const PostDetail: React.FC<PostDetailProps> = ({
               const categoryInfo = getCategoryInfo(post.category);
               return (
                 <div
-                  className={`flex items-center space-x-1 px-3 py-1 rounded-full text-xs font-medium ${categoryInfo.color}`}
+                  className={`flex items-center space-x-1 px-3 py-1 rounded-full text-xs font-medium border ${categoryInfo.borderColor} ${categoryInfo.textColor}`}
                 >
                   <categoryInfo.icon className="w-3 h-3" />
                   <span>{categoryInfo.name}</span>
@@ -433,9 +445,9 @@ const PostDetail: React.FC<PostDetailProps> = ({
               whileTap={{ scale: 0.95 }}
               onClick={handleToggleLike}
               className={`flex items-center space-x-2 transition-colors ${
-                post.userLiked
-                  ? "text-red-500"
-                  : "text-gray-500 hover:text-red-500"
+                localPost.userLiked
+                  ? "text-orange-500" // 좋아요 색상 주황
+                  : "text-gray-500 hover:text-orange-600" // 호버 시 주황
               }`}
             >
               <Heart
@@ -457,20 +469,19 @@ const PostDetail: React.FC<PostDetailProps> = ({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={handleShare}
-              className="flex items-center space-x-1 px-3 py-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+              className="flex items-center space-x-1 px-3 py-2 text-gray-500 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors" // 공유 버튼 호버 색상 주황
             >
               <Share2 className="w-4 h-4" />
               <span className="text-sm">공유</span>
             </motion.button>
 
-            {/* ✅ 북마크 버튼 여기 추가 */}
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
               onClick={handleToggleBookmark}
               className={`transition-colors ${
-                post.userBookmarked
-                  ? "text-yellow-500"
+                localPost.userBookmarked
+                  ? "text-yellow-500" // 북마크 색상은 기존 노란색 유지 (요청에 명시되지 않음)
                   : "text-gray-400 hover:text-yellow-500"
               }`}
             >
@@ -640,16 +651,15 @@ const PostDetail: React.FC<PostDetailProps> = ({
                             value={editingContent}
                             onChange={(e) => setEditingContent(e.target.value)}
                             rows={2}
-                            className="w-full border border-gray-300 rounded-lg p-2 text-sm"
+                            className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-400 focus:border-transparent"
                             maxLength={500}
                           />
-                          {/* 이 부분을 수정했습니다. */}
                           <div className="flex justify-end space-x-2 mt-2">
                             <button
                               onClick={() =>
                                 handleSaveEditedComment(comment.commentId)
                               }
-                              className="px-3 py-1 bg-orange-600 text-white text-sm rounded hover:bg-orange-700"
+                              className="px-3 py-1 bg-orange-600 text-white text-sm rounded hover:bg-orange-700 transition-colors"
                             >
                               저장
                             </button>
@@ -658,7 +668,7 @@ const PostDetail: React.FC<PostDetailProps> = ({
                                 setEditingCommentId(null);
                                 setEditingContent("");
                               }}
-                              className="px-3 py-1 bg-gray-200 text-sm rounded hover:bg-gray-300"
+                              className="px-3 py-1 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300 transition-colors"
                             >
                               취소
                             </button>
