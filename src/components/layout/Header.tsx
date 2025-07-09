@@ -289,8 +289,8 @@ const Header: React.FC = () => {
                 key={item.path}
                 className={`flex items-center space-x-1 px-3 py-2 rounded-xl transition-all duration-200 ${
                   location.pathname === item.path
-                    ? "text-[#df6d14] bg-[#df6d14]/10 shadow-sm"
-                    : "text-gray-600 hover:text-[#df6d14] hover:bg-gray-50"
+                    ? "text-primary-600 bg-primary-50 shadow-sm"
+                    : "text-gray-600 hover:text-primary-600 hover:bg-gray-50"
                 }`}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -554,9 +554,9 @@ const Header: React.FC = () => {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-3">
                             {mode === "personal" ? (
-                              <ToggleLeft className="w-5 h-5 text-[#df6d14]" />
+                              <ToggleLeft className="w-5 h-5 text-primary-600" />
                             ) : (
-                              <ToggleRight className="w-5 h-5 text-purple-600" />
+                              <ToggleRight className="w-5 h-5 text-primary-600" />
                             )}
                             <span className="text-sm font-medium text-gray-700">
                               모드 변경
@@ -568,8 +568,8 @@ const Header: React.FC = () => {
                                 isDisabled
                                   ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                                   : mode === "personal"
-                                  ? "bg-[#df6d14] text-white hover:bg-[#df6d14]/90"
-                                  : "bg-purple-600 text-white hover:bg-purple-700"
+                                  ? "bg-white text-primary-600 border border-primary-600 hover:bg-primary-50"
+                                  : "bg-primary-600 text-white hover:bg-primary-700"
                               }`}
                               whileHover={isDisabled ? {} : { scale: 1.05 }}
                               whileTap={isDisabled ? {} : { scale: 0.95 }}
@@ -601,7 +601,7 @@ const Header: React.FC = () => {
                                     key={group.id}
                                     className={`w-full flex items-center justify-between px-3 py-2 hover:bg-gray-50 transition-colors rounded-lg ${
                                       currentGroup?.id === group.id
-                                        ? "bg-[#df6d14]/10 border border-[#df6d14]/20"
+                                        ? "bg-primary-50 border border-primary-200"
                                         : ""
                                     }`}
                                   >
@@ -622,7 +622,7 @@ const Header: React.FC = () => {
                                         </div>
                                       </div>
                                       {currentGroup?.id === group.id && (
-                                        <div className="w-2 h-2 bg-[#df6d14] rounded-full flex-shrink-0"></div>
+                                        <div className="w-2 h-2 bg-primary-600 rounded-full flex-shrink-0"></div>
                                       )}
                                     </motion.button>
 
@@ -634,7 +634,7 @@ const Header: React.FC = () => {
                                           setShowGroupSettingsModal(true);
                                           setShowUserMenu(false);
                                         }}
-                                        className="p-1 text-gray-400 hover:text-[#df6d14] transition-colors"
+                                        className="p-1 text-gray-400 hover:text-primary-600 transition-colors"
                                       >
                                         <Settings className="w-4 h-4" />
                                       </motion.button>
@@ -652,7 +652,7 @@ const Header: React.FC = () => {
                             } space-y-1`}
                           >
                             <motion.button
-                              className="w-full flex items-center space-x-2 px-3 py-1.5 text-left text-[#df6d14] hover:bg-[#df6d14]/5 transition-colors rounded-lg text-sm"
+                              className="w-full flex items-center space-x-2 px-3 py-1.5 text-left text-primary-600 hover:bg-primary-50 transition-colors rounded-lg text-sm"
                               whileHover={{ x: 2 }}
                               onClick={() => {
                                 setShowCreateGroupModal(true);
@@ -662,7 +662,7 @@ const Header: React.FC = () => {
                               <span>+ 새 그룹 만들기</span>
                             </motion.button>
                             <motion.button
-                              className="w-full flex items-center space-x-2 px-3 py-1.5 text-left text-[#df6d14] hover:bg-[#df6d14]/5 transition-colors rounded-lg text-sm"
+                              className="w-full flex items-center space-x-2 px-3 py-1.5 text-left text-primary-600 hover:bg-primary-50 transition-colors rounded-lg text-sm"
                               whileHover={{ x: 2 }}
                               onClick={() => {
                                 setShowJoinGroupModal(true);
