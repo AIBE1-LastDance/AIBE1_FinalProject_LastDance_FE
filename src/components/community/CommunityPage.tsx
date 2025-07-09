@@ -1,6 +1,7 @@
-// src/components/community/CommunityPage.tsx
 import React, { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
+import toast from "react-hot-toast";
+
 import {
   Plus,
   Search,
@@ -17,6 +18,10 @@ import {
   ThumbsUp,
   ChevronLeft,
   ChevronRight,
+  GraduationCap, // LIFE_TIPS
+  Megaphone, // FIND_MATE
+  Handshake, // QNA
+  ScrollText, // POLICY
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/authStore";
@@ -24,19 +29,13 @@ import { usePostStore } from "../../store/community/postStore";
 import PostCard from "./PostCard";
 import CreatePostModal from "./CreatePostModal";
 import { Post } from "../../types/community/community";
-// import { fetchAllPosts, togglePostLike, togglePostBookmark, deletePost as deletePostApi, createPost as createPostApi, updatePost as updatePostApi,} from "../../api/community/community"; // 이제 스토어에서 관리
 
 const CommunityPage: React.FC = () => {
   const { user } = useAuthStore();
   const navigate = useNavigate();
 
-  const {
-    posts,
-    loadPosts, // usePostStore에서 loadPosts 액션 가져오기
-    deletePost, // usePostStore에서 deletePost 액션 가져오기
-    toggleLike, // usePostStore에서 toggleLike 액션 가져오기
-    toggleBookmark, // usePostStore에서 toggleBookmark 액션 가져오기
-  } = usePostStore();
+  const { posts, loadPosts, deletePost, toggleLike, toggleBookmark } =
+    usePostStore();
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -54,9 +53,7 @@ const CommunityPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const postsPerPage = 15;
 
-  // 컴포넌트 마운트 시 게시글 로드 (스토어의 loadPosts 사용)
   useEffect(() => {
-    // loadPosts가 Promise를 반환하므로, isLoading 상태를 여기서 관리
     const fetchAndSetLoading = async () => {
       setIsLoading(true);
       await loadPosts();
@@ -69,7 +66,6 @@ const CommunityPage: React.FC = () => {
     return posts.reduce((sum, post) => sum + (post.likeCount || 0), 0);
   }, [posts]);
 
-  // 스토어의 toggleLike 액션 사용
   const handleToggleLike = async (postId: string) => {
     if (!user) {
       alert("로그인 후 좋아요를 누를 수 있습니다.");
@@ -79,7 +75,6 @@ const CommunityPage: React.FC = () => {
     await toggleLike(postId);
   };
 
-  // 스토어의 toggleBookmark 액션 사용
   const handleToggleBookmark = async (postId: string) => {
     if (!user) {
       alert("로그인 후 북마크할 수 있습니다.");
@@ -90,30 +85,36 @@ const CommunityPage: React.FC = () => {
   };
 
   const categories = [
-    { id: "all", name: "전체", icon: Filter, color: "text-gray-600" },
+    { id: "all", name: "전체", icon: Filter, color: "text-orange-600" },
     {
       id: "FIND_MATE",
       name: "메이트구하기",
-      icon: Users,
-      color: "text-blue-600",
+      icon: Megaphone, // 주황톤 아이콘으로 변경
+      color: "text-orange-600",
     },
     {
       id: "LIFE_TIPS",
       name: "생활팁",
-      icon: Lightbulb,
-      color: "text-yellow-600",
+      icon: GraduationCap, // 주황톤 아이콘으로 변경
+      color: "text-orange-600",
     },
     {
       id: "FREE_BOARD",
       name: "자유게시판",
       icon: MessageSquare,
-      color: "text-purple-600",
+      color: "text-orange-600",
     },
     {
       id: "QNA",
       name: "질문답변",
-      icon: HelpCircle,
-      color: "text-red-600",
+      icon: Handshake, // 주황톤 아이콘으로 변경
+      color: "text-orange-600",
+    },
+    {
+      id: "POLICY",
+      name: "정책",
+      icon: ScrollText, // 주황톤 아이콘으로 변경
+      color: "text-orange-600",
     },
   ];
 
@@ -191,17 +192,15 @@ const CommunityPage: React.FC = () => {
     setIsCreateModalOpen(true);
   };
 
-  // 스토어의 deletePost 액션 사용
   const handlePostDelete = async (postId: string) => {
     if (!window.confirm("정말로 이 게시글을 삭제하시겠습니까?")) {
       return;
     }
     try {
       await deletePost(postId);
-      alert("게시글이 삭제되었습니다.");
+      toast.success("게시글이 성공적으로 삭제되었습니다!");
     } catch (error) {
       console.error(`[게시글 삭제 실패] PostId: ${postId}`, error);
-      alert("게시글 삭제에 111실패했습니다.");
     }
   };
 
@@ -214,7 +213,7 @@ const CommunityPage: React.FC = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-2xl p-6 text-white"
+        className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-2xl p-6 text-white"
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
@@ -223,10 +222,10 @@ const CommunityPage: React.FC = () => {
             </div>
             <div>
               <h1 className="text-2xl font-bold">커뮤니티</h1>
-              <p className="text-primary-100">
+              <p className="text-orange-100">
                 다양한 생활 정보를 공유하고 소통해보세요!
               </p>
-              <div className="flex items-center mt-2 text-primary-50">
+              <div className="flex items-center mt-2 text-orange-50">
                 <ThumbsUp className="w-4 h-4 mr-1" />
                 <span className="text-sm font-medium">
                   총 좋아요: {totalLikes}개
@@ -264,7 +263,7 @@ const CommunityPage: React.FC = () => {
                 setSearchQuery(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent"
             />
           </div>
         </div>
@@ -274,24 +273,21 @@ const CommunityPage: React.FC = () => {
             <button
               key={category.id}
               onClick={() => {
-                if (category.id === "POLICY" && category.onClick) {
-                  category.onClick();
-                } else {
-                  setSelectedCategory(category.id);
-                  setCurrentPage(1);
-                }
+                // 정책 카테고리는 별도의 onClick이 없으므로, 그냥 setSelectedCategory만 수행
+                setSelectedCategory(category.id);
+                setCurrentPage(1);
               }}
               className={`flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                selectedCategory === category.id && category.id !== "POLICY"
-                  ? "bg-primary-100 text-primary-700 border-2 border-primary-200"
+                selectedCategory === category.id
+                  ? "bg-orange-100 text-orange-700 border-2 border-orange-200" // 선택 시 주황 강조
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
               <category.icon
                 className={`w-4 h-4 ${
-                  selectedCategory === category.id && category.id !== "POLICY"
-                    ? category.color
-                    : "text-gray-500"
+                  selectedCategory === category.id
+                    ? category.color // 선택 시 주황톤 아이콘 색상
+                    : "text-gray-500" // 미선택 시 기본 회색 아이콘 색상
                 }`}
               />
               <span>{category.name}</span>
@@ -362,7 +358,7 @@ const CommunityPage: React.FC = () => {
               }}
               className={`flex items-center space-x-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                 sortBy === option.key
-                  ? "bg-white text-purple-600 shadow-sm"
+                  ? "bg-white text-orange-600 shadow-sm" // 정렬 버튼 선택 시 주황색 강조
                   : "text-gray-600 hover:text-gray-800"
               }`}
             >
@@ -381,12 +377,11 @@ const CommunityPage: React.FC = () => {
       >
         {isLoading ? (
           <div className="flex flex-col items-center justify-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-primary-500"></div>
+            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-orange-500"></div>
             <p className="mt-4 text-gray-600">게시글을 불러오는 중입니다...</p>
           </div>
         ) : currentPosts.length === 0 ? (
           <div className="bg-white rounded-2xl p-12 text-center shadow-sm border border-gray-200 w-full">
-            {" "}
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <MessageCircle className="w-8 h-8 text-gray-400" />
             </div>
@@ -403,14 +398,13 @@ const CommunityPage: React.FC = () => {
                 setEditingPost(null);
                 setIsCreateModalOpen(true);
               }}
-              className="bg-primary-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-primary-700 transition-colors"
+              className="bg-orange-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-orange-700 transition-colors"
             >
               글쓰기
             </button>
           </div>
         ) : (
           <div className="w-full space-y-4">
-            {" "}
             {currentPosts.map((post, index) => (
               <motion.div
                 key={post.postId}
@@ -453,7 +447,7 @@ const CommunityPage: React.FC = () => {
               onClick={() => paginate(number)}
               className={`px-4 py-2 rounded-full font-medium transition-colors ${
                 currentPage === number
-                  ? "bg-primary-600 text-white shadow-md"
+                  ? "bg-orange-600 text-white shadow-md" // 페이지네이션 선택 시 주황색 강조
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
               aria-current={currentPage === number ? "page" : undefined}
@@ -474,11 +468,9 @@ const CommunityPage: React.FC = () => {
       {isCreateModalOpen && (
         <CreatePostModal
           post={editingPost}
-          onClose={async (postData?: Post | null) => {
+          onClose={async () => {
             setIsCreateModalOpen(false);
             setEditingPost(null);
-            // CreatePostModal 내부에서 API 호출 후, 여기서는 단순히 게시글 목록을 새로고침합니다.
-            // postData가 넘어오지 않아도 (취소 시) 최신 데이터를 다시 불러오는 것이 안전합니다.
             await loadPosts();
           }}
         />
