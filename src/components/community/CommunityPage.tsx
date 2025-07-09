@@ -110,12 +110,6 @@ const CommunityPage: React.FC = () => {
       icon: Handshake, // 주황톤 아이콘으로 변경
       color: "text-orange-600",
     },
-    {
-      id: "POLICY",
-      name: "정책",
-      icon: ScrollText, // 주황톤 아이콘으로 변경
-      color: "text-orange-600",
-    },
   ];
 
   const processedPosts = useMemo(() => {
