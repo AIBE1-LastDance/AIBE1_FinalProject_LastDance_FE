@@ -320,7 +320,7 @@ const EventModal: React.FC<EventModalProps> = ({
                               endTime = '23:59';
                               // 잠시 후 toast 표시 (상태 업데이트 후)
                               setTimeout(() => {
-                                toast.info('시작 시간이 23시 이후여서 종료 시간을 23:59로 설정했습니다.');
+                                toast.success('시작 시간이 23시 이후여서 종료 시간을 23:59로 설정했습니다.');
                               }, 100);
                             }
 
