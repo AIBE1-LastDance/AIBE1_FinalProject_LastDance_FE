@@ -22,6 +22,7 @@ export interface Post {
 export interface PostDetailProps {
   post: Post;
   onBack: () => void;
-  onEdit?: (post: Post) => void;
-  onDelete?: (postId: string) => void;
+  onEdit: () => void;
+  onDelete: () => void;
+  onCommentAdded: () => void; // 이 줄을 추가합니다.
 }

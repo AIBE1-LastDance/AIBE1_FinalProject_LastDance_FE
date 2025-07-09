@@ -94,6 +94,8 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ post, onClose }) => {
           ...updated,
           updatedAt: new Date().toISOString(),
         };
+        // ✨ 게시글 수정 성공 토스트 메시지 추가
+        toast.success("게시글이 성공적으로 수정되었습니다!");
       } else {
         const created = await createPost(requestData);
         resultPost = {
