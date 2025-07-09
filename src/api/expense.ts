@@ -202,6 +202,17 @@ export const expenseAPI = {
             analysisResponseDTO
         });
         return response.data;
+    },
+
+    // 저장된 AI 분석 목록 페이징 조회
+    getSavedAnalysesPaginated: async (params: {
+        page?: number;
+        size?: number;
+        sortBy?: string;
+        sortDirection?: 'asc' | 'desc';
+    }) => {
+        const response = await apiClient.get('/api/v1/expenses/analyze/history', { params });
+        return response.data;
     }
 }
 

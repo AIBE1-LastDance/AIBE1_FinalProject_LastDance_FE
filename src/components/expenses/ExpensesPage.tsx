@@ -56,7 +56,7 @@ const ExpensesPage: React.FC = () => {
         expenses,
         mode,
         currentGroup,
-        savedAnalyses,
+        savedAnalyses = [],
         saveAnalysis,
         groupShares,
         loadGroupShares,
@@ -71,6 +71,10 @@ const ExpensesPage: React.FC = () => {
         groupSharesTotalPages,
         loadGroupSharesPaginated,
         groupSharesSummary,
+        aiAnalysesCurrentPage, // New
+        aiAnalysesTotalPages, // New
+        setAiAnalysesCurrentPage, // New
+        loadSavedAnalysesPaginated, // New
     } = useAppStore();
     const {user} = useAuthStore();
     const location = useLocation();
@@ -201,7 +205,9 @@ const ExpensesPage: React.FC = () => {
 
     useEffect(() => {
         refreshAllData();
-    }, [refreshAllData]);
+        // AI 분석 내역도 함께 로드
+        loadSavedAnalysesPaginated({ page: 0, size: 10 }); // 초기 페이지 로드
+    }, [refreshAllData, loadSavedAnalysesPaginated]);
 
     useEffect(() => {
         if (Object.keys(monthlyTrendData).length > 0) {
@@ -342,7 +348,7 @@ const ExpensesPage: React.FC = () => {
         }
     }
 
-    const filteredExpenses = combinedExpenses;
+    const filteredExpenses = combinedExpenses || [];
 
     const totalAmount = summary?.totalAmount || 0;
     const avgAmount = summary?.averageAmount || 0;
@@ -586,45 +592,84 @@ const ExpensesPage: React.FC = () => {
         };
     };
 
-    const aiAnalysis = analysisResult ? {
-        insights: [
-            {
-                type: 'mainFinding',
-                title: analysisResult.analysisResult.mainFinding,
-                message: '',
-                icon: Bot,
-                color: 'text-blue-500'
-            }
-        ],
-        recommendations: [
-            {
-                title: analysisResult.analysisResult.suggestion.title,
-                message: analysisResult.analysisResult.suggestion.description,
-                impact: analysisResult.analysisResult.suggestion.effect,
-                difficulty: analysisResult.analysisResult.suggestion.difficulty
-            }
-        ],
-        warnings: [], // 백엔드에서 직접 제공하지 않으므로 빈 배열
-        summary: {
-            totalAmount: analysisResult.budgetUsage.currentSpending,
-            spendingRate: analysisResult.budgetUsage.percentage,
-            totalBudget: analysisResult.budgetUsage.totalBudget,
-            changeRate: 0, // 백엔드에서 직접 제공하지 않으므로 0
-            topCategory: analysisResult.categoryDetails[0]?.category || '없음',
-            avgDaily: analysisResult.dailySpending.averageSoFar,
-            prediction: analysisResult.dailySpending.estimatedEom
-        },
-        categoryBreakdown: analysisResult.categoryDetails.map(cat => ({
-            category: cat.category,
-            label: categoryData.find(c => c.category === cat.category)?.label || cat.category,
-            amount: cat.totalAmount,
-            count: cat.transactionCount,
-            percentage: cat.percentage,
-            color: categoryData.find(c => c.category === cat.category)?.color || '#df6d14',
-            name: categoryData.find(c => c.category === cat.category)?.label || cat.category,
-            value: cat.totalAmount,
-        }))
-    } : null;
+    const aiAnalysis = (() => {
+        const source = selectedAnalysis || analysisResult;
+        if (!source) return null;
+
+        // If it's a saved analysis (ExpenseAnalysisHistoryDTO)
+        if (selectedAnalysis) {
+            return {
+                insights: [
+                    {
+                        type: 'mainFinding',
+                        title: source.mainFinding,
+                        message: '',
+                        icon: Bot,
+                        color: 'text-blue-500'
+                    }
+                ],
+                recommendations: [
+                    {
+                        title: source.suggestionTitle,
+                        message: source.suggestionDescription,
+                        impact: source.suggestionEffect,
+                        difficulty: source.suggestionDifficulty
+                    }
+                ],
+                warnings: [], // ExpenseAnalysisHistoryDTO does not contain warnings directly
+                summary: {
+                    totalAmount: source.budgetUsageCurrentSpending,
+                    spendingRate: source.budgetUsagePercentage,
+                    totalBudget: source.budgetUsageTotalBudget,
+                    changeRate: 0, // Not directly available in ExpenseAnalysisHistoryDTO
+                    topCategory: source.mainFinding.split(' ')[0] || '없음', // Extract category from mainFinding
+                    avgDaily: source.dailySpendingAverageSoFar,
+                    prediction: source.dailySpendingEstimatedEom
+                },
+                categoryBreakdown: [] // ExpenseAnalysisHistoryDTO does not contain categoryDetails
+            };
+        } else { // If it's a new analysis (AnalyzeExpenseResponseDTO)
+            return {
+                insights: [
+                    {
+                        type: 'mainFinding',
+                        title: source.analysisResult.mainFinding,
+                        message: '',
+                        icon: Bot,
+                        color: 'text-blue-500'
+                    }
+                ],
+                recommendations: [
+                    {
+                        title: source.analysisResult.suggestion.title,
+                        message: source.analysisResult.suggestion.description,
+                        impact: source.analysisResult.suggestion.effect,
+                        difficulty: source.analysisResult.suggestion.difficulty
+                    }
+                ],
+                warnings: [], // 백엔드에서 직접 제공하지 않으므로 빈 배열
+                summary: {
+                    totalAmount: source.budgetUsage.currentSpending,
+                    spendingRate: source.budgetUsage.percentage,
+                    totalBudget: source.budgetUsage.totalBudget,
+                    changeRate: 0, // 백엔드에서 직접 제공하지 않으므로 0
+                    topCategory: source.categoryDetails[0]?.category || '없음',
+                    avgDaily: source.dailySpending.averageSoFar,
+                    prediction: source.dailySpending.estimatedEom
+                },
+                categoryBreakdown: source.categoryDetails.map(cat => ({
+                    category: cat.category,
+                    label: categoryData.find(c => c.category === cat.category)?.label || cat.category,
+                    amount: cat.totalAmount,
+                    count: cat.transactionCount,
+                    percentage: cat.percentage,
+                    color: categoryData.find(c => c.category === cat.category)?.color || '#df6d14',
+                    name: categoryData.find(c => c.category === cat.category)?.label || cat.category,
+                    value: cat.totalAmount,
+                }))
+            };
+        }
+    })();
 
     // 메인 지출 목록 페이징 핸들러
     const handlePageChange = async (newPage: number) => {
@@ -668,6 +713,29 @@ const ExpensesPage: React.FC = () => {
             page: zeroBasedPage,
             size: 5
         });
+    };
+
+    // AI 분석 내역 페이징 핸들러
+    const handleAiAnalysisPageChange = async (newPage: number) => {
+        const zeroBasedPage = newPage - 1;
+        if (zeroBasedPage >= 0 && zeroBasedPage < aiAnalysesTotalPages && zeroBasedPage !== aiAnalysesCurrentPage) {
+            setAiAnalysesCurrentPage(zeroBasedPage);
+            // Optionally show loading state for AI analyses
+            // setPageLoading(true); // If you want a loading spinner for AI analyses
+
+            try {
+                await loadSavedAnalysesPaginated({
+                    page: zeroBasedPage,
+                    size: 10, // Assuming 10 items per page for AI analyses
+                    sortBy: 'createdAt', // Default sort
+                    sortDirection: 'desc' // Default sort
+                });
+            } catch (error) {
+                console.error('AI 분석 내역 페이지 로드 실패:', error);
+            } finally {
+                // setPageLoading(false); // If you want a loading spinner for AI analyses
+            }
+        }
     };
 
     const renderActiveShape = (props) => {
@@ -1588,52 +1656,48 @@ const ExpensesPage: React.FC = () => {
                     </>
 
                 ) : (
-                    <div className="divide-y divide-gray-100">
-                        {savedAnalyses.length > 0 ? (
-                            savedAnalyses.map((analysis) => (
-                                <motion.div
-                                    key={analysis.id}
-                                    className="p-6 hover:bg-gray-50 transition-all duration-200 cursor-pointer group"
-                                    whileHover={{x: 5}}
-                                    onClick={() => {
-                                        setSelectedAnalysis(analysis);
-                                        setShowAnalysis(true);
-                                    }}
-                                >
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center space-x-4">
-                                            <div
-                                                className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center transition-all group-hover:scale-110">
-                                                <Sparkles className="w-6 h-6 text-purple-600"/>
-                                            </div>
-                                            <div>
-                                                <h4 className="font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
-                                                    {analysis.month} AI 분석
-                                                </h4>
-                                                <div className="flex items-center space-x-3 text-sm text-gray-500">
-                                                    <span>{format(analysis.date, 'M월 d일 분석', {locale: ko})}</span>
-                                                    <span>•</span>
-                                                    <span>총 {formatCurrency(analysis.totalAmount)}</span>
-                                                    <span>•</span>
-                                                    <span>{analysis.categoryBreakdown.length}개 카테고리</span>
+                    <>
+                        <div className="divide-y divide-gray-100">
+                            {savedAnalyses.length > 0 ? (
+                                savedAnalyses.map((analysis) => (
+                                    <motion.div
+                                        key={analysis.id}
+                                        className="p-6 hover:bg-gray-50 transition-all duration-200 cursor-pointer group"
+                                        whileHover={{x: 5}}
+                                        onClick={() => {
+                                            setSelectedAnalysis(analysis);
+                                            setShowAnalysis(true);
+                                        }}
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center space-x-4">
+                                                <div
+                                                    className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center transition-all group-hover:scale-110">
+                                                    <Sparkles className="w-6 h-6 text-purple-600"/>
                                                 </div>
+                                                <div>
+                                                    <h4 className="font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
+                                                        {analysis.suggestionTitle}
+                                                    </h4>
+                                                    <div className="flex items-center space-x-3 text-sm text-gray-500">
+                                                        <span>{format(analysis.createdAt, 'M월 d일 분석', {locale: ko})}</span>
+                                                        <span>•</span>
+                                                        <span>총 지출 {formatCurrency(analysis.budgetUsageCurrentSpending)}</span>
+                                                    </div>                                                </div>                                            </div>                                            <div className="text-right">
+                                                <div className="text-xs text-gray-500 mt-1">
+                                                    예산
+                                                </div>
+                                                <p className="text-lg font-bold text-purple-600">
+                                                    {analysis.budgetUsagePercentage.toFixed(1)}% 사용
+                                                </p>
                                             </div>
                                         </div>
-                                        <div className="text-right">
-                                            <p className="text-lg font-bold text-purple-600">
-                                                {analysis.data.summary.spendingRate.toFixed(1)}% 사용
-                                            </p>
-                                            <div className="text-xs text-gray-500 mt-1">
-                                                예산 대비
-                                            </div>
-                                        </div>
-                                    </div>
-                                </motion.div>
-                            ))
-                        ) : (
-                            <div className="text-center py-16">
-                                <div
-                                    className="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                                    </motion.div>
+                                ))
+                            ) : (
+                                <div className="text-center py-16">
+                                    <div
+                                        className="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
                                     <Bot className="w-10 h-10 text-gray-400"/>
                                 </div>
                                 <h3 className="text-xl font-semibold text-gray-900 mb-2">AI 분석 내역이 없습니다</h3>
@@ -1644,11 +1708,18 @@ const ExpensesPage: React.FC = () => {
                                     whileTap={{scale: 0.95}}
                                     onClick={handleAnalysis}
                                 >
-                                    첫 AI 분석 실행하기
+                                    AI 분석 실행하기
                                 </motion.button>
                             </div>
                         )}
-                    </div>
+                        </div>
+                        {/* 페이징 컴포넌트 */}
+                        <Pagination
+                            currentPage={aiAnalysesCurrentPage + 1}
+                            totalPages={aiAnalysesTotalPages}
+                            onPageChange={handleAiAnalysisPageChange}
+                        />
+                    </>
                 )}
             </motion.div>
 
@@ -1676,7 +1747,7 @@ const ExpensesPage: React.FC = () => {
                                             <p className="text-purple-100">
                                                 {analysisResult
                                                     ? `${format(currentMonth, 'yyyy년 M월', {locale: ko})} 지출 패턴 분석 결과`
-                                                    : '분석 결과 로딩 중...'
+                                                    : '분석 결과'
                                                 }
                                             </p>
                                         </div>

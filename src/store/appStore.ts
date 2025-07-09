@@ -763,9 +763,9 @@ export const useAppStore = create<AppState>()(
               const response = await expenseAPI.getSavedAnalysesPaginated(params);
               if (response?.data) {
                 set({
-                  savedAnalyses: response.data.content,
-                  aiAnalysesCurrentPage: response.data.number,
-                  aiAnalysesTotalPages: response.data.totalPages,
+                  savedAnalyses: response.data.page.content,
+                  aiAnalysesCurrentPage: response.data.page.number,
+                  aiAnalysesTotalPages: response.data.page.totalPages,
                 });
               }
             } catch (error) {
