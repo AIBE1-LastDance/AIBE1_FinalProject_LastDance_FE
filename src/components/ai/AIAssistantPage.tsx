@@ -1,115 +1,144 @@
-import React, { useState, useRef, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Send, Bot, User, ThumbsUp, ThumbsDown, Copy } from "lucide-react";
-import toast from "react-hot-toast";
-import { judgeConflict } from "../../api/aijudgment/aiJudgment";
-import { sendFeedback } from "../../api/aijudgment/aiJudgment";
-import type { Message } from "../../types/aijudgment/aiMessage";
-import type { AiJudgmentResponse } from "../../types/aijudgment/aiMessage";
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Bot,
+  PlusCircle,
+  XCircle,
+  ThumbsUp,
+  ThumbsDown,
+  Copy,
+  RotateCcw,
+  BookOpenText,
+  Lightbulb,
+  ShieldCheck,
+  Users,
+  MessageCircle,
+  Sparkles,
+  Check,
+} from "lucide-react";
+import toast, { Toaster } from "react-hot-toast";
+import { judgeConflict, sendFeedback } from "../../api/aijudgment/aiJudgment";
+import type {
+  AiJudgmentRequest,
+  AiJudgmentResponse,
+} from "../../types/aijudgment/aiMessage";
+
+type PageState = "INITIAL" | "LOADING" | "RESULT";
 
 const AIAssistantPage: React.FC = () => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      type: "ai",
-      content:
-        "안녕하세요! 저는 룸메이트 갈등을 전문적으로 판단하는 우리.zip 도우미입니다. A: (A의 입장), B: (B의 입장) 형식으로 상황을 설명해 주시면 최대한 공정하게 판단해드릴게요. 모두가 납득할 수 있는 결과를 드리는 것이 제 역할입니다! 🏠✨",
-      timestamp: new Date(),
-      rating: null,
-    },
-  ]);
-  const [inputMessage, setInputMessage] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
-  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const [pageState, setPageState] = useState<PageState>("INITIAL");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [situations, setSituations] = useState<{ [key: string]: string }>({
+    A: "",
+    B: "",
+  });
+  const [aiJudgmentResult, setAiJudgmentResult] =
+    useState<AiJudgmentResponse | null>(null);
+  const [currentRating, setCurrentRating] = useState<"up" | "down" | null>(
+    null
+  );
+  const [copySuccess, setCopySuccess] = useState(false);
 
-  useEffect(() => {
-    if (shouldAutoScroll) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [messages, shouldAutoScroll]);
+  const personLabels = ["A", "B", "C", "D"];
+  // 인원별 입력 필드 레이블의 테두리 색상 (메인 스트로크 색상과 동일)
+  const personLabelColor =
+    "border-2 border-orange-300 text-orange-700 bg-white";
 
-  const handleScroll = () => {
-    if (messagesContainerRef.current) {
-      const { scrollTop, scrollHeight, clientHeight } =
-        messagesContainerRef.current;
-      setShouldAutoScroll(scrollHeight - scrollTop - clientHeight < 50);
+  const openModal = () => setIsModalOpen(true);
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSituations({ A: "", B: "" });
+  };
+
+  const handleSituationChange = (person: string, value: string) => {
+    setSituations((prev) => ({ ...prev, [person]: value }));
+  };
+
+  const addPerson = () => {
+    if (Object.keys(situations).length < 4) {
+      const currentPersonIds = Object.keys(situations);
+      const nextAvailableLabel = personLabels.find(
+        (label) => !currentPersonIds.includes(label)
+      );
+      if (nextAvailableLabel) {
+        setSituations((prev) => ({ ...prev, [nextAvailableLabel]: "" }));
+      }
+    } else {
+      toast.error("최대 4명까지 추가할 수 있습니다.");
     }
   };
 
-  const handleSendMessage = async (content: string) => {
-    if (!content.trim()) {
-      toast.error("메시지를 입력해주세요.");
+  const removePerson = (personToRemove: string) => {
+    setSituations((prev) => {
+      const newSituations = { ...prev };
+      delete newSituations[personToRemove];
+
+      const sortedKeys = Object.keys(newSituations).sort(
+        (a, b) => personLabels.indexOf(a) - personLabels.indexOf(b)
+      );
+      const reorderedSituations: { [key: string]: string } = {};
+      personLabels.forEach((label, index) => {
+        if (index < sortedKeys.length) {
+          reorderedSituations[label] = newSituations[sortedKeys[index]];
+        }
+      });
+      return reorderedSituations;
+    });
+  };
+
+  const handleSendSituations = async () => {
+    const filledSituations: { [key: string]: string } = {};
+    let allFieldsFilled = true;
+
+    Object.entries(situations).forEach(([person, content]) => {
+      if (content.trim()) {
+        filledSituations[person] = content.trim();
+      } else {
+        allFieldsFilled = false;
+      }
+    });
+
+    if (!allFieldsFilled) {
+      toast.error("모든 입력란을 채워주세요.");
       return;
     }
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      type: "user",
-      content,
-      timestamp: new Date(),
-    };
+    if (Object.keys(filledSituations).length < 2) {
+      toast.error("최소 2명의 입장을 입력해야 합니다.");
+      return;
+    }
 
-    setMessages((prev) => [...prev, userMessage]);
-    setInputMessage("");
-    setIsTyping(true);
-    setShouldAutoScroll(true);
+    closeModal();
+    setPageState("LOADING");
 
     try {
-      const response = await judgeConflict(content);
-      const aiResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        type: "ai",
-        content: response.judgmentResult,
-        timestamp: new Date(),
-        rating: null,
-        judgmentId: response.judgmentId, // ✅ 저장
-      };
-      setMessages((prev) => [...prev, aiResponse]);
+      const requestBody: AiJudgmentRequest = { situations: filledSituations };
+      const response = await judgeConflict(requestBody);
+      setAiJudgmentResult(response);
+      setPageState("RESULT");
     } catch (error: any) {
       toast.error(error.message || "AI 응답을 받아오는 데 실패했습니다.");
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: (Date.now() + 1).toString(),
-          type: "ai",
-          content:
-            "죄송합니다. AI 응답을 받아오는 데 문제가 발생했습니다. 다시 시도해 주세요.",
-          timestamp: new Date(),
-          rating: null,
-        },
-      ]);
-    } finally {
-      setIsTyping(false);
+      setPageState("INITIAL");
     }
   };
 
-  const handleRating = async (messageId: string, rating: "up" | "down") => {
-    const targetMessage = messages.find((msg) => msg.id === messageId);
-    if (!targetMessage || !targetMessage.judgmentId) return;
+  const handleRating = async (rating: "up" | "down") => {
+    if (!aiJudgmentResult?.judgmentId) return;
 
-    const isSame = targetMessage.rating === rating;
+    const isSame = currentRating === rating;
     const newRating: "up" | "down" | null = isSame ? null : rating;
 
     try {
+      await sendFeedback(aiJudgmentResult.judgmentId, newRating);
+
       if (newRating) {
-        await sendFeedback(targetMessage.judgmentId, newRating);
         toast.success(
           newRating === "up" ? "좋아요를 남겼습니다." : "싫어요를 남겼습니다."
         );
       } else {
-        // 양쪽 다 false로 만들기 위한 비워진 toggle
-        await sendFeedback(targetMessage.judgmentId, rating); // 재전송하면 서버에서 취소됨
         toast.success("피드백을 취소했습니다.");
       }
-
-      // UI 상태 업데이트
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === messageId ? { ...msg, rating: newRating } : msg
-        )
-      );
+      setCurrentRating(newRating);
     } catch (error: any) {
       toast.error(error.message || "피드백 처리 중 오류가 발생했습니다.");
     }
@@ -118,192 +147,456 @@ const AIAssistantPage: React.FC = () => {
   const handleCopy = async (content: string) => {
     try {
       await navigator.clipboard.writeText(content);
-      toast.success("메시지가 복사되었습니다!");
+      setCopySuccess(true);
+      toast.success("판결문이 복사되었습니다!");
+      setTimeout(() => setCopySuccess(false), 2000);
     } catch {
       toast.error("복사에 실패했습니다.");
     }
   };
 
+  const resetPage = () => {
+    setPageState("INITIAL");
+    setSituations({ A: "", B: "" });
+    setAiJudgmentResult(null);
+    setCurrentRating(null);
+    setCopySuccess(false);
+  };
+
+  const nextPersonLabel = personLabels[Object.keys(situations).length];
+
   return (
-    <div className="fixed inset-0 top-20 flex flex-col bg-gray-50 overflow-hidden">
-      <div className="flex-1 flex flex-col max-w-7xl mx-auto w-full px-6 lg:px-8 py-8">
-        {/* 헤더 */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-2xl p-6 text-white mb-6 flex-shrink-0"
-        >
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-              <Bot className="w-6 h-6" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold">AI 판단 도우미</h1>
-              <p className="text-primary-100">
-                하우스메이트 생활의 똑똑한 조언자
-              </p>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* 채팅 UI */}
-        <div
-          className="flex-1 bg-white rounded-xl border border-gray-200 flex flex-col overflow-hidden"
-          style={{
-            height: "calc(100vh - 280px)",
-            maxHeight: "calc(100vh - 280px)",
-            minHeight: "calc(100vh - 280px)",
-          }}
-        >
-          <div
-            ref={messagesContainerRef}
-            onScroll={handleScroll}
-            className="flex-1 overflow-y-auto p-4 space-y-4"
-            style={{
-              height: "calc(100% - 80px)",
-              maxHeight: "calc(100% - 80px)",
-            }}
+    <>
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          {/* Header */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-12"
           >
-            {messages.map((message) => (
-              <motion.div
-                key={message.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                className={`flex ${
-                  message.type === "user" ? "justify-end" : "justify-start"
-                }`}
-              >
-                <div
-                  className={`flex items-start space-x-3 max-w-[80%] ${
-                    message.type === "user"
-                      ? "flex-row-reverse space-x-reverse"
-                      : ""
-                  }`}
-                >
-                  <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                      message.type === "user"
-                        ? "bg-primary-600 text-white"
-                        : "bg-gradient-to-r from-primary-500 to-primary-600 text-white"
-                    }`}
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl mb-6 shadow-lg">
+              <Bot className="w-8 h-8 text-white" />
+            </div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-600 to-orange-800 bg-clip-text text-transparent mb-4">
+              AI 판단 도우미
+            </h1>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              룸메이트 갈등을 공정하고 객관적으로 해결하는 똑똑한 AI 조언자
+            </p>
+          </motion.div>
+
+          {/* Main Content */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="bg-white rounded-3xl shadow-xl border border-gray-200 overflow-hidden"
+          >
+            <div className="p-8 lg:p-12">
+              <AnimatePresence mode="wait">
+                {pageState === "INITIAL" && (
+                  <motion.div
+                    key="initial"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 1.05 }}
+                    transition={{ duration: 0.5 }}
+                    className="text-center"
                   >
-                    {message.type === "user" ? (
-                      <User className="w-4 h-4" />
-                    ) : (
-                      <Bot className="w-4 h-4" />
-                    )}
-                  </div>
-                  <div
-                    className={`rounded-2xl px-4 py-3 ${
-                      message.type === "user"
-                        ? "bg-primary-600 text-white"
-                        : "bg-gray-100 text-gray-800"
-                    }`}
-                  >
-                    <div className="whitespace-pre-wrap text-sm leading-relaxed break-words">
-                      {message.content}
-                    </div>
-                    {message.type === "ai" && (
-                      <div className="flex items-center space-x-2 mt-3 pt-2 border-t border-gray-200">
-                        <motion.button
-                          className={`p-1 rounded transition-colors ${
-                            message.rating === "up"
-                              ? "bg-green-500 text-white"
-                              : "hover:bg-gray-200 text-gray-500"
-                          }`}
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                          onClick={() => handleRating(message.id, "up")}
-                        >
-                          <ThumbsUp className="w-3 h-3" />
-                        </motion.button>
-                        <motion.button
-                          className={`p-1 rounded transition-colors ${
-                            message.rating === "down"
-                              ? "bg-red-500 text-white"
-                              : "hover:bg-gray-200 text-gray-500"
-                          }`}
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                          onClick={() => handleRating(message.id, "down")}
-                        >
-                          <ThumbsDown className="w-3 h-3" />
-                        </motion.button>
-                        <motion.button
-                          className="p-1 rounded hover:bg-gray-200 transition-colors text-gray-500"
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                          onClick={() => handleCopy(message.content)}
-                        >
-                          <Copy className="w-3 h-3" />
-                        </motion.button>
+                    <div className="mb-8">
+                      {/* MessageCircle 아이콘: AI 판단 도우미와 동일한 디자인으로 변경 */}
+                      <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl mb-6 shadow-lg">
+                        <MessageCircle className="w-8 h-8 text-white" />
                       </div>
-                    )}
-                  </div>
+                      <h2 className="text-3xl font-bold text-gray-800 mb-4">
+                        룸메이트 갈등을 해결해보세요
+                      </h2>
+                      <p className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
+                        복잡한 갈등 상황에서 각자의 입장을 명확히 입력하면, AI가
+                        공정하고 객관적인 판단을 내려드립니다.
+                      </p>
+                    </div>
+
+                    <motion.button
+                      className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-2xl text-lg font-semibold hover:from-orange-600 hover:to-orange-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={openModal}
+                    >
+                      <PlusCircle className="w-5 h-5 mr-2" />
+                      갈등 상황 입력하기
+                    </motion.button>
+                  </motion.div>
+                )}
+
+                {pageState === "LOADING" && (
+                  <motion.div
+                    key="loading"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className="text-center py-16"
+                  >
+                    <div className="relative mb-8 flex justify-center items-center">
+                      <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-orange-500"></div>
+                      <motion.div
+                        className="absolute"
+                        animate={{ rotate: 360 }}
+                        transition={{
+                          duration: 2,
+                          repeat: Infinity,
+                          ease: "linear",
+                        }}
+                      >
+                        <Sparkles className="w-8 h-8 text-orange-500" />
+                      </motion.div>
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-800 mb-3">
+                      AI가 상황을 분석하고 있습니다
+                    </h3>
+                    <p className="text-gray-600">
+                      공정한 판단을 위해 모든 입장을 신중히 검토 중입니다...
+                    </p>
+                  </motion.div>
+                )}
+
+                {pageState === "RESULT" && aiJudgmentResult && (
+                  <motion.div
+                    key="result"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.5 }}
+                    className="max-w-4xl mx-auto"
+                  >
+                    {/* Result Header */}
+                    <div className="text-center mb-8">
+                      <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl mb-4 shadow-lg">
+                        <ShieldCheck className="w-8 h-8 text-white" />
+                      </div>
+                      <h2 className="text-3xl font-bold text-gray-800 mb-2">
+                        AI의 공정한 판결
+                      </h2>
+                      <p className="text-gray-600">
+                        객관적인 분석을 통한 해결 방안을 제시합니다
+                      </p>
+                    </div>
+
+                    {/* Result Content */}
+                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-8 mb-8 border border-gray-200">
+                      <div className="prose max-w-none">
+                        <div className="text-gray-800 leading-relaxed whitespace-pre-wrap">
+                          {aiJudgmentResult.judgmentResult}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex flex-wrap gap-4 justify-center">
+                      <motion.button
+                        className={`flex items-center px-6 py-3 rounded-xl font-medium transition-all duration-200 ${
+                          currentRating === "up"
+                            ? "bg-green-500 text-white shadow-lg"
+                            : "bg-white text-gray-700 hover:bg-green-50 border border-gray-200"
+                        }`}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => handleRating("up")}
+                      >
+                        <ThumbsUp className="w-5 h-5 mr-2" />
+                        좋아요
+                      </motion.button>
+
+                      <motion.button
+                        className={`flex items-center px-6 py-3 rounded-xl font-medium transition-all duration-200 ${
+                          currentRating === "down"
+                            ? "bg-red-500 text-white shadow-lg"
+                            : "bg-white text-gray-700 hover:bg-red-50 border border-gray-200"
+                        }`}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => handleRating("down")}
+                      >
+                        <ThumbsDown className="w-5 h-5 mr-2" />
+                        싫어요
+                      </motion.button>
+
+                      <motion.button
+                        className={`flex items-center px-6 py-3 rounded-xl font-medium transition-all duration-200 ${
+                          copySuccess
+                            ? "bg-green-500 text-white"
+                            : "bg-white text-gray-700 hover:bg-gray-50 border border-gray-200"
+                        }`}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() =>
+                          handleCopy(aiJudgmentResult.judgmentResult)
+                        }
+                      >
+                        {copySuccess ? (
+                          <Check className="w-5 h-5 mr-2" />
+                        ) : (
+                          <Copy className="w-5 h-5 mr-2" />
+                        )}
+                        {copySuccess ? "복사됨" : "복사하기"}
+                      </motion.button>
+
+                      <motion.button
+                        className="flex items-center px-6 py-3 rounded-xl bg-orange-500 text-white font-medium hover:bg-orange-600 transition-all duration-200 shadow-lg"
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={resetPage}
+                      >
+                        <RotateCcw className="w-5 h-5 mr-2" />
+                        다시 시작
+                      </motion.button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </motion.div>
+
+          {/* Guide Section */}
+          {pageState !== "RESULT" && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              className="mt-12 bg-white rounded-2xl p-8 border border-gray-200"
+            >
+              <div className="text-center mb-8">
+                {/* BookOpenText 아이콘: 'AI 판단 도우미'와 동일한 디자인으로 변경 (사용 가이드 아이콘) */}
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl mb-4 shadow-lg">
+                  <BookOpenText className="w-8 h-8 text-white" />
                 </div>
-              </motion.div>
-            ))}
-            {isTyping && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex justify-start"
-              >
-                <div className="flex items-start space-x-3">
-                  <div className="w-8 h-8 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full flex items-center justify-center text-white">
-                    <Bot className="w-4 h-4" />
+                <h3 className="text-2xl font-bold text-gray-800 mb-2">
+                  사용 가이드
+                </h3>
+                <p className="text-gray-600">
+                  효과적인 갈등 해결을 위한 사용법을 안내합니다
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-6">
+                  <div className="flex items-start space-x-4">
+                    {/* Users 아이콘: 기존 디자인 유지 */}
+                    <div className="flex-shrink-0 w-10 h-10 bg-transparent rounded-xl flex items-center justify-center">
+                      <Users className="w-5 h-5 text-orange-600" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-800 mb-2">
+                        갈등 상황 입력
+                      </h4>
+                      <p className="text-gray-600 text-sm leading-relaxed">
+                        각 룸메이트의 입장을 최소 2명부터 최대 4명까지
+                        구체적이고 객관적으로 입력해주세요.
+                      </p>
+                    </div>
                   </div>
-                  <div className="bg-gray-100 rounded-2xl px-4 py-3">
-                    <div className="flex space-x-1">
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                      <div
-                        className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                        style={{ animationDelay: "0.1s" }}
-                      ></div>
-                      <div
-                        className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                        style={{ animationDelay: "0.2s" }}
-                      ></div>
+
+                  <div className="flex items-start space-x-4">
+                    {/* Sparkles 아이콘: 기존 디자인 유지 */}
+                    <div className="flex-shrink-0 w-10 h-10 bg-transparent rounded-xl flex items-center justify-center">
+                      <Sparkles className="w-5 h-5 text-orange-600" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-800 mb-2">
+                        AI 분석 및 판단
+                      </h4>
+                      <p className="text-gray-600 text-sm leading-relaxed">
+                        입력된 정보를 바탕으로 AI가 공정하게 상황을 분석하고
+                        해결책을 제시합니다.
+                      </p>
                     </div>
                   </div>
                 </div>
-              </motion.div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
 
-          {/* 입력창 */}
-          <div
-            className="border-t border-gray-200 p-4 flex-shrink-0"
-            style={{ height: "80px" }}
-          >
-            <div className="flex items-center space-x-3">
-              <input
-                type="text"
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                onKeyPress={(e) =>
-                  e.key === "Enter" && handleSendMessage(inputMessage)
-                }
-                placeholder="궁금한 것을 물어보세요..."
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              />
-              <motion.button
-                className="p-2 bg-primary-600 text-white rounded-full hover:bg-primary-700 transition-colors disabled:opacity-50"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => handleSendMessage(inputMessage)}
-                disabled={!inputMessage.trim() || isTyping}
-              >
-                <Send className="w-5 h-5" />
-              </motion.button>
-            </div>
-          </div>
+                <div className="rounded-xl p-6 border border-gray-100 bg-gray-50">
+                  <div className="flex items-center mb-4">
+                    {/* Lightbulb 아이콘: 기존 디자인 유지 */}
+                    <div className="flex-shrink-0 w-10 h-10 bg-transparent rounded-xl flex items-center justify-center mr-2">
+                      <Lightbulb className="w-5 h-5 text-orange-600" />
+                    </div>
+                    <h4 className="font-semibold text-orange-800">
+                      효과적인 사용 팁
+                    </h4>
+                  </div>
+                  <ul className="space-y-2 text-sm text-orange-700">
+                    <li className="flex items-start">
+                      <span className="text-orange-500 mr-2">•</span>
+                      감정보다는 구체적인 사실과 상황을 위주로 작성
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-orange-500 mr-2">•</span>
+                      각자의 입장과 요구사항을 명확히 기술
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-orange-500 mr-2">•</span>
+                      AI 판단은 참고용이며, 최종 결정은 대화로 해결
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </motion.div>
+          )}
         </div>
       </div>
-    </div>
+
+      {/* Modal */}
+      <AnimatePresence>
+        {isModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden"
+            >
+              {/* Modal Header */}
+              <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-6 text-white">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                      <MessageCircle className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold">갈등 상황 입력</h2>
+                      <p className="text-orange-100 text-sm">
+                        각자의 입장을 자세히 설명해주세요
+                      </p>
+                    </div>
+                  </div>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={closeModal}
+                    className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                  >
+                    <XCircle className="w-6 h-6" />
+                  </motion.button>
+                </div>
+              </div>
+
+              {/* Modal Content */}
+              <div className="p-6 max-h-[60vh] overflow-y-auto">
+                <div className="space-y-6">
+                  {Object.keys(situations)
+                    .sort(
+                      (a, b) =>
+                        personLabels.indexOf(a) - personLabels.indexOf(b)
+                    )
+                    .map((person, index) => (
+                      <motion.div
+                        key={person}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        className="group"
+                      >
+                        <div className="flex items-center space-x-3 mb-3">
+                          <div
+                            className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm ${personLabelColor}`}
+                          >
+                            {person}
+                          </div>
+                          <label className="font-semibold text-gray-800">
+                            {person}의 입장
+                          </label>
+                          {Object.keys(situations).length > 2 && (
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              onClick={() => removePerson(person)}
+                              className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                            >
+                              <XCircle className="w-4 h-4" />
+                            </motion.button>
+                          )}
+                        </div>
+                        <textarea
+                          value={situations[person]}
+                          onChange={(e) =>
+                            handleSituationChange(person, e.target.value)
+                          }
+                          placeholder={`${person}의 입장과 상황을 자세히 설명해주세요...`}
+                          rows={4}
+                          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none transition-all duration-200 hover:border-gray-300"
+                        />
+                      </motion.div>
+                    ))}
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="p-6 bg-gray-50 border-t border-gray-200">
+                <div className="flex items-center justify-between">
+                  {Object.keys(situations).length < 4 && (
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={addPerson}
+                      className="flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                    >
+                      <PlusCircle className="w-4 h-4 mr-2" /> 인원 추가 (
+                      {nextPersonLabel})
+                    </motion.button>
+                  )}
+                  <div className="flex items-center space-x-3 ml-auto">
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={closeModal}
+                      className="px-6 py-3 text-gray-600 hover:text-gray-800 transition-colors"
+                    >
+                      취소
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleSendSituations}
+                      disabled={
+                        Object.values(situations).some(
+                          (s) => s.trim() === ""
+                        ) || Object.keys(situations).length < 2
+                      }
+                      className="px-8 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg font-semibold hover:from-orange-600 hover:to-orange-700 transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      AI 판단 요청
+                    </motion.button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 3000,
+          style: {
+            background: "white",
+            color: "#374151",
+            border: "1px solid #e5e7eb",
+            borderRadius: "12px",
+            boxShadow:
+              "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+          },
+        }}
+      />
+    </>
   );
 };
 
