@@ -770,6 +770,7 @@ export const useAppStore = create<AppState>()(
                   savedAnalyses: response.data.page.content,
                   aiAnalysesCurrentPage: response.data.page.number,
                   aiAnalysesTotalPages: response.data.page.totalPages,
+                  aiAnalysesTotalElements: response.data.page.totalElements,
                 });
               }
             } catch (error) {
