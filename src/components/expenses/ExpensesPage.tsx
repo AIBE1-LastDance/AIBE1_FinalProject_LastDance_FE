@@ -82,6 +82,7 @@ const ExpensesPage: React.FC = () => {
         groupSharesSummary,
         aiAnalysesCurrentPage, // New
         aiAnalysesTotalPages, // New
+        aiAnalysesTotalElements,
         setAiAnalysesCurrentPage, // New
         loadSavedAnalysesPaginated, // New
     } = useAppStore();
@@ -1824,9 +1825,9 @@ const ExpensesPage: React.FC = () => {
                 onClick={() => setActiveTab("analyses")}
               >
                 AI 분석 내역{" "}
-                {savedAnalyses.length > 0 && (
+                {aiAnalysesTotalElements > 0 && (
                   <span className="ml-2 px-2 py-1 bg-primary-100 text-primary-600 rounded-full text-xs">
-                    {savedAnalyses.length}
+                    {aiAnalysesTotalElements}
                   </span>
                 )}
               </button>
