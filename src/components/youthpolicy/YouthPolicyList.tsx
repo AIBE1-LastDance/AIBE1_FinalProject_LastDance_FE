@@ -8,19 +8,22 @@ import {
   Filter,
   FileText,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom"; // ⭐ 추가: useNavigate 임포트
+import { useNavigate } from "react-router-dom";
 import { YouthPolicy } from "../../types/youthpolicy/youthPolicy";
 import YouthPolicyCard from "./YouthPolicyCard";
 import { fetchAllYouthPolicies } from "../../api/youthpolicy/youthPolicy";
 
 const YouthPolicyList: React.FC = () => {
-  const navigate = useNavigate(); // ⭐ 추가: useNavigate 훅 사용
+  const navigate = useNavigate();
   const [policies, setPolicies] = useState<YouthPolicy[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [currentPage, setCurrentPage] = useState(1);
-  const policiesPerPage = 9; // 한 페이지당 정책 수
+  const [currentPage, setCurrentPage] = useState(() => {
+    const savedPage = localStorage.getItem("youthPolicyCurrentPage");
+    return savedPage ? parseInt(savedPage, 10) : 1;
+  });
+  const policiesPerPage = 9;
 
   const categories = [
     { id: "all", name: "전체" },
@@ -48,6 +51,10 @@ const YouthPolicyList: React.FC = () => {
     loadPolicies();
   }, []);
 
+  useEffect(() => {
+    localStorage.setItem("youthPolicyCurrentPage", currentPage.toString());
+  }, [currentPage]);
+
   const processedPolicies = useMemo(() => {
     let tempPolicies = [...policies];
 
@@ -63,7 +70,7 @@ const YouthPolicyList: React.FC = () => {
       );
     }
 
-    // 카테고리 필터 (대분류 또는 중분류 기준으로 필터링)
+    // 카테고리 필터
     if (selectedCategory !== "all") {
       tempPolicies = tempPolicies.filter(
         (policy) =>
@@ -72,17 +79,16 @@ const YouthPolicyList: React.FC = () => {
       );
     }
 
-    // 최신 정책 우선 정렬 (사업 종료일이 미래인 정책을 우선)
+    // 최신 정책 우선 정렬
     tempPolicies.sort((a, b) => {
       const dateA = a.bizPrdEndYmd ? parseInt(a.bizPrdEndYmd) : 0;
       const dateB = b.bizPrdEndYmd ? parseInt(b.bizPrdEndYmd) : 0;
-      return dateB - dateA; // 종료일이 최신일수록 위로
+      return dateB - dateA;
     });
 
     return tempPolicies;
   }, [policies, searchQuery, selectedCategory]);
 
-  // 페이지네이션 관련 계산
   const totalPages = Math.ceil(processedPolicies.length / policiesPerPage);
   const currentPolicies = useMemo(() => {
     const indexOfLastPolicy = currentPage * policiesPerPage;
@@ -112,18 +118,16 @@ const YouthPolicyList: React.FC = () => {
     return pageNumbers;
   };
 
-  // ⭐ 수정: 정책 카드 클릭 시 상세 페이지로 이동
   const handlePolicyClick = (policy: YouthPolicy) => {
-    navigate(`/youth-policy/${policy.plcyNo}`); // 정책 번호를 URL 파라미터로 전달
+    navigate(`/youth-policy/${policy.plcyNo}`);
   };
 
   return (
-    <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-      {/* 헤더 */}
+    <div className="max-w-6xl mx-auto space-y-6">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-r from-teal-500 to-green-600 rounded-2xl p-6 text-white mb-8"
+        className="bg-gradient-to-r from-teal-500 to-teal-600 rounded-2xl p-6 text-white px-4 sm:px-6 lg:px-8"
       >
         <div className="flex items-center space-x-4">
           <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
