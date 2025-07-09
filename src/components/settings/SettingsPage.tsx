@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {motion} from 'framer-motion';
-import {Settings, User, Bell, Save, Camera, Trash2, Wifi, WifiOff, Smartphone, TestTube, ArrowRight} from 'lucide-react';
+import {Settings, User, Bell, Save, Camera, Trash2, Wifi, WifiOff, Smartphone, TestTube, ArrowRight, Calendar, CreditCard, CheckSquare, Mail} from 'lucide-react';
 import {useAuthStore} from '../../store/authStore';
 import toast from 'react-hot-toast';
 import {profileApi} from "../../api/profile";
@@ -597,10 +597,10 @@ const SettingsPage: React.FC = () => {
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center space-x-4">
                                         {/* 아이콘 영역 */}
-                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl bg-gradient-to-r ${
-                                            notifications.emailEnabled ? 'from-orange-400 to-amber-400' : 'from-gray-400 to-gray-500'
+                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                                            notifications.emailEnabled ? 'bg-orange-500' : 'bg-gray-400'
                                         } text-white shadow-sm`}>
-                                            📧
+                                            <Mail className="w-6 h-6" />
                                         </div>
 
                                         {/* 텍스트 영역 */}
@@ -632,7 +632,7 @@ const SettingsPage: React.FC = () => {
                                         />
                                         <div className={`relative w-16 h-8 transition-all duration-300 ease-in-out rounded-full shadow-inner ${
                                             notifications.emailEnabled
-                                                ? 'bg-gradient-to-r from-primary-500 to-primary-600 shadow-primary-200'
+                                                ? 'bg-orange-500'
                                                 : 'bg-gray-300'
                                         } ${notificationLoading ? 'opacity-50 cursor-not-allowed' : ''}`}>
                                             <div className={`absolute top-0.5 w-7 h-7 bg-white rounded-full shadow-lg transition-all duration-300 ease-in-out ${
@@ -641,7 +641,6 @@ const SettingsPage: React.FC = () => {
                                                 <div className={`w-full h-full rounded-full flex items-center justify-center text-xs transition-colors ${
                                                     notifications.emailEnabled ? 'text-primary-600' : 'text-gray-400'
                                                 }`}>
-                                                    {notifications.emailEnabled ? '✓' : '○'}
                                                 </div>
                                             </div>
                                         </div>
@@ -684,20 +683,20 @@ const SettingsPage: React.FC = () => {
                                     scheduleReminder: {
                                         label: '일정 알림',
                                         description: '일정 시작 15분 전에 미리 알려드려요',
-                                        icon: '📅',
-                                        color: 'from-orange-400 to-amber-400'
+                                        icon: Calendar,
+                                        color: 'bg-orange-500'
                                     },
                                     paymentReminder: {
                                         label: '정산 알림',
                                         description: '그룹 정산 및 지출 관련 소식을 전해드려요',
-                                        icon: '💰',
-                                        color: 'from-orange-400 to-amber-400'
+                                        icon: CreditCard,
+                                        color: 'bg-orange-500'
                                     },
                                     checklistReminder: {
                                         label: '할일 알림',
                                         description: '새 할일 등록과 마감일을 놓치지 마세요',
-                                        icon: '✅',
-                                        color: 'from-orange-400 to-amber-400'
+                                        icon: CheckSquare,
+                                        color: 'bg-orange-500'
                                     }
                                 };
 
@@ -719,10 +718,10 @@ const SettingsPage: React.FC = () => {
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center space-x-4">
                                                     {/* 아이콘 영역 */}
-                                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl bg-gradient-to-r ${
-                                                        value ? setting.color : 'from-gray-400 to-gray-500'
+                                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                                                        value ? setting.color : 'bg-gray-400'
                                                     } text-white shadow-sm`}>
-                                                        {setting.icon}
+                                                        <setting.icon className="w-6 h-6" />
                                                     </div>
 
                                                     {/* 텍스트 영역 */}
@@ -754,7 +753,7 @@ const SettingsPage: React.FC = () => {
                                                     />
                                                     <div className={`relative w-16 h-8 transition-all duration-300 ease-in-out rounded-full shadow-inner ${
                                                         value
-                                                            ? 'bg-gradient-to-r from-primary-500 to-primary-600 shadow-primary-200'
+                                                            ? 'bg-orange-500'
                                                             : 'bg-gray-300'
                                                     } ${notificationLoading ? 'opacity-50 cursor-not-allowed' : ''}`}>
                                                         <div className={`absolute top-0.5 w-7 h-7 bg-white rounded-full shadow-lg transition-all duration-300 ease-in-out ${
@@ -763,7 +762,6 @@ const SettingsPage: React.FC = () => {
                                                             <div className={`w-full h-full rounded-full flex items-center justify-center text-xs transition-colors ${
                                                                 value ? 'text-primary-600' : 'text-gray-400'
                                                             }`}>
-                                                                {value ? '✓' : '○'}
                                                             </div>
                                                         </div>
                                                     </div>
