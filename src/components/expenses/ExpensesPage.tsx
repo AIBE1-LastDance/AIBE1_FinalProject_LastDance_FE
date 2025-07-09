@@ -107,6 +107,8 @@ const ExpensesPage: React.FC = () => {
     const [activeIndex, setActiveIndex] = useState<number | null>(null);
     const [monthlyTrendData, setMonthlyTrendData] = useState<any>({});
     const [pageLoading, setPageLoading] = useState(false);
+    const [sharePageLoading, setSharePageLoading] = useState(false); // New state for group shares loading
+    const [isInitialLoad, setIsInitialLoad] = useState(true); // New state for initial load
 
   // URL 쿼리 파라미터에서 splitId 확인하여 상세 모달 열기
   useEffect(() => {
@@ -274,12 +276,13 @@ const ExpensesPage: React.FC = () => {
   };
 
   useEffect(() => {
-    if (!pageLoading && !sharePageLoading) {
+    if (isInitialLoad) { // Only run refreshAllData on initial load
       refreshAllData();
+      setIsInitialLoad(false); // Set to false after initial load
     }
-        // AI 분석 내역도 함께 로드
-        loadSavedAnalysesPaginated({ page: 0, size: 10 }); // 초기 페이지 로드
-  }, [refreshAllData, pageLoading, loadSavedAnalysesPaginated]);
+    // AI 분석 내역도 함께 로드
+    loadSavedAnalysesPaginated({ page: 0, size: 10 }); // 초기 페이지 로드
+  }, [refreshAllData, isInitialLoad, loadSavedAnalysesPaginated]);
 
   useEffect(() => {
     if (Object.keys(monthlyTrendData).length > 0) {
