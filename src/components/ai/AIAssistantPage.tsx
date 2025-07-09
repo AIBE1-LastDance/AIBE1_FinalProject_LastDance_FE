@@ -40,7 +40,6 @@ const AIAssistantPage: React.FC = () => {
   const [copySuccess, setCopySuccess] = useState(false);
 
   const personLabels = ["A", "B", "C", "D"];
-  // 인원별 입력 필드 레이블의 테두리 색상 (메인 스트로크 색상과 동일)
   const personLabelColor =
     "border-2 border-orange-300 text-orange-700 bg-white";
 
@@ -157,7 +156,7 @@ const AIAssistantPage: React.FC = () => {
 
   const resetPage = () => {
     setPageState("INITIAL");
-    setSituations({ A: "", B: "" });
+    setSituations({ A: "", B: "" }); // 초기 상태로 리셋
     setAiJudgmentResult(null);
     setCurrentRating(null);
     setCopySuccess(false);
@@ -169,7 +168,6 @@ const AIAssistantPage: React.FC = () => {
     <>
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-6xl mx-auto px-4 py-8">
-          {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -187,7 +185,6 @@ const AIAssistantPage: React.FC = () => {
             </p>
           </motion.div>
 
-          {/* Main Content */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -206,7 +203,6 @@ const AIAssistantPage: React.FC = () => {
                     className="text-center"
                   >
                     <div className="mb-8">
-                      {/* MessageCircle 아이콘: AI 판단 도우미와 동일한 디자인으로 변경 */}
                       <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl mb-6 shadow-lg">
                         <MessageCircle className="w-8 h-8 text-white" />
                       </div>
@@ -272,7 +268,6 @@ const AIAssistantPage: React.FC = () => {
                     transition={{ duration: 0.5 }}
                     className="max-w-4xl mx-auto"
                   >
-                    {/* Result Header */}
                     <div className="text-center mb-8">
                       <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl mb-4 shadow-lg">
                         <ShieldCheck className="w-8 h-8 text-white" />
@@ -285,7 +280,37 @@ const AIAssistantPage: React.FC = () => {
                       </p>
                     </div>
 
-                    {/* Result Content */}
+                    <div className="bg-white rounded-2xl p-6 mb-6 border border-gray-200 shadow-sm">
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                        <Users className="w-5 h-5 mr-2 text-orange-600" />
+                        입력된 갈등 상황
+                      </h3>
+                      <div className="space-y-3">
+                        {Object.entries(aiJudgmentResult.situations) // aiJudgmentResult에서 situations 사용
+                          .filter(([, content]) => content.trim() !== "")
+                          .sort(
+                            ([keyA], [keyB]) =>
+                              personLabels.indexOf(keyA) -
+                              personLabels.indexOf(keyB)
+                          )
+                          .map(([person, content]) => (
+                            <div
+                              key={person}
+                              className="flex items-start bg-gray-50 p-3 rounded-lg border border-gray-100"
+                            >
+                              <div
+                                className={`flex-shrink-0 w-7 h-7 rounded-md flex items-center justify-center font-bold text-xs ${personLabelColor}`}
+                              >
+                                {person}
+                              </div>
+                              <p className="ml-3 text-gray-700 flex-grow leading-snug">
+                                {content}
+                              </p>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+
                     <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-8 mb-8 border border-gray-200">
                       <div className="prose max-w-none">
                         <div className="text-gray-800 leading-relaxed whitespace-pre-wrap">
@@ -294,7 +319,6 @@ const AIAssistantPage: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Action Buttons */}
                     <div className="flex flex-wrap gap-4 justify-center">
                       <motion.button
                         className={`flex items-center px-6 py-3 rounded-xl font-medium transition-all duration-200 ${
@@ -360,7 +384,6 @@ const AIAssistantPage: React.FC = () => {
             </div>
           </motion.div>
 
-          {/* Guide Section */}
           {pageState !== "RESULT" && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -369,7 +392,6 @@ const AIAssistantPage: React.FC = () => {
               className="mt-12 bg-white rounded-2xl p-8 border border-gray-200"
             >
               <div className="text-center mb-8">
-                {/* BookOpenText 아이콘: 'AI 판단 도우미'와 동일한 디자인으로 변경 (사용 가이드 아이콘) */}
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl mb-4 shadow-lg">
                   <BookOpenText className="w-8 h-8 text-white" />
                 </div>
@@ -384,7 +406,6 @@ const AIAssistantPage: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-6">
                   <div className="flex items-start space-x-4">
-                    {/* Users 아이콘: 기존 디자인 유지 */}
                     <div className="flex-shrink-0 w-10 h-10 bg-transparent rounded-xl flex items-center justify-center">
                       <Users className="w-5 h-5 text-orange-600" />
                     </div>
@@ -400,7 +421,6 @@ const AIAssistantPage: React.FC = () => {
                   </div>
 
                   <div className="flex items-start space-x-4">
-                    {/* Sparkles 아이콘: 기존 디자인 유지 */}
                     <div className="flex-shrink-0 w-10 h-10 bg-transparent rounded-xl flex items-center justify-center">
                       <Sparkles className="w-5 h-5 text-orange-600" />
                     </div>
@@ -418,7 +438,6 @@ const AIAssistantPage: React.FC = () => {
 
                 <div className="rounded-xl p-6 border border-gray-100 bg-gray-50">
                   <div className="flex items-center mb-4">
-                    {/* Lightbulb 아이콘: 기존 디자인 유지 */}
                     <div className="flex-shrink-0 w-10 h-10 bg-transparent rounded-xl flex items-center justify-center mr-2">
                       <Lightbulb className="w-5 h-5 text-orange-600" />
                     </div>
@@ -447,7 +466,6 @@ const AIAssistantPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Modal */}
       <AnimatePresence>
         {isModalOpen && (
           <motion.div
@@ -463,7 +481,6 @@ const AIAssistantPage: React.FC = () => {
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
               className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden"
             >
-              {/* Modal Header */}
               <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-6 text-white">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
@@ -488,7 +505,6 @@ const AIAssistantPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Modal Content */}
               <div className="p-6 max-h-[60vh] overflow-y-auto">
                 <div className="space-y-6">
                   {Object.keys(situations)
@@ -538,7 +554,6 @@ const AIAssistantPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Modal Footer */}
               <div className="p-6 bg-gray-50 border-t border-gray-200">
                 <div className="flex items-center justify-between">
                   {Object.keys(situations).length < 4 && (

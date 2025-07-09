@@ -17,4 +17,7 @@ export interface AiJudgmentRequest {
 export interface AiJudgmentResponse {
   judgmentResult: string;
   judgmentId: string;
+  situations: {
+    [key: string]: string;
+  };
 }
