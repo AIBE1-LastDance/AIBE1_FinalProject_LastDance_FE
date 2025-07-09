@@ -606,17 +606,17 @@ export const useAppStore = create<AppState>()(
               })
             );
 
-            set({
-              groupShares: groupShares,
-              groupSharesCurrentPage: response.data.page.number,
-              groupSharesTotalPages: response.data.page.totalPages,
-              groupSharesSummary: response.data.summary,
-            });
-          }
-        } catch (error) {
-          console.error("분담금 페이징 로드 실패:", error);
-        }
-      },
+                set({
+                  groupShares: groupShares,
+                  groupSharesCurrentPage: response.data.page.number,
+                  groupSharesTotalPages: response.data.page.totalPages,
+                  groupSharesSummary: response.data.summary,
+                });
+              }
+            } catch (error) {
+              console.error('분담금 페이징 로드 실패:', error);
+            }
+          },
 
       addExpense: async (expenseData: any) => {
         try {
@@ -654,14 +654,14 @@ export const useAppStore = create<AppState>()(
             expenses: [...state.expenses, newExpense],
           }));
 
-          toast.success("지출이 추가되었습니다!");
-          return newExpense;
-        } catch (error: any) {
-          console.error("지출 추가 실패:", error);
-          toast.error("지출 추가에 실패했습니다.");
-          throw error;
-        }
-      },
+              toast.success('지출이 추가되었습니다!');
+              return newExpense;
+            } catch (error: any) {
+              console.error('지출 추가 실패:', error);
+              toast.error('지출 추가에 실패했습니다.');
+              throw error;
+            }
+          },
 
       updateExpense: async (id, updates) => {
         try {
@@ -676,13 +676,13 @@ export const useAppStore = create<AppState>()(
             groupId: state.mode === "group" ? state.currentGroup?.id : null,
           });
 
-          toast.success("지출이 수정되었습니다!");
-        } catch (error: any) {
-          console.error("지출 수정 실패:", error);
-          toast.error("지출 수정에 실패했습니다.");
-          throw error;
-        }
-      },
+              // toast.success('지출이 수정되었습니다!');
+            } catch (error: any) {
+              console.error('지출 수정 실패:', error);
+              toast.error('지출 수정에 실패했습니다.');
+              throw error;
+            }
+          },
 
       deleteExpense: async (id) => {
         try {
@@ -700,16 +700,16 @@ export const useAppStore = create<AppState>()(
         }
       },
 
-      // Post actions
-      // 게시글 목록을 서버에서 불러오는 액션
-      loadPosts: async () => {
-        try {
-          const fetchedPosts = await fetchAllPosts(); // community/community.ts의 fetchAllPosts 호출
-          set({ posts: fetchedPosts });
-        } catch (error) {
-          toast.error("게시글을 불러오는데 실패했습니다.");
-        }
-      },
+          // Post actions
+          // 게시글 목록을 서버에서 불러오는 액션
+          loadPosts: async () => {
+            try {
+              const fetchedPosts = await fetchAllPosts(); // community/community.ts의 fetchAllPosts 호출
+              set({ posts: fetchedPosts });
+            } catch (error) {
+              toast.error("게시글을 불러오는데 실패했습니다.");
+            }
+          },
 
       // 게시글 작성 액션 수정
       addPost: async (postData) => {
@@ -721,12 +721,12 @@ export const useAppStore = create<AppState>()(
           // 현재는 전체 게시글을 불러오므로, 특정 그룹 게시글만 불러와야 한다면 groupId를 인자로 전달해야 합니다.
           await get().loadPosts();
 
-          toast.success("게시글이 성공적으로 작성되었습니다!");
-        } catch (error: any) {
-          toast.error("게시글 작성에 실패했습니다.");
-          throw error;
-        }
-      },
+              toast.success("게시글이 성공적으로 작성되었습니다!");
+            } catch (error: any) {
+              toast.error("게시글 작성에 실패했습니다.");
+              throw error;
+            }
+          },
 
       // 게시글 수정 액션 수정
       updatePost: async (postId, updates) => {
@@ -734,13 +734,13 @@ export const useAppStore = create<AppState>()(
           // 백엔드 API를 통해 게시글 수정 요청
           await updatePostApi(postId, updates as any); // community/community.ts의 updatePost 호출
 
-          // 게시글 수정 성공 후, 스토어의 게시글 목록을 서버에서 다시 불러와서 UI를 새로고침
-          await get().loadPosts();
-        } catch (error: any) {
-          toast.error("게시글 수정에 실패했습니다.");
-          throw error;
-        }
-      },
+              // 게시글 수정 성공 후, 스토어의 게시글 목록을 서버에서 다시 불러와서 UI를 새로고침
+              await get().loadPosts();
+            } catch (error: any) {
+              toast.error("게시글 수정에 실패했습니다.");
+              throw error;
+            }
+          },
 
       // 게시글 삭제 액션 수정
       deletePost: async (postId) => {
@@ -748,13 +748,13 @@ export const useAppStore = create<AppState>()(
           // 백엔드 API를 통해 게시글 삭제 요청
           await deletePostApi(postId); // community/community.ts의 deletePost 호출
 
-          // 게시글 삭제 성공 후, 스토어의 게시글 목록을 서버에서 다시 불러와서 UI를 새로고침
-          await get().loadPosts();
-          toast.success("게시글이 성공적으로 삭제되었습니다!");
-        } catch (error: any) {
-          throw error;
-        }
-      },
+              // 게시글 삭제 성공 후, 스토어의 게시글 목록을 서버에서 다시 불러와서 UI를 새로고침
+              await get().loadPosts();
+              toast.success("게시글이 성공적으로 삭제되었습니다!");
+            } catch (error: any) {
+              throw error;
+            }
+          },
 
       // Analysis actions
       saveAnalysis: (analysis) => {
