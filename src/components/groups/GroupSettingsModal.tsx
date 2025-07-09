@@ -322,25 +322,25 @@ const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({isOpen, onClose,
     const renderGroupInfo = () => (
         <div className="space-y-6">
             {/* 그룹 기본 정보 */}
-            <div className="bg-blue-50 rounded-xl p-4">
+            <div className="bg-primary-50 rounded-xl p-4">
                 <div className="flex items-center space-x-2 mb-3">
-                    <Info className="w-5 h-5 text-blue-600"/>
-                    <h4 className="font-medium text-blue-900">그룹 정보</h4>
+                    <Info className="w-5 h-5 text-primary-600"/>
+                    <h4 className="font-medium text-primary-900">그룹 정보</h4>
                 </div>
                 <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                        <span className="text-blue-700">그룹원 수:</span>
-                        <span className="font-medium text-blue-900">{group.members?.length || 0}명</span>
+                        <span className="text-primary-700">그룹원 수:</span>
+                        <span className="font-medium text-primary-900">{group.members?.length || 0}명</span>
                     </div>
                     <div className="flex justify-between">
-                        <span className="text-blue-700">생성일:</span>
-                        <span className="font-medium text-blue-900">
+                        <span className="text-primary-700">생성일:</span>
+                        <span className="font-medium text-primary-900">
               {group.createdAt ? new Date(group.createdAt).toLocaleDateString() : '정보 없음'}
             </span>
                     </div>
                     <div className="flex justify-between">
-                        <span className="text-blue-700">당신의 역할:</span>
-                        <span className="font-medium text-blue-900 flex items-center">
+                        <span className="text-primary-700">당신의 역할:</span>
+                        <span className="font-medium text-primary-900 flex items-center">
               {isGroupLeader ? (
                   <>
                       <Crown className="w-4 h-4 mr-1 text-yellow-500"/>
@@ -361,7 +361,7 @@ const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({isOpen, onClose,
                     {!isEditing ? (
                         <button
                             onClick={() => setIsEditing(true)}
-                            className="text-blue-600 hover:text-blue-700 p-1 rounded hover:bg-blue-50 transition-colors"
+                            className="text-primary-600 hover:text-primary-700 p-1 rounded hover:bg-primary-50 transition-colors"
                         >
                             <Edit3 className="w-4 h-4"/>
                         </button>
@@ -390,7 +390,7 @@ const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({isOpen, onClose,
                         type="text"
                         value={editedGroupName}
                         onChange={(e) => setEditedGroupName(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         maxLength={30}
                         placeholder="그룹명을 입력하세요"
                     />
@@ -406,7 +406,7 @@ const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({isOpen, onClose,
                     {isGroupLeader && !isEditingBudget ? (
                         <button
                             onClick={() => setIsEditingBudget(true)}
-                            className="text-blue-600 hover:text-blue-700 p-1 rounded hover:bg-blue-50 transition-colors"
+                            className="text-primary-600 hover:text-primary-700 p-1 rounded hover:bg-primary-50 transition-colors"
                         >
                             <Edit3 className="w-4 h-4"/>
                         </button>
@@ -436,7 +436,7 @@ const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({isOpen, onClose,
                             type="number"
                             value={editedMonthlyBudget}
                             onChange={(e) => setEditedMonthlyBudget(parseInt(e.target.value) || 0)}
-                            className="w-full px-3 py-2 pr-8 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className="w-full px-3 py-2 pr-8 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                             min="0"
                             step="1000"
                             placeholder="예산을 입력하세요"
@@ -467,12 +467,12 @@ const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({isOpen, onClose,
             <div className="bg-gray-50 rounded-xl p-4">
                 <label className="block text-sm font-medium text-gray-700 mb-3">참여 코드</label>
                 <div className="flex items-center justify-between">
-          <span className="font-mono text-lg font-bold text-blue-600 bg-white px-3 py-2 rounded border">
+          <span className="font-mono text-lg font-bold text-primary-600 bg-white px-3 py-2 rounded border">
             {group.code}
           </span>
                     <button
                         onClick={handleCopyCode}
-                        className="flex items-center space-x-1 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        className="flex items-center space-x-1 px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
                     >
                         <Copy className="w-4 h-4"/>
                         <span className="text-sm">복사</span>
@@ -490,7 +490,7 @@ const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({isOpen, onClose,
                     {isGroupLeader && !isEditingMaxMembers ? (
                         <button
                             onClick={() => setIsEditingMaxMembers(true)}
-                            className="text-blue-600 hover:text-blue-700 p-1 rounded hover:bg-blue-50 transition-colors"
+                            className="text-primary-600 hover:text-primary-700 p-1 rounded hover:bg-primary-50 transition-colors"
                         >
                             <Edit3 className="w-4 h-4"/>
                         </button>
@@ -520,7 +520,7 @@ const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({isOpen, onClose,
                             type="number"
                             value={editedMaxMembers}
                             onChange={(e) => setEditedMaxMembers(parseInt(e.target.value) || 2)}
-                            className="w-full px-3 py-2 pr-8 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className="w-full px-3 py-2 pr-8 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                             min="2"
                             max="100"
                             placeholder="최대 인원을 입력하세요"
@@ -767,8 +767,8 @@ const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({isOpen, onClose,
             )}
 
             {pendingRequests.length > 0 && (
-                <div className="bg-blue-50 rounded-xl p-4">
-                    <p className="text-sm text-blue-800">
+                <div className="bg-primary-50 rounded-xl p-4">
+                    <p className="text-sm text-primary-800">
                         💡 가입 신청을 승인하면 해당 사용자가 그룹에 참여할 수 있습니다.
                     </p>
                 </div>
@@ -807,8 +807,8 @@ const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({isOpen, onClose,
                     {/* 헤더 */}
                     <div className="flex items-center justify-between p-6 border-b border-gray-200">
                         <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                                <Settings className="w-5 h-5 text-blue-600"/>
+                            <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
+                                <Settings className="w-5 h-5 text-primary-600"/>
                             </div>
                             <div>
                                 <h2 className="text-xl font-bold text-gray-900">그룹 설정</h2>
@@ -832,7 +832,7 @@ const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({isOpen, onClose,
                                     onClick={() => setActiveTab(tab.id)}
                                     className={`flex items-center space-x-2 px-6 py-3 text-sm font-medium transition-colors relative ${
                                         activeTab === tab.id
-                                            ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
+                                            ? 'text-primary-600 border-b-2 border-primary-600 bg-primary-50'
                                             : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                                     }`}
                                 >

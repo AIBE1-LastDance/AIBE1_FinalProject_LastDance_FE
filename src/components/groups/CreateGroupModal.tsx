@@ -89,8 +89,8 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({isOpen, onClose}) =>
                         {/* 헤더 */}
                         <div className="flex items-center justify-between p-6 border-b border-gray-200">
                             <div className="flex items-center space-x-3">
-                                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                                    <Users className="w-5 h-5 text-blue-600"/>
+                                <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
+                                    <Users className="w-5 h-5 text-primary-600"/>
                                 </div>
                                 <h2 className="text-xl font-bold text-gray-900">새 그룹 만들기</h2>
                             </div>
@@ -116,7 +116,7 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({isOpen, onClose}) =>
                                     onChange={(e) => setGroupName(e.target.value)}
                                     placeholder="예: 신촌 하우스"
                                     maxLength={30}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                                 />
                                 <div className="text-xs text-gray-500 mt-1">
                                     {groupName.length}/30
@@ -134,7 +134,7 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({isOpen, onClose}) =>
                                     placeholder="그룹에 대한 간단한 설명을 입력하세요"
                                     rows={3}
                                     maxLength={100}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
                                 />
                                 <div className="text-xs text-gray-500 mt-1">
                                     {description.length}/100
@@ -149,7 +149,7 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({isOpen, onClose}) =>
                                 <select
                                     value={maxMembers}
                                     onChange={(e) => setMaxMembers(Number(e.target.value))}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                                 >
                                     {[2, 3, 4, 5, 6, 7, 8].map(num => (
                                         <option key={num} value={num}>{num}명</option>
@@ -170,7 +170,7 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({isOpen, onClose}) =>
                                         placeholder="0"
                                         min="0"
                                         step="1000"
-                                        className="w-full px-4 py-3 pr-8 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        className="w-full px-4 py-3 pr-8 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                                     />
                                     <span className="absolute right-3 top-3 text-gray-500">원</span>
                                 </div>
@@ -180,10 +180,10 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({isOpen, onClose}) =>
                             </div>
 
                             {/* 안내 메시지 */}
-                            <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
+                            <div className="p-4 bg-primary-50 rounded-xl border border-primary-200">
                                 <div className="flex items-start space-x-2">
-                                    <Hash className="w-4 h-4 text-blue-600 mt-0.5"/>
-                                    <div className="text-sm text-blue-700">
+                                    <Hash className="w-4 h-4 text-primary-600 mt-0.5"/>
+                                    <div className="text-sm text-primary-700">
                                         <p className="font-medium mb-1">그룹 생성 후</p>
                                         <p>자동으로 생성되는 참여 코드를 통해 다른 사람들을 초대할 수 있습니다.</p>
                                     </div>
@@ -205,7 +205,7 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({isOpen, onClose}) =>
                                 whileTap={{scale: 0.98}}
                                 onClick={handleCreate}
                                 disabled={isCreating || !groupName.trim()}
-                                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                                className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                             >
                                 {isCreating ? (
                                     <>
