@@ -95,8 +95,8 @@ const JoinGroupModal: React.FC<JoinGroupModalProps> = ({ isOpen, onClose }) => {
           {/* 헤더 */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                <UserPlus className="w-5 h-5 text-green-600" />
+              <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
+                <UserPlus className="w-5 h-5 text-primary-600" />
               </div>
               <h2 className="text-xl font-bold text-gray-900">그룹 참여하기</h2>
             </div>
@@ -124,7 +124,7 @@ const JoinGroupModal: React.FC<JoinGroupModalProps> = ({ isOpen, onClose }) => {
                   onChange={handleCodeChange}
                   placeholder="6자리 코드를 입력하세요"
                   maxLength={6}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent text-center text-lg font-mono tracking-wider"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent text-center text-lg font-mono tracking-wider"
                 />
               </div>
               <div className="text-xs text-gray-500 mt-1">
@@ -134,10 +134,10 @@ const JoinGroupModal: React.FC<JoinGroupModalProps> = ({ isOpen, onClose }) => {
 
             {/* 안내 메시지 */}
             <div className="space-y-3">
-              <div className="p-4 bg-green-50 rounded-xl border border-green-200">
+              <div className="p-4 bg-primary-50 rounded-xl border border-primary-200">
                 <div className="flex items-start space-x-2">
-                  <Users className="w-4 h-4 text-green-600 mt-0.5" />
-                  <div className="text-sm text-green-700">
+                  <Users className="w-4 h-4 text-primary-600 mt-0.5" />
+                  <div className="text-sm text-primary-700">
                     <p className="font-medium mb-1">참여 코드란?</p>
                     <p>그룹 생성자가 제공하는 6자리 코드로, 이 코드를 통해 그룹에 참여할 수 있습니다.</p>
                   </div>
@@ -171,7 +171,7 @@ const JoinGroupModal: React.FC<JoinGroupModalProps> = ({ isOpen, onClose }) => {
               whileTap={{ scale: 0.98 }}
               onClick={handleJoin}
               disabled={isJoining || !groupCode.trim() || groupCode.length !== 6}
-              className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+              className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
             >
               {isJoining ? (
                 <>

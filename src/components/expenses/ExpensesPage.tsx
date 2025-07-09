@@ -1,27 +1,28 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Plus,
-  PieChart,
-  BarChart3,
-  TrendingUp,
-  Receipt,
-  Calendar,
-  Filter,
-  Search,
-  Bot,
-  Sparkles,
-  AlertTriangle,
-  CheckCircle,
-  TrendingDown,
-  ChevronLeft,
-  ChevronRight,
-  Share2,
-  RefreshCw,
-  Users,
-  Image,
-  X,
-} from "lucide-react";
+    Plus,
+    PieChart,
+    BarChart3,
+    TrendingUp,
+    Receipt,
+    Calendar,
+    Filter,
+    Search,
+    Bot,
+    Sparkles,
+    AlertTriangle,
+    CheckCircle,
+    TrendingDown,
+    ChevronLeft,
+    ChevronRight,
+    Share2,
+    RefreshCw,
+    Users,
+    Image,
+    X,
+    Save
+} from 'lucide-react';
 import {
   PieChart as RechartsPieChart,
   Pie,
@@ -60,52 +61,54 @@ interface GroupSummary {
 }
 
 const ExpensesPage: React.FC = () => {
-  const {
-    expenses,
-    mode,
-    currentGroup,
-    savedAnalyses,
-    saveAnalysis,
-    groupShares,
-    loadGroupShares,
-    loadMyGroups,
-    combinedExpenses,
-    currentPage,
-    totalPages,
-    loadCombinedExpenses,
-    setCurrentPage,
-    summary,
-    groupSharesCurrentPage,
-    groupSharesTotalPages,
-    loadGroupSharesPaginated,
-    groupSharesSummary,
-  } = useAppStore();
-  const { user } = useAuthStore();
-  const location = useLocation();
-  const navigate = useNavigate();
-  const [showExpenseModal, setShowExpenseModal] = useState(false);
-  const [selectedExpense, setSelectedExpense] = useState(null);
-  const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [searchTerm, setSearchTerm] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<string>("all");
-  const [showAnalysis, setShowAnalysis] = useState(false);
-  const [analysisLoading, setAnalysisLoading] = useState(false);
-  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
-  const [activeTab, setActiveTab] = useState<"expenses" | "analyses">(
-    "expenses"
-  );
-  const [selectedAnalysis, setSelectedAnalysis] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [currentCardIndex, setCurrentCardIndex] = useState(0);
-  const [showReceiptModal, setShowReceiptModal] = useState(false);
-  const [currentReceiptUrl, setCurrentReceiptUrl] = useState<string | null>(
-    null
-  );
-  const [activeIndex, setActiveIndex] = useState<number | null>(null);
-  const [monthlyTrendData, setMonthlyTrendData] = useState<any>({});
-  const [pageLoading, setPageLoading] = useState(false);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const [sharePageLoading, setSharePageLoading] = useState(false);
+    const {
+        expenses,
+        mode,
+        currentGroup,
+        savedAnalyses = [],
+        saveAnalysis,
+        groupShares,
+        loadGroupShares,
+        loadMyGroups,
+        combinedExpenses,
+        currentPage,
+        totalPages,
+        loadCombinedExpenses,
+        setCurrentPage,
+        summary,
+        groupSharesCurrentPage,
+        groupSharesTotalPages,
+        loadGroupSharesPaginated,
+        groupSharesSummary,
+        aiAnalysesCurrentPage, // New
+        aiAnalysesTotalPages, // New
+        setAiAnalysesCurrentPage, // New
+        loadSavedAnalysesPaginated, // New
+    } = useAppStore();
+    const {user} = useAuthStore();
+    const location = useLocation();
+    const navigate = useNavigate();
+    const [showExpenseModal, setShowExpenseModal] = useState(false);
+    const [selectedExpense, setSelectedExpense] = useState(null);
+    const [currentMonth, setCurrentMonth] = useState(new Date());
+    const [searchTerm, setSearchTerm] = useState('');
+    const [categoryFilter, setCategoryFilter] = useState<string>('all');
+    const [showAnalysis, setShowAnalysis] = useState(false);
+    const [analysisLoading, setAnalysisLoading] = useState(false);
+    const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+    const [activeTab, setActiveTab] = useState<'expenses' | 'analyses'>('expenses');
+    const [selectedAnalysis, setSelectedAnalysis] = useState(null);
+    const [analysisResult, setAnalysisResult] = useState(null);
+    const [isAnalysisSaved, setIsAnalysisSaved] = useState(false); // New state
+    const [loading, setLoading] = useState(false);
+    const [currentCardIndex, setCurrentCardIndex] = useState(0);
+    const [showReceiptModal, setShowReceiptModal] = useState(false);
+    const [currentReceiptUrl, setCurrentReceiptUrl] = useState<string | null>(null);
+    const [activeIndex, setActiveIndex] = useState<number | null>(null);
+    const [monthlyTrendData, setMonthlyTrendData] = useState<any>({});
+    const [pageLoading, setPageLoading] = useState(false);
+    const [sharePageLoading, setSharePageLoading] = useState(false); // New state for group shares loading
+    const [isInitialLoad, setIsInitialLoad] = useState(true); // New state for initial load
 
   // URL 쿼리 파라미터에서 splitId 확인하여 상세 모달 열기
   useEffect(() => {
@@ -273,10 +276,13 @@ const ExpensesPage: React.FC = () => {
   };
 
   useEffect(() => {
-    if (!pageLoading && !sharePageLoading) {
+    if (isInitialLoad) { // Only run refreshAllData on initial load
       refreshAllData();
+      setIsInitialLoad(false); // Set to false after initial load
     }
-  }, [refreshAllData, pageLoading]);
+    // AI 분석 내역도 함께 로드
+    loadSavedAnalysesPaginated({ page: 0, size: 10 }); // 초기 페이지 로드
+  }, [refreshAllData, isInitialLoad, loadSavedAnalysesPaginated]);
 
   useEffect(() => {
     if (Object.keys(monthlyTrendData).length > 0) {
@@ -429,7 +435,7 @@ const ExpensesPage: React.FC = () => {
     }
   };
 
-  const filteredExpenses = combinedExpenses;
+    const filteredExpenses = combinedExpenses || [];
 
   const totalAmount = summary?.totalAmount || 0;
   const avgAmount = summary?.averageAmount || 0;
@@ -472,34 +478,26 @@ const ExpensesPage: React.FC = () => {
     categoryBreakdown: categoryBreakdown,
   };
 
-  // AI 분석 생성 함수
-  const generateAIAnalysis = () => {
-    setAnalysisLoading(true);
-    setSelectedAnalysis(null); // 새로운 분석이므로 선택된 분석 초기화
-
-    // 실제로는 LLM API를 호출하지만, 여기서는 시뮬레이션
-    setTimeout(() => {
-      setAnalysisLoading(false);
-      setShowAnalysis(true);
-    }, 2000);
-  };
-
-  // 분석 저장 함수
-  const saveAnalysisResult = () => {
-    const analysis = getAIAnalysis();
-    const savedAnalysis = {
-      id: Date.now().toString(),
-      month: format(currentMonth, "yyyy년 M월", { locale: ko }),
-      date: new Date(),
-      data: analysis,
-      totalAmount,
-      categoryBreakdown: analytics.categoryBreakdown,
+    // AI 분석 생성 함수
+    const handleAnalysis = async () => {
+        setAnalysisLoading(true);
+        setSelectedAnalysis(null);
+        try {
+            const startDate = format(startOfMonth(currentMonth), 'yyyy-MM-dd');
+            const endDate = format(endOfMonth(currentMonth), 'yyyy-MM-dd');
+            console.log('AI 분석 요청 시작. 기간:', startDate, '~', endDate);
+            const result = await expenseAPI.analyze({ startDate, endDate });
+            console.log('AI 분석 API 응답 (result.data):', result.data);
+            setAnalysisResult(result.data);
+            console.log('analysisResult 상태 설정 완료:', result.data); // Log the value being set
+            setShowAnalysis(true);
+        } catch (error) {
+            console.error('AI 분석 실패:', error);
+            toast.error('AI 분석에 실패했습니다. 잠시 후 다시 시도해주세요.');
+        } finally {
+            setAnalysisLoading(false);
+        }
     };
-
-    saveAnalysis(savedAnalysis);
-    setShowAnalysis(false);
-    alert("분석 결과를 저장했습니다!");
-  };
 
   // 이전/다음 달 이동
   const handlePreviousMonth = async () => {
@@ -560,19 +558,42 @@ const ExpensesPage: React.FC = () => {
     setCurrentPage(0); // 첫 페이지로 리셋
   };
 
-  // AI 분석 데이터 생성 (현재 또는 선택된 분석)
-  const getAIAnalysis = () => {
-    // 선택된 분석이 있으면 그것을 반환
-    if (selectedAnalysis) {
-      return selectedAnalysis.data;
-    }
+    const handleSaveAnalysis = async () => {
+        if (!analysisResult) {
+            toast.error('저장할 분석 결과가 없습니다. 먼저 AI 분석을 실행해주세요.');
+            return;
+        }
 
-    // 새로운 분석 생성
-    const totalBudget = 2000000; // 200만원 예산 가정
-    const spendingRate = (totalAmount / totalBudget) * 100;
-    const previousMonthAmount = totalAmount * 0.85; // 이전 달 대비 가정
-    const changeRate =
-      ((totalAmount - previousMonthAmount) / previousMonthAmount) * 100;
+        try {
+            const startDate = format(startOfMonth(currentMonth), 'yyyy-MM-dd');
+            const endDate = format(endOfMonth(currentMonth), 'yyyy-MM-dd');
+
+            await expenseAPI.saveAnalysis(
+                { startDate, endDate },
+                analysisResult
+            );
+            toast.success('AI 분석 결과가 성공적으로 저장되었습니다!');
+            setIsAnalysisSaved(true); // Set state to true on success
+            // Optionally, refresh saved analyses list if needed
+            // loadSavedAnalyses(); // Assuming such a function exists or can be added to appStore
+        } catch (error) {
+            console.error('AI 분석 결과 저장 실패:', error);
+            toast.error('AI 분석 결과 저장에 실패했습니다. 다시 시도해주세요.');
+        }
+    };
+
+    // AI 분석 데이터 생성 (현재 또는 선택된 분석)
+    const getAIAnalysis = () => {
+        // 선택된 분석이 있으면 그것을 반환
+        if (selectedAnalysis) {
+            return selectedAnalysis.data;
+        }
+
+        // 새로운 분석 생성
+        const totalBudget = parseFloat(analysisResult?.budgetUsage?.totalBudget) || 0;
+        const spendingRate = (totalAmount / totalBudget) * 100;
+        const previousMonthAmount = totalAmount * 0.85; // 이전 달 대비 가정
+        const changeRate = ((totalAmount - previousMonthAmount) / previousMonthAmount) * 100;
 
     const insights = [];
     const recommendations = [];
@@ -691,7 +712,84 @@ const ExpensesPage: React.FC = () => {
     };
   };
 
-  const aiAnalysis = getAIAnalysis();
+    const aiAnalysis = (() => {
+        const source = selectedAnalysis || analysisResult;
+        if (!source) return null;
+
+        // If it's a saved analysis (ExpenseAnalysisHistoryDTO)
+        if (selectedAnalysis) {
+            return {
+                insights: [
+                    {
+                        type: 'mainFinding',
+                        title: source.mainFinding,
+                        message: '',
+                        icon: Bot,
+                        color: 'text-blue-500'
+                    }
+                ],
+                recommendations: [
+                    {
+                        title: source.suggestionTitle,
+                        message: source.suggestionDescription,
+                        impact: source.suggestionEffect,
+                        difficulty: source.suggestionDifficulty
+                    }
+                ],
+                warnings: [], // ExpenseAnalysisHistoryDTO does not contain warnings directly
+                summary: {
+                    totalAmount: source.budgetUsageCurrentSpending,
+                    spendingRate: source.budgetUsagePercentage,
+                    totalBudget: source.budgetUsageTotalBudget,
+                    changeRate: 0, // Not directly available in ExpenseAnalysisHistoryDTO
+                    topCategory: source.mainFinding.split(' ')[0] || '없음', // Extract category from mainFinding
+                    avgDaily: source.dailySpendingAverageSoFar,
+                    prediction: source.dailySpendingEstimatedEom
+                },
+                categoryBreakdown: [] // ExpenseAnalysisHistoryDTO does not contain categoryDetails
+            };
+        } else { // If it's a new analysis (AnalyzeExpenseResponseDTO)
+            return {
+                insights: [
+                    {
+                        type: 'mainFinding',
+                        title: source.analysisResult.mainFinding,
+                        message: '',
+                        icon: Bot,
+                        color: 'text-blue-500'
+                    }
+                ],
+                recommendations: [
+                    {
+                        title: source.analysisResult.suggestion.title,
+                        message: source.analysisResult.suggestion.description,
+                        impact: source.analysisResult.suggestion.effect,
+                        difficulty: source.analysisResult.suggestion.difficulty
+                    }
+                ],
+                warnings: [], // 백엔드에서 직접 제공하지 않으므로 빈 배열
+                summary: {
+                    totalAmount: source.budgetUsage.currentSpending,
+                    spendingRate: source.budgetUsage.percentage,
+                    totalBudget: source.budgetUsage.totalBudget,
+                    changeRate: 0, // 백엔드에서 직접 제공하지 않으므로 0
+                    topCategory: source.categoryDetails[0]?.category || '없음',
+                    avgDaily: source.dailySpending.averageSoFar,
+                    prediction: source.dailySpending.estimatedEom
+                },
+                categoryBreakdown: source.categoryDetails.map(cat => ({
+                    category: cat.category,
+                    label: categoryData.find(c => c.category === cat.category)?.label || cat.category,
+                    amount: cat.totalAmount,
+                    count: cat.transactionCount,
+                    percentage: cat.percentage,
+                    color: categoryData.find(c => c.category === cat.category)?.color || '#df6d14',
+                    name: categoryData.find(c => c.category === cat.category)?.label || cat.category,
+                    value: cat.totalAmount,
+                }))
+            };
+        }
+    })();
 
   // 메인 지출 목록 페이징 핸들러
   const handlePageChange = async (newPage: number) => {
@@ -751,30 +849,41 @@ const ExpensesPage: React.FC = () => {
     }
   };
 
-  const renderActiveShape = (props) => {
-    const RADIAN = Math.PI / 180;
-    const {
-      cx,
-      cy,
-      midAngle,
-      innerRadius,
-      outerRadius,
-      startAngle,
-      endAngle,
-      fill,
-      payload,
-      percent,
-      value,
-    } = props;
-    const sin = Math.sin(-RADIAN * midAngle);
-    const cos = Math.cos(-RADIAN * midAngle);
-    const sx = cx + (outerRadius + 10) * cos;
-    const sy = cy + (outerRadius + 10) * sin;
-    const mx = cx + (outerRadius + 30) * cos;
-    const my = cy + (outerRadius + 30) * sin;
-    const ex = mx + (cos >= 0 ? 1 : -1) * 22;
-    const ey = my;
-    const textAnchor = cos >= 0 ? "start" : "end";
+    // AI 분석 내역 페이징 핸들러
+    const handleAiAnalysisPageChange = async (newPage: number) => {
+        const zeroBasedPage = newPage - 1;
+        if (zeroBasedPage >= 0 && zeroBasedPage < aiAnalysesTotalPages && zeroBasedPage !== aiAnalysesCurrentPage) {
+            setAiAnalysesCurrentPage(zeroBasedPage);
+            // Optionally show loading state for AI analyses
+            // setPageLoading(true); // If you want a loading spinner for AI analyses
+
+            try {
+                await loadSavedAnalysesPaginated({
+                    page: zeroBasedPage,
+                    size: 10, // Assuming 10 items per page for AI analyses
+                    sortBy: 'createdAt', // Default sort
+                    sortDirection: 'desc' // Default sort
+                });
+            } catch (error) {
+                console.error('AI 분석 내역 페이지 로드 실패:', error);
+            } finally {
+                // setPageLoading(false); // If you want a loading spinner for AI analyses
+            }
+        }
+    };
+
+    const renderActiveShape = (props) => {
+        const RADIAN = Math.PI / 180;
+        const {cx, cy, midAngle, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent, value} = props;
+        const sin = Math.sin(-RADIAN * midAngle);
+        const cos = Math.cos(-RADIAN * midAngle);
+        const sx = cx + (outerRadius + 10) * cos;
+        const sy = cy + (outerRadius + 10) * sin;
+        const mx = cx + (outerRadius + 30) * cos;
+        const my = cy + (outerRadius + 30) * sin;
+        const ex = mx + (cos >= 0 ? 1 : -1) * 22;
+        const ey = my;
+        const textAnchor = cos >= 0 ? 'start' : 'end';
 
     return (
       <g>
@@ -1010,24 +1119,25 @@ const ExpensesPage: React.FC = () => {
             </AnimatePresence>
           </div>
 
-          <div className="flex space-x-4">
-            {/* AI Analysis Button */}
-            {mode === "personal" && (
-              <motion.button
-                className="flex items-center space-x-2 px-6 py-3 bg-primary-500 text-white rounded-2xl font-medium hover:bg-primary-700 transition-colors shadow-md hover:shadow-lg whitespace-nowrap"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={generateAIAnalysis}
-                disabled={analysisLoading}
-              >
-                {analysisLoading ? (
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <Bot className="w-5 h-5" />
-                )}
-                <span>{analysisLoading ? "분석 중..." : "AI 분석"}</span>
-              </motion.button>
-            )}
+                    <div className="flex space-x-4">
+                        {/* AI Analysis Button */}
+                        {mode === 'personal' && (
+                            <motion.button
+                                className="flex items-center space-x-2 px-6 py-3 bg-primary-500 text-white rounded-2xl font-medium hover:bg-primary-700 transition-colors shadow-md hover:shadow-lg whitespace-nowrap"
+                                whileHover={{scale: 1.05}}
+                                whileTap={{scale: 0.95}}
+                                onClick={handleAnalysis}
+                                disabled={analysisLoading}
+                            >
+                                {analysisLoading ? (
+                                    <div
+                                        className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"/>
+                                ) : (
+                                    <Bot className="w-5 h-5"/>
+                                )}
+                                <span>{analysisLoading ? '분석 중...' : 'AI 분석'}</span>
+                            </motion.button>
+                        )}
 
             {/* Add Expense Button */}
             <motion.button
@@ -1867,142 +1977,137 @@ const ExpensesPage: React.FC = () => {
               )}
             </div>
 
-            {/* 페이징 컴포넌트 */}
-            <Pagination
-              currentPage={currentPage + 1}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-            />
-          </>
-        ) : (
-          <div className="divide-y divide-gray-100">
-            {savedAnalyses.length > 0 ? (
-              savedAnalyses.map((analysis) => (
-                <motion.div
-                  key={analysis.id}
-                  className="p-6 hover:bg-gray-50 transition-all duration-200 cursor-pointer group"
-                  whileHover={{ x: 5 }}
-                  onClick={() => {
-                    setSelectedAnalysis(analysis);
-                    setShowAnalysis(true);
-                  }}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center transition-all group-hover:scale-110">
-                        <Sparkles className="w-6 h-6 text-purple-600" />
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
-                          {analysis.month} AI 분석
-                        </h4>
-                        <div className="flex items-center space-x-3 text-sm text-gray-500">
-                          <span>
-                            {format(analysis.date, "M월 d일 분석", {
-                              locale: ko,
-                            })}
-                          </span>
-                          <span>•</span>
-                          <span>총 {formatCurrency(analysis.totalAmount)}</span>
-                          <span>•</span>
-                          <span>
-                            {analysis.categoryBreakdown.length}개 카테고리
-                          </span>
+                        {/* 페이징 컴포넌트 */}
+                        <Pagination
+                            currentPage={currentPage + 1}
+                            totalPages={totalPages}
+                            onPageChange={handlePageChange}
+                        />
+                    </>
+
+                ) : (
+                    <>
+                        <div className="divide-y divide-gray-100">
+                            {savedAnalyses.length > 0 ? (
+                                savedAnalyses.map((analysis) => (
+                                    <motion.div
+                                        key={analysis.id}
+                                        className="p-6 hover:bg-gray-50 transition-all duration-200 cursor-pointer group"
+                                        whileHover={{x: 5}}
+                                        onClick={() => {
+                                            setSelectedAnalysis(analysis);
+                                            setShowAnalysis(true);
+                                        }}
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center space-x-4">
+                                                <div
+                                                    className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center transition-all group-hover:scale-110">
+                                                    <Sparkles className="w-6 h-6 text-purple-600"/>
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
+                                                        {analysis.suggestionTitle}
+                                                    </h4>
+                                                    <div className="flex items-center space-x-3 text-sm text-gray-500">
+                                                        <span>{format(analysis.createdAt, 'M월 d일 분석', {locale: ko})}</span>
+                                                        <span>•</span>
+                                                        <span>총 지출 {formatCurrency(analysis.budgetUsageCurrentSpending)}</span>
+                                                    </div>                                                </div>                                            </div>                                            <div className="text-right">
+                                                <div className="text-xs text-gray-500 mt-1">
+                                                    예산
+                                                </div>
+                                                <p className="text-lg font-bold text-purple-600">
+                                                    {analysis.budgetUsagePercentage.toFixed(1)}% 사용
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                ))
+                            ) : (
+                                <div className="text-center py-16">
+                                    <div
+                                        className="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                                    <Bot className="w-10 h-10 text-gray-400"/>
+                                </div>
+                                <h3 className="text-xl font-semibold text-gray-900 mb-2">AI 분석 내역이 없습니다</h3>
+                                <p className="text-gray-600 mb-6">AI 분석을 실행하고 결과를 저장해보세요!</p>
+                                <motion.button
+                                    className="px-6 py-3 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 transition-colors"
+                                    whileHover={{scale: 1.05}}
+                                    whileTap={{scale: 0.95}}
+                                    onClick={handleAnalysis}
+                                >
+                                    AI 분석 실행하기
+                                </motion.button>
+                            </div>
+                        )}
                         </div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-lg font-bold text-purple-600">
-                        {analysis.data.summary.spendingRate.toFixed(1)}% 사용
-                      </p>
-                      <div className="text-xs text-gray-500 mt-1">
-                        예산 대비
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              ))
-            ) : (
-              <div className="text-center py-16">
-                <div className="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                  <Bot className="w-10 h-10 text-gray-400" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  AI 분석 내역이 없습니다
-                </h3>
-                <p className="text-gray-600 mb-6">
-                  AI 분석을 실행하고 결과를 저장해보세요!
-                </p>
-                <motion.button
-                  className="px-6 py-3 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 transition-colors"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={generateAIAnalysis}
-                >
-                  첫 AI 분석 실행하기
-                </motion.button>
-              </div>
-            )}
-          </div>
-        )}
-      </motion.div>
+                        {/* 페이징 컴포넌트 */}
+                        <Pagination
+                            currentPage={aiAnalysesCurrentPage + 1}
+                            totalPages={aiAnalysesTotalPages}
+                            onPageChange={handleAiAnalysisPageChange}
+                        />
+                    </>
+                )}
+            </motion.div>
 
-      {/* AI Analysis Modal */}
-      <AnimatePresence>
-        {showAnalysis && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full h-[85vh] flex flex-col"
-            >
-              {/* Modal Header */}
-              <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6 flex-shrink-0 rounded-t-3xl">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center">
-                      <Sparkles className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-bold">AI 가계부 분석</h2>
-                      <p className="text-purple-100">
-                        {selectedAnalysis
-                          ? `${selectedAnalysis.month} 지출 패턴 분석 결과`
-                          : `${format(currentMonth, "yyyy년 M월", {
-                              locale: ko,
-                            })} 지출 패턴 분석 결과`}
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setShowAnalysis(false)}
-                    className="w-10 h-10 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center hover:bg-opacity-30 transition-colors"
-                  >
-                    ×
-                  </button>
-                </div>
-              </div>
+            {/* AI Analysis Modal */}
+            <AnimatePresence>
+                {showAnalysis && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                        <motion.div
+                            initial={{opacity: 0, scale: 0.95}}
+                            animate={{opacity: 1, scale: 1}}
+                            exit={{opacity: 0, scale: 0.95}}
+                            className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full h-[85vh] flex flex-col"
+                        >
+                            {/* Modal Header */}
+                            <div
+                                className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6 flex-shrink-0 rounded-t-3xl">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center space-x-3">
+                                        <div
+                                            className="w-12 h-12 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center">
+                                            <Sparkles className="w-6 h-6"/>
+                                        </div>
+                                        <div>
+                                            <h2 className="text-xl font-bold">AI 가계부 분석</h2>
+                                            <p className="text-purple-100">
+                                                {analysisResult
+                                                    ? `${format(currentMonth, 'yyyy년 M월', {locale: ko})} 지출 패턴 분석 결과`
+                                                    : '분석 결과'
+                                                }
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => setShowAnalysis(false)}
+                                        className="w-10 h-10 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center hover:bg-opacity-30 transition-colors"
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+                            </div>
 
-              {/* Modal Content */}
-              <div className="p-6 overflow-y-auto flex-1">
-                {/* Summary Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-blue-600 font-medium">
-                        예산 사용률
-                      </span>
-                      <TrendingUp className="w-5 h-5 text-blue-600" />
-                    </div>
-                    <div className="text-2xl font-bold text-blue-800">
-                      {aiAnalysis.summary.spendingRate.toFixed(1)}%
-                    </div>
-                    <div className="text-sm text-blue-600">
-                      {formatCurrency(aiAnalysis.summary.totalAmount)} /{" "}
-                      {formatCurrency(2000000)}
-                    </div>
-                  </div>
+                            {/* Modal Content */}
+                            {aiAnalysis ? (
+                                <div className="p-6 overflow-y-auto flex-1">
+                                {/* Summary Cards */}
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <span className="text-blue-600 font-medium">예산 사용률</span>
+                                            <TrendingUp className="w-5 h-5 text-blue-600"/>
+                                        </div>
+                                        <div className="text-2xl font-bold text-blue-800">
+                                            {aiAnalysis.summary.spendingRate.toFixed(1)}%
+                                        </div>
+                                        <div className="text-sm text-blue-600">
+                                            {formatCurrency(aiAnalysis.summary.totalAmount)} / {formatCurrency(aiAnalysis.summary.totalBudget)}
+                                        </div>
+                                    </div>
 
                   <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4">
                     <div className="flex items-center justify-between mb-2">
@@ -2155,94 +2260,89 @@ const ExpensesPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Category Analysis */}
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                    카테고리별 상세 분석
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {analytics.categoryBreakdown.slice(0, 4).map((cat) => (
-                      <div
-                        key={cat.category}
-                        className="p-4 border border-gray-200 rounded-xl"
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center space-x-2">
-                            <div
-                              className="w-4 h-4 rounded-full"
-                              style={{ backgroundColor: cat.color }}
-                            />
-                            <span className="font-medium text-gray-900">
-                              {cat.label}
-                            </span>
-                          </div>
-                          <span className="text-sm font-medium text-gray-600">
-                            {cat.percentage.toFixed(1)}%
-                          </span>
-                        </div>
-                        <div className="text-lg font-bold text-gray-900 mb-1">
-                          {formatCurrency(cat.amount)}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {cat.count}건의 지출
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                          <div
-                            className="h-2 rounded-full transition-all duration-500"
-                            style={{
-                              backgroundColor: cat.color,
-                              width: `${cat.percentage}%`,
-                            }}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+                                {/* Category Analysis */}
+                                <div>
+                                    <h3 className="text-lg font-semibold text-gray-900 mb-3">카테고리별 상세 분석</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {analytics.categoryBreakdown.slice(0, 4).map((cat) => (
+                                            <div key={cat.category} className="p-4 border border-gray-200 rounded-xl">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <div className="flex items-center space-x-2">
+                                                        <div
+                                                            className="w-4 h-4 rounded-full"
+                                                            style={{backgroundColor: cat.color}}
+                                                        />
+                                                        <span className="font-medium text-gray-900">{cat.label}</span>
+                                                    </div>
+                                                    <span className="text-sm font-medium text-gray-600">
+                                                        {cat.percentage.toFixed(1)}%
+                                                    </span>
+                                                </div>
+                                                <div className="text-lg font-bold text-gray-900 mb-1">
+                                                    {formatCurrency(cat.amount)}
+                                                </div>
+                                                <div className="text-sm text-gray-500">
+                                                    {cat.count}건의 지출
+                                                </div>
+                                                <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                                                    <div
+                                                        className="h-2 rounded-full transition-all duration-500"
+                                                        style={{
+                                                            backgroundColor: cat.color,
+                                                            width: `${cat.percentage}%`
+                                                        }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center h-full text-gray-600">
+                                    <RefreshCw className="w-12 h-12 animate-spin text-primary-600 mb-4" />
+                                    <p className="text-lg font-medium">AI 분석 결과를 불러오는 중입니다...</p>
+                                    <p className="text-sm mt-2">잠시만 기다려 주세요.</p>
+                                </div>
+                            )}
 
-              {/* Modal Footer */}
-              <div className="bg-gray-50 p-6 border-t border-gray-200 flex-shrink-0 rounded-b-3xl">
-                <div className="flex items-center justify-between">
-                  <div className="text-xs text-gray-500">
-                    * 이 분석은 AI가 생성한 것으로 참고용입니다.
-                  </div>
-                  <div className="flex space-x-3">
-                    <button
-                      onClick={() => {
-                        setShowAnalysis(false);
-                        setSelectedAnalysis(null);
-                      }}
-                      className="px-6 py-3 text-gray-700 bg-white border border-gray-300 rounded-2xl hover:bg-gray-50 transition-colors"
-                    >
-                      닫기
-                    </button>
-                    {!selectedAnalysis && (
-                      <button
-                        onClick={saveAnalysisResult}
-                        className="px-6 py-3 bg-primary-600 text-white rounded-2xl hover:bg-primary-700 transition-colors"
-                      >
-                        결과 저장
-                      </button>
-                    )}
-                    {selectedAnalysis && (
-                      <button
-                        onClick={() => {
-                          alert("분석 결과를 공유했습니다!");
-                        }}
-                        className="px-6 py-3 bg-primary-600 text-white rounded-2xl hover:bg-primary-700 transition-colors flex items-center space-x-2"
-                      >
-                        <Share2 className="w-4 h-4" />
-                        <span>공유</span>
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+                            {/* Modal Footer */}
+                            <div className="bg-gray-50 p-6 border-t border-gray-200 flex-shrink-0 rounded-b-3xl">
+                                <div className="flex items-center justify-between">
+                                    <div className="text-xs text-gray-500">
+                                        * 이 분석은 AI가 생성한 것으로 참고용입니다.
+                                    </div>
+                                    <div className="flex space-x-3">
+                                        <button
+                                            onClick={() => {
+                                                setShowAnalysis(false);
+                                                setSelectedAnalysis(null);
+                                            }}
+                                            className="px-6 py-3 text-gray-700 bg-white border border-gray-300 rounded-2xl hover:bg-gray-50 transition-colors"
+                                        >
+                                            닫기
+                                        </button>
+                                        {!selectedAnalysis && (
+                                            <button
+                                            onClick={handleSaveAnalysis}
+                                            disabled={isAnalysisSaved}
+                                            className={`px-6 py-3 rounded-2xl transition-colors flex items-center space-x-2 ${
+                                                isAnalysisSaved
+                                                    ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
+                                                    : 'bg-primary-600 text-white hover:bg-primary-700 shadow-md hover:shadow-lg'
+                                            }`}
+                                        >
+                                            <Save className="w-4 h-4"/>
+                                            <span>{isAnalysisSaved ? '저장됨' : '저장'}</span>
+                                        </button>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
 
       {/* Expense Modal */}
       {showExpenseModal && (

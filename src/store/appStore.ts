@@ -41,6 +41,8 @@ interface AppState {
   posts: Post[];
   comments?: Comment[];
   savedAnalyses: any[]; // AI 분석 결과 저장
+  aiAnalysesCurrentPage: number; // AI 분석 페이지네이션 현재 페이지
+  aiAnalysesTotalPages: number; // AI 분석 페이지네이션 전체 페이지 수
   currentDate: Date;
   currentView: "year" | "month" | "week" | "day";
   version?: number; // 버전 관리용
@@ -109,8 +111,8 @@ interface AppState {
   deletePost: (id: string) => Promise<void>;
 
   // Analysis actions
-  saveAnalysis: (analysis: any) => void;
-  deleteAnalysis: (id: string) => void;
+  // saveAnalysis: (analysis: any) => void;
+  // deleteAnalysis: (id: string) => void;
 }
 
 const generateId = () => Math.random().toString(36).substr(2, 9);
@@ -169,7 +171,9 @@ export const useAppStore = create<AppState>()(
       summary: null,
       groupSharesSummary: null,
 
-      savedAnalyses: [],
+          savedAnalyses: [],
+          aiAnalysesCurrentPage: 0,
+          aiAnalysesTotalPages: 0,
 
       setMode: (mode) => {
         set({ mode });
@@ -756,40 +760,56 @@ export const useAppStore = create<AppState>()(
             }
           },
 
-      // Analysis actions
-      saveAnalysis: (analysis) => {
-        set((state) => ({
-          savedAnalyses: [analysis, ...state.savedAnalyses],
-        }));
-      },
+          // Analysis actions
+          setAiAnalysesCurrentPage: (page: number) => set({aiAnalysesCurrentPage: page}),
+          loadSavedAnalysesPaginated: async (params) => {
+            try {
+              const response = await expenseAPI.getSavedAnalysesPaginated(params);
+              if (response?.data) {
+                set({
+                  savedAnalyses: response.data.page.content,
+                  aiAnalysesCurrentPage: response.data.page.number,
+                  aiAnalysesTotalPages: response.data.page.totalPages,
+                });
+              }
+            } catch (error) {
+              console.error('저장된 AI 분석 로드 실패:', error);
+              toast.error('저장된 AI 분석을 불러오는데 실패했습니다.');
+            }
+          },
+          // saveAnalysis: (analysis) => {
+          //   set((state) => ({
+          //     savedAnalyses: [analysis, ...state.savedAnalyses],
+          //   }));
+          // },
 
-      deleteAnalysis: (id) => {
-        set((state) => ({
-          savedAnalyses: state.savedAnalyses.filter(
-            (analysis) => analysis.id !== id
-          ),
-        }));
-      },
-    }),
-    {
-      name: "app-storage-v4", // 키 이름 변경으로 강제 리셋
-      partialize: (state) => ({
-        mode: state.mode,
-        currentGroup: state.currentGroup,
-        joinedGroups: state.joinedGroups,
-        tasks: state.tasks,
-        events: state.events,
-        expenses: state.expenses,
-        posts: state.posts,
-        savedAnalyses: state.savedAnalyses,
-        currentDate: state.currentDate,
-        currentView: state.currentView,
-        version: state.version,
-      }),
-      storage: {
-        getItem: (name) => {
-          const str = localStorage.getItem(name);
-          if (!str) return null;
+          // deleteAnalysis: (id) => {
+          //   set((state) => ({
+          //     savedAnalyses: state.savedAnalyses.filter(
+          //         (analysis) => analysis.id !== id
+          //     ),
+          //   }));
+          // },
+        }),
+        {
+          name: "app-storage-v4", // 키 이름 변경으로 강제 리셋
+          partialize: (state) => ({
+            mode: state.mode,
+            currentGroup: state.currentGroup,
+            joinedGroups: state.joinedGroups,
+            tasks: state.tasks,
+            events: state.events,
+            expenses: state.expenses,
+            posts: state.posts,
+            // savedAnalyses: state.savedAnalyses,
+            currentDate: state.currentDate,
+            currentView: state.currentView,
+            version: state.version,
+          }),
+          storage: {
+            getItem: (name) => {
+              const str = localStorage.getItem(name);
+              if (!str) return null;
 
           try {
             const parsed = JSON.parse(str);
@@ -808,121 +828,121 @@ export const useAppStore = create<AppState>()(
               parsed.state.version = STORE_VERSION;
             }
 
-            return {
-              ...parsed,
-              state: {
-                ...parsed.state,
-                currentDate: parsed.state.currentDate
-                  ? new Date(parsed.state.currentDate)
-                  : new Date(),
-                joinedGroups:
-                  parsed.state.joinedGroups?.map((group: any) => ({
-                    ...group,
-                    createdAt: group.createdAt
-                      ? new Date(group.createdAt)
-                      : new Date(),
-                  })) || sampleGroups,
-                tasks:
-                  parsed.state.tasks?.map((task: any) => ({
-                    ...task,
-                    createdAt: task.createdAt
-                      ? new Date(task.createdAt)
-                      : new Date(),
-                    dueDate: task.dueDate ? new Date(task.dueDate) : undefined,
-                  })) || [],
-                events:
-                  parsed.state.events?.map((event: any) => ({
-                    ...event,
-                    date: event.date ? new Date(event.date) : new Date(),
-                    endDate: event.endDate
-                      ? new Date(event.endDate)
-                      : undefined,
-                    repeatEndDate: event.repeatEndDate
-                      ? new Date(event.repeatEndDate)
-                      : undefined,
-                  })) || sampleEvents,
-                expenses:
-                  parsed.state.expenses?.map((expense: any) => ({
-                    ...expense,
-                    createdAt: expense.createdAt
-                      ? new Date(expense.createdAt)
-                      : new Date(),
-                    date: expense.date ? new Date(expense.date) : new Date(),
-                  })) || [],
-                savedAnalyses:
-                  parsed.state.savedAnalyses?.map((analysis: any) => ({
-                    ...analysis,
-                    date: analysis.date ? new Date(analysis.date) : new Date(),
-                  })) || [],
-                posts:
-                  parsed.state.posts?.map((post: any) => ({
-                    ...post,
-                    createdAt: post.createdAt
-                      ? new Date(post.createdAt)
-                      : new Date(),
-                    comments:
-                      post.comments?.map((comment: any) => ({
-                        ...comment,
-                        createdAt: comment.createdAt
-                          ? new Date(comment.createdAt)
-                          : new Date(),
-                      })) || [],
-                  })) || samplePosts,
-                version: STORE_VERSION,
-              },
-            };
-          } catch (error) {
-            console.error("Error parsing stored data:", error);
-            return null;
-          }
-        },
-        setItem: (name, value) => {
-          const serializedValue = JSON.stringify({
-            ...value,
-            state: {
-              ...value.state,
-              currentDate: value.state.currentDate?.toISOString(),
-              joinedGroups: value.state.joinedGroups?.map((group: Group) => ({
-                ...group,
-                createdAt: group.createdAt?.toISOString(),
-              })),
-              tasks: value.state.tasks?.map((task: Task) => ({
-                ...task,
-                createdAt: task.createdAt?.toISOString(),
-                dueDate: task.dueDate?.toISOString(),
-              })),
-              events: value.state.events?.map((event: Event) => ({
-                ...event,
-                date: event.date?.toISOString(),
-                endDate: event.endDate?.toISOString(),
-                repeatEndDate: event.repeatEndDate?.toISOString(),
-              })),
-              expenses: value.state.expenses?.map((expense: Expense) => ({
-                ...expense,
-                createdAt: expense.createdAt,
-                date: expense.date,
-              })),
-              savedAnalyses: value.state.savedAnalyses?.map(
-                (analysis: any) => ({
-                  ...analysis,
-                  date: analysis.date?.toISOString(),
-                })
-              ),
-              posts: value.state.posts?.map((post: Post) => ({
-                ...post,
-                createdAt: post.createdAt, // string이므로 toISOString() 제거
-                updatedAt: post.updatedAt, // string?이므로 toISOString() 제거
-                comments: post.comments?.map((comment: Comment) => ({
-                  ...comment,
-                  createdAt: comment.createdAt, // string이므로 toISOString() 제거
-                })),
-              })),
+                return {
+                  ...parsed,
+                  state: {
+                    ...parsed.state,
+                    currentDate: parsed.state.currentDate
+                        ? new Date(parsed.state.currentDate)
+                        : new Date(),
+                    joinedGroups:
+                        parsed.state.joinedGroups?.map((group: any) => ({
+                          ...group,
+                          createdAt: group.createdAt
+                              ? new Date(group.createdAt)
+                              : new Date(),
+                        })) || sampleGroups,
+                    tasks:
+                        parsed.state.tasks?.map((task: any) => ({
+                          ...task,
+                          createdAt: task.createdAt
+                              ? new Date(task.createdAt)
+                              : new Date(),
+                          dueDate: task.dueDate ? new Date(task.dueDate) : undefined,
+                        })) || [],
+                    events:
+                        parsed.state.events?.map((event: any) => ({
+                          ...event,
+                          date: event.date ? new Date(event.date) : new Date(),
+                          endDate: event.endDate
+                              ? new Date(event.endDate)
+                              : undefined,
+                          repeatEndDate: event.repeatEndDate
+                              ? new Date(event.repeatEndDate)
+                              : undefined,
+                        })) || sampleEvents,
+                    expenses:
+                        parsed.state.expenses?.map((expense: any) => ({
+                          ...expense,
+                          createdAt: expense.createdAt
+                              ? new Date(expense.createdAt)
+                              : new Date(),
+                          date: expense.date ? new Date(expense.date) : new Date(),
+                        })) || [],
+                    // savedAnalyses:
+                    //     parsed.state.savedAnalyses?.map((analysis: any) => ({
+                    //       ...analysis,
+                    //       date: analysis.date ? new Date(analysis.date) : new Date(),
+                    //     })) || [],
+                    posts:
+                        parsed.state.posts?.map((post: any) => ({
+                          ...post,
+                          createdAt: post.createdAt
+                              ? new Date(post.createdAt)
+                              : new Date(),
+                          comments:
+                              post.comments?.map((comment: any) => ({
+                                ...comment,
+                                createdAt: comment.createdAt
+                                    ? new Date(comment.createdAt)
+                                    : new Date(),
+                              })) || [],
+                        })) || samplePosts,
+                    version: STORE_VERSION,
+                  },
+                };
+              } catch (error) {
+                console.error("Error parsing stored data:", error);
+                return null;
+              }
             },
-          });
-          localStorage.setItem(name, serializedValue);
-        },
-        removeItem: (name) => localStorage.removeItem(name),
-      },
-    }
-  )
+            setItem: (name, value) => {
+              const serializedValue = JSON.stringify({
+                ...value,
+                state: {
+                  ...value.state,
+                  currentDate: value.state.currentDate?.toISOString(),
+                  joinedGroups: value.state.joinedGroups?.map((group: Group) => ({
+                    ...group,
+                    createdAt: group.createdAt?.toISOString(),
+                  })),
+                  tasks: value.state.tasks?.map((task: Task) => ({
+                    ...task,
+                    createdAt: task.createdAt?.toISOString(),
+                    dueDate: task.dueDate?.toISOString(),
+                  })),
+                  events: value.state.events?.map((event: Event) => ({
+                    ...event,
+                    date: event.date?.toISOString(),
+                    endDate: event.endDate?.toISOString(),
+                    repeatEndDate: event.repeatEndDate?.toISOString(),
+                  })),
+                  expenses: value.state.expenses?.map((expense: Expense) => ({
+                    ...expense,
+                    createdAt: expense.createdAt,
+                    date: expense.date,
+                  })),
+                  savedAnalyses: value.state.savedAnalyses?.map(
+                      (analysis: any) => ({
+                        ...analysis,
+                        date: analysis.date?.toISOString(),
+                      })
+                  ),
+                  posts: value.state.posts?.map((post: Post) => ({
+                    ...post,
+                    createdAt: post.createdAt, // string이므로 toISOString() 제거
+                    updatedAt: post.updatedAt, // string?이므로 toISOString() 제거
+                    comments: post.comments?.map((comment: Comment) => ({
+                      ...comment,
+                      createdAt: comment.createdAt, // string이므로 toISOString() 제거
+                    })),
+                  })),
+                },
+              });
+              localStorage.setItem(name, serializedValue);
+            },
+            removeItem: (name) => localStorage.removeItem(name),
+          },
+        }
+    )
 );
