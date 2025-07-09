@@ -55,6 +55,7 @@ jobs:
         labels: ${{ steps.meta.outputs.labels }}
         build-args: |
           VITE_API_BASE_URL=${{ secrets.API_BASE_URL }}
+          VITE_VAPID_PUBLIC_KEY=${{ secrets.VITE_VAPID_PUBLIC_KEY }}
       
     - name: Set output
       run: echo "image=${{ secrets.DOCKERHUB_USERNAME }}/${{ env.DOCKERHUB_REPOSITORY }}:latest" >> $GITHUB_OUTPUT
