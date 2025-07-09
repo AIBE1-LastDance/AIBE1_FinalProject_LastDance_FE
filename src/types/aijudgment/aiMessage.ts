@@ -8,8 +8,16 @@ export interface Message {
   judgmentId?: string;
 }
 
-// types/aijudgment/aiMessage.ts
+export interface AiJudgmentRequest {
+  situations: {
+    [key: string]: string; // 예: { "A": "A의 입장", "B": "B의 입장" }
+  };
+}
+
 export interface AiJudgmentResponse {
   judgmentResult: string;
-  judgmentId: string; // ✅ 반드시 포함되어야 함
+  judgmentId: string;
+  situations: {
+    [key: string]: string;
+  };
 }

@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { calendarApi, CalendarsQuery } from '../api/calendar';
 import { Event } from '../types';
+import toast from 'react-hot-toast';
 
 interface UseCalendarOptions {
     autoLoad?: boolean;
@@ -137,6 +138,7 @@ export const useCalendar = (options: UseCalendarOptions = {}): UseCalendarReturn
             if (response.success && response.data) {
                 setEvents(prev => [...prev, response.data!]);
                 await refreshEvents();
+                toast.success('일정이 추가되었습니다');
                 return response.data;
             } else {
                 const errorMsg = response.error || 'Failed to create event';
@@ -172,6 +174,7 @@ export const useCalendar = (options: UseCalendarOptions = {}): UseCalendarReturn
                 setEvents(prev => prev.map(event =>
                     event.id === eventId ? response.data! : event
                 ));
+                toast.success('일정이 수정되었습니다');
                 return response.data;
             } else {
                 const errorMsg = response.error || 'Failed to update event';
@@ -206,6 +209,7 @@ export const useCalendar = (options: UseCalendarOptions = {}): UseCalendarReturn
             if (response.success) {
                 // 모든 반복 일정 삭제이므로 해당 이벤트를 완전히 제거
                 setEvents(prev => prev.filter(event => event.id !== eventId));
+                toast.success('일정이 삭제되었습니다');
                 return true;
             } else {
                 const errorMsg = response.error || 'Failed to delete event';

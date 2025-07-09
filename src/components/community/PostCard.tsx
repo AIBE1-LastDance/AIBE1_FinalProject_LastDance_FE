@@ -1,7 +1,5 @@
-// src/components/community/PostCard.tsx
-
 import React, { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Heart,
   MessageCircle,
@@ -16,6 +14,10 @@ import {
   MessageSquare,
   HelpCircle,
   FileText,
+  Megaphone,
+  GraduationCap,
+  Handshake,
+  ScrollText,
 } from "lucide-react";
 import { Post } from "../../types/community/community";
 import { useAuthStore } from "../../store/authStore";
@@ -43,32 +45,42 @@ const PostCard: React.FC<PostCardProps> = ({
   const [showMenu, setShowMenu] = useState(false);
 
   const getCategoryDisplayInfo = (category: string) => {
-    const categories: Record<string, { icon: any; color: string }> = {
+    // 배경색을 없애고 테두리 색상과 텍스트 색상으로 변경
+    const categories: Record<
+      string,
+      { icon: any; borderColor: string; textColor: string }
+    > = {
       LIFE_TIPS: {
-        icon: Lightbulb,
-        color: "bg-yellow-100 text-yellow-800",
+        icon: GraduationCap,
+        borderColor: "border-orange-500", // 테두리 색상
+        textColor: "text-orange-600", // 텍스트 색상
       },
       FREE_BOARD: {
         icon: MessageSquare,
-        color: "bg-purple-100 text-purple-800",
+        borderColor: "border-orange-600",
+        textColor: "text-orange-700",
       },
       FIND_MATE: {
-        icon: Users,
-        color: "bg-blue-100 text-blue-800",
+        icon: Megaphone,
+        borderColor: "border-orange-700",
+        textColor: "text-orange-800",
       },
       QNA: {
-        icon: HelpCircle,
-        color: "bg-red-100 text-red-800",
+        icon: Handshake,
+        borderColor: "border-orange-800",
+        textColor: "text-orange-900",
       },
       POLICY: {
-        icon: FileText,
-        color: "bg-green-100 text-green-800",
+        icon: ScrollText,
+        borderColor: "border-orange-900",
+        textColor: "text-orange-950", // 가장 진한 오렌지 계열
       },
     };
     return (
       categories[category] || {
         icon: FileText,
-        color: "bg-gray-100 text-gray-800",
+        borderColor: "border-gray-400",
+        textColor: "text-gray-600",
       }
     );
   };
@@ -148,7 +160,7 @@ const PostCard: React.FC<PostCardProps> = ({
         </div>
         <div className="flex items-center space-x-2">
           <div
-            className={`flex items-center space-x-1 px-3 py-1 rounded-full text-xs font-medium ${categoryDisplayInfo.color}`}
+            className={`flex items-center space-x-1 px-3 py-1 rounded-full text-xs font-medium border ${categoryDisplayInfo.borderColor} ${categoryDisplayInfo.textColor}`}
           >
             <categoryDisplayInfo.icon className="w-3 h-3" />
             <span>{post.categoryName}</span>
@@ -206,11 +218,15 @@ const PostCard: React.FC<PostCardProps> = ({
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={handleLike}
+            // 좋아요(하트) 색상 변경: isLiked 상태에 따라 주황색으로
             className={`flex items-center space-x-2 ${
-              isLiked ? "text-red-500" : "text-gray-500 hover:text-red-500"
+              isLiked
+                ? "text-orange-500"
+                : "text-gray-500 hover:text-orange-500"
             } transition-colors`}
           >
-            <Heart className={`w-5 h-5 ${isLiked ? "fill-current" : ""}`} />
+            <Heart className={`w-5 h-5 ${isLiked ? "fill-orange-500" : ""}`} />{" "}
+            {/* 채워지는 하트도 주황색으로 */}
             <span className="text-sm font-medium">{post.likeCount || 0}</span>
           </motion.button>
 

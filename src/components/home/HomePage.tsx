@@ -370,21 +370,6 @@ const HomePage: React.FC = () => {
                               ))
                             )}
                           </div>
-
-                          {/* Footer */}
-                          {notifications.length > 0 && (
-                            <div className="border-t border-gray-100 px-4 py-3">
-                              <button
-                                onClick={() => {
-                                  navigate('/notifications');
-                                  setShowNotifications(false);
-                                }}
-                                className="w-full text-sm text-blue-600 hover:text-blue-700 font-medium text-center"
-                              >
-                                모든 알림 보기
-                              </button>
-                            </div>
-                          )}
                         </motion.div>
                       )}
                     </AnimatePresence>
