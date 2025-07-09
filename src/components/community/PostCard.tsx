@@ -52,28 +52,23 @@ const PostCard: React.FC<PostCardProps> = ({
     > = {
       LIFE_TIPS: {
         icon: GraduationCap,
-        borderColor: "border-orange-500", // 테두리 색상
-        textColor: "text-orange-600", // 텍스트 색상
+        borderColor: "border-orange-600", // 테두리 색상
+        textColor: "text-orange-700", // 텍스트 색상
       },
       FREE_BOARD: {
         icon: MessageSquare,
-        borderColor: "border-orange-600",
-        textColor: "text-orange-700",
+        borderColor: "border-orange-700",
+        textColor: "text-orange-800",
       },
       FIND_MATE: {
         icon: Megaphone,
-        borderColor: "border-orange-700",
-        textColor: "text-orange-800",
+        borderColor: "border-orange-500",
+        textColor: "text-orange-600",
       },
       QNA: {
         icon: Handshake,
         borderColor: "border-orange-800",
         textColor: "text-orange-900",
-      },
-      POLICY: {
-        icon: ScrollText,
-        borderColor: "border-orange-900",
-        textColor: "text-orange-950", // 가장 진한 오렌지 계열
       },
     };
     return (
