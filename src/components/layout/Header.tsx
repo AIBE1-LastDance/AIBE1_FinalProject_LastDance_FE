@@ -457,20 +457,13 @@ const Header: React.FC = () => {
                                       </div>
                                     </div>
                                     <p
-                                      className={`text-sm mt-1 ${
-                                        notification.read
-                                          ? "text-gray-500"
-                                          : "text-gray-700"
-                                      } group-hover:text-gray-800 transition-colors`}
+                                        className={`text-sm mt-1 ${
+                                            notification.read
+                                                ? "text-gray-500"
+                                                : "text-gray-700"
+                                        } group-hover:text-gray-800 transition-colors`}
                                     >
                                       {notification.content}
-                                      {(notification.url ||
-                                        notification.relatedId ||
-                                        notification.type) && (
-                                        <span className="text-blue-600 font-medium ml-1">
-                                          → 자세히 보기
-                                        </span>
-                                      )}
                                     </p>
                                     <div className="flex items-center justify-between mt-1">
                                       <p className="text-xs text-gray-400">
@@ -503,21 +496,6 @@ const Header: React.FC = () => {
                           })
                         )}
                       </div>
-
-                      {/* Footer */}
-                      {notifications.length > 0 && (
-                        <div className="border-t border-gray-100 px-4 py-3">
-                          <button
-                            onClick={() => {
-                              navigate("/notifications");
-                              setShowNotifications(false);
-                            }}
-                            className="w-full text-sm text-blue-600 hover:text-blue-700 font-medium text-center"
-                          >
-                            모든 알림 보기
-                          </button>
-                        </div>
-                      )}
                     </motion.div>
                   </>
                 )}
