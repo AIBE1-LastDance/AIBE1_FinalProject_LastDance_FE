@@ -252,10 +252,8 @@ export class AdminAPI {
     status?: string;
     reportType?: string;
     reason?: string;
-    reporterNickname?: string;
-    reporterEmail?: string;
-    reportedUserNickname?: string;
-    reportedUserEmail?: string;
+    reporterNicknameOrEmail?: string;
+    reportedUserNicknameOrEmail?: string;
     dateFrom?: string;
     dateTo?: string;
   } = {}): Promise<PaginationResponse<ReportManagement>> {
@@ -280,10 +278,8 @@ export class AdminAPI {
       apiParams.reason = params.reason;
     }
     
-    if (params.reporterNickname) apiParams.reporterNickname = params.reporterNickname;
-    if (params.reporterEmail) apiParams.reporterEmail = params.reporterEmail;
-    if (params.reportedUserNickname) apiParams.reportedUserNickname = params.reportedUserNickname;
-    if (params.reportedUserEmail) apiParams.reportedUserEmail = params.reportedUserEmail;
+    if (params.reporterNicknameOrEmail) apiParams.reporterNicknameOrEmail = params.reporterNicknameOrEmail;
+    if (params.reportedUserNicknameOrEmail) apiParams.reportedUserNicknameOrEmail = params.reportedUserNicknameOrEmail;
     if (params.dateFrom) apiParams.dateFrom = params.dateFrom;
     if (params.dateTo) apiParams.dateTo = params.dateTo;
     
