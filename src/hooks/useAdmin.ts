@@ -179,10 +179,8 @@ export const useAdminReports = () => {
     status?: string;
     reportType?: string;
     reason?: string;
-    reporterNickname?: string;
-    reporterEmail?: string;
-    reportedUserNickname?: string;
-    reportedUserEmail?: string;
+    reporterNicknameOrEmail?: string;
+    reportedUserNicknameOrEmail?: string;
     dateFrom?: string;
     dateTo?: string;
   } = {}) => {
