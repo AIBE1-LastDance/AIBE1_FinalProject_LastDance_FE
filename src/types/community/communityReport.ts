@@ -1,9 +1,11 @@
-// src/types/community.ts
-
-// 백엔드 ReportType enum과 일치하도록 정의
-export enum ReportType {
+// 백엔드의 ReportType enum과 일치하도록 정의 (신고 대상 타입)
+export enum ReportTargetType {
   POST = "POST",
   COMMENT = "COMMENT",
+}
+
+// 신고 사유를 위한 enum (백엔드의 reason 필드에 들어갈 값)
+export enum ReportReasonType {
   SPAM = "SPAM",
   INAPPROPRIATE = "INAPPROPRIATE",
   HARASSMENT = "HARASSMENT",
@@ -15,9 +17,9 @@ export enum ReportType {
 
 // ReportRequestDTO에 대응하는 타입
 export interface ReportRequest {
-  reportType: ReportType;
+  reportType: ReportTargetType; // 변경: ReportTargetType 사용
   targetId: string; // UUID는 JavaScript에서 string으로 표현
-  reason: string;
+  reason: string; // 이 필드에는 ReportReasonType의 label (예: "스팸/도배") 또는 customReason이 들어갑니다.
 }
 
 // ReportResponseDTO에 대응하는 타입
@@ -25,7 +27,7 @@ export interface ReportResponse {
   reportId: number;
   reporterId: string;
   reportedUserId: string;
-  reportType: ReportType;
+  reportType: ReportTargetType; // 변경: ReportTargetType 사용
   targetId: string;
   reason: string;
   status: string; // 백엔드 ReportStatus enum에 대응

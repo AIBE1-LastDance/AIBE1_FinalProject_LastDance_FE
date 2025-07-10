@@ -9,9 +9,17 @@ import { ApiResponse } from "../../types/index.ts"; // ApiResponse 타입 임포
 export const reportContent = async (
   reportData: ReportRequest
 ): Promise<ApiResponse<ReportResponse>> => {
+  console.log("📦 최종 전송 payload:", JSON.stringify(reportData, null, 2));
+
   const response = await apiClient.post<ApiResponse<ReportResponse>>(
     "/api/v1/community/report",
-    reportData
+    reportData,
+    {
+      headers: {
+        "Content-Type": "application/json", // ✅ 명시적으로 설정 (디버깅용)
+      },
+    }
   );
+
   return response.data;
 };
