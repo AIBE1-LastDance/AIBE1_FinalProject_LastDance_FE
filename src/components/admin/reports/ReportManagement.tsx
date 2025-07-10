@@ -79,9 +79,9 @@ const ReportManagement: React.FC = () => {
         // 검색어가 있을 때 검색 타입에 따라 파라미터 설정
         if (searchTerm.trim()) {
             if (searchType === 'reporter') {
-                params.reporterNickname = searchTerm.trim();
+                params.reporterNicknameOrEmail = searchTerm.trim();
             } else {
-                params.reportedUserNickname = searchTerm.trim();
+                params.reportedUserNicknameOrEmail = searchTerm.trim();
             }
         }
 
@@ -122,9 +122,9 @@ const ReportManagement: React.FC = () => {
         // 검색어가 있을 때 검색 타입에 따라 파라미터 설정
         if (searchTerm.trim()) {
             if (searchType === 'reporter') {
-                params.reporterNickname = searchTerm.trim(); // API 명세에 맞게 수정
+                params.reporterNicknameOrEmail = searchTerm.trim(); // API 명세에 맞게 수정
             } else {
-                params.reportedUserNickname = searchTerm.trim(); // API 명세에 맞게 수정
+                params.reportedUserNicknameOrEmail = searchTerm.trim(); // API 명세에 맞게 수정
             }
         }
 
@@ -157,9 +157,9 @@ const ReportManagement: React.FC = () => {
         // 검색어가 있을 때 검색 타입에 따라 파라미터 설정
         if (searchTerm.trim()) {
             if (searchType === 'reporter') {
-                params.reporterNickname = searchTerm.trim();
+                params.reporterNicknameOrEmail = searchTerm.trim();
             } else {
-                params.reportedUserNickname = searchTerm.trim();
+                params.reportedUserNicknameOrEmail = searchTerm.trim();
             }
         }
 
@@ -1036,23 +1036,7 @@ const ReportManagement: React.FC = () => {
         );
     });
 
-    if (error) {
-        return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="text-center">
-                    <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4"/>
-                    <h2 className="text-xl font-semibold text-gray-900 mb-2">오류가 발생했습니다</h2>
-                    <p className="text-gray-600 mb-4">{error}</p>
-                    <button
-                        onClick={handleSearch}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                        다시 시도
-                    </button>
-                </div>
-            </div>
-        );
-    }
+    // 오류 발생 시에도 기본 화면을 보여주고, 테이블에서 오류 메시지 표시
 
     return (
         <div className="space-y-6">
@@ -1266,6 +1250,12 @@ const ReportManagement: React.FC = () => {
                                             className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
                                         <span className="ml-2">로딩 중...</span>
                                     </div>
+                                </td>
+                            </tr>
+                        ) : error ? (
+                            <tr>
+                                <td colSpan={8} className="px-6 py-4 text-center text-gray-500">
+                                    사용자가 없습니다.
                                 </td>
                             </tr>
                         ) : safeReports.length === 0 ? (

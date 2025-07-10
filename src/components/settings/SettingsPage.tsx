@@ -1,15 +1,17 @@
 import React, {useEffect, useState} from 'react';
 import {motion} from 'framer-motion';
-import {Settings, User, Bell, Save, Camera, Trash2, Wifi, WifiOff, Smartphone, TestTube, ArrowRight, Calendar, CreditCard, CheckSquare, Mail} from 'lucide-react';
+import {Settings, User, Bell, Save, Camera, Trash2, Wifi, WifiOff, Smartphone, TestTube, ArrowRight, Calendar, CreditCard, CheckSquare, Mail, Shield} from 'lucide-react';
 import {useAuthStore} from '../../store/authStore';
 import toast from 'react-hot-toast';
 import {profileApi} from "../../api/profile";
 import {notificationApi, NotificationSettingRequest} from "../../api/notifications";
 import Avatar from "../common/Avatar";
 import {useSSEStore} from "../../store/sseStore";
+import {useNavigate} from "react-router-dom";
 
 const SettingsPage: React.FC = () => {
     const {user, setProcessingAccountDeletion} = useAuthStore();
+    const navigate = useNavigate();
     const {
         isSSEConnected,
         isWebPushSupported,
@@ -215,6 +217,7 @@ const SettingsPage: React.FC = () => {
     const tabs = [
         {id: 'profile', label: '프로필 정보', icon: User},
         {id: 'notifications', label: '알림', icon: Bell},
+        ...(user?.role === 'ADMIN' ? [{id: 'admin', label: '관리자 페이지', icon: Shield}] : []),
     ];
 
     const handleProfileChange = (field: string, value: string) => {
