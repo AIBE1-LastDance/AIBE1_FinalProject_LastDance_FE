@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+"use client";
+import type React from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Bot,
   PlusCircle,
-  XCircle,
   MessageCircle,
   Sparkles,
   BookOpenText,
@@ -17,17 +18,19 @@ import type {
   AiJudgmentRequest,
   AiJudgmentResponse,
 } from "../../types/aijudgment/aiMessage";
-import HistorySidebar from "../ai/HistorySidebar";
-import ResultDisplay from "../ai/ResultDisplay";
+import HistorySidebar from "./HistorySidebar";
+import ResultDisplay from "./ResultDisplay";
+import ConflictInputModal from "./ConflictInputModal.tsx";
+import TipsModal from "./TipsModal.tsx";
 
 type PageState = "INITIAL" | "LOADING" | "RESULT";
 
-const personLabelColor = "border-2 border-orange-300 text-orange-700 bg-white";
 const personLabels = ["A", "B", "C", "D"];
 
 const AIAssistantPage: React.FC = () => {
   const [pageState, setPageState] = useState<PageState>("INITIAL");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isTipsModalOpen, setIsTipsModalOpen] = useState(false);
   const [situations, setSituations] = useState<{ [key: string]: string }>({
     A: "",
     B: "",
@@ -41,6 +44,9 @@ const AIAssistantPage: React.FC = () => {
     setIsModalOpen(false);
     setSituations({ A: "", B: "" });
   };
+
+  const openTipsModal = () => setIsTipsModalOpen(true);
+  const closeTipsModal = () => setIsTipsModalOpen(false);
 
   const handleSituationChange = (person: string, value: string) => {
     setSituations((prev) => ({ ...prev, [person]: value }));
@@ -64,7 +70,6 @@ const AIAssistantPage: React.FC = () => {
     setSituations((prev) => {
       const newSituations = { ...prev };
       delete newSituations[personToRemove];
-
       const sortedKeys = Object.keys(newSituations).sort(
         (a, b) => personLabels.indexOf(a) - personLabels.indexOf(b)
       );
@@ -126,8 +131,6 @@ const AIAssistantPage: React.FC = () => {
 
   const handleFeedbackSent = () => {};
 
-  const nextPersonLabel = personLabels[Object.keys(situations).length];
-
   return (
     <>
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
@@ -178,7 +181,6 @@ const AIAssistantPage: React.FC = () => {
                         공정하고 객관적인 판단을 내려드립니다.
                       </p>
                     </div>
-
                     <motion.button
                       className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-2xl text-lg font-semibold hover:from-orange-600 hover:to-orange-700 transition-all duration-200 shadow-lg hover:shadow-xl"
                       whileHover={{ scale: 1.02 }}
@@ -207,7 +209,7 @@ const AIAssistantPage: React.FC = () => {
                         animate={{ rotate: 360 }}
                         transition={{
                           duration: 2,
-                          repeat: Infinity,
+                          repeat: Number.POSITIVE_INFINITY,
                           ease: "linear",
                         }}
                       >
@@ -252,7 +254,6 @@ const AIAssistantPage: React.FC = () => {
                   효과적인 갈등 해결을 위한 사용법을 안내합니다
                 </p>
               </div>
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-6">
                   <div className="flex items-start space-x-4">
@@ -269,7 +270,6 @@ const AIAssistantPage: React.FC = () => {
                       </p>
                     </div>
                   </div>
-
                   <div className="flex items-start space-x-4">
                     <div className="flex-shrink-0 w-10 h-10 bg-transparent rounded-xl flex items-center justify-center">
                       <Sparkles className="w-5 h-5 text-orange-600" />
@@ -285,7 +285,6 @@ const AIAssistantPage: React.FC = () => {
                     </div>
                   </div>
                 </div>
-
                 <div className="rounded-xl p-6 border border-gray-100 bg-gray-50">
                   <div className="flex items-center mb-4">
                     <div className="flex-shrink-0 w-10 h-10 bg-transparent rounded-xl flex items-center justify-center mr-2">
@@ -333,151 +332,20 @@ const AIAssistantPage: React.FC = () => {
         toggleHistory={toggleHistory}
       />
 
-      <AnimatePresence>
-        {isModalOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden"
-            >
-              <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-6 text-white">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                      <MessageCircle className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h2 className="text-2xl font-bold">갈등 상황 입력</h2>
-                      <p className="text-orange-100 text-sm">
-                        각자의 입장을 자세히 설명해주세요
-                      </p>
-                    </div>
-                  </div>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={closeModal}
-                    className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-                  >
-                    <XCircle className="w-6 h-6" />
-                  </motion.button>
-                </div>
-              </div>
-
-              <div className="p-6 max-h-[60vh] overflow-y-auto">
-                <div className="space-y-6">
-                  {Object.keys(situations)
-                    .sort(
-                      (a, b) =>
-                        personLabels.indexOf(a) - personLabels.indexOf(b)
-                    )
-                    .map((person, index) => (
-                      <motion.div
-                        key={person}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                        className="group"
-                      >
-                        <div className="flex items-center space-x-3 mb-3">
-                          <div
-                            className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm ${personLabelColor}`}
-                          >
-                            {person}
-                          </div>
-                          <label className="font-semibold text-gray-800">
-                            {person}의 입장
-                          </label>
-                          {Object.keys(situations).length > 2 && (
-                            <motion.button
-                              whileHover={{ scale: 1.1 }}
-                              whileTap={{ scale: 0.9 }}
-                              onClick={() => removePerson(person)}
-                              className="p-1 text-gray-400 hover:text-red-500 transition-colors"
-                            >
-                              <XCircle className="w-4 h-4" />
-                            </motion.button>
-                          )}
-                        </div>
-                        <textarea
-                          value={situations[person]}
-                          onChange={(e) =>
-                            handleSituationChange(person, e.target.value)
-                          }
-                          placeholder={`${person}의 입장과 상황을 자세히 설명해주세요...`}
-                          rows={4}
-                          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none transition-all duration-200 hover:border-gray-300"
-                        />
-                      </motion.div>
-                    ))}
-                </div>
-              </div>
-
-              <div className="p-6 bg-gray-50 border-t border-gray-200">
-                <div className="flex items-center justify-between">
-                  {Object.keys(situations).length < 4 && (
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={addPerson}
-                      className="flex items-center px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
-                    >
-                      <PlusCircle className="w-4 h-4 mr-2" /> 인원 추가 (
-                      {nextPersonLabel})
-                    </motion.button>
-                  )}
-                  <div className="flex items-center space-x-3 ml-auto">
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={closeModal}
-                      className="px-6 py-3 text-gray-600 hover:text-gray-800 transition-colors"
-                    >
-                      취소
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={handleSendSituations}
-                      disabled={
-                        Object.values(situations).some(
-                          (s) => s.trim() === ""
-                        ) || Object.keys(situations).length < 2
-                      }
-                      className="px-8 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg font-semibold hover:from-orange-600 hover:to-orange-700 transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      AI 판단 요청
-                    </motion.button>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          duration: 3000,
-          style: {
-            background: "white",
-            color: "#374151",
-            border: "1px solid #e5e7eb",
-            borderRadius: "12px",
-            boxShadow:
-              "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
-          },
-        }}
+      <ConflictInputModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        situations={situations}
+        onSituationChange={handleSituationChange}
+        onAddPerson={addPerson}
+        onRemovePerson={removePerson}
+        onSubmit={handleSendSituations}
+        onOpenTips={openTipsModal}
       />
+
+      <TipsModal isOpen={isTipsModalOpen} onClose={closeTipsModal} />
+
+      <Toaster position="top-center" reverseOrder={false} />
     </>
   );
 };
