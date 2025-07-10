@@ -338,6 +338,49 @@ const PostDetail: React.FC<PostDetailProps> = ({
     });
   };
 
+  // 삭제된 게시글 처리
+  if (post.deleted) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-6">
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="flex items-center space-x-4"
+        >
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={onBack}
+            className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span>목록으로</span>
+          </motion.button>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gray-50 rounded-2xl border border-gray-200 p-12 text-center"
+        >
+          <HelpCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-600 mb-2">
+            신고로 인해 삭제된 게시글입니다
+          </h2>
+          <p className="text-gray-500">
+            운영정책을 위반하여 관리자에 의해 삭제되었습니다.
+          </p>
+          <div className="mt-4 text-sm text-gray-400">
+            작성일: {formatDistanceToNow(new Date(post.createdAt), {
+              addSuffix: true,
+              locale: ko,
+            })}
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <motion.div
@@ -568,6 +611,34 @@ const PostDetail: React.FC<PostDetailProps> = ({
                 const isCommentAuthor = user?.id === comment.userId;
                 const isCommentDeletedUser =
                   comment.authorNickname === "탈퇴한 회원입니다.";
+
+                // 삭제된 댓글 처리
+                if (comment.deleted) {
+                  return (
+                    <motion.div
+                      key={comment.commentId}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="flex space-x-4 p-4 bg-gray-50 rounded-xl border-l-4 border-gray-300 opacity-75"
+                    >
+                      <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                        <HelpCircle className="w-4 h-4 text-gray-500" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-1">
+                          <span className="text-sm font-medium text-gray-600">신고로 인해 삭제된 댓글입니다</span>
+                        </div>
+                        <div className="text-xs text-gray-400">
+                          {formatDistanceToNow(new Date(comment.createdAt), {
+                            addSuffix: true,
+                            locale: ko,
+                          })}
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                }
 
                 return (
                   <motion.div
