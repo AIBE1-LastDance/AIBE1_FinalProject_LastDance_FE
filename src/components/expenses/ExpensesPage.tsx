@@ -2227,9 +2227,12 @@ const ExpensesPage: React.FC = () => {
                           <div className="flex-1">
                             <div className="prose prose-green max-w-none prose-headings:text-green-800 prose-p:text-green-700 prose-strong:text-green-800 prose-li:text-green-700 prose-table:border-green-300 prose-th:bg-green-100 prose-td:border-green-200 prose-blockquote:border-green-300 prose-code:text-green-800 prose-code:bg-green-100 prose-code:px-2 prose-code:py-1 prose-code:rounded prose-a:text-green-600">
                               <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                {`**${rec.title}**\n\n${rec.message}`}
+                                {`### ${rec.title}
+
+${rec.message}`}
                               </ReactMarkdown>
                             </div>
+                            <hr className="my-4 border-green-200" />
                             <div className="flex items-center space-x-4 text-xs mt-3">
                               <div className="flex items-center space-x-1">
                                 <span className="text-green-600 font-medium">
