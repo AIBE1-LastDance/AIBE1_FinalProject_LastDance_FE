@@ -128,3 +128,26 @@ apiClient.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+export const formatDate = (timestamp: string) => {
+  const date = new Date(timestamp);
+  return date.toLocaleString("ko-KR", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
+export const copyToClipboard = async (
+  text: string
+): Promise<{ success: boolean; message: string }> => {
+  try {
+    await navigator.clipboard.writeText(text);
+    return { success: true, message: "복사되었습니다!" };
+  } catch (err) {
+    console.error("복사 실패:", err);
+    return { success: false, message: "복사에 실패했습니다." };
+  }
+};

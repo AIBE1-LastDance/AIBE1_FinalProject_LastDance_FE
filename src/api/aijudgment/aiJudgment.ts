@@ -1,8 +1,8 @@
-// api/aijudgment/aiJudgment.ts
 import { apiClient } from "../../utils/api";
 import type {
   AiJudgmentRequest,
   AiJudgmentResponse,
+  AiJudgmentHistoryResponse,
 } from "../../types/aijudgment/aiMessage";
 
 export const judgeConflict = async (
@@ -19,4 +19,11 @@ export const sendFeedback = async (
   await apiClient.post(
     `/api/v1/ai/judgments/${judgmentId}/feedback?type=${type}`
   );
+};
+
+export const fetchAiJudgmentHistory = async (): Promise<
+  AiJudgmentHistoryResponse[]
+> => {
+  const response = await apiClient.get("/api/v1/ai/judgments/history");
+  return response.data.data;
 };
