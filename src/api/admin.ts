@@ -251,12 +251,49 @@ export class AdminAPI {
     limit?: number;
     status?: string;
     reportType?: string;
-    reporterId?: string;
-    reportedUserId?: string;
+    reason?: string;
+    reporterNickname?: string;
+    reporterEmail?: string;
+    reportedUserNickname?: string;
+    reportedUserEmail?: string;
     dateFrom?: string;
     dateTo?: string;
   } = {}): Promise<PaginationResponse<ReportManagement>> {
-    const response = await apiClient.get('/api/v1/admin/reports', { params });
+    // API 파라미터 정리
+    const apiParams: any = {};
+    
+    if (params.page) apiParams.page = params.page;
+    if (params.limit) apiParams.limit = params.limit;
+    
+    // 상태 필터
+    if (params.status) {
+      apiParams.status = params.status;
+    }
+    
+    // 타입 필터
+    if (params.reportType) {
+      apiParams.reportType = params.reportType;
+    }
+    
+    // 사유 필터
+    if (params.reason) {
+      apiParams.reason = params.reason;
+    }
+    
+    if (params.reporterNickname) apiParams.reporterNickname = params.reporterNickname;
+    if (params.reporterEmail) apiParams.reporterEmail = params.reporterEmail;
+    if (params.reportedUserNickname) apiParams.reportedUserNickname = params.reportedUserNickname;
+    if (params.reportedUserEmail) apiParams.reportedUserEmail = params.reportedUserEmail;
+    if (params.dateFrom) apiParams.dateFrom = params.dateFrom;
+    if (params.dateTo) apiParams.dateTo = params.dateTo;
+    
+    console.log('AdminAPI.getReports 호출 파라미터:', apiParams);
+    console.log('실제 요청 URL:', `/api/v1/admin/reports?${new URLSearchParams(Object.entries(apiParams).filter(([key, value]) => value !== undefined && value !== null).map(([key, value]) => [key, String(value)])).toString()}`);
+    
+    const response = await apiClient.get('/api/v1/admin/reports', { params: apiParams });
+    console.log('AdminAPI.getReports 전체 응답:', response);
+    console.log('AdminAPI.getReports 응답 데이터:', response.data);
+    
     // 실제 응답이 배열 형태라면 페이지네이션 정보 추가
     if (Array.isArray(response.data)) {
       return {

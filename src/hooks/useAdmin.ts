@@ -113,7 +113,9 @@ export const useAdminUsers = () => {
   } = {}) => {
     try {
       setLoading(true);
+      console.log('사용자 목록 API 호출 파라미터:', params);
       const response = await AdminAPI.getUsers(params);
+      console.log('사용자 목록 API 응답:', response);
       setUsers(response.users);
       setPagination(response.pagination);
       setError(null);
@@ -176,15 +178,19 @@ export const useAdminReports = () => {
     limit?: number;
     status?: string;
     reportType?: string;
-    reporterId?: string;
-    reportedUserId?: string;
+    reason?: string;
+    reporterNickname?: string;
+    reporterEmail?: string;
+    reportedUserNickname?: string;
+    reportedUserEmail?: string;
     dateFrom?: string;
     dateTo?: string;
   } = {}) => {
     try {
       setLoading(true);
+      console.log('신고 목록 API 호출 파라미터:', params);
       const response = await AdminAPI.getReports(params);
-      console.log('Reports API Response:', response); // 디버그용
+      console.log('신고 목록 API 응답:', response);
       setReports(response.reportManagements || []);
       setPagination(response.pagination);
       setError(null);

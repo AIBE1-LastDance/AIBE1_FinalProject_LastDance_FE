@@ -37,12 +37,17 @@ const UserManagement: React.FC = () => {
 
   // 초기 데이터 로딩
   useEffect(() => {
-    handleSearch();
+    const params = {
+      page: 1, // 초기 로딩 시 첫 페이지
+      limit: 20,
+    };
+    fetchUsers(params);
   }, []);
 
   const handleSearch = () => {
+    setCurrentPage(1); // 검색할 때는 첫 페이지로 리셋
     const params: any = {
-      page: currentPage,
+      page: 1, // 검색 시 첫 페이지부터
       limit: 20,
     };
 
@@ -64,7 +69,15 @@ const UserManagement: React.FC = () => {
   };
 
   const handlePageChange = (page: number) => {
+    console.log('페이지 변경 요청:', page, '현재 페이지:', currentPage, '총 페이지:', pagination?.totalPages);
+    
+    if (page < 1 || (pagination && page > pagination.totalPages)) {
+      console.log('유효하지 않은 페이지 번호:', page);
+      return; // 유효하지 않은 페이지
+    }
+
     setCurrentPage(page);
+    
     const params: any = {
       page,
       limit: 20,
@@ -84,6 +97,7 @@ const UserManagement: React.FC = () => {
       params.provider = providerFilter;
     }
 
+    console.log('API 호출 파라미터:', params);
     fetchUsers(params);
   };
 
@@ -670,44 +684,83 @@ const UserManagement: React.FC = () => {
         </div>
 
         {/* Pagination */}
-        <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-          <div className="flex-1 flex justify-between sm:hidden">
-            <button className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-              이전
-            </button>
-            <button className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-              다음
-            </button>
-          </div>
-          <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm text-gray-700">
-                총 <span className="font-medium">{safeString(pagination?.totalItems)}</span>명의 사용자 중{' '}
-                <span className="font-medium">
-                  {safeString(pagination ? ((safeNumber(pagination.currentPage, 1) - 1) * safeNumber(pagination.itemsPerPage, 20)) + 1 : 0)}
-                </span>
-                -{' '}
-                <span className="font-medium">
-                  {safeString(pagination ? Math.min(safeNumber(pagination.currentPage, 1) * safeNumber(pagination.itemsPerPage, 20), safeNumber(pagination.totalItems)) : 0)}
-                </span>
-                명 표시
-              </p>
+        {pagination && (
+          <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+            <div className="flex-1 flex justify-between sm:hidden">
+              <button 
+                onClick={() => handlePageChange(pagination.currentPage - 1)}
+                disabled={!pagination.hasPrevious}
+                className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                이전
+              </button>
+              <button 
+                onClick={() => handlePageChange(pagination.currentPage + 1)}
+                disabled={!pagination.hasNext}
+                className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                다음
+              </button>
             </div>
-            <div>
-              <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                <button className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                  이전
-                </button>
-                <button className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
-                  1
-                </button>
-                <button className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                  다음
-                </button>
-              </nav>
+            <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm text-gray-700">
+                  총 <span className="font-medium">{safeString(pagination?.totalItems)}</span>명의 사용자 중{' '}
+                  <span className="font-medium">
+                    {safeString(pagination ? ((safeNumber(pagination.currentPage, 1) - 1) * safeNumber(pagination.itemsPerPage, 20)) + 1 : 0)}
+                  </span>
+                  -{' '}
+                  <span className="font-medium">
+                    {safeString(pagination ? Math.min(safeNumber(pagination.currentPage, 1) * safeNumber(pagination.itemsPerPage, 20), safeNumber(pagination.totalItems)) : 0)}
+                  </span>
+                  명 표시
+                  <span className="text-xs text-gray-500 ml-2">
+                    (페이지 {currentPage}/{pagination?.totalPages || 0})
+                  </span>
+                </p>
+              </div>
+              <div>
+                <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                  <button 
+                    onClick={() => handlePageChange(safeNumber(pagination?.currentPage, 1) - 1)}
+                    disabled={!pagination?.hasPrevious}
+                    className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  
+                  {/* Page Numbers */}
+                  {Array.from({ length: Math.min(5, safeNumber(pagination?.totalPages, 1)) }, (_, i) => {
+                    const pageNumber = Math.max(1, safeNumber(pagination?.currentPage, 1) - 2) + i;
+                    if (pageNumber > safeNumber(pagination?.totalPages, 1)) return null;
+                    
+                    return (
+                      <button
+                        key={pageNumber}
+                        onClick={() => handlePageChange(pageNumber)}
+                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                          pageNumber === safeNumber(pagination?.currentPage, 1)
+                            ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
+                            : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                        }`}
+                      >
+                        {safeString(pageNumber)}
+                      </button>
+                    );
+                  })}
+                  
+                  <button 
+                    onClick={() => handlePageChange(safeNumber(pagination?.currentPage, 1) + 1)}
+                    disabled={!pagination?.hasNext}
+                    className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </nav>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Modals */}

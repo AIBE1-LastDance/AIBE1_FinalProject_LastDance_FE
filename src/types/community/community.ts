@@ -17,6 +17,7 @@ export interface Post {
   likedBy?: string[];
   bookmarkedBy?: string[];
   authorProfileImageUrl?: string; // ✅ 추가: 게시글 작성자의 프로필 이미지 URL (Optional)
+  deleted: boolean; // ✅ 추가: 신고로 인한 삭제 여부
 }
 
 export interface PostDetailProps {
