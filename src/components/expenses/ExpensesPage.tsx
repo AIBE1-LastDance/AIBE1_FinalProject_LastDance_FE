@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import {
     Plus,
     PieChart,
@@ -2197,13 +2199,12 @@ const ExpensesPage: React.FC = () => {
                         <insight.icon
                           className={`w-5 h-5 mt-0.5 ${insight.color}`}
                         />
-                        <div>
-                          <h4 className="font-medium text-gray-900">
-                            {insight.title}
-                          </h4>
-                          <p className="text-sm text-gray-600 mt-1">
-                            {insight.message}
-                          </p>
+                        <div className="flex-1">
+                          <div className="prose prose-gray max-w-none prose-headings:text-gray-900 prose-p:text-gray-600 prose-strong:text-gray-800 prose-li:text-gray-600 prose-table:border-gray-300 prose-th:bg-gray-100 prose-td:border-gray-200 prose-blockquote:border-gray-300 prose-code:text-gray-800 prose-code:bg-gray-100 prose-code:px-2 prose-code:py-1 prose-code:rounded prose-a:text-blue-600">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                              {`**${insight.title}**${insight.message ? `\n\n${insight.message}` : ''}`}
+                            </ReactMarkdown>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -2224,13 +2225,12 @@ const ExpensesPage: React.FC = () => {
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <h4 className="font-semibold text-green-800 mb-2">
-                              {rec.title}
-                            </h4>
-                            <p className="text-sm text-green-700 mb-3">
-                              {rec.message}
-                            </p>
-                            <div className="flex items-center space-x-4 text-xs">
+                            <div className="prose prose-green max-w-none prose-headings:text-green-800 prose-p:text-green-700 prose-strong:text-green-800 prose-li:text-green-700 prose-table:border-green-300 prose-th:bg-green-100 prose-td:border-green-200 prose-blockquote:border-green-300 prose-code:text-green-800 prose-code:bg-green-100 prose-code:px-2 prose-code:py-1 prose-code:rounded prose-a:text-green-600">
+                              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                {`**${rec.title}**\n\n${rec.message}`}
+                              </ReactMarkdown>
+                            </div>
+                            <div className="flex items-center space-x-4 text-xs mt-3">
                               <div className="flex items-center space-x-1">
                                 <span className="text-green-600 font-medium">
                                   예상 효과:

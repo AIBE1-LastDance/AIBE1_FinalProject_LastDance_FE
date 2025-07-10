@@ -17,6 +17,8 @@ import {
   Check,
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { judgeConflict, sendFeedback } from "../../api/aijudgment/aiJudgment";
 import type {
   AiJudgmentRequest,
@@ -312,10 +314,10 @@ const AIAssistantPage: React.FC = () => {
                     </div>
 
                     <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-8 mb-8 border border-gray-200">
-                      <div className="prose max-w-none">
-                        <div className="text-gray-800 leading-relaxed whitespace-pre-wrap">
+                      <div className="prose prose-gray prose-lg max-w-none prose-headings:text-gray-800 prose-p:text-gray-700 prose-strong:text-gray-800 prose-li:text-gray-700 prose-table:border-gray-300 prose-th:bg-gray-100 prose-td:border-gray-200 prose-blockquote:border-gray-300 prose-blockquote:text-gray-600 prose-code:text-gray-800 prose-code:bg-gray-200 prose-code:px-2 prose-code:py-1 prose-code:rounded prose-pre:bg-gray-800 prose-pre:text-gray-100 prose-a:text-blue-600 prose-a:hover:text-blue-800">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
                           {aiJudgmentResult.judgmentResult}
-                        </div>
+                        </ReactMarkdown>
                       </div>
                     </div>
 
