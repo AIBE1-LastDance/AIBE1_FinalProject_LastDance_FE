@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { 
   Search, 
   Filter, 
@@ -179,7 +181,11 @@ const AISystemManagement: React.FC = () => {
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">AI 판단 결과</h3>
                 <div className="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500">
-                  <p className="text-sm text-gray-800 whitespace-pre-wrap">{selectedJudgment.aiResponse || 'N/A'}</p>
+                  <div className="prose prose-blue max-w-none prose-headings:text-blue-800 prose-p:text-blue-700 prose-strong:text-blue-800 prose-li:text-blue-700 prose-table:border-blue-300 prose-th:bg-blue-100 prose-td:border-blue-200 prose-blockquote:border-blue-300 prose-blockquote:text-blue-600 prose-code:text-blue-800 prose-code:bg-blue-100 prose-code:px-2 prose-code:py-1 prose-code:rounded prose-pre:bg-blue-800 prose-pre:text-blue-100 prose-a:text-blue-600">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {selectedJudgment.aiResponse || 'N/A'}
+                    </ReactMarkdown>
+                  </div>
                 </div>
               </div>
 
@@ -192,7 +198,15 @@ const AISystemManagement: React.FC = () => {
                       ? 'bg-red-50 border-red-500' 
                       : 'bg-green-50 border-green-500'
                   }`}>
-                    <p className="text-sm text-gray-800 whitespace-pre-wrap">{selectedJudgment.judgmentComment}</p>
+                    <div className={`prose max-w-none ${
+                      selectedJudgment.userRating === 'DOWN'
+                        ? 'prose-red prose-headings:text-red-800 prose-p:text-red-700 prose-strong:text-red-800 prose-li:text-red-700 prose-table:border-red-300 prose-th:bg-red-100 prose-td:border-red-200 prose-blockquote:border-red-300 prose-code:text-red-800 prose-code:bg-red-100 prose-a:text-red-600'
+                        : 'prose-green prose-headings:text-green-800 prose-p:text-green-700 prose-strong:text-green-800 prose-li:text-green-700 prose-table:border-green-300 prose-th:bg-green-100 prose-td:border-green-200 prose-blockquote:border-green-300 prose-code:text-green-800 prose-code:bg-green-100 prose-a:text-green-600'
+                    } prose-code:px-2 prose-code:py-1 prose-code:rounded`}>
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {selectedJudgment.judgmentComment}
+                      </ReactMarkdown>
+                    </div>
                   </div>
                 </div>
               )}
