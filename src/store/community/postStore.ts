@@ -77,6 +77,7 @@ export const usePostStore = create<PostState>((set, get) => ({
         commentCount: item.commentCount || 0,
         comments: item.comments || [],
         userBookmarked: item.userBookmarked || false,
+        deleted: item.deleted || false,
       }));
       setPosts(mappedPosts);
       setLastFetched(Date.now());
@@ -119,6 +120,7 @@ export const usePostStore = create<PostState>((set, get) => ({
         commentCount: createdPostResponse.commentCount || 0,
         comments: createdPostResponse.comments || [],
         userBookmarked: createdPostResponse.userBookmarked || false,
+        deleted: createdPostResponse.deleted || false,
       };
 
       // 게시글 생성 성공 후, 목록을 다시 로드하여 최신 상태 반영
@@ -151,6 +153,7 @@ export const usePostStore = create<PostState>((set, get) => ({
         commentCount: response.commentCount,
         comments: response.comments,
         userBookmarked: response.userBookmarked,
+        deleted: response.deleted,
       };
       await get().loadPosts(); // 업데이트 후 게시글 목록 새로고침
       return updatedPost;
