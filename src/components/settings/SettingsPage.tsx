@@ -62,7 +62,7 @@ const SettingsPage: React.FC = () => {
                     scheduleReminder: data.scheduleReminder || false,
                     paymentReminder: data.paymentReminder || false,
                     checklistReminder: data.checklistReminder || false,
-                    webpushEnabled: data.webpushEnabled ?? true,
+                    webpushEnabled: data.webpushEnabled || false,
                     sseEnabled: data.sseEnabled ?? true,
                 });
 
@@ -75,7 +75,7 @@ const SettingsPage: React.FC = () => {
                     scheduleReminder: false,
                     paymentReminder: false,
                     checklistReminder: false,
-                    webpushEnabled: true,
+                    webpushEnabled: false,
                     sseEnabled: true
                 });
             } finally {
@@ -168,7 +168,7 @@ const SettingsPage: React.FC = () => {
         scheduleReminder: true,
         paymentReminder: true,
         checklistReminder: true,
-        webpushEnabled: true,
+        webpushEnabled: false,
         sseEnabled: true,
     });
     const [notificationLoading, setNotificationLoading] = useState(false);
@@ -554,6 +554,32 @@ const SettingsPage: React.FC = () => {
                         </div>
                     </div>
                 </div>
+            </div>
+            {/* 변경사항 저장 버튼 */}
+            <div className="flex justify-end mt-8">
+                <motion.button
+                    onClick={handleSave}
+                    disabled={isSaving || (!nicknameState.available && profileData.nickname !== user?.nickname)}
+                    className={`flex items-center space-x-3 px-6 py-3 rounded-xl font-medium transition-colors shadow-lg ${
+                        isSaving || (!nicknameState.available && profileData.nickname !== user?.nickname)
+                            ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                            : 'bg-primary-600 text-white hover:bg-primary-700'
+                    }`}
+                    whileHover={!isSaving && nicknameState.available ? { scale: 1.02 } : {}}
+                    whileTap={!isSaving && nicknameState.available ? { scale: 0.98 } : {}}
+                >
+                    {isSaving ? (
+                        <>
+                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            <span>저장 중...</span>
+                        </>
+                    ) : (
+                        <>
+                            <Save className="w-5 h-5" />
+                            <span>변경사항 저장</span>
+                        </>
+                    )}
+                </motion.button>
             </div>
         </div>
     );
