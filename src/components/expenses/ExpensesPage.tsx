@@ -293,6 +293,23 @@ const ExpensesPage: React.FC = () => {
     }
   }, [categoryFilter, loadMonthlyTrendData]);
 
+  // 모드 또는 현재 그룹이 변경될 때 데이터 새로고침 (페이지 유지)
+  useEffect(() => {
+    if (!isInitialLoad) { // 초기 로드가 아닐 때만 실행
+      const params = {
+        mode,
+        year: currentMonth.getFullYear(),
+        month: currentMonth.getMonth() + 1,
+        page: currentPage, // 현재 페이지 번호 유지
+        size: 10, // 페이지 사이즈는 기존과 동일하게
+        groupId: mode === "group" ? currentGroup?.id : null,
+        category: categoryFilter === "all" ? undefined : categoryFilter,
+        search: searchTerm || undefined,
+      };
+      loadCombinedExpenses(params);
+    }
+  }, [mode, currentGroup?.id]); // currentGroup.id를 직접 의존성으로 추가
+
   const categoryData = [
     { category: "FOOD", label: "식비", color: "#FF6B6B" },
     { category: "UTILITIES", label: "공과금", color: "#4ECDC4" },
