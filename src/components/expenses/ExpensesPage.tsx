@@ -293,6 +293,23 @@ const ExpensesPage: React.FC = () => {
     }
   }, [categoryFilter, loadMonthlyTrendData]);
 
+  // 모드 또는 현재 그룹이 변경될 때 데이터 새로고침 (페이지 유지)
+  useEffect(() => {
+    if (!isInitialLoad) { // 초기 로드가 아닐 때만 실행
+      const params = {
+        mode,
+        year: currentMonth.getFullYear(),
+        month: currentMonth.getMonth() + 1,
+        page: currentPage, // 현재 페이지 번호 유지
+        size: 10, // 페이지 사이즈는 기존과 동일하게
+        groupId: mode === "group" ? currentGroup?.id : null,
+        category: categoryFilter === "all" ? undefined : categoryFilter,
+        search: searchTerm || undefined,
+      };
+      loadCombinedExpenses(params);
+    }
+  }, [mode, currentGroup?.id]); // currentGroup.id를 직접 의존성으로 추가
+
   const categoryData = [
     { category: "FOOD", label: "식비", color: "#FF6B6B" },
     { category: "UTILITIES", label: "공과금", color: "#4ECDC4" },
@@ -1126,23 +1143,26 @@ const ExpensesPage: React.FC = () => {
 
                     <div className="flex space-x-4">
                         {/* AI Analysis Button */}
-                        {mode === 'personal' && (
-                            <motion.button
-                                className="flex items-center space-x-2 px-6 py-3 bg-primary-500 text-white rounded-2xl font-medium hover:bg-primary-700 transition-colors shadow-md hover:shadow-lg whitespace-nowrap"
-                                whileHover={{scale: 1.05}}
-                                whileTap={{scale: 0.95}}
-                                onClick={handleAnalysis}
-                                disabled={analysisLoading}
-                            >
-                                {analysisLoading ? (
-                                    <div
-                                        className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"/>
-                                ) : (
-                                    <Bot className="w-5 h-5"/>
-                                )}
-                                <span>{analysisLoading ? '분석 중...' : 'AI 분석'}</span>
-                            </motion.button>
-                        )}
+                        <motion.button
+                            className={`flex items-center space-x-2 px-6 py-3 rounded-2xl font-medium transition-colors shadow-md whitespace-nowrap ${
+                                mode === 'group'
+                                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                    : 'bg-primary-500 text-white hover:bg-primary-700 hover:shadow-lg'
+                            }`}
+                            whileHover={mode === 'personal' ? { scale: 1.05 } : {}}
+                            whileTap={mode === 'personal' ? { scale: 0.95 } : {}}
+                            onClick={handleAnalysis}
+                            disabled={mode === 'group' || analysisLoading}
+                            title={mode === 'group' ? "AI 분석은 개인 가계부에서만 사용할 수 있습니다." : "AI 지출 분석"}
+                        >
+                            {(analysisLoading && mode === 'personal') ? (
+                                <div
+                                    className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"/>
+                            ) : (
+                                <Bot className="w-5 h-5"/>
+                            )}
+                            <span>{(analysisLoading && mode === 'personal') ? '분석 중...' : 'AI 분석'}</span>
+                        </motion.button>
 
             {/* Add Expense Button */}
             <motion.button
@@ -2227,9 +2247,12 @@ const ExpensesPage: React.FC = () => {
                           <div className="flex-1">
                             <div className="prose prose-green max-w-none prose-headings:text-green-800 prose-p:text-green-700 prose-strong:text-green-800 prose-li:text-green-700 prose-table:border-green-300 prose-th:bg-green-100 prose-td:border-green-200 prose-blockquote:border-green-300 prose-code:text-green-800 prose-code:bg-green-100 prose-code:px-2 prose-code:py-1 prose-code:rounded prose-a:text-green-600">
                               <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                {`**${rec.title}**\n\n${rec.message}`}
+                                {`### ${rec.title}
+
+${rec.message}`}
                               </ReactMarkdown>
                             </div>
+                            <hr className="my-4 border-green-200" />
                             <div className="flex items-center space-x-4 text-xs mt-3">
                               <div className="flex items-center space-x-1">
                                 <span className="text-green-600 font-medium">
