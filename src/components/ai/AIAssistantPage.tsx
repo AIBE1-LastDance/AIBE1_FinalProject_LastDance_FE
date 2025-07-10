@@ -158,7 +158,7 @@ const AIAssistantPage: React.FC = () => {
 
   const resetPage = () => {
     setPageState("INITIAL");
-    setSituations({ A: "", B: "" }); // 초기 상태로 리셋
+    setSituations({ A: "", B: "" });
     setAiJudgmentResult(null);
     setCurrentRating(null);
     setCopySuccess(false);
@@ -288,7 +288,7 @@ const AIAssistantPage: React.FC = () => {
                         입력된 갈등 상황
                       </h3>
                       <div className="space-y-3">
-                        {Object.entries(aiJudgmentResult.situations) // aiJudgmentResult에서 situations 사용
+                        {Object.entries(aiJudgmentResult.situations)
                           .filter(([, content]) => content.trim() !== "")
                           .sort(
                             ([keyA], [keyB]) =>
@@ -314,7 +314,8 @@ const AIAssistantPage: React.FC = () => {
                     </div>
 
                     <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-8 mb-8 border border-gray-200">
-                      <div className="prose prose-gray prose-lg max-w-none prose-headings:text-gray-800 prose-p:text-gray-700 prose-strong:text-gray-800 prose-li:text-gray-700 prose-table:border-gray-300 prose-th:bg-gray-100 prose-td:border-gray-200 prose-blockquote:border-gray-300 prose-blockquote:text-gray-600 prose-code:text-gray-800 prose-code:bg-gray-200 prose-code:px-2 prose-code:py-1 prose-code:rounded prose-pre:bg-gray-800 prose-pre:text-gray-100 prose-a:text-blue-600 prose-a:hover:text-blue-800">
+                      {/* 이곳에 ReactMarkdown 렌더링을 위한 div를 넣었습니다. */}
+                      <div className="prose prose-gray prose-lg max-w-none">
                         <ReactMarkdown remarkPlugins={[remarkGfm]}>
                           {aiJudgmentResult.judgmentResult}
                         </ReactMarkdown>
