@@ -1,87 +1,96 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, Flag, AlertTriangle, MessageSquare, User, Trash2, Shield, Heart } from 'lucide-react';
-import toast from 'react-hot-toast';
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  X,
+  Flag,
+  AlertTriangle,
+  MessageSquare,
+  User,
+  Trash2,
+  Shield,
+  Heart,
+} from "lucide-react";
+import toast from "react-hot-toast";
 
 interface ReportModalProps {
   isOpen: boolean;
   onClose: () => void;
-  type: 'post' | 'comment';
+  type: "post" | "comment";
   targetId: string;
   targetTitle?: string;
 }
 
-const ReportModal: React.FC<ReportModalProps> = ({ 
-  isOpen, 
-  onClose, 
-  type, 
-  targetId, 
-  targetTitle 
+const ReportModal: React.FC<ReportModalProps> = ({
+  isOpen,
+  onClose,
+  type,
+  targetId,
+  targetTitle,
 }) => {
-  const [selectedReason, setSelectedReason] = useState<string>('');
-  const [customReason, setCustomReason] = useState('');
+  const [selectedReason, setSelectedReason] = useState<string>("");
+  const [customReason, setCustomReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const reportReasons = [
     {
-      id: 'spam',
-      label: '스팸/도배',
-      description: '반복적인 광고나 의미없는 내용',
+      id: "spam",
+      label: "스팸/도배",
+      description: "반복적인 광고나 의미없는 내용",
       icon: Trash2,
-      color: 'text-orange-600'
+      color: "text-orange-600",
     },
     {
-      id: 'inappropriate',
-      label: '부적절한 내용',
-      description: '선정적이거나 폭력적인 내용',
+      id: "inappropriate",
+      label: "부적절한 내용",
+      description: "선정적이거나 폭력적인 내용",
       icon: AlertTriangle,
-      color: 'text-red-600'
+      color: "text-red-600",
     },
     {
-      id: 'harassment',
-      label: '괴롭힘/욕설',
-      description: '다른 사용자를 향한 괴롭힘이나 욕설',
+      id: "harassment",
+      label: "괴롭힘/욕설",
+      description: "다른 사용자를 향한 괴롭힘이나 욕설",
       icon: User,
-      color: 'text-purple-600'
+      color: "text-purple-600",
     },
     {
-      id: 'misinformation',
-      label: '허위정보',
-      description: '거짓되거나 오해를 불러일으키는 정보',
+      id: "misinformation",
+      label: "허위정보",
+      description: "거짓되거나 오해를 불러일으키는 정보",
       icon: Shield,
-      color: 'text-blue-600'
+      color: "text-blue-600",
     },
     {
-      id: 'copyright',
-      label: '저작권 침해',
-      description: '다른 사람의 저작물을 무단 사용',
+      id: "copyright",
+      label: "저작권 침해",
+      description: "다른 사람의 저작물을 무단 사용",
       icon: MessageSquare,
-      color: 'text-green-600'
+      color: "text-green-600",
     },
     {
-      id: 'hate',
-      label: '혐오 발언',
-      description: '특정 집단에 대한 차별이나 혐오 표현',
+      id: "hate",
+      label: "혐오 발언",
+      description: "특정 집단에 대한 차별이나 혐오 표현",
       icon: Heart,
-      color: 'text-pink-600'
+      color: "text-pink-600",
     },
     {
-      id: 'other',
-      label: '기타',
-      description: '위에 해당하지 않는 기타 사유',
+      id: "other",
+      label: "기타",
+      description: "위에 해당하지 않는 기타 사유",
       icon: Flag,
-      color: 'text-gray-600'
-    }
+      color: "text-gray-600",
+    },
   ];
 
   const handleSubmit = async () => {
     if (!selectedReason) {
-      toast.error('신고 사유를 선택해주세요.');
+      toast.error("신고 사유를 선택해주세요.");
       return;
     }
 
-    if (selectedReason === 'other' && !customReason.trim()) {
-      toast.error('기타 사유를 작성해주세요.');
+    if (selectedReason === "other" && !customReason.trim()) {
+      toast.error("기타 사유를 작성해주세요.");
       return;
     }
 
@@ -93,17 +102,21 @@ const ReportModal: React.FC<ReportModalProps> = ({
         targetType: type,
         targetId,
         reason: selectedReason,
-        customReason: selectedReason === 'other' ? customReason.trim() : '',
-        timestamp: new Date()
+        customReason: selectedReason === "other" ? customReason.trim() : "",
+        timestamp: new Date(),
       };
 
       // 시뮬레이션: 1초 후 성공
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      toast.success(`${type === 'post' ? '게시글' : '댓글'}이 신고되었습니다. 검토 후 조치하겠습니다.`);
+      toast.success(
+        `${
+          type === "post" ? "게시글" : "댓글"
+        }이 신고되었습니다. 검토 후 조치하겠습니다.`
+      );
       onClose();
     } catch (error) {
-      toast.error('신고 처리 중 오류가 발생했습니다.');
+      toast.error("신고 처리 중 오류가 발생했습니다.");
     } finally {
       setIsSubmitting(false);
     }
@@ -111,8 +124,8 @@ const ReportModal: React.FC<ReportModalProps> = ({
 
   const handleClose = () => {
     if (!isSubmitting) {
-      setSelectedReason('');
-      setCustomReason('');
+      setSelectedReason("");
+      setCustomReason("");
       onClose();
     }
   };
@@ -136,7 +149,7 @@ const ReportModal: React.FC<ReportModalProps> = ({
               </div>
               <div>
                 <h2 className="text-lg font-bold text-gray-900">
-                  {type === 'post' ? '게시글' : '댓글'} 신고하기
+                  {type === "post" ? "게시글" : "댓글"} 신고하기
                 </h2>
                 {targetTitle && (
                   <p className="text-sm text-gray-500 truncate max-w-48">
@@ -170,12 +183,14 @@ const ReportModal: React.FC<ReportModalProps> = ({
                       whileTap={{ scale: 0.98 }}
                       className={`w-full p-4 rounded-xl border-2 text-left transition-colors ${
                         selectedReason === reason.id
-                          ? 'border-red-300 bg-red-50'
-                          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                          ? "border-red-300 bg-red-50"
+                          : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
                       }`}
                     >
                       <div className="flex items-start space-x-3">
-                        <reason.icon className={`w-5 h-5 mt-0.5 ${reason.color}`} />
+                        <reason.icon
+                          className={`w-5 h-5 mt-0.5 ${reason.color}`}
+                        />
                         <div>
                           <div className="font-medium text-gray-900 mb-1">
                             {reason.label}
@@ -191,10 +206,10 @@ const ReportModal: React.FC<ReportModalProps> = ({
               </div>
 
               {/* 기타 사유 작성 */}
-              {selectedReason === 'other' && (
+              {selectedReason === "other" && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
+                  animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
                   className="space-y-2"
                 >
@@ -256,5 +271,5 @@ const ReportModal: React.FC<ReportModalProps> = ({
     </AnimatePresence>
   );
 };
-
+//
 export default ReportModal;
