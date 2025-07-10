@@ -1126,23 +1126,26 @@ const ExpensesPage: React.FC = () => {
 
                     <div className="flex space-x-4">
                         {/* AI Analysis Button */}
-                        {mode === 'personal' && (
-                            <motion.button
-                                className="flex items-center space-x-2 px-6 py-3 bg-primary-500 text-white rounded-2xl font-medium hover:bg-primary-700 transition-colors shadow-md hover:shadow-lg whitespace-nowrap"
-                                whileHover={{scale: 1.05}}
-                                whileTap={{scale: 0.95}}
-                                onClick={handleAnalysis}
-                                disabled={analysisLoading}
-                            >
-                                {analysisLoading ? (
-                                    <div
-                                        className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"/>
-                                ) : (
-                                    <Bot className="w-5 h-5"/>
-                                )}
-                                <span>{analysisLoading ? '분석 중...' : 'AI 분석'}</span>
-                            </motion.button>
-                        )}
+                        <motion.button
+                            className={`flex items-center space-x-2 px-6 py-3 rounded-2xl font-medium transition-colors shadow-md whitespace-nowrap ${
+                                mode === 'group'
+                                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                    : 'bg-primary-500 text-white hover:bg-primary-700 hover:shadow-lg'
+                            }`}
+                            whileHover={mode === 'personal' ? { scale: 1.05 } : {}}
+                            whileTap={mode === 'personal' ? { scale: 0.95 } : {}}
+                            onClick={handleAnalysis}
+                            disabled={mode === 'group' || analysisLoading}
+                            title={mode === 'group' ? "AI 분석은 개인 가계부에서만 사용할 수 있습니다." : "AI 지출 분석"}
+                        >
+                            {(analysisLoading && mode === 'personal') ? (
+                                <div
+                                    className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"/>
+                            ) : (
+                                <Bot className="w-5 h-5"/>
+                            )}
+                            <span>{(analysisLoading && mode === 'personal') ? '분석 중...' : 'AI 분석'}</span>
+                        </motion.button>
 
             {/* Add Expense Button */}
             <motion.button
