@@ -584,7 +584,8 @@ const UserManagement: React.FC = () => {
 
       {/* Users Table */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Desktop View - Table */}
+        <div className="hidden lg:block overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -681,6 +682,72 @@ const UserManagement: React.FC = () => {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile View - Cards */}
+        <div className="lg:hidden">
+          {loading ? (
+            <div className="p-6 text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="text-gray-500 mt-2">로딩 중...</p>
+            </div>
+          ) : users.length === 0 ? (
+            <div className="p-6 text-center text-gray-500">
+              사용자가 없습니다.
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-200">
+              {users.map((user) => (
+                <div key={user.userId} className="p-4 hover:bg-gray-50">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-gray-900">{user.nickname}</div>
+                      <div className="text-sm text-gray-500">{user.email}</div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      {getProviderBadge(user.provider)}
+                      {getStatusBadge(user)}
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2 text-xs text-gray-500 mb-3">
+                    <div>가입일: {new Date(user.createdAt).toLocaleDateString()}</div>
+                    <div>역할: {user.role}</div>
+                  </div>
+
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => handleUserDetail(user.userId)}
+                      className="flex-1 text-blue-600 hover:text-blue-900 flex items-center justify-center text-sm py-2"
+                    >
+                      <Eye className="w-4 h-4 mr-1" />
+                      상세보기
+                    </button>
+                    {!user.isBanned ? (
+                      <button
+                        onClick={() => {
+                          setSelectedUser(user as any);
+                          setPenaltyModal(true);
+                        }}
+                        className="flex-1 text-red-600 hover:text-red-900 flex items-center justify-center text-sm py-2"
+                      >
+                        <Ban className="w-4 h-4 mr-1" />
+                        제재
+                      </button>
+                    ) : (
+                      <button 
+                        onClick={() => handleUnbanUser(user)}
+                        className="flex-1 text-green-600 hover:text-green-900 flex items-center justify-center text-sm py-2"
+                      >
+                        <UserCheck className="w-4 h-4 mr-1" />
+                        해제
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Pagination */}

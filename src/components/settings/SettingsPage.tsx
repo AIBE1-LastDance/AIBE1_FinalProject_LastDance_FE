@@ -5,6 +5,7 @@ import {useAuthStore} from '../../store/authStore';
 import toast from 'react-hot-toast';
 import {profileApi} from "../../api/profile";
 import {notificationApi, NotificationSettingRequest} from "../../api/notifications";
+import {AdminAPI} from "../../api/admin";
 import Avatar from "../common/Avatar";
 import {useSSEStore} from "../../store/sseStore";
 import {useNavigate} from "react-router-dom";
@@ -47,6 +48,36 @@ const SettingsPage: React.FC = () => {
                 monthlyBudget: user.monthlyBudget || 0
             });
         }
+    }, [user]);
+
+    // 관리자 권한 확인
+    useEffect(() => {
+        const checkAdminAuth = async () => {
+            if (!user) {
+                setIsAdmin(false);
+                setAdminCheckLoading(false);
+                return;
+            }
+
+            try {
+                setAdminCheckLoading(true);
+                const adminResponse = await AdminAPI.verifyAdmin();
+                console.log('Admin auth response:', adminResponse);
+                
+                // 응답 구조: { success: true, data: { role: "ADMIN" } }
+                const isAdminUser = adminResponse?.data?.role === 'ADMIN';
+                setIsAdmin(isAdminUser);
+                
+                console.log('Is admin user:', isAdminUser);
+            } catch (error) {
+                console.log('Admin auth failed (not admin):', error);
+                setIsAdmin(false);
+            } finally {
+                setAdminCheckLoading(false);
+            }
+        };
+
+        checkAdminAuth();
     }, [user]);
 
     // 알림 설정 로드
@@ -175,6 +206,8 @@ const SettingsPage: React.FC = () => {
     });
     const [notificationLoading, setNotificationLoading] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [isAdmin, setIsAdmin] = useState(false);
+    const [adminCheckLoading, setAdminCheckLoading] = useState(true);
 
     // SSE/웹푸시 특별 처리 함수
     const handleSpecialMethodToggle = async (methodKey: string, enabled: boolean) => {
@@ -217,8 +250,15 @@ const SettingsPage: React.FC = () => {
     const tabs = [
         {id: 'profile', label: '프로필 정보', icon: User},
         {id: 'notifications', label: '알림', icon: Bell},
-        ...(user?.role === 'ADMIN' ? [{id: 'admin', label: '관리자 페이지', icon: Shield}] : []),
+        ...(isAdmin ? [{id: 'admin', label: '관리자 페이지', icon: Shield}] : []),
     ];
+
+    // 디버깅용 로그 추가
+    console.log('Current user:', user);
+    console.log('User role:', user?.role);
+    console.log('Is admin (API check):', isAdmin);
+    console.log('Admin check loading:', adminCheckLoading);
+    console.log('Tabs:', tabs);
 
     const handleProfileChange = (field: string, value: string) => {
         if (field === 'monthlyBudget') {
@@ -1037,12 +1077,56 @@ const SettingsPage: React.FC = () => {
         );
     };
 
+    const renderAdminSettings = () => (
+        <div className="space-y-6">
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+                <h3 className="text-xl font-bold text-gray-900 mb-6">관리자 도구</h3>
+                
+                <div className="space-y-4">
+                    {/* 관리자 페이지 이동 버튼 */}
+                    <motion.button
+                        onClick={() => navigate('/admin')}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl hover:from-red-600 hover:to-red-700 transition-all shadow-lg"
+                    >
+                        <div className="flex items-center space-x-3">
+                            <Shield className="w-6 h-6" />
+                            <div className="text-left">
+                                <p className="font-semibold">관리자 페이지</p>
+                                <p className="text-sm text-red-100">시스템 관리 및 사용자 관리</p>
+                            </div>
+                        </div>
+                        <ArrowRight className="w-5 h-5" />
+                    </motion.button>
+
+                    {/* 관리자 정보 */}
+                    <div className="bg-gradient-to-r from-red-50 to-red-100 p-4 rounded-xl border border-red-200">
+                        <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center">
+                                <Shield className="w-5 h-5 text-white" />
+                            </div>
+                            <div>
+                                <p className="font-medium text-red-900">관리자 계정</p>
+                                <p className="text-sm text-red-700">
+                                    관리자 권한으로 로그인되어 있습니다.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+
     const renderContent = () => {
         switch (activeTab) {
             case 'profile':
                 return renderProfileSettings();
             case 'notifications':
                 return renderNotificationSettings();
+            case 'admin':
+                return renderAdminSettings();
             default:
                 return renderProfileSettings();
         }
@@ -1078,20 +1162,35 @@ const SettingsPage: React.FC = () => {
                 >
                     <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
                         <nav className="space-y-2">
-                            {tabs.map((tab) => (
-                                <button
-                                    key={tab.id}
-                                    onClick={() => setActiveTab(tab.id)}
-                                    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left transition-all ${
-                                        activeTab === tab.id
-                                            ? 'bg-primary-50 text-primary-600 border border-primary-200'
-                                            : 'text-gray-600 hover:bg-gray-50 hover:text-primary-600'
-                                    }`}
-                                >
-                                    <tab.icon className="w-5 h-5"/>
-                                    <span className="font-medium">{tab.label}</span>
-                                </button>
-                            ))}
+                            {adminCheckLoading ? (
+                                <div className="flex items-center justify-center py-4">
+                                    <div className="w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+                                </div>
+                            ) : (
+                                tabs.map((tab) => (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => {
+                                            if (tab.id === 'admin') {
+                                                navigate('/admin');
+                                            } else {
+                                                setActiveTab(tab.id);
+                                            }
+                                        }}
+                                        className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left transition-all ${
+                                            activeTab === tab.id
+                                                ? 'bg-primary-50 text-primary-600 border border-primary-200'
+                                                : tab.id === 'admin'
+                                                    ? 'text-red-600 hover:bg-red-50 hover:text-red-700'
+                                                    : 'text-gray-600 hover:bg-gray-50 hover:text-primary-600'
+                                        }`}
+                                    >
+                                        <tab.icon className="w-5 h-5"/>
+                                        <span className="font-medium">{tab.label}</span>
+                                        {tab.id === 'admin' && <ArrowRight className="w-4 h-4 ml-auto" />}
+                                    </button>
+                                ))
+                            )}
                         </nav>
                     </div>
                 </motion.div>
