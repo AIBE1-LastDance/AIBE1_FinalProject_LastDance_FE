@@ -252,7 +252,7 @@ const CalendarPage: React.FC = () => {
             {/* View Selector */}
             <div className="relative">
               <motion.button
-                  className="flex items-center space-x-2 sm:space-x-3 pl-3 pr-4 py-3 border border-gray-200 rounded-lg text-sm bg-white hover:bg-gray-50 transition-colors font-medium text-gray-700 cursor-pointer shadow-sm w-full sm:w-auto whitespace-nowrap"
+                  className="flex items-center space-x-2 sm:space-x-3 pl-4 pr-4 py-3 border border-gray-200 rounded-2xl text-sm bg-white hover:bg-gray-50 transition-colors font-medium text-gray-700 cursor-pointer shadow-md hover:shadow-lg w-full sm:w-auto whitespace-nowrap"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => setShowViewDropdown(!showViewDropdown)}
@@ -292,7 +292,7 @@ const CalendarPage: React.FC = () => {
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, y: -10, scale: 0.95 }}
                           transition={{ duration: 0.2 }}
-                          className="absolute top-full mt-2 left-0 right-0 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-20"
+                          className="absolute top-full mt-2 left-0 right-0 bg-white rounded-2xl shadow-lg border border-gray-200 py-2 z-20"
                       >
                         {viewOptions.map((option) => (
                             <motion.button
@@ -319,7 +319,7 @@ const CalendarPage: React.FC = () => {
                                       animate={{ scale: 1 }}
                                       className="flex-shrink-0"
                                   >
-                                    <svg className="w-4 h-4 text-primary-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <svg className="w-4 h-4 text-accent-500" fill="currentColor" viewBox="0 0 20 20">
                                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                     </svg>
                                   </motion.div>
@@ -334,7 +334,7 @@ const CalendarPage: React.FC = () => {
 
             {/* Add Event Button */}
             <motion.button
-                className="flex items-center space-x-2 px-4 py-3 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors shadow-sm whitespace-nowrap"
+                className="flex items-center space-x-2 px-6 py-3 bg-accent-500 text-white rounded-2xl font-medium hover:bg-accent-600 transition-colors shadow-md hover:shadow-lg whitespace-nowrap"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => {
@@ -344,7 +344,7 @@ const CalendarPage: React.FC = () => {
                 }}
                 disabled={loading}
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-5 h-5" />
               <span>일정 추가</span>
             </motion.button>
           </div>
@@ -725,7 +725,7 @@ const DayView: React.FC<{
                 <CalendarIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                 <p className="text-gray-500">이 날에는 일정이 없습니다</p>
                 <motion.button
-                    className="mt-4 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                    className="mt-4 px-4 py-2 bg-accent-500 text-white rounded-lg hover:bg-accent-600 transition-colors"
                     whileHover={{ scale: 1.05 }}
                     onClick={() => onDateClick(currentDate)}
                 >

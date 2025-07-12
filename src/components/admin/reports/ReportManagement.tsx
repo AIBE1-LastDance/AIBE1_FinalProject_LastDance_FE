@@ -1072,42 +1072,42 @@ const ReportManagement: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 md:p-6">
                     <div className="flex items-center">
-                        <div className="p-2 bg-blue-100 rounded-lg">
-                            <Eye className="w-6 h-6 text-blue-600"/>
+                        <div className="p-1.5 md:p-2 bg-blue-100 rounded-lg">
+                            <Eye className="w-4 h-4 md:w-6 md:h-6 text-blue-600"/>
                         </div>
-                        <div className="ml-4">
-                            <p className="text-sm font-medium text-gray-600">검토중</p>
-                            <p className="text-2xl font-bold text-gray-900">
+                        <div className="ml-2 md:ml-4">
+                            <p className="text-xs md:text-sm font-medium text-gray-600">검토중</p>
+                            <p className="text-lg md:text-2xl font-bold text-gray-900">
                                 {safeString(statusCounts.reviewed)}
                             </p>
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 md:p-6">
                     <div className="flex items-center">
-                        <div className="p-2 bg-green-100 rounded-lg">
-                            <CheckCircle className="w-6 h-6 text-green-600"/>
+                        <div className="p-1.5 md:p-2 bg-green-100 rounded-lg">
+                            <CheckCircle className="w-4 h-4 md:w-6 md:h-6 text-green-600"/>
                         </div>
-                        <div className="ml-4">
-                            <p className="text-sm font-medium text-gray-600">처리완료</p>
-                            <p className="text-2xl font-bold text-gray-900">
+                        <div className="ml-2 md:ml-4">
+                            <p className="text-xs md:text-sm font-medium text-gray-600">처리완료</p>
+                            <p className="text-lg md:text-2xl font-bold text-gray-900">
                                 {safeString(statusCounts.resolved)}
                             </p>
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 md:p-6">
                     <div className="flex items-center">
-                        <div className="p-2 bg-red-100 rounded-lg">
-                            <XCircle className="w-6 h-6 text-red-600"/>
+                        <div className="p-1.5 md:p-2 bg-red-100 rounded-lg">
+                            <XCircle className="w-4 h-4 md:w-6 md:h-6 text-red-600"/>
                         </div>
-                        <div className="ml-4">
-                            <p className="text-sm font-medium text-gray-600">반려</p>
-                            <p className="text-2xl font-bold text-gray-900">
+                        <div className="ml-2 md:ml-4">
+                            <p className="text-xs md:text-sm font-medium text-gray-600">반려</p>
+                            <p className="text-lg md:text-2xl font-bold text-gray-900">
                                 {safeString(statusCounts.rejected)}
                             </p>
                         </div>
@@ -1211,32 +1211,24 @@ const ReportManagement: React.FC = () => {
 
             {/* Reports Table */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                <div className="overflow-x-auto">
+                {/* Desktop View - Table */}
+                <div className="hidden lg:block overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                         <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                신고 ID
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
+                                ID
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                신고자/피신고자
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                신고 정보
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                유형
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48">
+                                유형/사유
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                신고 사유
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                신고일
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
                                 상태
                             </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                처리일
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
                                 액션
                             </th>
                         </tr>
@@ -1244,7 +1236,7 @@ const ReportManagement: React.FC = () => {
                         <tbody className="bg-white divide-y divide-gray-200">
                         {loading ? (
                             <tr>
-                                <td colSpan={8} className="px-6 py-4 text-center">
+                                <td colSpan={5} className="px-6 py-4 text-center">
                                     <div className="flex items-center justify-center">
                                         <div
                                             className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
@@ -1254,67 +1246,63 @@ const ReportManagement: React.FC = () => {
                             </tr>
                         ) : error ? (
                             <tr>
-                                <td colSpan={8} className="px-6 py-4 text-center text-gray-500">
-                                    사용자가 없습니다.
+                                <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
+                                    오류가 발생했습니다.
                                 </td>
                             </tr>
                         ) : safeReports.length === 0 ? (
                             <tr>
-                                <td colSpan={8} className="px-6 py-4 text-center text-gray-500">
+                                <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
                                     신고가 없습니다.
                                 </td>
                             </tr>
                         ) : (
                             safeReports.map((report) => (
                                 <tr key={report.reportId} className="hover:bg-gray-50">
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                         #{report.reportId}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div>
-                                            <div className="text-sm font-medium text-gray-900">
-                                                {report.reporter?.nickname || 'N/A'}
-                                                {report.reporter?.email && (
-                                                    <span className="text-gray-500">({report.reporter.email})</span>
-                                                )}
+                                    <td className="px-4 py-4">
+                                        <div className="space-y-1">
+                                            <div className="flex items-center text-sm">
+                                                <span className="font-medium text-gray-900">
+                                                    {report.reporter?.nickname || 'N/A'}
+                                                </span>
+                                                <span className="mx-2 text-gray-400">→</span>
+                                                <span className="font-medium text-gray-900">
+                                                    {report.reportedUser?.nickname || 'N/A'}
+                                                </span>
                                             </div>
-                                            <div className="text-sm text-gray-500 flex items-center">
-                                                <span>→</span>
-                                                <span className="ml-1 font-medium text-gray-900">
-                            {report.reportedUser?.nickname || 'N/A'}
-                                                    {report.reportedUser?.email && (
-                                                        <span
-                                                            className="text-gray-500">({report.reportedUser.email})</span>
-                                                    )}
-                          </span>
+                                            <div className="text-xs text-gray-500">
+                                                {new Date(report.createdAt).toLocaleDateString('ko-KR')}
+                                                {report.processedAt && (
+                                                    <span className="ml-2">
+                                                        처리: {new Date(report.processedAt).toLocaleDateString('ko-KR')}
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        {getTypeBadge(report.reportType)}
+                                    <td className="px-4 py-4">
+                                        <div className="space-y-1">
+                                            <div className="w-full">
+                                                {getTypeBadge(report.reportType)}
+                                            </div>
+                                            <div className="w-full">
+                                                {getReasonBadge(report.reason)}
+                                            </div>
+                                        </div>
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        {getReasonBadge(report.reason)}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        {new Date(report.createdAt).toLocaleDateString('ko-KR')}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
+                                    <td className="px-4 py-4 whitespace-nowrap">
                                         {getStatusBadge(report.status)}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        {report.processedAt
-                                            ? new Date(report.processedAt).toLocaleDateString('ko-KR')
-                                            : '미처리'
-                                        }
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
                                         <button
                                             onClick={() => handleReportDetail(report.reportId)}
                                             className="text-blue-600 hover:text-blue-900 flex items-center"
                                         >
                                             <Eye className="w-4 h-4 mr-1"/>
-                                            상세보기
+                                            보기
                                         </button>
                                     </td>
                                 </tr>
@@ -1322,6 +1310,81 @@ const ReportManagement: React.FC = () => {
                         )}
                         </tbody>
                     </table>
+                </div>
+
+                {/* Mobile View - Cards */}
+                <div className="lg:hidden">
+                    {loading ? (
+                        <div className="p-6 text-center">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                            <p className="text-gray-500 mt-2">로딩 중...</p>
+                        </div>
+                    ) : error ? (
+                        <div className="p-6 text-center text-gray-500">
+                            오류가 발생했습니다.
+                        </div>
+                    ) : safeReports.length === 0 ? (
+                        <div className="p-6 text-center text-gray-500">
+                            신고가 없습니다.
+                        </div>
+                    ) : (
+                        <div className="divide-y divide-gray-200">
+                            {safeReports.map((report) => (
+                                <div key={report.reportId} className="p-4 hover:bg-gray-50">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <div className="flex-1">
+                                            <div className="text-sm font-medium text-gray-900">
+                                                신고 #{report.reportId}
+                                            </div>
+                                            <div className="text-xs text-gray-500">
+                                                {new Date(report.createdAt).toLocaleDateString('ko-KR')}
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            {getTypeBadge(report.reportType)}
+                                            {getStatusBadge(report.status)}
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2 mb-3">
+                                        <div className="text-xs">
+                                            <span className="text-gray-600">신고자:</span>
+                                            <span className="ml-1 font-medium text-gray-900">
+                                                {report.reporter?.nickname || 'N/A'}
+                                            </span>
+                                        </div>
+                                        <div className="text-xs">
+                                            <span className="text-gray-600">피신고자:</span>
+                                            <span className="ml-1 font-medium text-gray-900">
+                                                {report.reportedUser?.nickname || 'N/A'}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <span className="text-xs text-gray-600">사유:</span>
+                                            {getReasonBadge(report.reason)}
+                                        </div>
+                                        <div className="text-xs">
+                                            <span className="text-gray-600">처리일:</span>
+                                            <span className="ml-1">
+                                                {report.processedAt
+                                                    ? new Date(report.processedAt).toLocaleDateString('ko-KR')
+                                                    : '미처리'
+                                                }
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        onClick={() => handleReportDetail(report.reportId)}
+                                        className="w-full text-blue-600 hover:text-blue-900 flex items-center justify-center text-sm py-2 border border-blue-200 rounded-md hover:bg-blue-50"
+                                    >
+                                        <Eye className="w-4 h-4 mr-1"/>
+                                        상세보기
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
                 {/* Pagination */}

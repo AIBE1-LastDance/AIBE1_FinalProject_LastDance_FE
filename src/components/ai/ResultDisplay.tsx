@@ -32,7 +32,7 @@ const personThemes = {
   A: {
     gradient: "bg-gradient-to-br from-orange-50 to-orange-100",
     border: "border-orange-200",
-    label: "bg-gradient-to-br from-orange-500 to-orange-600 text-white",
+    label: "bg-gradient-to-br from-primary-500 to-primary-600 text-white",
     accent: "border-l-4 border-orange-400",
   },
   B: {
@@ -117,7 +117,7 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
         transition={{ duration: 0.6 }}
         className="text-center mb-12"
       >
-        <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-orange-500 to-orange-600 rounded-3xl mb-6 shadow-xl">
+        <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-primary-500 to-primary-600 rounded-3xl mb-6 shadow-xl">
           <ShieldCheck className="w-10 h-10 text-white" />
         </div>
         <h2 className="text-4xl font-bold bg-gradient-to-r from-orange-600 to-orange-800 bg-clip-text text-transparent mb-4">
@@ -135,7 +135,7 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
         className="bg-white rounded-3xl p-8 mb-8 border border-gray-200 shadow-xl border-l-4 border-l-orange-400"
       >
         <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-          <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mr-4 shadow-lg">
+          <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center mr-4 shadow-lg">
             <Users className="w-5 h-5 text-white" />
           </div>
           입력된 갈등 상황
@@ -187,7 +187,7 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
         className="relative bg-white border border-gray-200 border-l-4 border-l-orange-400 rounded-3xl p-8 shadow-xl transition-all duration-300 mb-8"
       >
         <div className="flex items-center space-x-4 mb-6">
-          <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center">
+          <div className="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center">
             <Sparkles className="w-7 h-7 text-white" />
           </div>
           <div>
@@ -264,7 +264,7 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
         </motion.button>
 
         <motion.button
-          className="flex items-center px-8 py-4 rounded-2xl bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold hover:from-orange-600 hover:to-orange-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+          className="flex items-center px-8 py-4 rounded-2xl bg-gradient-to-r from-primary-500 to-primary-600 text-white font-semibold hover:from-orange-600 hover:to-orange-700 transition-all duration-200 shadow-lg hover:shadow-xl"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={onReset}

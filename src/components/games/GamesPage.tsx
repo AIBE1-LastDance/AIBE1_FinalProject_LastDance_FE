@@ -94,57 +94,35 @@ const GamesPage: React.FC = () => {
             title: '룰렛',
             description: '당번을 정하는 재밌는 룰렛 게임',
             icon: RotateCcw,
-            color: 'bg-gradient-to-br from-orange-300 to-orange-400',
+            color: 'bg-gradient-to-br from-primary-300 to-primary-400',
             path: '/games/roulette',
             players: '2-8명',
             duration: '1분',
-            difficulty: 'Easy'
         },
         {
             id: 'ladder',
             title: '사다리타기',
             description: '사다리를 타고 내려가서 운명을 결정하세요',
             icon: GitBranch,
-            color: 'bg-gradient-to-br from-orange-300 to-orange-400',
+            color: 'bg-gradient-to-br from-primary-300 to-primary-400',
             path: '/games/ladder',
             players: '2-8명',
             duration: '2분',
-            difficulty: 'Easy'
         },
         {
             id: 'yahtzee',
             title: 'YAHTZEE (주사위)',
             description: '최고의 주사위 조합을 만드는 전략형 점수 게임',
             icon: Dice6,
-            color: 'bg-gradient-to-br from-orange-300 to-orange-400',
+            color: 'bg-gradient-to-br from-primary-300 to-primary-400',
             path: '/games/yahtzee',
-            players: '1~6명',
+            players: '1~4명',
             duration: '5~15분',
-            difficulty: 'Normal'
         }
     ];
 
     return (
         <div className="space-y-6">
-            {/* Header */}
-            <motion.div
-                initial={{opacity: 0, y: 20}}
-                animate={{opacity: 1, y: 0}}
-                transition={{duration: 0.6}}
-                className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-2xl p-6 text-white"
-            >
-                <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                        <Gamepad2 className="w-6 h-6"/>
-                    </div>
-                    <div>
-                        <h1 className="text-2xl font-bold">미니게임</h1>
-                        <p className="text-primary-100">
-                            재밌는 게임으로 당번을 정하고 함께 즐겨보세요!
-                        </p>
-                    </div>
-                </div>
-            </motion.div>
 
             {/* Games Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -170,13 +148,6 @@ const GamesPage: React.FC = () => {
                                     className="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center backdrop-blur-sm">
                                     <game.icon className="w-6 h-6"/>
                                 </div>
-                                <div className={`px-2 py-1 text-xs font-medium rounded-full ${
-                                    game.difficulty === 'Easy' ? 'bg-green-500 bg-opacity-20' :
-                                        game.difficulty === 'Medium' ? 'bg-yellow-500 bg-opacity-20' :
-                                            'bg-red-500 bg-opacity-20'
-                                }`}>
-                                    {game.difficulty}
-                                </div>
                             </div>
 
                             <h3 className="text-xl font-bold mb-2">{game.title}</h3>
@@ -193,17 +164,7 @@ const GamesPage: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center space-x-1">
-                                    {[...Array(5)].map((_, i) => (
-                                        <Star
-                                            key={i}
-                                            className={`w-3 h-3 ${
-                                                i < 4 ? 'text-yellow-300 fill-current' : 'text-white text-opacity-30'
-                                            }`}
-                                        />
-                                    ))}
-                                </div>
+                            <div className="text-right">
                                 <div className="text-sm font-medium">플레이 →</div>
                             </div>
                         </div>
@@ -311,17 +272,15 @@ const GamesPage: React.FC = () => {
                         {displayedResults.map((result, index) => (
                             <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                                 <div className="flex items-center space-x-3">
-                                    <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center">
-                                        <span className="text-white text-sm font-medium">
-                                            {result.result.charAt(0)}
-                                        </span>
-                                    </div>
                                     <div>
                                         <div className="text-sm font-medium text-gray-800">
-                                            {getGameTypeName(result.gameType)} - {result.result}
+                                            {getGameTypeName(result.gameType)}
                                         </div>
                                         <div className="text-xs text-gray-600">
                                             참여자: {result.participants.join(', ')}
+                                        </div>
+                                        <div className="text-xs text-gray-600">
+                                            당첨자: {result.result}
                                         </div>
                                         {result.penalty && (
                                             <div className="text-xs text-red-600 font-medium">

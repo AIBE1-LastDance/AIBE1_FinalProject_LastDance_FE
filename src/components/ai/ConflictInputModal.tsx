@@ -45,7 +45,7 @@ const ConflictInputModal: React.FC<ConflictInputModalProps> = ({
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
             className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden"
           >
-            <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-6 text-white">
+            <div className="bg-gradient-to-r from-primary-500 to-primary-600 p-6 text-white">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
@@ -159,7 +159,7 @@ const ConflictInputModal: React.FC<ConflictInputModalProps> = ({
                       Object.values(situations).some((s) => s.trim() === "") ||
                       Object.keys(situations).length < 2
                     }
-                    className="px-8 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg font-semibold hover:from-orange-600 hover:to-orange-700 transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-8 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-lg font-semibold hover:from-primary-600 hover:to-primary-700 transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     AI 판단 요청
                   </motion.button>

@@ -2,6 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 폰트 정의 */
 @font-face {
     font-family: 'GongGothicMedium';
     src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_20-10@1.0/GongGothicMedium.woff') format('woff');
@@ -9,8 +10,113 @@
     font-style: normal;
 }
 
-.font-gong {
-    font-family: 'GongGothicMedium', sans-serif;
+@font-face {
+    font-family: 'Pretendard-Regular';
+    src: url('https://fastly.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Regular.woff') format('woff');
+    font-weight: 400;
+    font-style: normal;
+}
+
+/* Base styles */
+body {
+  font-family: 'Pretendard-Regular', sans-serif;
+  color: #333333;
+  background-color: #FFFFFF;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'GongGothicMedium', sans-serif;
+}
+
+/* 브라우저 확장 프로그램 간섭 방지 */
+* {
+  -webkit-user-select: inherit;
+  -moz-user-select: inherit;
+  -ms-user-select: inherit;
+  user-select: inherit;
+}
+
+/* 확장 프로그램 overlay 방지 */
+body {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* 확장 프로그램이 삽입하는 요소들 숨기기 - react-hot-toast 제외 */
+[class*="extension"],
+[id*="extension"],
+[class*="translate"],
+[id*="translate"],
+div[style*="position: fixed"][style*="z-index"]:not([data-react-hot-toast]):not([data-react-hot-toast-container]):not(.go2072408551) {
+  display: none !important;
+}
+
+/* react-hot-toast 보호 */
+[data-react-hot-toast],
+[data-react-hot-toast-container],
+.go2072408551,
+#_rht_toaster {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* 3D Transform utilities */
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
+/* Custom animations */
+@keyframes flip {
+  0% { transform: rotateY(0deg); }
+  100% { transform: rotateY(180deg); }
+}
+
+.flip-animation {
+  animation: flip 0.6s ease-in-out;
+}
+
+/* Game specific styles */
+.dartboard-cursor {
+  cursor: crosshair;
+}
+
+.slot-reel {
+  overflow: hidden;
+  position: relative;
+}
+
+.slot-reel-content {
+  transition: transform 0.5s ease-out;
+}
+
+/* Glowing effects */
+.glow {
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+}
+
+.glow-blue {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+}
+
+.glow-green {
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.5);
+}
+
+.glow-yellow {
+  box-shadow: 0 0 20px rgba(250, 204, 21, 0.5);
+}
+
+.glow-red {
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
 }
 
 /* 파이차트 포커스 박스 제거 */
@@ -22,12 +128,12 @@
 .recharts-surface:focus-visible,
 .recharts-pie:focus,
 .recharts-pie:focus-visible {
-    outline: none !important;
-    box-shadow: none !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 /* 모든 SVG 요소의 포커스 제거 */
 svg:focus,
 svg:focus-visible {
-    outline: none !important;
+  outline: none !important;
 }

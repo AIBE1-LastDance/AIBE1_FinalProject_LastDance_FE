@@ -41,7 +41,7 @@ const YouthPolicyCard: React.FC<YouthPolicyCardProps> = ({
           <h3 className="text-xl font-bold text-gray-800 leading-snug pr-4 line-clamp-2 min-h-[56px] flex-grow">
             {policy.plcyNm}
           </h3>
-          <div className="flex-shrink-0 text-xs font-medium text-teal-600 bg-teal-100 px-3 py-1 rounded-full">
+          <div className="flex-shrink-0 text-xs font-medium text-accent-600 bg-accent-100 px-3 py-1 rounded-full">
             {policy.lclsfNm}
           </div>
         </div>

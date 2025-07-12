@@ -264,7 +264,7 @@ const LadderGamePage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-accent-50">
       {/* Header */}
       <div className="bg-white shadow-sm border-b border-gray-200 p-4">
         <div className="flex items-center justify-between max-w-6xl mx-auto">
@@ -283,15 +283,15 @@ const LadderGamePage: React.FC = () => {
           <div className="flex items-center space-x-3">
             <button
               onClick={() => setShowHelpModal(true)}
-              className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center hover:bg-purple-200 transition-colors"
+              className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center hover:bg-primary-200 transition-colors"
               title="게임 방법 보기"
             >
-              <HelpCircle className="w-5 h-5 text-purple-600" />
+              <HelpCircle className="w-5 h-5 text-primary-600" />
             </button>
             {!showSetup && !gameFinished && (
               <button
                 onClick={resetGame}
-                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
               >
                 <RotateCcw className="w-4 h-4" />
                 <span>새 사다리</span>
@@ -331,9 +331,9 @@ const LadderGamePage: React.FC = () => {
 
                 <div className="space-y-6">
                   {/* 게임 방법 */}
-                  <div className="p-4 bg-purple-50 rounded-lg">
-                    <h3 className="font-semibold text-purple-800 mb-3">🪜 게임 방법</h3>
-                    <ul className="text-sm text-purple-700 space-y-2">
+                  <div className="p-4 bg-primary-50 rounded-lg">
+                    <h3 className="font-semibold text-primary-800 mb-3">🪜 게임 방법</h3>
+                    <ul className="text-sm text-primary-700 space-y-2">
                       <li>• 위에서 참여자를 선택하세요</li>
                       <li>• 빨간 공이 사다리를 따라 부드럽게 내려갑니다</li>
                       <li>• 연결된 가로줄을 만나면 반대편으로 이동합니다</li>
@@ -343,9 +343,9 @@ const LadderGamePage: React.FC = () => {
                   </div>
 
                   {/* 게임 정보 */}
-                  <div className="p-4 bg-blue-50 rounded-lg">
-                    <h3 className="font-semibold text-blue-800 mb-3">🎯 게임 정보</h3>
-                    <div className="text-sm text-blue-700 space-y-1">
+                  <div className="p-4 bg-accent-50 rounded-lg">
+                    <h3 className="font-semibold text-accent-800 mb-3">🎯 게임 정보</h3>
+                    <div className="text-sm text-accent-700 space-y-1">
                       <div><strong>참여자:</strong> {players.join(', ')}</div>
                       <div><strong>벌칙:</strong> {penalty}</div>
                     </div>
@@ -413,7 +413,7 @@ const LadderGamePage: React.FC = () => {
                       setResult(null);
                       resetGame();
                     }}
-                    className="flex-1 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                    className="flex-1 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
                   >
                     다시 하기
                   </button>
@@ -479,12 +479,12 @@ const LadderGamePage: React.FC = () => {
                   whileTap={{ scale: playedPlayers.includes(index) || gameFinished ? 1 : 0.95 }}
                   className={`px-6 py-3 rounded-lg font-medium transition-all ${
                     selectedPlayer === index
-                      ? 'bg-blue-600 text-white'
+                      ? 'bg-primary-600 text-white'
                       : playedPlayers.includes(index)
                       ? 'bg-green-100 text-green-700 cursor-not-allowed'
                       : isPlaying || gameFinished
                       ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                      : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                      : 'bg-primary-100 text-primary-700 hover:bg-primary-200'
                   }`}
                 >
                   {playedPlayers.includes(index) ? `${player} (통과)` : player}
@@ -493,7 +493,7 @@ const LadderGamePage: React.FC = () => {
             </div>
 
             {/* Ladder Visualization */}
-            <div className="relative w-full h-96 bg-gradient-to-b from-blue-50 to-purple-50 rounded-xl overflow-hidden border-2 border-blue-100">
+            <div className="relative w-full h-96 bg-gradient-to-b from-primary-50 to-accent-50 rounded-xl overflow-hidden border-2 border-primary-100">
               <svg
                 width="100%"
                 height="100%"
@@ -514,7 +514,7 @@ const LadderGamePage: React.FC = () => {
                       y1="8"
                       x2={x}
                       y2="92"
-                      stroke="#1e40af"
+                      stroke="#E69975" // primary-500 색상
                       strokeWidth="0.8"
                       strokeLinecap="round"
                       style={{
@@ -556,7 +556,7 @@ const LadderGamePage: React.FC = () => {
                       y1={y}
                       x2={endX}
                       y2={y}
-                      stroke="#2563eb"
+                      stroke="#6C92E6" // accent-500 색상
                       strokeWidth="0.6"
                       strokeLinecap="round"
                       style={{
@@ -599,7 +599,7 @@ const LadderGamePage: React.FC = () => {
                       x={x}
                       y="4"
                       textAnchor="middle"
-                      className="text-xs font-bold fill-blue-700"
+                      className="text-xs font-bold fill-primary-700"
                       style={{ fontSize: '3px' }}
                     >
                       {player}

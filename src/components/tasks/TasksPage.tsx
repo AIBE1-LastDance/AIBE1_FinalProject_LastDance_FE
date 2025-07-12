@@ -18,7 +18,7 @@ const TasksPage: React.FC = () => {
   const { checklists, loading, error, fetchChecklists, toggleChecklist, deleteChecklist } = useChecklist();
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState<ChecklistResponseDTO | null>(null);
-  const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all');
+  const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('pending');
 
   // URL 쿼리 파라미터에서 taskId 확인하여 상세 모달 열기
   useEffect(() => {
@@ -40,7 +40,7 @@ const TasksPage: React.FC = () => {
     }
   }, [checklists, location.search, showTaskModal, navigate]);
 
-  // 필터링된 체크리스트 목록 (마감일 순 정렬)
+  // 필터링된 체크리스트 목록 (마감일 역순 정렬)
   const filteredChecklists = checklists
     .filter(checklist => {
       const isFilterMatch = filter === 'all' || 
@@ -54,8 +54,8 @@ const TasksPage: React.FC = () => {
       if (!a.dueDate) return 1;
       if (!b.dueDate) return -1;
       
-      // 마감일이 빠른 순으로 정렬
-      return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+      // 마감일이 늦은 순으로 정렬 (역순)
+      return new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime();
     });
 
   const handleTaskClick = (checklist: ChecklistResponseDTO) => {
@@ -80,10 +80,10 @@ const TasksPage: React.FC = () => {
 
   const getPriorityColor = (priority: string) => {
     switch (priority?.toLowerCase()) {
-      case 'high': return 'bg-red-100 text-red-800 border-red-200';
-      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'low': return 'bg-green-100 text-green-800 border-green-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'high': return 'bg-transparent text-red-600 border-red-300';
+      case 'medium': return 'bg-transparent text-yellow-600 border-yellow-300';
+      case 'low': return 'bg-transparent text-green-600 border-green-300';
+      default: return 'bg-transparent text-gray-600 border-gray-300';
     }
   };
 
@@ -112,7 +112,7 @@ const TasksPage: React.FC = () => {
       <div className="space-y-8">
         <div className="flex items-center justify-center py-12">
           <div className="flex items-center space-x-3">
-            <RefreshCw className="w-6 h-6 animate-spin text-primary-600" />
+            <div className="w-5 h-5 border-2 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
             <span className="text-gray-600">체크리스트를 불러오는 중...</span>
           </div>
         </div>
@@ -123,7 +123,7 @@ const TasksPage: React.FC = () => {
   // 에러 발생시
   if (error) {
     return (
-      <div className="space-y-8">
+        <div className="space-y-8">
         <div className="flex flex-col items-center justify-center py-12">
           <div className="text-red-500 text-center">
             <p className="mb-4">체크리스트를 불러오는데 실패했습니다</p>
@@ -148,14 +148,19 @@ const TasksPage: React.FC = () => {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0">
         <div className="flex items-center space-x-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              {mode === 'personal' ? '내 할일' : '공용 할일'}
+            <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">
+              {mode === "personal" ? (
+                  "내 할일"
+              ) : (
+                  <div className="flex items-center space-x-2 lg:space-x-3 flex-wrap">
+                    <span className="whitespace-nowrap">공용 할일</span>
+                    <span className="text-lg lg:text-xl text-primary-600">•</span>
+                    <span className="text-lg lg:text-2xl text-primary-600 font-semibold whitespace-nowrap">
+                    {currentGroup?.name || "그룹 선택 필요"}
+                  </span>
+                  </div>
+              )}
             </h1>
-            <p className="text-gray-600 mt-1">
-              {mode === 'personal' ? '개인 할일을 관리하세요' : 
-               currentGroup ? `${currentGroup.name} 그룹 할일을 함께 관리하세요` : 
-               '그룹을 선택해주세요'}
-            </p>
           </div>
 
           {/* Progress Ring */}
@@ -197,17 +202,17 @@ const TasksPage: React.FC = () => {
           </motion.button>
 
           {/* Filter Tabs */}
-          <div className="flex bg-gray-100 rounded-xl p-1">
+          <div className="flex bg-gray-100 rounded-2xl p-1 shadow-md">
             {filterOptions.map((option) => (
               <motion.button
                 key={option.value}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                className={`flex items-center space-x-2 px-6 py-3 rounded-xl text-sm font-medium transition-all ${
                   filter === option.value
-                    ? 'bg-white text-primary-600 shadow-sm'
+                    ? 'bg-white text-primary-600 shadow-md'
                     : 'text-gray-600 hover:text-gray-800'
                 }`}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => setFilter(option.value as 'all' | 'pending' | 'completed')}
               >
                 <span>{option.label}</span>
@@ -223,9 +228,9 @@ const TasksPage: React.FC = () => {
           {/* Add Task Button */}
           {(mode === 'personal' || currentGroup) && (
             <motion.button
-              className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              className="flex items-center space-x-2 px-6 py-3 bg-accent-500 text-white rounded-2xl font-medium hover:bg-accent-600 transition-colors shadow-md hover:shadow-lg whitespace-nowrap"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={handleAddTask}
             >
               <Plus className="w-5 h-5" />
@@ -265,9 +270,9 @@ const TasksPage: React.FC = () => {
               <h3 className="text-xl font-semibold text-gray-900 mb-2">할일이 없습니다</h3>
               <p className="text-gray-600 mb-6">새로운 할일을 추가해서 시작해보세요!</p>
               <motion.button
-                className="px-6 py-3 bg-[#df6d14] text-white rounded-xl font-medium hover:bg-[#df6d14]/90 transition-colors"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                className="px-6 py-3 bg-accent-500 text-white rounded-2xl font-medium hover:bg-accent-600 transition-colors shadow-md hover:shadow-lg"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={handleAddTask}
               >
                 첫 할일 추가하기
@@ -308,7 +313,7 @@ const TasksPage: React.FC = () => {
                             <div className="flex items-start space-x-4">
                               {/* Checkbox */}
                               <motion.button
-                                className={`mt-1 ${checklist.isCompleted ? 'text-green-600' : 'text-gray-400 hover:text-green-500'}`}
+                                className={`mt-1 ${checklist.isCompleted ? 'text-accent-500' : 'text-gray-400 hover:text-accent-500'}`}
                                 whileHover={{ scale: 1.1 }}
                                 whileTap={{ scale: 0.9 }}
                                 onClick={(e) => handleToggleTask(checklist.checklistId, checklist.isCompleted, e)}
@@ -335,14 +340,25 @@ const TasksPage: React.FC = () => {
                                     </span>
                                     {/* 그룹 체크리스트인 경우 그룹명 표시 */}
                                     {checklist.type === 'GROUP' && checklist.groupName && (
-                                      <span className="px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 border border-purple-200">
+                                      <span className="px-3 py-1 rounded-full text-xs font-medium bg-transparent text-purple-600 border border-purple-300">
                                         {checklist.groupName}
                                       </span>
                                     )}
-                                    {checklist.isCompleted && (
-                                      <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
+                                    {/* 상태 태그 */}
+                                    {checklist.isCompleted ? (
+                                      <span className="px-3 py-1 rounded-full text-xs font-medium bg-transparent text-green-600 border border-green-300">
                                         <CheckCircle className="w-3 h-3 inline mr-1" />
                                         완료
+                                      </span>
+                                    ) : checklist.dueDate && new Date(checklist.dueDate) < new Date() ? (
+                                      <span className="px-3 py-1 rounded-full text-xs font-medium bg-transparent text-red-600 border border-red-300 animate-pulse">
+                                        <Clock className="w-3 h-3 inline mr-1" />
+                                        지연
+                                      </span>
+                                    ) : (
+                                      <span className="px-3 py-1 rounded-full text-xs font-medium bg-transparent text-blue-600 border border-blue-300">
+                                        <Circle className="w-3 h-3 inline mr-1" />
+                                        진행중
                                       </span>
                                     )}
                                   </div>
