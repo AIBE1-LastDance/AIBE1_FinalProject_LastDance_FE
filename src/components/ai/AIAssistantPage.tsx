@@ -141,10 +141,10 @@ const AIAssistantPage: React.FC = () => {
             transition={{ duration: 0.6 }}
             className="text-center mb-12"
           >
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl mb-6 shadow-lg">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl mb-6 shadow-lg">
               <Bot className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-600 to-orange-800 bg-clip-text text-transparent mb-4">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent mb-4">
               AI 판단 도우미
             </h1>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
@@ -170,7 +170,7 @@ const AIAssistantPage: React.FC = () => {
                     className="text-center"
                   >
                     <div className="mb-8">
-                      <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl mb-6 shadow-lg">
+                      <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl mb-6 shadow-lg">
                         <MessageCircle className="w-8 h-8 text-white" />
                       </div>
                       <h2 className="text-3xl font-bold text-gray-800 mb-4">
@@ -182,7 +182,7 @@ const AIAssistantPage: React.FC = () => {
                       </p>
                     </div>
                     <motion.button
-                      className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-2xl text-lg font-semibold hover:from-orange-600 hover:to-orange-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+                      className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-2xl text-lg font-semibold hover:from-primary-600 hover:to-primary-700 transition-all duration-200 shadow-lg hover:shadow-xl"
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={openModal}
@@ -203,7 +203,7 @@ const AIAssistantPage: React.FC = () => {
                     className="text-center py-16"
                   >
                     <div className="relative mb-8 flex justify-center items-center">
-                      <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-orange-500"></div>
+                      <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-primary-500"></div>
                       <motion.div
                         className="absolute"
                         animate={{ rotate: 360 }}
@@ -213,7 +213,7 @@ const AIAssistantPage: React.FC = () => {
                           ease: "linear",
                         }}
                       >
-                        <Sparkles className="w-8 h-8 text-orange-500" />
+                        <Sparkles className="w-8 h-8 text-primary-500" />
                       </motion.div>
                     </div>
                     <h3 className="text-2xl font-bold text-gray-800 mb-3">
@@ -244,7 +244,7 @@ const AIAssistantPage: React.FC = () => {
               className="mt-12 bg-white rounded-2xl p-8 border border-gray-200"
             >
               <div className="text-center mb-8">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl mb-4 shadow-lg">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl mb-4 shadow-lg">
                   <BookOpenText className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="text-2xl font-bold text-gray-800 mb-2">
@@ -258,7 +258,7 @@ const AIAssistantPage: React.FC = () => {
                 <div className="space-y-6">
                   <div className="flex items-start space-x-4">
                     <div className="flex-shrink-0 w-10 h-10 bg-transparent rounded-xl flex items-center justify-center">
-                      <Users className="w-5 h-5 text-orange-600" />
+                      <Users className="w-5 h-5 text-primary-600" />
                     </div>
                     <div>
                       <h4 className="font-semibold text-gray-800 mb-2">
@@ -272,7 +272,7 @@ const AIAssistantPage: React.FC = () => {
                   </div>
                   <div className="flex items-start space-x-4">
                     <div className="flex-shrink-0 w-10 h-10 bg-transparent rounded-xl flex items-center justify-center">
-                      <Sparkles className="w-5 h-5 text-orange-600" />
+                      <Sparkles className="w-5 h-5 text-primary-600" />
                     </div>
                     <div>
                       <h4 className="font-semibold text-gray-800 mb-2">
@@ -288,23 +288,23 @@ const AIAssistantPage: React.FC = () => {
                 <div className="rounded-xl p-6 border border-gray-100 bg-gray-50">
                   <div className="flex items-center mb-4">
                     <div className="flex-shrink-0 w-10 h-10 bg-transparent rounded-xl flex items-center justify-center mr-2">
-                      <Lightbulb className="w-5 h-5 text-orange-600" />
+                      <Lightbulb className="w-5 h-5 text-primary-600" />
                     </div>
-                    <h4 className="font-semibold text-orange-800">
+                    <h4 className="font-semibold text-primary-800">
                       효과적인 사용 팁
                     </h4>
                   </div>
-                  <ul className="space-y-2 text-sm text-orange-700">
+                  <ul className="space-y-2 text-sm text-primary-700">
                     <li className="flex items-start">
-                      <span className="text-orange-500 mr-2">•</span>
+                      <span className="text-primary-500 mr-2">•</span>
                       감정보다는 구체적인 사실과 상황을 위주로 작성
                     </li>
                     <li className="flex items-start">
-                      <span className="text-orange-500 mr-2">•</span>
+                      <span className="text-primary-500 mr-2">•</span>
                       각자의 입장과 요구사항을 명확히 기술
                     </li>
                     <li className="flex items-start">
-                      <span className="text-orange-500 mr-2">•</span>
+                      <span className="text-primary-500 mr-2">•</span>
                       AI 판단은 참고용이며, 최종 결정은 대화로 해결
                     </li>
                   </ul>
@@ -316,7 +316,7 @@ const AIAssistantPage: React.FC = () => {
       </div>
 
       <motion.button
-        className="fixed bottom-6 left-6 w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center z-40"
+        className="fixed bottom-6 left-6 w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center z-40"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
         onClick={toggleHistory}

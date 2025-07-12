@@ -56,7 +56,7 @@ const YouthPolicyDetailPage: React.FC = () => {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] py-20">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-teal-500"></div>
+        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-accent-500"></div>
         <p className="mt-4 text-gray-600">
           정책 상세 정보를 불러오는 중입니다...
         </p>
@@ -83,7 +83,7 @@ const YouthPolicyDetailPage: React.FC = () => {
           </p>
           <button
             onClick={() => navigate("/youth-policy")}
-            className="bg-teal-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-teal-700 transition-colors flex items-center justify-center mx-auto"
+            className="bg-accent-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-accent-700 transition-colors flex items-center justify-center mx-auto"
           >
             <ArrowLeft className="w-5 h-5 mr-2" />
             청년 정책 목록으로 돌아가기
@@ -99,7 +99,7 @@ const YouthPolicyDetailPage: React.FC = () => {
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         onClick={() => navigate("/youth-policy")}
-        className="flex items-center text-gray-600 hover:text-teal-600 transition-colors mb-6 font-medium"
+        className="flex items-center text-gray-600 hover:text-accent-600 transition-colors mb-6 font-medium"
       >
         <ArrowLeft className="w-5 h-5 mr-2" />
         목록으로 돌아가기
@@ -112,9 +112,9 @@ const YouthPolicyDetailPage: React.FC = () => {
         className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden"
       >
         {/* 정책 헤더 */}
-        <div className="bg-gradient-to-r from-teal-500 to-green-600 p-8 text-white">
+        <div className="bg-gradient-to-r from-accent-500 to-accent-600 p-8 text-white">
           <h1 className="text-3xl font-extrabold mb-2">{policy.plcyNm}</h1>
-          <p className="text-teal-100 text-lg">{policy.plcyKywdNm}</p>
+          <p className="text-accent-100 text-lg">{policy.plcyKywdNm}</p>
         </div>
 
         {/* 정책 상세 내용 */}
@@ -122,13 +122,13 @@ const YouthPolicyDetailPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-8 mb-8">
             {/* 카테고리 */}
             <div className="flex items-center">
-              <Tag className="w-5 h-5 text-teal-600 mr-2 flex-shrink-0" />
+              <Tag className="w-5 h-5 text-accent-600 mr-2 flex-shrink-0" />
               <div className="flex flex-wrap gap-2">
-                <span className="bg-teal-50 text-teal-700 px-3 py-1 rounded-full text-sm font-medium">
+                <span className="bg-accent-50 text-accent-700 px-3 py-1 rounded-full text-sm font-medium">
                   {policy.lclsfNm}
                 </span>
                 {policy.mclsfNm && policy.lclsfNm !== policy.mclsfNm && (
-                  <span className="bg-teal-50 text-teal-700 px-3 py-1 rounded-full text-sm font-medium">
+                  <span className="bg-accent-50 text-accent-700 px-3 py-1 rounded-full text-sm font-medium">
                     {policy.mclsfNm}
                   </span>
                 )}
@@ -137,7 +137,7 @@ const YouthPolicyDetailPage: React.FC = () => {
 
             {/* 사업 기간 */}
             <div className="flex items-center">
-              <CalendarDays className="w-5 h-5 text-teal-600 mr-2 flex-shrink-0" />
+              <CalendarDays className="w-5 h-5 text-accent-600 mr-2 flex-shrink-0" />
               <p className="text-gray-700 text-sm">
                 사업 기간: {formatDate(policy.bizPrdBgngYmd)} ~{" "}
                 {formatDate(policy.bizPrdEndYmd)}
@@ -146,7 +146,7 @@ const YouthPolicyDetailPage: React.FC = () => {
 
             {/* 신청 기간 */}
             <div className="flex items-center">
-              <CalendarDays className="w-5 h-5 text-teal-600 mr-2 flex-shrink-0" />
+              <CalendarDays className="w-5 h-5 text-accent-600 mr-2 flex-shrink-0" />
               <p className="text-gray-700 text-sm">
                 신청 기간: {formatDate(policy.plcyStDt)} ~{" "}
                 {formatDate(policy.plcyEndDt)} (신청 연월일:{" "}
@@ -160,7 +160,7 @@ const YouthPolicyDetailPage: React.FC = () => {
           {/* 정책 설명 */}
           <div className="mb-8">
             <h2 className="text-xl font-bold text-gray-800 flex items-center mb-4">
-              <ClipboardList className="w-6 h-6 text-teal-600 mr-2" />
+              <ClipboardList className="w-6 h-6 text-accent-600 mr-2" />
               정책 설명
             </h2>
             <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
@@ -171,7 +171,7 @@ const YouthPolicyDetailPage: React.FC = () => {
           {/* 정책 지원 내용 */}
           <div className="mb-8">
             <h2 className="text-xl font-bold text-gray-800 flex items-center mb-4">
-              <DollarSign className="w-6 h-6 text-teal-600 mr-2" />
+              <DollarSign className="w-6 h-6 text-accent-600 mr-2" />
               지원 내용
             </h2>
             <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">

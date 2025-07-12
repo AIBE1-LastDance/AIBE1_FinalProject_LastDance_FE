@@ -342,30 +342,6 @@ const DashboardPage: React.FC = () => {
 
     return (
         <div className="space-y-8">
-            {/* Welcome Section */}
-            <motion.div
-                initial={{opacity: 0, y: 20}}
-                animate={{opacity: 1, y: 0}}
-                transition={{duration: 0.6}}
-                className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-2xl p-6 text-white"
-            >
-                <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                        <BarChart3 className="w-6 h-6"/>
-                    </div>
-                    <div>
-                        <h1 className="text-2xl font-bold">대시보드</h1>
-                        <p className="text-primary-100">
-                            {mode === 'personal'
-                                ? `개인 활동 현황을 확인하세요`
-                                : currentGroup
-                                    ? `${currentGroup.name} 그룹의 현황을 확인하세요`
-                                    : '그룹 현황을 확인하세요'
-                            }
-                        </p>
-                    </div>
-                </div>
-            </motion.div>
 
             {/* Quick Stats */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
@@ -777,8 +753,8 @@ const DashboardPage: React.FC = () => {
                                     <motion.button
                                         className={`w-4 h-4 mt-0.5 rounded-sm border-2 flex items-center justify-center transition-all ${
                                             checklist.isCompleted
-                                                ? 'bg-green-600 border-green-600 text-white'
-                                                : 'bg-white border-gray-300 hover:border-green-500'
+                                                ? 'bg-accent-500 border-accent-500 text-white'
+                                                : 'bg-white border-gray-300 hover:border-accent-500'
                                         }`}
                                         whileHover={{scale: 1.1}}
                                         whileTap={{scale: 0.9}}

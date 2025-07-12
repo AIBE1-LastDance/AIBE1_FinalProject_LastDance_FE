@@ -56,6 +56,13 @@ const Header: React.FC = () => {
   const notificationRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
+  // 로고 URL 환경 변수
+  const logoUrl = import.meta.env.VITE_LOGO_URL;
+  
+  // 디버깅용 로그
+  console.log('Header - VITE_LOGO_URL:', import.meta.env.VITE_LOGO_URL);
+  console.log('Header - All env vars:', import.meta.env);
+
   // 로그인 상태 확인
   const isAuthenticated = !!user;
 
@@ -275,11 +282,9 @@ const Header: React.FC = () => {
             whileHover={{ scale: 1.05 }}
             onClick={() => navigate(isAuthenticated ? "/dashboard" : "/")}
           >
-            <img
-              src="/image/Logo.png"
-              alt="우리.zip"
-              className="w-12 h-12 sm:w-16 sm:h-16"
-            />
+            <span className="text-2xl sm:text-3xl font-title font-bold text-primary-500">
+              우리.zip
+            </span>
           </motion.div>
 
           {/* Desktop Navigation */}
@@ -289,8 +294,8 @@ const Header: React.FC = () => {
                 key={item.path}
                 className={`flex items-center space-x-1 px-3 py-2 rounded-xl transition-all duration-200 ${
                   location.pathname === item.path
-                    ? "text-primary-600 bg-primary-50 shadow-sm"
-                    : "text-gray-600 hover:text-primary-600 hover:bg-gray-50"
+                    ? "text-accent-600 bg-accent-50 shadow-sm"
+                    : "text-gray-600 hover:text-accent-600 hover:bg-gray-50"
                 }`}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}

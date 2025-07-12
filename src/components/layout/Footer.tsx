@@ -48,6 +48,9 @@ const Footer: React.FC = () => {
     { icon: Instagram, href: '#', label: 'Instagram' },
   ];
 
+  // 로고 URL 환경 변수
+  const logoUrl = import.meta.env.VITE_LOGO_URL;
+
   return (
     <footer className="bg-white border-t border-gray-200 mt-20 hidden md:block">
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-16">
@@ -60,7 +63,7 @@ const Footer: React.FC = () => {
               transition={{ duration: 0.6 }}
             >
               <div className="flex items-center space-x-3 mb-6">
-                <img src="/image/Logo.png" alt="우리.zip" className="w-16 h-16" />
+                <img src={logoUrl} alt="우리.zip" className="w-16 h-16" />
               </div>
               <p className="text-gray-600 mb-6 leading-relaxed">
                 하우스메이트와 함께하는 스마트한 공동생활 관리 플랫폼. 

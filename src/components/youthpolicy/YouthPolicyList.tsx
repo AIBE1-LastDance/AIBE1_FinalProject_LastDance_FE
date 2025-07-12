@@ -127,7 +127,7 @@ const YouthPolicyList: React.FC = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-r from-teal-500 to-teal-600 rounded-2xl p-6 text-white px-4 sm:px-6 lg:px-8"
+        className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-2xl p-6 text-white px-4 sm:px-6 lg:px-8"
       >
         <div className="flex items-center space-x-4">
           <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
@@ -135,7 +135,7 @@ const YouthPolicyList: React.FC = () => {
           </div>
           <div>
             <h1 className="text-2xl font-bold">청년 정책</h1>
-            <p className="text-teal-100">
+            <p className="text-primary-100">
               다양한 청년 지원 정책을 한눈에 확인하고 나에게 맞는 정책을
               찾아보세요!
             </p>
@@ -161,7 +161,7 @@ const YouthPolicyList: React.FC = () => {
                 setSearchQuery(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
         </div>
@@ -178,7 +178,7 @@ const YouthPolicyList: React.FC = () => {
       >
         {isLoading ? (
           <div className="flex flex-col items-center justify-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-teal-500"></div>
+            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-primary-500"></div>
             <p className="mt-4 text-gray-600">
               정책 정보를 불러오는 중입니다...
             </p>
@@ -233,7 +233,7 @@ const YouthPolicyList: React.FC = () => {
               onClick={() => paginate(number)}
               className={`px-4 py-2 rounded-full font-medium transition-colors ${
                 currentPage === number
-                  ? "bg-teal-600 text-white shadow-md"
+                  ? "bg-accent-500 text-white shadow-md"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
               aria-current={currentPage === number ? "page" : undefined}

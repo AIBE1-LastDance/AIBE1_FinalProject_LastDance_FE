@@ -16,6 +16,8 @@ const HomePage: React.FC = () => {
   const notificationRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
+  const logoUrl = import.meta.env.VITE_LOGO_URL;
+
   // 임시 알림 데이터
   const [notifications] = useState([
     {
@@ -136,7 +138,7 @@ const HomePage: React.FC = () => {
       description: "개인과 그룹의 모든 활동을 분석하고 시각화합니다. 할일 완료율, 지출 패턴, 일정 현황을 한 곳에서 확인하세요.",
       icon: BarChart3,
       color: "from-primary-500 to-primary-600",
-      image: "/image/Logo.png",
+      image: logoUrl,
       path: "/dashboard"
     },
     {
@@ -145,7 +147,7 @@ const HomePage: React.FC = () => {
       description: "개인과 그룹 일정을 하나의 캘린더에서 관리하세요. 월간, 주간, 일간 뷰로 일정을 효율적으로 계획할 수 있습니다.",
       icon: Calendar,
       color: "from-primary-500 to-primary-600",
-      image: "/image/Logo.png",
+      image: logoUrl,
       path: "/calendar"
     },
     {
@@ -154,7 +156,7 @@ const HomePage: React.FC = () => {
       description: "집안일을 공평하게 분배하고, 진행 상황을 실시간으로 추적하세요. 우선순위 설정과 마감일 알림으로 놓치는 일이 없습니다.",
       icon: CheckSquare,
       color: "from-primary-500 to-primary-600",
-      image: "/image/Logo.png",
+      image: logoUrl,
       path: "/tasks"
     },
     {
@@ -163,7 +165,7 @@ const HomePage: React.FC = () => {
       description: "공동 지출을 자동으로 분할하고, 카테고리별 분석을 제공합니다. 월별 지출 패턴과 절약 팁도 확인할 수 있어요.",
       icon: CreditCard,
       color: "from-primary-500 to-primary-600",
-      image: "/image/Logo.png",
+      image: logoUrl,
       path: "/expenses"
     },
     {
@@ -172,7 +174,7 @@ const HomePage: React.FC = () => {
       description: "룰렛, 가위바위보, 주사위 등 8가지 다양한 게임으로 당번을 공정하게 정하세요. 게임 결과는 자동으로 기록됩니다.",
       icon: Gamepad2,
       color: "from-primary-500 to-primary-600",
-      image: "/image/Logo.png",
+      image: logoUrl,
       path: "/games"
     },
     {
@@ -181,7 +183,7 @@ const HomePage: React.FC = () => {
       description: "AI가 여러분의 생활 패턴을 분석하여 맞춤형 조언을 제공합니다. 효율적인 일정 관리와 절약 팁을 받아보세요.",
       icon: Bot,
       color: "from-primary-500 to-primary-600",
-      image: "/image/Logo.png",
+      image: logoUrl,
       path: "/ai-assistant"
     },
     {
@@ -190,7 +192,7 @@ const HomePage: React.FC = () => {
       description: "생활팁, 레시피, 청소법 등을 공유하고 다른 사용자들과 소통하세요. 카테고리별로 정리된 유용한 정보들을 만나보세요.",
       icon: Users,
       color: "from-primary-500 to-primary-600",
-      image: "/image/Logo.png",
+      image: logoUrl,
       path: "/community"
     }
   ];
@@ -234,15 +236,17 @@ const HomePage: React.FC = () => {
     <div className="bg-white text-gray-900 overflow-hidden">
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-md border-b border-gray-200/20 fixed top-0 left-0 right-0 z-50 shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="flex items-center justify-between h-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16 sm:h-20">
             {/* Logo */}
             <motion.div
               className="flex items-center cursor-pointer"
               whileHover={{ scale: 1.05 }}
               onClick={() => navigate('/')}
             >
-              <img src="/image/Logo.png" alt="우리.zip" className="w-16 h-16" />
+              <span className="text-2xl sm:text-3xl font-title font-bold text-primary-500">
+                우리.zip
+              </span>
             </motion.div>
 
             {/* Navigation - 메인페이지에서는 스크롤 네비게이션 */}
@@ -264,7 +268,7 @@ const HomePage: React.FC = () => {
                   onClick={() => scrollToSection(item.section)}
                 >
                   <item.icon className="w-5 h-5" />
-                  <span className="font-medium">{item.label}</span>
+                  <span className="font-medium font-body hidden lg:block whitespace-nowrap">{item.label}</span>
                 </motion.button>
               ))}
             </nav>
@@ -302,9 +306,9 @@ const HomePage: React.FC = () => {
                           {/* Header */}
                           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
                             <div className="flex items-center space-x-2">
-                              <h3 className="font-semibold text-gray-900">알림</h3>
+                              <h3 className="font-semibold font-body text-gray-900">알림</h3>
                               {unreadCount > 0 && (
-                                <span className="px-2 py-1 bg-red-100 text-red-600 text-xs rounded-full font-medium">
+                                <span className="px-2 py-1 bg-red-100 text-red-600 text-xs rounded-full font-medium font-body">
                                   {unreadCount}개 안읽음
                                 </span>
                               )}
@@ -312,7 +316,7 @@ const HomePage: React.FC = () => {
                             {unreadCount > 0 && (
                               <button
                                 onClick={markAllAsRead}
-                                className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                                className="text-xs text-blue-600 hover:text-blue-700 font-medium font-body"
                               >
                                 모두 읽음
                               </button>
@@ -324,7 +328,7 @@ const HomePage: React.FC = () => {
                             {notifications.length === 0 ? (
                               <div className="text-center py-8">
                                 <Bell className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                                <p className="text-gray-500">새로운 알림이 없습니다.</p>
+                                <p className="text-gray-500 font-body">새로운 알림이 없습니다.</p>
                               </div>
                             ) : (
                               notifications.map((notification) => (
@@ -347,7 +351,7 @@ const HomePage: React.FC = () => {
                                     </div>
                                     <div className="flex-1 min-w-0">
                                       <div className="flex items-center justify-between">
-                                        <p className={`text-sm font-medium truncate ${
+                                        <p className={`text-sm font-medium font-body truncate ${
                                           notification.read ? 'text-gray-700' : 'text-gray-900'
                                         }`}>
                                           {notification.title}
@@ -356,7 +360,7 @@ const HomePage: React.FC = () => {
                                           <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 ml-2" />
                                         )}
                                       </div>
-                                      <p className={`text-sm mt-1 ${
+                                      <p className={`text-sm mt-1 font-body ${
                                         notification.read ? 'text-gray-500' : 'text-gray-700'
                                       }`}>
                                         {notification.message}
@@ -404,8 +408,8 @@ const HomePage: React.FC = () => {
                               {getProviderIcon(user?.provider || '')}
                             </div>
                             <div>
-                              <div className="text-sm font-medium text-gray-900">{user?.name}</div>
-                              <div className="text-xs text-gray-500">{user?.email}</div>
+                              <div className="text-sm font-medium font-body text-gray-900">{user?.name}</div>
+                              <div className="text-xs font-body text-gray-500">{user?.email}</div>
                             </div>
                           </div>
                         </div>
@@ -419,7 +423,7 @@ const HomePage: React.FC = () => {
                           }}
                         >
                           <BarChart3 className="w-4 h-4" />
-                          <span>대시보드로 이동</span>
+                          <span className="font-body">대시보드로 이동</span>
                         </motion.button>
                         <motion.button
                           className="w-full flex items-center space-x-3 px-4 py-2 text-left text-gray-700 hover:bg-gray-50 transition-colors"
@@ -430,7 +434,7 @@ const HomePage: React.FC = () => {
                           }}
                         >
                           <Settings className="w-4 h-4" />
-                          <span>설정</span>
+                          <span className="font-body">설정</span>
                         </motion.button>
                         <motion.button
                           className="w-full flex items-center space-x-3 px-4 py-2 text-left text-red-600 hover:bg-red-50 transition-colors"
@@ -438,7 +442,7 @@ const HomePage: React.FC = () => {
                           onClick={handleLogout}
                         >
                           <LogOut className="w-4 h-4" />
-                          <span>로그아웃</span>
+                          <span className="font-body">로그아웃</span>
                         </motion.button>
                       </motion.div>
                     )}
@@ -447,7 +451,7 @@ const HomePage: React.FC = () => {
                 </>
               ) : (
                 <motion.button
-                  className="bg-primary-600 text-white px-6 py-2 rounded-xl font-medium hover:bg-primary-700 transition-colors"
+                  className="bg-primary-600 text-white px-6 py-2 rounded-xl font-medium font-body hover:bg-primary-700 transition-colors"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={handleLogin}
@@ -538,11 +542,11 @@ const HomePage: React.FC = () => {
             style={{ scale: logoScale }}
             className="mb-8"
           >
-            <img src="/image/Logo.png" alt="우리.zip" className="w-64 h-64 mx-auto mb-8 drop-shadow-2xl" />
+            <img src={logoUrl} alt="우리.zip" className="w-64 h-64 mx-auto mb-8 drop-shadow-2xl" />
           </motion.div>
 
           <motion.p 
-            className="text-xl md:text-2xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed"
+            className="text-xl md:text-2xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed font-body"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, duration: 0.8 }}
@@ -557,7 +561,7 @@ const HomePage: React.FC = () => {
             className="flex justify-center items-center"
           >
             <motion.button
-              className="group bg-primary-500 hover:bg-primary-600 text-white px-12 py-4 rounded-full text-lg font-medium transition-all duration-300 shadow-lg"
+              className="group bg-primary-500 hover:bg-primary-600 text-white px-12 py-4 rounded-full text-lg font-medium font-body transition-all duration-300 shadow-lg"
               whileHover={{ scale: 1.05, y: -2 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => navigate('/dashboard')}
@@ -597,15 +601,15 @@ const HomePage: React.FC = () => {
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-5xl md:text-7xl font-light mb-8 text-gray-900">
+            <h2 className="text-5xl md:text-7xl font-title font-light mb-8 text-gray-900">
               지금 바로 시작하세요
             </h2>
-            <p className="text-xl text-gray-600 mb-12 max-w-2xl mx-auto">
+            <p className="text-xl text-gray-600 mb-12 max-w-2xl mx-auto font-body">
               더 나은 공동생활을 위한 새로운 경험을 만나보세요
             </p>
             
             <motion.button
-              className="bg-primary-500 hover:bg-primary-600 text-white px-12 py-4 rounded-full text-lg font-medium transition-all duration-300 shadow-lg"
+              className="bg-primary-500 hover:bg-primary-600 text-white px-12 py-4 rounded-full text-lg font-medium font-body transition-all duration-300 shadow-lg"
               whileHover={{ scale: 1.05, y: -2 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => navigate('/dashboard')}
@@ -620,9 +624,9 @@ const HomePage: React.FC = () => {
       <footer className="py-16 border-t border-gray-200 bg-white">
         <div className="max-w-7xl mx-auto px-6 text-center">
           <div className="flex items-center justify-center mb-8">
-            <img src="/image/Logo.png" alt="우리.zip" className="w-16 h-16" />
+            <img src={logoUrl} alt="우리.zip" className="w-16 h-16" />
           </div>
-          <p className="text-gray-500">&copy; 2024 우리.zip. All rights reserved.</p>
+          <p className="text-gray-500 font-body">&copy; 2024 우리.zip. All rights reserved.</p>
         </div>
       </footer>
     </div>
@@ -668,18 +672,18 @@ const FeatureSection: React.FC<{
               <feature.icon className="w-8 h-8 text-white" />
             </div>
             
-            <h3 className="text-sm font-medium text-primary-600 mb-4 uppercase tracking-wider">
+            <h3 className="text-sm font-medium font-body text-primary-600 mb-4 uppercase tracking-wider">
               {feature.subtitle}
             </h3>
-            <h2 className="text-4xl md:text-6xl font-light mb-8 text-gray-900">
+            <h2 className="text-4xl md:text-6xl font-title font-light mb-8 text-gray-900">
               {feature.title}
             </h2>
-            <p className="text-xl text-gray-600 leading-relaxed mb-8">
+            <p className="text-xl text-gray-600 leading-relaxed mb-8 font-body">
               {feature.description}
             </p>
 
             <motion.button
-              className="flex items-center space-x-2 text-primary-600 hover:text-primary-700 font-medium"
+              className="flex items-center space-x-2 text-primary-600 hover:text-primary-700 font-medium font-body"
               whileHover={{ x: 10 }}
               onClick={() => navigate(feature.path)}
             >

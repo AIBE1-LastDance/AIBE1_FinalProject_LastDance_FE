@@ -2,6 +2,32 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 폰트 정의 */
+@font-face {
+    font-family: 'GongGothicMedium';
+    src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_20-10@1.0/GongGothicMedium.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Pretendard-Regular';
+    src: url('https://fastly.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Regular.woff') format('woff');
+    font-weight: 400;
+    font-style: normal;
+}
+
+/* Base styles */
+body {
+  font-family: 'Pretendard-Regular', sans-serif;
+  color: #333333;
+  background-color: #FFFFFF;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'GongGothicMedium', sans-serif;
+}
+
 /* 브라우저 확장 프로그램 간섭 방지 */
 * {
   -webkit-user-select: inherit;
