@@ -30,10 +30,10 @@ interface HistorySidebarProps {
 
 const personThemes = {
   A: {
-    bg: "bg-orange-50",
-    border: "border-orange-200",
-    text: "text-orange-600",
-    dot: "bg-orange-300",
+    bg: "bg-primary-50",
+    border: "border-primary-200",
+    text: "text-primary-600",
+    dot: "bg-primary-300",
   },
   B: {
     bg: "bg-amber-50",
@@ -123,7 +123,7 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
             className="fixed left-0 top-0 h-full w-96 bg-white z-50 overflow-hidden flex flex-col rounded-r-2xl shadow-lg"
           >
-            <div className="bg-gradient-to-r from-orange-300 to-orange-400 p-5 text-white rounded-tr-2xl relative overflow-hidden">
+            <div className="bg-gradient-to-r from-primary-300 to-primary-400 p-5 text-white rounded-tr-2xl relative overflow-hidden">
               <div className="flex items-center justify-between relative z-10">
                 <div className="flex items-center space-x-3">
                   <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
@@ -131,7 +131,7 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
                   </div>
                   <div>
                     <h2 className="text-xl font-bold">히스토리 </h2>
-                    <p className="text-orange-100 text-sm">
+                    <p className="text-primary-100 text-sm">
                       지난 기록들을 살펴보세요
                     </p>
                   </div>
@@ -155,18 +155,7 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center">
                     <div className="relative mb-4 flex justify-center items-center">
-                      <div className="animate-spin rounded-full h-12 w-12 border-t-3 border-b-3 border-orange-300"></div>
-                      <motion.div
-                        className="absolute"
-                        animate={{ rotate: 360 }}
-                        transition={{
-                          duration: 2,
-                          repeat: Number.POSITIVE_INFINITY,
-                          ease: "linear",
-                        }}
-                      >
-                        <Clock className="w-6 h-6 text-orange-300" />
-                      </motion.div>
+                      <div className="w-12 h-12 border-2 border-primary-300 border-t-transparent rounded-full animate-spin"></div>
                     </div>
                     <p className="text-gray-600 font-medium">불러오는 중...</p>
                   </div>

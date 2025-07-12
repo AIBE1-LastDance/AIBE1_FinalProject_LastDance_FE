@@ -2,6 +2,7 @@ import React from 'react';
 import Header from './Header';
 import MobileNav from './MobileNav';
 import Footer from './Footer';
+import FloatingButtons from '../common/FloatingButtons';
 import { Toaster } from 'react-hot-toast';
 // ❌ useNotifications import 제거
 // import { useNotifications } from '../../hooks/useNotifications';
@@ -26,6 +27,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       </main>
       <Footer />
       <MobileNav />
+      <FloatingButtons />
       <Toaster 
         position="top-right"
         toastOptions={{

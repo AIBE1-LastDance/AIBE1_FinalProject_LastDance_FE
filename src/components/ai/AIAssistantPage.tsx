@@ -203,7 +203,7 @@ const AIAssistantPage: React.FC = () => {
                     className="text-center py-16"
                   >
                     <div className="relative mb-8 flex justify-center items-center">
-                      <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-primary-500"></div>
+                      <div className="w-16 h-16 border-2 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
                       <motion.div
                         className="absolute"
                         animate={{ rotate: 360 }}
@@ -323,6 +323,11 @@ const AIAssistantPage: React.FC = () => {
         initial={{ opacity: 0, x: -100 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 1, duration: 0.5 }}
+        style={{ 
+          position: 'fixed',
+          bottom: '1.5rem',
+          left: '1.5rem',
+        }}
       >
         <History className="w-6 h-6" />
       </motion.button>

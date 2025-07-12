@@ -90,7 +90,7 @@ const RoulettePage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-50">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-accent-50">
       {/* Header */}
       <div className="bg-white shadow-sm border-b border-gray-200 p-4">
         <div className="flex items-center justify-between max-w-6xl mx-auto">
@@ -109,15 +109,15 @@ const RoulettePage: React.FC = () => {
           <div className="flex items-center space-x-3">
             <button
               onClick={() => setShowHelpModal(true)}
-              className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center hover:bg-red-200 transition-colors"
+              className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center hover:bg-primary-200 transition-colors"
               title="게임 방법 보기"
             >
-              <HelpCircle className="w-5 h-5 text-red-600" />
+              <HelpCircle className="w-5 h-5 text-primary-600" />
             </button>
             {!showSetup && !result && (
               <button
                 onClick={resetRoulette}
-                className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
               >
                 <RotateCcw className="w-4 h-4" />
                 <span>초기화</span>
@@ -157,9 +157,9 @@ const RoulettePage: React.FC = () => {
 
                 <div className="space-y-6">
                   {/* 게임 방법 */}
-                  <div className="p-4 bg-red-50 rounded-lg">
-                    <h3 className="font-semibold text-red-800 mb-3">🎯 게임 방법</h3>
-                    <ul className="text-sm text-red-700 space-y-2">
+                  <div className="p-4 bg-primary-50 rounded-lg">
+                    <h3 className="font-semibold text-primary-800 mb-3">🎯 게임 방법</h3>
+                    <ul className="text-sm text-primary-700 space-y-2">
                       <li>• 빨간 화살표가 가리키는 위치에서 당첨자가 결정됩니다</li>
                       <li>• 룰렛이 멈춘 후 1초 뒤에 결과가 발표됩니다</li>
                       <li>• 다시 하기를 누르면 새로운 게임을 시작할 수 있습니다</li>
@@ -168,9 +168,9 @@ const RoulettePage: React.FC = () => {
                   </div>
 
                   {/* 게임 정보 */}
-                  <div className="p-4 bg-blue-50 rounded-lg">
-                    <h3 className="font-semibold text-blue-800 mb-3">🎲 게임 정보</h3>
-                    <div className="text-sm text-blue-700 space-y-1">
+                  <div className="p-4 bg-accent-50 rounded-lg">
+                    <h3 className="font-semibold text-accent-800 mb-3">🎲 게임 정보</h3>
+                    <div className="text-sm text-accent-700 space-y-1">
                       <div><strong>참여자:</strong> {players.join(', ')}</div>
                       <div><strong>벌칙:</strong> {penalty}</div>
                     </div>
@@ -214,16 +214,16 @@ const RoulettePage: React.FC = () => {
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.2, type: "spring" }}
-                className="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6"
+                className="w-20 h-20 bg-accent-100 rounded-full flex items-center justify-center mx-auto mb-6"
               >
-                <Trophy className="w-10 h-10 text-yellow-600" />
+                <Trophy className="w-10 h-10 text-accent-600" />
               </motion.div>
               
               <h2 className="text-3xl font-bold text-gray-800 mb-2">결과 발표!</h2>
               <p className="text-xl text-gray-600 mb-2">
-                <span className="font-bold text-red-600">{result.winner}</span>님이
+                <span className="font-bold text-primary-600">{result.winner}</span>님이
               </p>
-              <p className="text-2xl font-bold text-red-600 mb-6">
+              <p className="text-2xl font-bold text-primary-600 mb-6">
                 "{result.penalty}"
               </p>
               <p className="text-gray-500 mb-6">을 담당하게 되었습니다!</p>
@@ -234,7 +234,7 @@ const RoulettePage: React.FC = () => {
                     setResult(null);
                     resetRoulette();
                   }}
-                  className="flex-1 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+                  className="flex-1 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
                 >
                   다시 하기
                 </button>
@@ -271,7 +271,7 @@ const RoulettePage: React.FC = () => {
                     style={{ 
                       borderLeft: '15px solid transparent',
                       borderRight: '15px solid transparent',
-                      borderTop: '30px solid #dc2626',
+                      borderTop: '30px solid #E69975', // primary-500 색상
                       filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.3))',
                     }}
                   />
@@ -280,7 +280,7 @@ const RoulettePage: React.FC = () => {
                 {/* 룰렛 휠 컨테이너 */}
                 <div className="relative">
                   {/* 룰렛 휠 외부 테두리 */}
-                  <div className="absolute -inset-2 rounded-full border-8 border-yellow-400 shadow-2xl"></div>
+                  <div className="absolute -inset-2 rounded-full border-8 border-accent-400 shadow-2xl"></div>
                   
                   <motion.div
                     className="w-80 h-80 rounded-full relative overflow-hidden shadow-2xl border-4 border-white"
@@ -300,7 +300,7 @@ const RoulettePage: React.FC = () => {
                       className="absolute inset-0"
                     >
                       {players.map((_, index) => {
-                        const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#FFB6C1', '#98FB98'];
+                        const colors = ['#E69975', '#6C92E6', '#F1B088', '#A3CCFF', '#F6CCB3', '#C7E0FF', '#FAE1D4', '#E1EFFF'];
                         const anglePerSection = 360 / players.length;
                         const startAngle = index * anglePerSection;
                         const endAngle = (index + 1) * anglePerSection;
@@ -367,8 +367,8 @@ const RoulettePage: React.FC = () => {
                   </motion.div>
 
                   {/* 중앙 원 */}
-                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-white rounded-full border-4 border-yellow-400 shadow-lg flex items-center justify-center z-10">
-                    <div className="w-8 h-8 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full"></div>
+                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-white rounded-full border-4 border-accent-400 shadow-lg flex items-center justify-center z-10">
+                    <div className="w-8 h-8 bg-gradient-to-br from-accent-400 to-accent-600 rounded-full"></div>
                   </div>
                 </div>
               </div>
@@ -378,7 +378,7 @@ const RoulettePage: React.FC = () => {
                 className={`flex items-center space-x-3 px-8 py-4 rounded-2xl font-bold text-lg transition-all ${
                   isSpinning
                     ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-red-500 to-pink-500 text-white hover:from-red-600 hover:to-pink-600 shadow-lg hover:shadow-xl'
+                    : 'bg-gradient-to-r from-primary-500 to-accent-500 text-white hover:from-primary-600 hover:to-accent-600 shadow-lg hover:shadow-xl'
                 }`}
                 whileHover={!isSpinning ? { scale: 1.05 } : {}}
                 whileTap={!isSpinning ? { scale: 0.95 } : {}}
