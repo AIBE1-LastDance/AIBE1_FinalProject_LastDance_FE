@@ -25,7 +25,7 @@ const DicePage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-primary-900 via-accent-900 to-primary-800 p-6">
       <div className="max-w-4xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -34,7 +34,7 @@ const DicePage: React.FC = () => {
         >
           <button
             onClick={() => navigate('/games')}
-            className="flex items-center space-x-2 text-white hover:text-purple-300 transition-colors"
+            className="flex items-center space-x-2 text-white hover:text-primary-300 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
             <span>게임 목록</span>
@@ -68,7 +68,7 @@ const DicePage: React.FC = () => {
           <button
             onClick={rollDice}
             disabled={isRolling}
-            className="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-bold text-lg disabled:opacity-50"
+            className="px-8 py-3 bg-gradient-to-r from-primary-500 to-accent-500 text-white rounded-xl font-bold text-lg disabled:opacity-50"
           >
             <Dice6 className="w-5 h-5 inline mr-2" />
             {isRolling ? '굴리는 중...' : '주사위 굴리기'}
@@ -82,7 +82,7 @@ const DicePage: React.FC = () => {
               animate={{ opacity: 1, scale: 1 }}
               className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80"
             >
-              <div className="bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl p-12 text-center text-white">
+              <div className="bg-gradient-to-br from-accent-400 to-primary-500 rounded-2xl p-12 text-center text-white">
                 <div className="text-6xl mb-4">🏆</div>
                 <h2 className="text-3xl font-bold mb-4">승리!</h2>
                 <div className="text-2xl font-bold mb-6">{winner}</div>
@@ -90,7 +90,7 @@ const DicePage: React.FC = () => {
                   onClick={() => {
                     setWinner(null);
                   }}
-                  className="px-6 py-3 bg-white text-orange-500 rounded-xl font-bold"
+                  className="px-6 py-3 bg-white text-primary-500 rounded-xl font-bold"
                 >
                   다시 플레이
                 </button>

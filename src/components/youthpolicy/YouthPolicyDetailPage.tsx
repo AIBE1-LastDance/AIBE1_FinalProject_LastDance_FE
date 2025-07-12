@@ -56,7 +56,7 @@ const YouthPolicyDetailPage: React.FC = () => {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] py-20">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-accent-500"></div>
+        <div className="w-16 h-16 border-2 border-accent-500 border-t-transparent rounded-full animate-spin"></div>
         <p className="mt-4 text-gray-600">
           정책 상세 정보를 불러오는 중입니다...
         </p>
