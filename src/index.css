@@ -12,3 +12,22 @@
 .font-gong {
     font-family: 'GongGothicMedium', sans-serif;
 }
+
+/* 파이차트 포커스 박스 제거 */
+.recharts-pie-sector:focus,
+.recharts-pie-sector:focus-visible,
+.recharts-wrapper svg:focus,
+.recharts-wrapper svg:focus-visible,
+.recharts-surface:focus,
+.recharts-surface:focus-visible,
+.recharts-pie:focus,
+.recharts-pie:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* 모든 SVG 요소의 포커스 제거 */
+svg:focus,
+svg:focus-visible {
+    outline: none !important;
+}

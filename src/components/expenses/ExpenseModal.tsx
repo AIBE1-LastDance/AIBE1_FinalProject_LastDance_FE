@@ -242,7 +242,7 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                                 type="text"
                                 value={formData.title}
                                 onChange={(e) => setFormData({...formData, title: e.target.value})}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#df6d14] focus:border-transparent"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#df6d14] focus:border-transparent"
                                 placeholder="지출 내용을 입력하세요"
                             />
                         </div>
@@ -261,7 +261,7 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                                     const numericValue = e.target.value.replace(/[^0-9]/g, '');
                                     setFormData({...formData, amount: numericValue});
                                 }}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#df6d14] focus:border-transparent text-2xl font-bold text-right"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#df6d14] focus:border-transparent text-2xl font-bold text-right"
                                 placeholder="10,000"
                                 inputMode="numeric"
                             />
@@ -312,7 +312,7 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                                 type="date"
                                 value={formData.date}
                                 onChange={(e) => setFormData({...formData, date: e.target.value})}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#df6d14] focus:border-transparent"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#df6d14] focus:border-transparent"
                             />
                         </div>
 
@@ -325,7 +325,7 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                             <textarea
                                 value={formData.memo}
                                 onChange={(e) => setFormData({...formData, memo: e.target.value})}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#df6d14] focus:border-transparent"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#df6d14] focus:border-transparent"
                                 placeholder="추가 설명을 입력하세요"
                                 rows={3}
                             />
@@ -355,7 +355,7 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                                             setReceiptUrl(null);
                                         }
                                     }}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#df6d14] focus:border-transparent"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#df6d14] focus:border-transparent"
                                 />
                                 {(formData.receipt || receiptUrl) && (
                                     <div className="mt-2">
@@ -435,7 +435,7 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                                             splitType: e.target.value,
                                             splitData: {}
                                         })}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#df6d14] focus:border-transparent"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#df6d14] focus:border-transparent"
                                     >
                                         {splitTypes.map((type) => (
                                             <option key={type.value} value={type.value}>
@@ -473,7 +473,7 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                                                                 splitData: newSplitData
                                                             });
                                                         }}
-                                                        className="w-24 px-2 py-1 border border-gray-300 rounded text-sm text-center"
+                                                        className="w-24 px-2 py-1 border border-gray-300 rounded text-sm text-center focus:outline-none focus:ring-2 focus:ring-[#df6d14]"
                                                         placeholder="0"
                                                         inputMode="numeric"  // 모바일에서 숫자 키패드
                                                     />
@@ -525,7 +525,7 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                                                                                     });
                                                                                 }
                                                                             }}
-                                                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#df6d14] focus:border-transparent"
+                                                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#df6d14] focus:border-transparent"
                                                                         >
                                                                             내가 부담 (+{new Intl.NumberFormat('ko-KR', {
                                                                             style: 'currency',
@@ -606,7 +606,7 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                                                                     splitData: newSplitData
                                                                 });
                                                             }}
-                                                            className="rounded border-gray-300 accent-[#df6d14] focus:ring-[#df6d14]"
+                                                            className="rounded border-gray-300 accent-[#df6d14] focus:ring-[#df6d14] focus:outline-none"
                                                         />
                                                         <span
                                                             className="text-sm text-gray-700">{getDisplayNickname(member)}</span>
