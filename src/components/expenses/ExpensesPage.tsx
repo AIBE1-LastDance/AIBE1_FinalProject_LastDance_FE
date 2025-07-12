@@ -1103,7 +1103,7 @@ const ExpensesPage: React.FC = () => {
                               : cat.value === "FOOD"
                               ? "bg-red-400"
                               : cat.value === "UTILITIES"
-                              ? "bg-teal-400"
+                              ? "bg-accent-400"
                               : cat.value === "TRANSPORT"
                               ? "bg-blue-400"
                               : cat.value === "SHOPPING"
@@ -1166,7 +1166,7 @@ const ExpensesPage: React.FC = () => {
 
             {/* Add Expense Button */}
             <motion.button
-              className="flex items-center space-x-2 px-6 py-3 bg-primary-600 text-white rounded-2xl font-medium hover:bg-primary-700 transition-colors shadow-md hover:shadow-lg whitespace-nowrap"
+              className="flex items-center space-x-2 px-6 py-3 bg-accent-500 text-white rounded-2xl font-medium hover:bg-accent-600 transition-colors shadow-md hover:shadow-lg whitespace-nowrap"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => {
@@ -1843,7 +1843,7 @@ const ExpensesPage: React.FC = () => {
               <button
                 className={`flex-1 px-6 py-4 text-sm font-medium transition-colors ${
                   activeTab === "analyses"
-                    ? "text-primary-600 border-b-2 border-primary-600 bg-primary-50"
+                    ? "text-accent-600 border-b-2 border-accent-600 bg-accent-50"
                     : "text-gray-500 hover:text-gray-700"
                 }`}
                 onClick={() => setActiveTab("analyses")}
@@ -1991,7 +1991,7 @@ const ExpensesPage: React.FC = () => {
                     새로운 지출을 추가해보세요!
                   </p>
                   <motion.button
-                    className="px-6 py-3 bg-[#df6d14] text-white rounded-xl font-medium hover:bg-[#df6d14]/90 transition-colors"
+                    className="px-6 py-3 bg-accent-500 text-white rounded-xl font-medium hover:bg-accent-600 transition-colors"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => setShowExpenseModal(true)}

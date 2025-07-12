@@ -6,6 +6,13 @@ import { Calendar, CheckSquare, CreditCard, Users, Gamepad2, Bot, ArrowRight, St
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
 
+  // 로고 URL 환경 변수
+  const logoUrl = import.meta.env.VITE_LOGO_URL;
+  
+  // 디버깅용 로그
+  console.log('LandingPage - VITE_LOGO_URL:', import.meta.env.VITE_LOGO_URL);
+  console.log('LandingPage - All env vars:', import.meta.env);
+
   const features = [
     {
       icon: Calendar,
@@ -109,13 +116,13 @@ const LandingPage: React.FC = () => {
             transition={{ duration: 0.8 }}
             className="mb-8"
           >
-            <img src="/image/Logo.png" alt="우리.zip" className="w-48 h-48 mx-auto mb-8 drop-shadow-lg" />
-            <h1 className="text-6xl md:text-8xl font-bold mb-6">
+            <img src={logoUrl} alt="우리.zip" className="w-48 h-48 mx-auto mb-8 drop-shadow-lg" />
+            <h1 className="text-6xl md:text-8xl font-title font-bold mb-6">
               <span className="bg-gradient-to-r from-primary-500 to-primary-700 bg-clip-text text-transparent">
                 우리.zip
               </span>
             </h1>
-            <p className="text-xl md:text-2xl text-gray-700 mb-8 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-xl md:text-2xl text-gray-700 mb-8 max-w-3xl mx-auto leading-relaxed font-body">
               개인과 그룹 생활을 하나로 묶어주는 스마트 라이프 플랫폼
             </p>
           </motion.div>
@@ -187,10 +194,10 @@ const LandingPage: React.FC = () => {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+            <h2 className="text-4xl md:text-5xl font-title font-bold text-gray-900 mb-6">
               모든 것을 <span className="text-primary-600">하나로</span>
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto font-body">
               개인 모드와 그룹 모드를 자유롭게 전환하며, 
               일정, 할일, 가계부, 커뮤니티까지 한 번에 관리하세요
             </p>
@@ -210,8 +217,8 @@ const LandingPage: React.FC = () => {
                 <div className={`w-16 h-16 rounded-2xl bg-gradient-to-r ${feature.color} flex items-center justify-center mb-6 shadow-lg`}>
                   <feature.icon className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">{feature.title}</h3>
-                <p className="text-gray-600 leading-relaxed">{feature.description}</p>
+                <h3 className="text-2xl font-title font-bold text-gray-900 mb-4">{feature.title}</h3>
+                <p className="text-gray-600 leading-relaxed font-body">{feature.description}</p>
               </motion.div>
             ))}
           </div>
@@ -249,10 +256,10 @@ const LandingPage: React.FC = () => {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+            <h2 className="text-4xl md:text-5xl font-title font-bold text-gray-900 mb-6">
               사용자들의 <span className="text-primary-600">이야기</span>
             </h2>
-            <p className="text-xl text-gray-600">
+            <p className="text-xl text-gray-600 font-body">
               실제 사용자들이 전하는 우리.zip의 경험
             </p>
           </motion.div>
@@ -272,7 +279,7 @@ const LandingPage: React.FC = () => {
                     <Star key={i} className="w-5 h-5 text-yellow-500 fill-current" />
                   ))}
                 </div>
-                <p className="text-gray-700 mb-6 leading-relaxed">"{testimonial.content}"</p>
+                <p className="text-gray-700 mb-6 leading-relaxed font-body">"{testimonial.content}"</p>
                 <div className="flex items-center space-x-3">
                   <div className="w-12 h-12 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full flex items-center justify-center">
                     <span className="text-white font-semibold">{testimonial.name[0]}</span>
@@ -302,10 +309,10 @@ const LandingPage: React.FC = () => {
             viewport={{ once: true }}
           >
             <Sparkles className="w-16 h-16 text-white mx-auto mb-8" />
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+            <h2 className="text-4xl md:text-5xl font-title font-bold text-white mb-6">
               지금 바로 시작하세요
             </h2>
-            <p className="text-xl text-primary-100 mb-12 max-w-2xl mx-auto">
+            <p className="text-xl text-primary-100 mb-12 max-w-2xl mx-auto font-body">
               개인과 그룹 생활을 더욱 스마트하게 관리할 수 있는 새로운 경험을 만나보세요
             </p>
 
@@ -328,10 +335,10 @@ const LandingPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="col-span-1 md:col-span-2">
               <div className="flex items-center space-x-3 mb-6">
-                <img src="/image/Logo.png" alt="우리.zip" className="w-14 h-14" />
-                <h3 className="text-2xl font-bold">우리.zip</h3>
+                <img src={logoUrl} alt="우리.zip" className="w-14 h-14" />
+                <h3 className="text-2xl font-title font-bold">우리.zip</h3>
               </div>
-              <p className="text-gray-400 mb-6 max-w-md">
+              <p className="text-gray-400 mb-6 max-w-md font-body">
                 개인과 그룹 생활을 하나로 묶어주는 스마트 라이프 플랫폼으로, 
                 더 나은 일상을 만들어갑니다.
               </p>
@@ -342,7 +349,7 @@ const LandingPage: React.FC = () => {
             </div>
 
             <div>
-              <h4 className="text-lg font-semibold mb-4">서비스</h4>
+              <h4 className="text-lg font-title font-semibold mb-4">서비스</h4>
               <ul className="space-y-2 text-gray-400">
                 <li>개인 모드</li>
                 <li>그룹 모드</li>
@@ -352,7 +359,7 @@ const LandingPage: React.FC = () => {
             </div>
 
             <div>
-              <h4 className="text-lg font-semibold mb-4">지원</h4>
+              <h4 className="text-lg font-title font-semibold mb-4">지원</h4>
               <ul className="space-y-2 text-gray-400">
                 <li>고객센터</li>
                 <li>사용 가이드</li>

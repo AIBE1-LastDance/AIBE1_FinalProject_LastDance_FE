@@ -19,6 +19,8 @@ const LoginPage: React.FC = () => {
     const {getSocialLoginUrl} = useAuth();
     const [modalContent, setModalContent] = useState<'terms' | 'privacy' | null>(null);
 
+    const logoUrl = import.meta.env.VITE_LOGO_URL;
+
     const handleSocialLogin = async (provider: 'google' | 'kakao' | 'naver') => {
         setIsLoading(provider);
 
@@ -47,29 +49,57 @@ const LoginPage: React.FC = () => {
     return (
         <div
             className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-100 flex items-center justify-center p-6">
-            <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+            <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                 {/* Left Side - Branding */}
                 <motion.div
                     initial={{opacity: 0, x: -50}}
                     animate={{opacity: 1, x: 0}}
                     transition={{duration: 0.8}}
-                    className="text-center lg:text-left"
+                    className="flex flex-col justify-center text-center relative"
                 >
-                    <div className="flex items-center justify-center lg:justify-start mb-8">
-                        <img src="/image/Logo.png" alt="우리.zip" className="w-32 h-32"/>
+                    {/* 로고 - 절대 위치로 문구 위에 추가 (문구 위치에 영향 없음) */}
+                    <motion.div
+                        initial={{ scale: 0.8, opacity: 0, rotate: -10 }}
+                        animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                        transition={{ duration: 0.6, delay: 0.2, type: "spring", stiffness: 200 }}
+                        className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-[120%] z-10"
+                    >
+                        <div className="relative">
+                            <div className="absolute inset-0 bg-gradient-to-r from-primary-200 to-primary-300 rounded-full blur-xl opacity-30 animate-pulse"></div>
+                            <img 
+                                src={logoUrl} 
+                                alt="우리.zip" 
+                                className="relative w-20 h-20 lg:w-24 lg:h-24 xl:w-28 xl:h-28 drop-shadow-lg"
+                            />
+                        </div>
+                    </motion.div>
+
+                    {/* 메인 콘텐츠 (로고 없을 때와 동일한 세로 가운데 정렬) */}
+                    <div className="flex flex-col">
+                        {/* 제목 - 원래 위치 유지 */}
+                        <motion.div 
+                            initial={{ opacity: 0, y: 30 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.8, delay: 0.4 }}
+                        >
+                            <h1 className="text-3xl lg:text-4xl xl:text-5xl font-title font-bold text-center text-gray-900 leading-tight mb-6">
+                                우리의 하루를,<br/>
+                                <span className="bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
+                                    우리.zip에 담다
+                                </span>
+                            </h1>
+                        </motion.div>
+
+                        {/* 설명 - 원래 위치 유지 */}
+                        <motion.p 
+                            className="text-lg lg:text-xl text-center text-gray-600 mb-12 leading-relaxed font-body"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6, delay: 0.6 }}
+                        >
+                            하우스메이트와 함께하는 스마트한 공동생활 관리 플랫폼
+                        </motion.p>
                     </div>
-
-                    <h1 className="text-4xl lg:text-5xl font-bold text-center text-gray-900 mb-6 leading-tight">
-                        우리의 하루를,<br/>
-                        <span
-                            className="bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
-              우리.zip에 담다
-            </span>
-                    </h1>
-
-                    <p className="text-xl text-center text-gray-600 mb-12 leading-relaxed">
-                        하우스메이트와 함께하는 스마트한 공동생활 관리 플랫폼
-                    </p>
 
                     {/* Features Grid */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
@@ -97,7 +127,7 @@ const LoginPage: React.FC = () => {
                     initial={{opacity: 0, x: 50}}
                     animate={{opacity: 1, x: 0}}
                     transition={{duration: 0.8, delay: 0.2}}
-                    className="bg-white rounded-3xl shadow-2xl p-8 lg:p-12 mt-[10rem]"
+                    className="bg-white rounded-3xl shadow-2xl p-8 lg:p-12 flex flex-col justify-center"
                 >
                     <div className="text-center mb-8">
                         <h2 className="text-3xl font-bold text-gray-900 mb-2">시작하기</h2>

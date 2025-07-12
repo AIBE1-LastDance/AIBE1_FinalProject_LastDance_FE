@@ -153,7 +153,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onSave }) => {
               type="text"
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-transparent"
               placeholder="할일 제목을 입력하세요"
               disabled={isSubmitting}
               maxLength={100}
@@ -168,7 +168,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onSave }) => {
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-transparent"
               placeholder="할일 설명을 입력하세요"
               rows={3}
               disabled={isSubmitting}
@@ -186,7 +186,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onSave }) => {
               type="date"
               value={formData.dueDate}
               onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-transparent"
               disabled={isSubmitting}
               min={new Date().toISOString().split('T')[0]} // 오늘 이후만 선택 가능
             />
@@ -205,7 +205,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onSave }) => {
                   type="button"
                   className={`p-3 rounded-lg border-2 transition-colors ${
                     formData.priority === priority.value
-                      ? 'border-blue-500 bg-blue-50'
+                      ? 'border-accent-500 bg-accent-50'
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
                   whileHover={{ scale: 1.02 }}
@@ -231,7 +231,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onSave }) => {
               <select
                 value={formData.assigneeId}
                 onChange={(e) => setFormData({ ...formData, assigneeId: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-transparent"
                 disabled={isSubmitting}
               >
                 <option value="">담당자를 선택하세요</option>
@@ -270,7 +270,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onSave }) => {
             </motion.button>
             <motion.button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 bg-accent-600 text-white rounded-lg font-medium hover:bg-accent-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
               whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
               disabled={isSubmitting}

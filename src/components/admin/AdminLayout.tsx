@@ -64,7 +64,7 @@ const AdminLayout: React.FC = () => {
                 }}
                 className={`w-full flex items-center px-6 py-3 text-left text-sm font-medium transition-colors ${
                   isActive(item.path)
-                    ? 'bg-slate-800 text-white border-r-2 border-blue-500'
+                    ? 'bg-slate-800 text-white border-r-2 border-accent-500'
                     : 'text-gray-300 hover:bg-slate-800 hover:text-white'
                 }`}
               >
@@ -99,16 +99,10 @@ const AdminLayout: React.FC = () => {
         {/* Header */}
         <header className="bg-white shadow-sm border-b border-gray-200">
           <div className="flex items-center justify-between h-16 px-6">
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="lg:hidden text-gray-600 hover:text-gray-900"
-            >
-              <Menu className="w-6 h-6" />
-            </button>
             
             <div className="flex items-center space-x-4">
               <div className="relative">
-                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                <div className="w-8 h-8 bg-accent-500 rounded-full flex items-center justify-center">
                   <span className="text-sm font-medium text-white">
                     {adminInfo?.nickname?.charAt(0) || '관'}
                   </span>

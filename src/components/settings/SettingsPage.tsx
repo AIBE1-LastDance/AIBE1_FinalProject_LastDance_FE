@@ -606,7 +606,7 @@ const SettingsPage: React.FC = () => {
                     className={`flex items-center space-x-3 px-6 py-3 rounded-xl font-medium transition-colors shadow-lg ${
                         isSaving || (!nicknameState.available && profileData.nickname !== user?.nickname)
                             ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                            : 'bg-primary-600 text-white hover:bg-primary-700'
+                            : 'bg-accent-600 text-white hover:bg-accent-700'
                     }`}
                     whileHover={!isSaving && nicknameState.available ? { scale: 1.02 } : {}}
                     whileTap={!isSaving && nicknameState.available ? { scale: 0.98 } : {}}
@@ -855,7 +855,7 @@ const SettingsPage: React.FC = () => {
                         className={`flex items-center space-x-3 px-6 py-3 rounded-xl font-medium transition-colors shadow-lg ${
                             isSaving || (!nicknameState.available && profileData.nickname !== user?.nickname)
                                 ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                                : 'bg-primary-600 text-white hover:bg-primary-700'
+                                : 'bg-accent-600 text-white hover:bg-accent-700'
                         }`}
                         whileHover={!isSaving && nicknameState.available ? {scale: 1.02} : {}}
                         whileTap={!isSaving && nicknameState.available ? {scale: 0.98} : {}}

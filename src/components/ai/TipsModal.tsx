@@ -73,7 +73,7 @@ const TipsModal: React.FC<TipsModalProps> = ({ isOpen, onClose }) => {
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
             className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden"
           >
-            <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-6 text-white">
+            <div className="bg-gradient-to-r from-primary-500 to-primary-600 p-6 text-white">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
@@ -183,7 +183,7 @@ const TipsModal: React.FC<TipsModalProps> = ({ isOpen, onClose }) => {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={onClose}
-                  className="px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg font-semibold hover:from-orange-600 hover:to-orange-700 transition-all duration-200 shadow-lg"
+                  className="px-6 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-lg font-semibold hover:from-orange-600 hover:to-orange-700 transition-all duration-200 shadow-lg"
                 >
                   이해했어요
                 </motion.button>
