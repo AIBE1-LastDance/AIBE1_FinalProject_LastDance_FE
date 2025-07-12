@@ -213,12 +213,13 @@ const CalendarPage: React.FC = () => {
             <div className="flex flex-col lg:flex-row lg:items-center space-y-1 lg:space-y-0 lg:space-x-4">
               <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 leading-tight">
                 {mode === 'personal' ? '내 캘린더' : (
-                    <div className="flex items-center space-x-2 lg:space-x-3 flex-wrap">
-                      <span className="whitespace-nowrap">공유 캘린더</span>
-                      <span className="text-lg lg:text-xl text-primary-600">•</span>
-                      <span className="text-lg lg:text-2xl text-primary-600 font-semibold whitespace-nowrap">
-            {currentGroup?.name || '그룹 선택 필요'}
-          </span>
+                    <div className="space-y-1">
+                      <div className="text-base font-medium text-gray-500">
+                        공유 캘린더
+                      </div>
+                      <div className="text-2xl lg:text-3xl font-bold text-primary-600 truncate" title={currentGroup?.name || "그룹 선택 필요"}>
+                        {currentGroup?.name || "그룹 선택 필요"}
+                      </div>
                     </div>
                 )}
               </h1>
