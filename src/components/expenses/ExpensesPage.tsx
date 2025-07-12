@@ -661,30 +661,22 @@ const ExpensesPage: React.FC = () => {
 
     const handleFeedback = async (historyId: number, type: 'up' | 'down') => {
         console.log('handleFeedback 호출됨:', { historyId, type }); // 디버깅 로그
-        let feedbackTypeToSend: 'up' | 'down' | null = type; // 백엔드로 보낼 피드백 타입
-
-        // 현재 aiAnalysis의 피드백 상태 확인
-        const currentFeedback = aiAnalysis?.feedback?.toLowerCase();
-
-        if (currentFeedback === type) {
-            // 이미 선택된 피드백을 다시 누르면 취소
-            feedbackTypeToSend = null;
-        }
-
+        
         try {
-            if (feedbackTypeToSend !== null) {
-                await expenseAPI.submitFeedback(historyId, feedbackTypeToSend);
-            }
+            const response = await expenseAPI.submitFeedback(historyId, type);
 
             // 현재 표시된 분석 결과의 피드백 상태 업데이트
-            const newFeedbackState = feedbackTypeToSend ? feedbackTypeToSend.toUpperCase() : null;
-            if (analysisResult && analysisResult.historyId === historyId) {
+            const newFeedbackState = response.data === 'CANCELED' ? null : type.toUpperCase();
+            if (selectedAnalysis && selectedAnalysis.historyId === historyId) {
+                setSelectedAnalysis(prev => ({ ...prev, feedback: newFeedbackState }));
+                console.log('selectedAnalysis 업데이트됨:', selectedAnalysis); // 디버깅 로그
+            } else if (analysisResult && analysisResult.historyId === historyId) {
                 setAnalysisResult(prev => ({ ...prev, feedback: newFeedbackState }));
                 console.log('analysisResult 업데이트됨:', analysisResult); // 디버깅 로그
             }
 
             // 토스트 메시지 분리
-            if (feedbackTypeToSend === null) {
+            if (response.data === 'CANCELED') {
                 toast.success('피드백이 취소되었습니다.');
             } else {
                 toast.success('피드백이 성공적으로 제출되었습니다!');

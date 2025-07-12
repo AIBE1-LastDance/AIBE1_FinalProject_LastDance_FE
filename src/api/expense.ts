@@ -233,8 +233,9 @@ export const expenseAPI = {
 
     submitFeedback: async (historyId: number, type: 'up' | 'down' | null) => {
         let url = `/api/v1/expenses/analyze/${historyId}/feedback`;
-        // type이 null이더라도 쿼리 파라미터에 명시적으로 포함
-        url += `?type=${type}`;
+        // type이 null이면 빈 문자열로 보내고, 아니면 해당 type으로 보냄
+        url += `?type=${type === null ? '' : type}`;
+        console.log('Submitting feedback URL:', url); // 디버깅 로그 추가
         const response = await apiClient.post(url);
         return response.data;
     }
