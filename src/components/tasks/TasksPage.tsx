@@ -223,7 +223,7 @@ const TasksPage: React.FC = () => {
           {/* Add Task Button */}
           {(mode === 'personal' || currentGroup) && (
             <motion.button
-              className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors"
+              className="flex items-center space-x-2 px-4 py-2 bg-accent-500 text-white rounded-lg font-medium hover:bg-accent-600 transition-colors"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={handleAddTask}
@@ -265,7 +265,7 @@ const TasksPage: React.FC = () => {
               <h3 className="text-xl font-semibold text-gray-900 mb-2">할일이 없습니다</h3>
               <p className="text-gray-600 mb-6">새로운 할일을 추가해서 시작해보세요!</p>
               <motion.button
-                className="px-6 py-3 bg-[#df6d14] text-white rounded-xl font-medium hover:bg-[#df6d14]/90 transition-colors"
+                className="px-6 py-3 bg-accent-500 text-white rounded-xl font-medium hover:bg-accent-600 transition-colors"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleAddTask}
@@ -308,7 +308,7 @@ const TasksPage: React.FC = () => {
                             <div className="flex items-start space-x-4">
                               {/* Checkbox */}
                               <motion.button
-                                className={`mt-1 ${checklist.isCompleted ? 'text-green-600' : 'text-gray-400 hover:text-green-500'}`}
+                                className={`mt-1 ${checklist.isCompleted ? 'text-accent-500' : 'text-gray-400 hover:text-accent-500'}`}
                                 whileHover={{ scale: 1.1 }}
                                 whileTap={{ scale: 0.9 }}
                                 onClick={(e) => handleToggleTask(checklist.checklistId, checklist.isCompleted, e)}

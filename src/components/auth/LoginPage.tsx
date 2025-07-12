@@ -2,18 +2,24 @@ import React, {useEffect, useState} from 'react';
 import {motion} from 'framer-motion';
 import {FaGoogle, FaComment} from 'react-icons/fa';
 import {SiNaver} from 'react-icons/si';
-import {Home, Calendar, CreditCard, Gamepad2, Bot, Users} from 'lucide-react';
+import { Home, Calendar, CheckSquare, CreditCard, Gamepad2, Bot, Users, ExternalLink } from 'lucide-react';
 import {useAuthStore} from '../../store/authStore';
 import {useNavigate} from 'react-router-dom';
 import {User} from '../../types';
 import toast from 'react-hot-toast';
 import {useAuth} from '../../hooks/useAuth';
+import Modal from '../common/Modal';
+import TermsContent from '../legal/TermsContent';
+import PrivacyPolicyContent from '../legal/PrivacyPolicyContent';
 
 const LoginPage: React.FC = () => {
     const {login} = useAuthStore();
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState<string | null>(null);
     const {getSocialLoginUrl} = useAuth();
+    const [modalContent, setModalContent] = useState<'terms' | 'privacy' | null>(null);
+
+    const logoUrl = import.meta.env.VITE_LOGO_URL;
 
     const handleSocialLogin = async (provider: 'google' | 'kakao' | 'naver') => {
         setIsLoading(provider);
@@ -31,10 +37,12 @@ const LoginPage: React.FC = () => {
 
     const features = [
         {icon: Calendar, title: '스마트 캘린더', description: '일정 관리'},
+        {icon: CheckSquare, title: '할일 관리', description: '할 일 목록'},
         {icon: CreditCard, title: '가계부 관리', description: '지출 추적'},
         {icon: Gamepad2, title: '재밌는 게임', description: '당번 정하기'},
         {icon: Bot, title: 'AI 도우미', description: '똑똑한 조언'},
         {icon: Users, title: '커뮤니티', description: '정보 공유'},
+        {icon: ExternalLink, title: '청년정책', description: '정책 정보'},
         {icon: Home, title: '그룹 관리', description: '공동생활'},
     ];
 
@@ -47,26 +55,54 @@ const LoginPage: React.FC = () => {
                     initial={{opacity: 0, x: -50}}
                     animate={{opacity: 1, x: 0}}
                     transition={{duration: 0.8}}
-                    className="text-center lg:text-left"
+                    className="flex flex-col justify-center text-center relative"
                 >
-                    <div className="flex items-center justify-center lg:justify-start mb-8">
-                        <img src="/image/Logo.png" alt="우리.zip" className="w-32 h-32"/>
+                    {/* 로고 - 절대 위치로 문구 위에 추가 (문구 위치에 영향 없음) */}
+                    <motion.div
+                        initial={{ scale: 0.8, opacity: 0, rotate: -10 }}
+                        animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                        transition={{ duration: 0.6, delay: 0.2, type: "spring", stiffness: 200 }}
+                        className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-[120%] z-10"
+                    >
+                        <div className="relative">
+                            <div className="absolute inset-0 bg-gradient-to-r from-primary-200 to-primary-300 rounded-full blur-xl opacity-30 animate-pulse"></div>
+                            <img 
+                                src={logoUrl} 
+                                alt="우리.zip" 
+                                className="relative w-20 h-20 lg:w-24 lg:h-24 xl:w-28 xl:h-28 drop-shadow-lg"
+                            />
+                        </div>
+                    </motion.div>
+
+                    {/* 메인 콘텐츠 (로고 없을 때와 동일한 세로 가운데 정렬) */}
+                    <div className="flex flex-col">
+                        {/* 제목 - 원래 위치 유지 */}
+                        <motion.div 
+                            initial={{ opacity: 0, y: 30 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.8, delay: 0.4 }}
+                        >
+                            <h1 className="text-3xl lg:text-4xl xl:text-5xl font-title font-bold text-center text-gray-900 leading-tight mb-6">
+                                우리의 하루를,<br/>
+                                <span className="bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
+                                    우리.zip에 담다
+                                </span>
+                            </h1>
+                        </motion.div>
+
+                        {/* 설명 - 원래 위치 유지 */}
+                        <motion.p 
+                            className="text-lg lg:text-xl text-center text-gray-600 mb-12 leading-relaxed font-body"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6, delay: 0.6 }}
+                        >
+                            하우스메이트와 함께하는 스마트한 공동생활 관리 플랫폼
+                        </motion.p>
                     </div>
 
-                    <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6 leading-tight">
-                        우리의 하루를,<br/>
-                        <span
-                            className="bg-gradient-to-r from-primary-500 to-primary-600 bg-clip-text text-transparent">
-              우리.zip에 담다
-            </span>
-                    </h1>
-
-                    <p className="text-xl text-gray-600 mb-12 leading-relaxed">
-                        하우스메이트와 함께하는 스마트한 공동생활 관리 플랫폼
-                    </p>
-
                     {/* Features Grid */}
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                         {features.map((feature, index) => (
                             <motion.div
                                 key={feature.title}
@@ -91,7 +127,7 @@ const LoginPage: React.FC = () => {
                     initial={{opacity: 0, x: 50}}
                     animate={{opacity: 1, x: 0}}
                     transition={{duration: 0.8, delay: 0.2}}
-                    className="bg-white rounded-3xl shadow-2xl p-8 lg:p-12"
+                    className="bg-white rounded-3xl shadow-2xl p-8 lg:p-12 flex flex-col justify-center"
                 >
                     <div className="text-center mb-8">
                         <h2 className="text-3xl font-bold text-gray-900 mb-2">시작하기</h2>
@@ -165,12 +201,20 @@ const LoginPage: React.FC = () => {
 
                     <div className="mt-8 pt-6 border-t border-gray-200 text-center">
                         <p className="text-sm text-gray-500">
-                            로그인하면 <a href="#" className="text-primary-600 hover:underline">이용약관</a> 및{' '}
-                            <a href="#" className="text-primary-600 hover:underline">개인정보처리방침</a>에 동의하게 됩니다.
+                            로그인하면 <button onClick={() => setModalContent('terms')} className="text-primary-600 hover:underline">이용약관</button> 및{' '}
+                            <button onClick={() => setModalContent('privacy')} className="text-primary-600 hover:underline">개인정보처리방침</button>에 동의하게 됩니다.
                         </p>
                     </div>
                 </motion.div>
             </div>
+            <Modal 
+                isOpen={modalContent !== null}
+                onClose={() => setModalContent(null)}
+                title={modalContent === 'terms' ? '이용약관' : '개인정보처리방침'}
+            >
+                {modalContent === 'terms' && <TermsContent />}
+                {modalContent === 'privacy' && <PrivacyPolicyContent />}
+            </Modal>
         </div>
     );
 };

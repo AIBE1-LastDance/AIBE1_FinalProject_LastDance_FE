@@ -215,7 +215,7 @@ const CommunityPage: React.FC = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-2xl p-6 text-white"
+        className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-2xl p-6 text-white"
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
@@ -280,7 +280,7 @@ const CommunityPage: React.FC = () => {
               }}
               className={`flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                 selectedCategory === category.id
-                  ? "bg-orange-100 text-orange-700 border-2 border-orange-200"
+                  ? "bg-primary-100 text-primary-700 border-2 border-primary-200"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
@@ -333,7 +333,7 @@ const CommunityPage: React.FC = () => {
             }}
             className={`p-2 rounded-lg transition-colors ${
               filterBy === "liked"
-                ? "bg-red-100 text-red-700 border border-red-300"
+                ? "bg-accent-100 text-accent-700 border border-accent-300"
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             }`}
           >
@@ -359,7 +359,7 @@ const CommunityPage: React.FC = () => {
               }}
               className={`flex items-center space-x-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                 sortBy === option.key
-                  ? "bg-white text-orange-600 shadow-sm"
+                  ? "bg-white text-accent-600 shadow-sm"
                   : "text-gray-600 hover:text-gray-800"
               }`}
             >
@@ -399,7 +399,7 @@ const CommunityPage: React.FC = () => {
                 setEditingPost(null);
                 setIsCreateModalOpen(true);
               }}
-              className="bg-orange-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-orange-700 transition-colors"
+              className="bg-accent-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-accent-700 transition-colors"
             >
               글쓰기
             </button>
@@ -448,7 +448,7 @@ const CommunityPage: React.FC = () => {
               onClick={() => paginate(number)}
               className={`px-4 py-2 rounded-full font-medium transition-colors ${
                 currentPage === number
-                  ? "bg-orange-600 text-white shadow-md"
+                  ? "bg-accent-600 text-white shadow-md"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
               aria-current={currentPage === number ? "page" : undefined}

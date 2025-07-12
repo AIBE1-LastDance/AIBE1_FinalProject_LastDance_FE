@@ -147,7 +147,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ post, onClose }) => {
                       onClick={() => setCategory(cat.id)}
                       className={`flex flex-col items-center p-3 rounded-xl border-2 transition-colors ${
                         category === cat.id
-                          ? "border-orange-500 bg-orange-50 text-orange-700"
+                          ? "border-primary-500 bg-primary-50 text-primary-700"
                           : "border-gray-200 hover:border-gray-300"
                       }`}
                     >
@@ -168,7 +168,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ post, onClose }) => {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="제목을 입력하세요..."
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   maxLength={100}
                 />
                 <div className="text-xs text-gray-500 mt-1">
@@ -186,7 +186,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ post, onClose }) => {
                   onChange={(e) => setContent(e.target.value)}
                   placeholder="내용을 입력하세요..."
                   rows={8}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
                   maxLength={2000}
                 />
                 <div className="text-xs text-gray-500 mt-1">
@@ -213,7 +213,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ post, onClose }) => {
                 whileTap={{ scale: 0.98 }}
                 onClick={handleSubmit}
                 disabled={isSubmitting || !title.trim() || !content.trim()}
-                className="flex items-center space-x-2 px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                className="flex items-center space-x-2 px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
               >
                 {isSubmitting ? (
                   <>

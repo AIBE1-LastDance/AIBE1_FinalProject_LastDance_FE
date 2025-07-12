@@ -124,7 +124,7 @@ const JoinGroupModal: React.FC<JoinGroupModalProps> = ({ isOpen, onClose }) => {
                   onChange={handleCodeChange}
                   placeholder="6자리 코드를 입력하세요"
                   maxLength={6}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent text-center text-lg font-mono tracking-wider"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent text-center text-lg font-body tracking-wider"
                 />
               </div>
               <div className="text-xs text-gray-500 mt-1">
