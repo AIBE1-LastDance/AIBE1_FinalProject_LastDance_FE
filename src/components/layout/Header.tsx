@@ -58,7 +58,7 @@ const Header: React.FC = () => {
 
   // 로고 URL 환경 변수
   const logoUrl = import.meta.env.VITE_LOGO_URL;
-  
+
   // 디버깅용 로그
   console.log('Header - VITE_LOGO_URL:', import.meta.env.VITE_LOGO_URL);
   console.log('Header - All env vars:', import.meta.env);
@@ -258,19 +258,6 @@ const Header: React.FC = () => {
     { icon: Users, label: "커뮤니티", path: "/community" },
     { icon: ExternalLink, label: "청년정책", path: "/youth-policy" },
   ];
-
-  const getProviderIcon = (provider: string) => {
-    switch (provider) {
-      case "google":
-        return <FaGoogle className="w-4 h-4" />;
-      case "kakao":
-        return <FaComment className="w-4 h-4 text-yellow-500" />;
-      case "naver":
-        return <SiNaver className="w-4 h-4" />;
-      default:
-        return <User className="w-4 h-4" />;
-    }
-  };
 
   return (
     <header className="bg-white/80 backdrop-blur-md border-b border-gray-200/20 sticky top-0 z-50 shadow-sm">
@@ -619,8 +606,13 @@ const Header: React.FC = () => {
                                       }}
                                     >
                                       <div className="flex-1 min-w-0">
-                                        <div className="text-sm font-medium text-gray-900 truncate">
-                                          {group.name}
+                                        <div
+                                          className="text-sm font-medium text-gray-900 truncate"
+                                          title={group.name}
+                                        >
+                                          {group.name.length > 10
+                                            ? `${group.name.substring(0, 10)}...`
+                                            : group.name}
                                         </div>
                                         <div className="text-xs text-gray-500">
                                           {group.members.length}명

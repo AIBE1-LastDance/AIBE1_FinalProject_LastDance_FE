@@ -658,7 +658,7 @@ export const useAppStore = create<AppState>()(
             expenses: [...state.expenses, newExpense],
           }));
 
-              toast.success('지출이 추가되었습니다!');
+              // toast.success('지출이 추가되었습니다!');
               return newExpense;
             } catch (error: any) {
               console.error('지출 추가 실패:', error);
