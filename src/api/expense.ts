@@ -21,6 +21,22 @@ export interface ExpenseWithReceiptRequest extends ExpenseRequest {
     receipt?: File;
 }
 
+export interface ExpenseAnalysisHistoryDTO {
+    historyId: number;
+    createdAt: string;
+    budgetUsagePercentage: number;
+    mainFinding: string;
+    suggestionTitle: string;
+    suggestionDescription: string;
+    suggestionEffect: string;
+    suggestionDifficulty: '쉬움' | '보통' | '어려움';
+    budgetUsageCurrentSpending: number;
+    budgetUsageTotalBudget: number;
+    dailySpendingAverageSoFar: number;
+    dailySpendingEstimatedEom: number;
+    feedback?: 'UP' | 'DOWN' | null;
+}
+
 export const expenseAPI = {
     // 지출 생성
     create: async (data: ExpenseWithReceiptRequest) => {
@@ -211,10 +227,19 @@ export const expenseAPI = {
         sortBy?: string;
         sortDirection?: 'asc' | 'desc';
     }) => {
-        const response = await apiClient.get('/api/v1/expenses/analyze/history', { params });
+        const response = await apiClient.get<ExpenseAnalysisHistoryDTO[]>('/api/v1/expenses/analyze/history', { params });
+        return response.data;
+    },
+
+    submitFeedback: async (historyId: number, type: 'up' | 'down' | null) => {
+        let url = `/api/v1/expenses/analyze/${historyId}/feedback`;
+        // type이 null이더라도 쿼리 파라미터에 명시적으로 포함
+        url += `?type=${type}`;
+        const response = await apiClient.post(url);
         return response.data;
     }
 }
+
 
 export interface BudgetUsage {
     percentage: number;
@@ -247,6 +272,8 @@ export interface CategoryDetail {
 }
 
 export interface AnalyzeExpenseResponse {
+    historyId: number;
+    feedback?: 'UP' | 'DOWN' | null; // 추가
     budgetUsage: BudgetUsage;
     dailySpending: DailySpending;
     analysisResult: AnalysisResult;

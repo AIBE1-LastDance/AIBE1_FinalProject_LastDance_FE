@@ -23,7 +23,8 @@ import {
     Users,
     Image,
     X,
-    Save
+    ThumbsUp,
+    ThumbsDown
 } from 'lucide-react';
 import {
   PieChart as RechartsPieChart,
@@ -586,8 +587,8 @@ const ExpensesPage: React.FC = () => {
             console.log('AI 분석 요청 시작. 기간:', startDate, '~', endDate);
             const result = await expenseAPI.analyze({ startDate, endDate });
             console.log('AI 분석 API 응답 (result.data):', result.data);
-            setAnalysisResult(result.data);
-            console.log('analysisResult 상태 설정 완료:', result.data); // Log the value being set
+            setAnalysisResult({ ...result.data, feedback: null }); // feedback 초기화
+            console.log('analysisResult 상태 설정 완료:', { ...result.data, feedback: null }); // Log the value being set
             setShowAnalysis(true);
         } catch (error) {
             console.error('AI 분석 실패:', error);
@@ -656,27 +657,43 @@ const ExpensesPage: React.FC = () => {
     setCurrentPage(0); // 첫 페이지로 리셋
   };
 
-    const handleSaveAnalysis = async () => {
-        if (!analysisResult) {
-            toast.error('저장할 분석 결과가 없습니다. 먼저 AI 분석을 실행해주세요.');
-            return;
+    
+
+    const handleFeedback = async (historyId: number, type: 'up' | 'down') => {
+        console.log('handleFeedback 호출됨:', { historyId, type }); // 디버깅 로그
+        let feedbackTypeToSend: 'up' | 'down' | null = type; // 백엔드로 보낼 피드백 타입
+
+        // 현재 aiAnalysis의 피드백 상태 확인
+        const currentFeedback = aiAnalysis?.feedback?.toLowerCase();
+
+        if (currentFeedback === type) {
+            // 이미 선택된 피드백을 다시 누르면 취소
+            feedbackTypeToSend = null;
         }
 
         try {
-            const startDate = format(startOfMonth(currentMonth), 'yyyy-MM-dd');
-            const endDate = format(endOfMonth(currentMonth), 'yyyy-MM-dd');
+            if (feedbackTypeToSend !== null) {
+                await expenseAPI.submitFeedback(historyId, feedbackTypeToSend);
+            }
 
-            await expenseAPI.saveAnalysis(
-                { startDate, endDate },
-                analysisResult
-            );
-            toast.success('AI 분석 결과가 성공적으로 저장되었습니다!');
-            setIsAnalysisSaved(true); // Set state to true on success
-            // Refresh saved analyses list
-            await loadSavedAnalysesPaginated({ page: 0, size: 10 }); // Refresh the list after saving
+            // 현재 표시된 분석 결과의 피드백 상태 업데이트
+            const newFeedbackState = feedbackTypeToSend ? feedbackTypeToSend.toUpperCase() : null;
+            if (analysisResult && analysisResult.historyId === historyId) {
+                setAnalysisResult(prev => ({ ...prev, feedback: newFeedbackState }));
+                console.log('analysisResult 업데이트됨:', analysisResult); // 디버깅 로그
+            }
+
+            // 토스트 메시지 분리
+            if (feedbackTypeToSend === null) {
+                toast.success('피드백이 취소되었습니다.');
+            } else {
+                toast.success('피드백이 성공적으로 제출되었습니다!');
+            }
+
+            await loadSavedAnalysesPaginated({ page: aiAnalysesCurrentPage, size: 10 }); // Refresh the list after feedback
         } catch (error) {
-            console.error('AI 분석 결과 저장 실패:', error);
-            toast.error('AI 분석 결과 저장에 실패했습니다. 다시 시도해주세요.');
+            console.error('피드백 제출 실패:', error);
+            toast.error('피드백 제출에 실패했습니다. 다시 시도해주세요.');
         }
     };
 
@@ -684,7 +701,40 @@ const ExpensesPage: React.FC = () => {
     const getAIAnalysis = () => {
         // 선택된 분석이 있으면 그것을 반환
         if (selectedAnalysis) {
-            return selectedAnalysis.data;
+            const result = {
+                historyId: undefined, // 히스토리에서는 피드백 버튼을 표시하지 않으므로 undefined로 설정
+                feedback: undefined, // 히스토리에서는 피드백 상태를 표시하지 않으므로 undefined로 설정
+                insights: [
+                    {
+                        type: 'mainFinding',
+                        title: selectedAnalysis.mainFinding || '분석 결과 없음',
+                        message: '',
+                        icon: Bot,
+                        color: 'text-blue-500'
+                    }
+                ],
+                recommendations: [
+                    {
+                        title: selectedAnalysis.suggestionTitle || '제안 없음',
+                        message: selectedAnalysis.suggestionDescription || '',
+                        impact: selectedAnalysis.suggestionEffect || '',
+                        difficulty: selectedAnalysis.suggestionDifficulty || '보통'
+                    }
+                ],
+                warnings: [],
+                summary: {
+                    totalAmount: selectedAnalysis.budgetUsageCurrentSpending || 0,
+                    spendingRate: selectedAnalysis.budgetUsagePercentage || 0,
+                    totalBudget: selectedAnalysis.budgetUsageTotalBudget || 0,
+                    changeRate: 0,
+                    topCategory: selectedAnalysis.mainFinding?.split(' ')[0] || '없음',
+                    avgDaily: selectedAnalysis.dailySpendingAverageSoFar || 0,
+                    prediction: selectedAnalysis.dailySpendingEstimatedEom || 0
+                },
+                categoryBreakdown: []
+            };
+            console.log('aiAnalysis (selectedAnalysis) 결과:', result); // 디버깅 로그
+            return result;
         }
 
         // 새로운 분석 생성
@@ -812,15 +862,18 @@ const ExpensesPage: React.FC = () => {
 
     const aiAnalysis = (() => {
         const source = selectedAnalysis || analysisResult;
+        console.log('aiAnalysis 계산 중 - source:', source); // 디버깅 로그
         if (!source) return null;
 
         // If it's a saved analysis (ExpenseAnalysisHistoryDTO)
         if (selectedAnalysis) {
-            return {
+            const result = {
+                historyId: source.historyId,
+                feedback: source.feedback, // Use feedback from selectedAnalysis
                 insights: [
                     {
                         type: 'mainFinding',
-                        title: source.mainFinding,
+                        title: source.mainFinding || '분석 결과 없음',
                         message: '',
                         icon: Bot,
                         color: 'text-blue-500'
@@ -828,30 +881,39 @@ const ExpensesPage: React.FC = () => {
                 ],
                 recommendations: [
                     {
-                        title: source.suggestionTitle,
-                        message: source.suggestionDescription,
-                        impact: source.suggestionEffect,
-                        difficulty: source.suggestionDifficulty
+                        title: source.suggestionTitle || '제안 없음',
+                        message: source.suggestionDescription || '',
+                        impact: source.suggestionEffect || '',
+                        difficulty: source.suggestionDifficulty || '보통'
                     }
                 ],
-                warnings: [], // ExpenseAnalysisHistoryDTO does not contain warnings directly
+                warnings: [],
                 summary: {
-                    totalAmount: source.budgetUsageCurrentSpending,
-                    spendingRate: source.budgetUsagePercentage,
-                    totalBudget: source.budgetUsageTotalBudget,
-                    changeRate: 0, // Not directly available in ExpenseAnalysisHistoryDTO
-                    topCategory: source.mainFinding.split(' ')[0] || '없음', // Extract category from mainFinding
-                    avgDaily: source.dailySpendingAverageSoFar,
-                    prediction: source.dailySpendingEstimatedEom
+                    totalAmount: source.budgetUsageCurrentSpending || 0,
+                    spendingRate: source.budgetUsagePercentage || 0,
+                    totalBudget: source.budgetUsageTotalBudget || 0,
+                    changeRate: 0,
+                    topCategory: source.mainFinding?.split(' ')[0] || '없음',
+                    avgDaily: source.dailySpendingAverageSoFar || 0,
+                    prediction: source.dailySpendingEstimatedEom || 0
                 },
-                categoryBreakdown: [] // ExpenseAnalysisHistoryDTO does not contain categoryDetails
+                categoryBreakdown: []
             };
+            console.log('aiAnalysis (selectedAnalysis) 결과:', result); // 디버깅 로그
+            return result;
         } else { // If it's a new analysis (AnalyzeExpenseResponseDTO)
-            return {
+            const analysisResultData = source.analysisResult;
+            const budgetUsageData = source.budgetUsage;
+            const dailySpendingData = source.dailySpending;
+            const categoryDetailsData = source.categoryDetails;
+
+            const result = {
+                historyId: source.historyId,
+                feedback: analysisResult?.feedback, // analysisResult의 feedback을 직접 참조
                 insights: [
                     {
                         type: 'mainFinding',
-                        title: source.analysisResult.mainFinding,
+                        title: analysisResultData?.mainFinding || '분석 결과 없음',
                         message: '',
                         icon: Bot,
                         color: 'text-blue-500'
@@ -859,23 +921,23 @@ const ExpensesPage: React.FC = () => {
                 ],
                 recommendations: [
                     {
-                        title: source.analysisResult.suggestion.title,
-                        message: source.analysisResult.suggestion.description,
-                        impact: source.analysisResult.suggestion.effect,
-                        difficulty: source.analysisResult.suggestion.difficulty
+                        title: analysisResultData?.suggestion?.title || '제안 없음',
+                        message: analysisResultData?.suggestion?.description || '',
+                        impact: analysisResultData?.suggestion?.effect || '',
+                        difficulty: analysisResultData?.suggestion?.difficulty || '보통'
                     }
                 ],
-                warnings: [], // 백엔드에서 직접 제공하지 않으므로 빈 배열
+                warnings: [],
                 summary: {
-                    totalAmount: source.budgetUsage.currentSpending,
-                    spendingRate: source.budgetUsage.percentage,
-                    totalBudget: source.budgetUsage.totalBudget,
-                    changeRate: 0, // 백엔드에서 직접 제공하지 않으므로 0
-                    topCategory: source.categoryDetails[0]?.category || '없음',
-                    avgDaily: source.dailySpending.averageSoFar,
-                    prediction: source.dailySpending.estimatedEom
+                    totalAmount: budgetUsageData?.currentSpending || 0,
+                    spendingRate: budgetUsageData?.percentage || 0,
+                    totalBudget: budgetUsageData?.totalBudget || 0,
+                    changeRate: 0,
+                    topCategory: categoryDetailsData?.[0]?.category || '없음',
+                    avgDaily: dailySpendingData?.averageSoFar || 0,
+                    prediction: dailySpendingData?.estimatedEom || 0
                 },
-                categoryBreakdown: source.categoryDetails.map(cat => ({
+                categoryBreakdown: categoryDetailsData?.map(cat => ({
                     category: cat.category,
                     label: categoryData.find(c => c.category === cat.category)?.label || cat.category,
                     amount: cat.totalAmount,
@@ -884,8 +946,10 @@ const ExpensesPage: React.FC = () => {
                     color: categoryData.find(c => c.category === cat.category)?.color || '#df6d14',
                     name: categoryData.find(c => c.category === cat.category)?.label || cat.category,
                     value: cat.totalAmount,
-                }))
+                })) || []
             };
+            console.log('aiAnalysis (analysisResult) 결과:', result); // 디버깅 로그
+            return result;
         }
     })();
 
@@ -2124,6 +2188,7 @@ const ExpensesPage: React.FC = () => {
                                         onClick={() => {
                                             setSelectedAnalysis(analysis);
                                             setShowAnalysis(true);
+                                            console.log('Selected Analysis from History:', analysis); // 디버깅 로그
                                         }}
                                     >
                                         <div className="flex items-center justify-between">
@@ -2136,11 +2201,11 @@ const ExpensesPage: React.FC = () => {
                                                     <h4 className="font-semibold text-gray-900 group-hover:text-purple-600 transition-colors">
                                                         {analysis.suggestionTitle}
                                                     </h4>
-                                                    <div className="flex items-center space-x-3 text-sm text-gray-500">
-                                                        <span>{format(analysis.createdAt, 'M월 d일 분석', {locale: ko})}</span>
-                                                        <span>•</span>
-                                                        <span>총 지출 {formatCurrency(analysis.budgetUsageCurrentSpending)}</span>
-                                                    </div>                                                </div>                                            </div>                                            <div className="text-right">
+                                                    <div className="flex items-center space-x-2 text-sm text-gray-500">
+                                        <span>{analysis.createdAt.split('T')[0]}</span>
+                                        <span>•</span>
+                                        <span>{analysis.budgetUsagePercentage.toFixed(1)}% 사용</span>
+                                    </div>                                                </div>                                            </div>                                            <div className="text-right">
                                                 <div className="text-xs text-gray-500 mt-1">
                                                     예산
                                                 </div>
@@ -2200,7 +2265,10 @@ const ExpensesPage: React.FC = () => {
                                             <Sparkles className="w-6 h-6"/>
                                         </div>
                                         <div>
-                                            <h2 className="text-xl font-bold">AI 가계부 분석</h2>
+                                            <div className="flex items-center justify-between mb-4">
+                                    <h2 className="text-xl font-bold text-gray-100">AI 지출 분석 결과</h2>
+                                    
+                                </div>
                                             <p className="text-purple-100">
                                                 {analysisResult
                                                     ? `${format(currentMonth, 'yyyy년 M월', {locale: ko})} 지출 패턴 분석 결과`
@@ -2441,6 +2509,32 @@ ${rec.message}`}
                                         * 이 분석은 AI가 생성한 것으로 참고용입니다.
                                     </div>
                                     <div className="flex space-x-3">
+                                        {aiAnalysis?.historyId && (
+                                            <>
+                                                <motion.button
+                                                    whileHover={{ scale: 1.1 }}
+                                                    whileTap={{ scale: 0.9 }}
+                                                    className={`p-2 rounded-full ${aiAnalysis.feedback === 'UP' ? 'bg-green-100 text-green-600' : 'hover:bg-gray-100 text-gray-500'}`}
+                                                    onClick={() => {
+                                                        console.log('UP 버튼 클릭됨. aiAnalysis.historyId:', aiAnalysis.historyId, 'aiAnalysis.feedback:', aiAnalysis.feedback); // 디버깅 로그
+                                                        handleFeedback(aiAnalysis.historyId, 'up');
+                                                    }}
+                                                >
+                                                    <ThumbsUp className="w-5 h-5" />
+                                                </motion.button>
+                                                <motion.button
+                                                    whileHover={{ scale: 1.1 }}
+                                                    whileTap={{ scale: 0.9 }}
+                                                    className={`p-2 rounded-full ${aiAnalysis.feedback === 'DOWN' ? 'bg-red-100 text-red-600' : 'hover:bg-gray-100 text-gray-500'}`}
+                                                    onClick={() => {
+                                                        console.log('DOWN 버튼 클릭됨. aiAnalysis.historyId:', aiAnalysis.historyId, 'aiAnalysis.feedback:', aiAnalysis.feedback); // 디버깅 로그
+                                                        handleFeedback(aiAnalysis.historyId, 'down');
+                                                    }}
+                                                >
+                                                    <ThumbsDown className="w-5 h-5" />
+                                                </motion.button>
+                                            </>
+                                        )}
                                         <button
                                             onClick={() => {
                                                 setShowAnalysis(false);
@@ -2450,20 +2544,7 @@ ${rec.message}`}
                                         >
                                             닫기
                                         </button>
-                                        {!selectedAnalysis && (
-                                            <button
-                                            onClick={handleSaveAnalysis}
-                                            disabled={isAnalysisSaved}
-                                            className={`px-6 py-3 rounded-2xl transition-colors flex items-center space-x-2 ${
-                                                isAnalysisSaved
-                                                    ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
-                                                    : 'bg-primary-600 text-white hover:bg-primary-700 shadow-md hover:shadow-lg'
-                                            }`}
-                                        >
-                                            <Save className="w-4 h-4"/>
-                                            <span>{isAnalysisSaved ? '저장됨' : '저장'}</span>
-                                        </button>
-                                        )}
+                                        
                                     </div>
                                 </div>
                             </div>
