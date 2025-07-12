@@ -85,7 +85,7 @@ const GameSetupModal: React.FC<GameSetupModalProps> = ({
           <div className="mb-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-800 flex items-center">
-                <Users className="w-5 h-5 mr-2 text-blue-600" />
+                <Users className="w-5 h-5 mr-2 text-primary-600" />
                 참여자
               </h3>
               <span className="text-sm text-gray-500">
@@ -102,7 +102,7 @@ const GameSetupModal: React.FC<GameSetupModalProps> = ({
                       value={player}
                       onChange={(e) => updatePlayer(index, e.target.value)}
                       placeholder={`참여자 ${index + 1}`}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
                     />
                   </div>
                   {players.length > 1 && (
@@ -120,7 +120,7 @@ const GameSetupModal: React.FC<GameSetupModalProps> = ({
             {players.length < maxPlayers && (
               <button
                 onClick={addPlayer}
-                className="w-full mt-3 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-blue-400 hover:text-blue-600 transition-colors flex items-center justify-center"
+                className="w-full mt-3 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-primary-400 hover:text-primary-600 transition-colors flex items-center justify-center"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 참여자 추가
@@ -131,7 +131,7 @@ const GameSetupModal: React.FC<GameSetupModalProps> = ({
           {/* Penalty Section */}
           <div className="mb-6">
             <h3 className="text-lg font-semibold text-gray-800 flex items-center mb-4">
-              <AlertTriangle className="w-5 h-5 mr-2 text-yellow-600" />
+              <AlertTriangle className="w-5 h-5 mr-2 text-accent-600" />
               벌칙
             </h3>
             <input
@@ -139,7 +139,7 @@ const GameSetupModal: React.FC<GameSetupModalProps> = ({
               value={penalty}
               onChange={(e) => setPenalty(e.target.value)}
               placeholder="예: 설거지, 청소, 쓰레기 배출 등"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent outline-none"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-transparent outline-none"
             />
           </div>
 
@@ -156,7 +156,7 @@ const GameSetupModal: React.FC<GameSetupModalProps> = ({
               disabled={!isValid()}
               className={`flex-1 py-3 rounded-lg font-medium transition-colors ${
                 isValid()
-                  ? 'bg-blue-600 text-white hover:bg-blue-700'
+                  ? 'bg-primary-600 text-white hover:bg-primary-700'
                   : 'bg-gray-300 text-gray-500 cursor-not-allowed'
               }`}
             >

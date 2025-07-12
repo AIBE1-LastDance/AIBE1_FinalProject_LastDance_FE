@@ -1041,7 +1041,7 @@ const ExpensesPage: React.FC = () => {
           {/* Category Filter */}
           <div className="relative">
             <motion.button
-              className="flex items-center space-x-3 pl-3 pr-4 py-3 border border-gray-200 rounded-2xl text-sm bg-white hover:bg-gray-50 transition-colors font-medium text-gray-700 cursor-pointer shadow-sm w-full sm:w-auto whitespace-nowrap"
+              className="flex items-center space-x-3 pl-4 pr-4 py-3 border border-gray-200 rounded-2xl text-sm bg-white hover:bg-gray-50 transition-colors font-medium text-gray-700 cursor-pointer shadow-md hover:shadow-lg w-full sm:w-auto whitespace-nowrap"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
@@ -1144,13 +1144,13 @@ const ExpensesPage: React.FC = () => {
                     <div className="flex space-x-4">
                         {/* AI Analysis Button */}
                         <motion.button
-                            className={`flex items-center space-x-2 px-6 py-3 rounded-2xl font-medium transition-colors shadow-md whitespace-nowrap ${
+                            className={`flex items-center space-x-2 px-6 py-3 rounded-2xl font-medium transition-colors shadow-md hover:shadow-lg whitespace-nowrap ${
                                 mode === 'group'
                                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                    : 'bg-primary-500 text-white hover:bg-primary-700 hover:shadow-lg'
+                                    : 'bg-primary-500 text-white hover:bg-primary-600'
                             }`}
-                            whileHover={mode === 'personal' ? { scale: 1.05 } : {}}
-                            whileTap={mode === 'personal' ? { scale: 0.95 } : {}}
+                            whileHover={mode === 'personal' ? { scale: 1.02 } : {}}
+                            whileTap={mode === 'personal' ? { scale: 0.98 } : {}}
                             onClick={handleAnalysis}
                             disabled={mode === 'group' || analysisLoading}
                             title={mode === 'group' ? "AI 분석은 개인 가계부에서만 사용할 수 있습니다." : "AI 지출 분석"}
@@ -1167,8 +1167,8 @@ const ExpensesPage: React.FC = () => {
             {/* Add Expense Button */}
             <motion.button
               className="flex items-center space-x-2 px-6 py-3 bg-accent-500 text-white rounded-2xl font-medium hover:bg-accent-600 transition-colors shadow-md hover:shadow-lg whitespace-nowrap"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={() => {
                 setSelectedExpense(null);
                 setShowExpenseModal(true);

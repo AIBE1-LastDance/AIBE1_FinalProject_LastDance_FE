@@ -25,7 +25,7 @@ import CommunityPage from "./components/community/CommunityPage";
 import PostDetailPage from "./components/community/PostDetailPage";
 import SettingsPage from "./components/settings/SettingsPage";
 import { useAuth } from "./hooks/useAuth";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import AdminRouter from "./components/admin/AdminRouter";
 // SSE 관리를 위해 추가
 import { useNotifications } from "./hooks/useNotifications";
