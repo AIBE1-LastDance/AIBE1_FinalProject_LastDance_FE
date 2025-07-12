@@ -16,6 +16,8 @@ const CalendarPage: React.FC = () => {
   const [showEventModal, setShowEventModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [showViewDropdown, setShowViewDropdown] = useState(false);
+  const [showDayEventsModal, setShowDayEventsModal] = useState(false);
+  const [dayEventsModalDate, setDayEventsModalDate] = useState<Date | null>(null);
 
   // useCalendar 훅 사용 - 그룹 모드일 때 currentGroup.id 전달
   const {
@@ -100,6 +102,13 @@ const CalendarPage: React.FC = () => {
     }
     
     setShowEventModal(true);
+  };
+
+  // 날짜의 모든 일정을 보여주는 모달 열기
+  const handleShowMoreEvents = (date: Date, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDayEventsModalDate(date);
+    setShowDayEventsModal(true);
   };
 
   // 모드에 따른 이벤트 필터링
@@ -383,6 +392,7 @@ const CalendarPage: React.FC = () => {
                     getEventStyle={getEventStyle}
                     renderEventIcon={renderEventIcon}
                     renderEventLabel={renderEventLabel}
+                    onShowMoreEvents={handleShowMoreEvents}
                 />
             )}
             {currentView === 'week' && (
@@ -425,6 +435,33 @@ const CalendarPage: React.FC = () => {
                 onSave={handleSaveEvent}
                 onDelete={handleDeleteEvent}
             />
+        )}
+
+        {/* Day Events Modal */}
+        {showDayEventsModal && dayEventsModalDate && (
+          <DayEventsModal
+            date={dayEventsModalDate}
+            events={getFilteredEventsForDate(dayEventsModalDate)}
+            getEventStyle={getEventStyle}
+            renderEventIcon={renderEventIcon}
+            renderEventLabel={renderEventLabel}
+            onClose={() => {
+              setShowDayEventsModal(false);
+              setDayEventsModalDate(null);
+            }}
+            onEventClick={(event) => {
+              setShowDayEventsModal(false);
+              setSelectedEvent(event);
+              setSelectedDate(dayEventsModalDate);
+              setShowEventModal(true);
+            }}
+            onAddEvent={() => {
+              setShowDayEventsModal(false);
+              setSelectedEvent(null);
+              setSelectedDate(dayEventsModalDate);
+              setShowEventModal(true);
+            }}
+          />
         )}
       </div>
   );
@@ -493,7 +530,8 @@ const MonthView: React.FC<{
   getEventStyle: (event: any) => string;
   renderEventIcon: (event: any) => React.ReactNode;
   renderEventLabel: (event: any) => React.ReactNode;
-}> = ({ currentDate, onDateClick, onEventClick, getEventsForDate, getEventStyle, renderEventIcon, renderEventLabel }) => {
+  onShowMoreEvents: (date: Date, e: React.MouseEvent) => void;
+}> = ({ currentDate, onDateClick, onEventClick, getEventsForDate, getEventStyle, renderEventIcon, renderEventLabel, onShowMoreEvents }) => {
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   const calendarStart = startOfWeek(monthStart, { weekStartsOn: 0 });
@@ -570,9 +608,13 @@ const MonthView: React.FC<{
                         </motion.div>
                     ))}
                     {dayEvents.length > 3 && (
-                        <div className="text-xs text-gray-500 px-2">
+                        <motion.button
+                          className="text-xs text-blue-600 hover:text-blue-800 px-2 py-1 hover:bg-blue-50 rounded transition-colors font-medium"
+                          whileHover={{ scale: 1.02 }}
+                          onClick={(e) => onShowMoreEvents(day, e)}
+                        >
                           +{dayEvents.length - 3}개
-                        </div>
+                        </motion.button>
                     )}
                   </div>
                 </motion.div>
@@ -744,6 +786,122 @@ const DayView: React.FC<{
           )}
         </div>
       </div>
+  );
+};
+
+// Day Events Modal Component
+const DayEventsModal: React.FC<{
+  date: Date;
+  events: any[];
+  getEventStyle: (event: any) => string;
+  renderEventIcon: (event: any) => React.ReactNode;
+  renderEventLabel: (event: any) => React.ReactNode;
+  onClose: () => void;
+  onEventClick: (event: any) => void;
+  onAddEvent: () => void;
+}> = ({ date, events, getEventStyle, renderEventIcon, renderEventLabel, onClose, onEventClick, onAddEvent }) => {
+  return (
+    <AnimatePresence>
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[80vh] overflow-hidden"
+        >
+          {/* Header */}
+          <div className="bg-primary-600 text-white p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold">
+                  {format(date, 'M월 d일 (E)', { locale: ko })} 일정
+                </h2>
+                <p className="text-primary-100 text-sm mt-1">
+                  총 {events.length}개의 일정
+                </p>
+              </div>
+              <button
+                onClick={onClose}
+                className="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center hover:bg-opacity-30 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+
+          {/* Events List */}
+          <div className="p-6 overflow-y-auto max-h-[60vh]">
+            {events.length > 0 ? (
+              <div className="space-y-3">
+                {events.map((event) => (
+                  <motion.div
+                    key={event.id}
+                    className={`p-4 rounded-lg cursor-pointer hover:shadow-md transition-all border ${getEventStyle(event)}`}
+                    whileHover={{ scale: 1.02 }}
+                    onClick={() => onEventClick(event)}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-2">
+                          {renderEventIcon(event)}
+                          <h4 className="font-semibold text-gray-800">{event.title}</h4>
+                          {event.repeat !== 'none' && (
+                            <Repeat className="w-4 h-4 opacity-60" />
+                          )}
+                        </div>
+                        
+                        <div className="flex items-center justify-between">
+                          {renderEventLabel(event)}
+                          <div className="text-right">
+                            {event.isAllDay ? (
+                              <span className="text-sm text-gray-500">하루 종일</span>
+                            ) : (
+                              <span className="text-sm text-gray-500">
+                                {event.startTime} - {event.endTime}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        
+                        {event.description && (
+                          <p className="text-sm text-gray-600 mt-2">{event.description}</p>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <CalendarIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                <p className="text-gray-500">이 날에는 일정이 없습니다</p>
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="bg-gray-50 p-4 border-t">
+            <div className="flex items-center justify-between">
+              <button
+                onClick={onClose}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+              >
+                닫기
+              </button>
+              <motion.button
+                className="flex items-center space-x-2 px-4 py-2 bg-accent-500 text-white rounded-lg hover:bg-accent-600 transition-colors"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={onAddEvent}
+              >
+                <Plus className="w-4 h-4" />
+                <span>일정 추가</span>
+              </motion.button>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    </AnimatePresence>
   );
 };
 
