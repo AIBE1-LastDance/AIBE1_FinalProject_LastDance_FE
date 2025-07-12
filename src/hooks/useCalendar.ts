@@ -31,6 +31,7 @@ interface UseCalendarReturn {
     setCurrentDate: (date: Date) => void;
     setCurrentView: (view: 'day' | 'week' | 'month' | 'year') => void;
     goToToday: () => void;
+    goToMonth: (date: Date) => void;
     goToPrevious: () => void;
     goToNext: () => void;
 
@@ -60,7 +61,7 @@ export const useCalendar = (options: UseCalendarOptions = {}): UseCalendarReturn
     }, []);
 
     // 이벤트 로드
-    const loadEvents = useCallback(async (query: CalendarsQuery = {}) => {
+    const loadEvents = useCallback(async (query: CalendarsQuery = {}, shouldReplace = true) => {
         // 이미 로딩 중이면 중복 요청 방지
         if (loading) {
             return;
@@ -79,7 +80,16 @@ export const useCalendar = (options: UseCalendarOptions = {}): UseCalendarReturn
             }
 
             if (response.success && response.data) {
-                setEvents(response.data);
+                if (shouldReplace) {
+                    setEvents(response.data);
+                } else {
+                    // 기존 데이터와 병합
+                    setEvents(prev => {
+                        const existingIds = new Set(prev.map(event => event.id));
+                        const newEvents = response.data!.filter(event => !existingIds.has(event.id));
+                        return [...prev, ...newEvents];
+                    });
+                }
             } else {
                 const errorMsg = response.error || 'Failed to load events';
                 // 401 에러는 이미 api.ts에서 처리하므로 여기서는 다른 에러만 표시
@@ -234,6 +244,13 @@ export const useCalendar = (options: UseCalendarOptions = {}): UseCalendarReturn
     // 네비게이션 함수들
     const goToToday = useCallback(() => {
         setCurrentDate(new Date());
+    }, []);
+
+    // 월 이동 (데이터 유지)
+    const goToMonth = useCallback((targetDate: Date) => {
+        setCurrentDate(targetDate);
+        setCurrentView('month');
+        // 데이터는 유지하고 새로운 데이터만 필요시 추가 로드
     }, []);
 
     const goToPrevious = useCallback(() => {
@@ -405,6 +422,7 @@ export const useCalendar = (options: UseCalendarOptions = {}): UseCalendarReturn
         setCurrentDate,
         setCurrentView,
         goToToday,
+        goToMonth,
         goToPrevious,
         goToNext,
 

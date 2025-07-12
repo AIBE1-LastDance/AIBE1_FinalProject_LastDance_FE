@@ -29,7 +29,9 @@ const CalendarPage: React.FC = () => {
     createEvent,
     updateEvent,
     deleteEvent,
+    setCurrentDate,
     setCurrentView,
+    goToMonth,
     goToPrevious,
     goToNext,
     getEventsForDate,
@@ -88,6 +90,13 @@ const CalendarPage: React.FC = () => {
     setSelectedDate(date);
     setSelectedEvent(null);
     setShowEventModal(true);
+  };
+
+  // 연간 뷰에서 월 클릭 시 해당 월로 이동
+  const handleMonthClick = (month: Date) => {
+    // 해당 월의 1일로 설정
+    const targetDate = new Date(month.getFullYear(), month.getMonth(), 1);
+    goToMonth(targetDate);
   };
 
   const handleEventClick = (event: any, e: React.MouseEvent, clickedDate?: Date) => {
@@ -379,7 +388,7 @@ const CalendarPage: React.FC = () => {
                     currentDate={currentDate}
                     events={events}
                     mode={mode}
-                    onDateClick={handleDateClick}
+                    onMonthClick={handleMonthClick}
                     getEventsForDate={getFilteredEventsForDate}
                 />
             )}
@@ -472,9 +481,9 @@ const YearView: React.FC<{
   currentDate: Date;
   events: any[];
   mode: string;
-  onDateClick: (date: Date) => void;
+  onMonthClick: (month: Date) => void;
   getEventsForDate: (date: Date) => any[];
-}> = ({ currentDate, onDateClick, getEventsForDate }) => {
+}> = ({ currentDate, onMonthClick, getEventsForDate }) => {
   const yearStart = startOfYear(currentDate);
   const yearEnd = endOfYear(currentDate);
   const months = eachMonthOfInterval({ start: yearStart, end: yearEnd });
@@ -503,7 +512,7 @@ const YearView: React.FC<{
                         isCurrentMonth ? 'bg-primary-50 border-primary-200' : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
                     }`}
                     whileHover={{ scale: 1.02 }}
-                    onClick={() => onDateClick(month)}
+                    onClick={() => onMonthClick(month)}
                 >
                   <div className={`text-sm font-medium ${isCurrentMonth ? 'text-primary-600' : 'text-gray-700'}`}>
                     {format(month, 'M월', { locale: ko })}
