@@ -184,6 +184,20 @@ const CalendarPage: React.FC = () => {
     { value: 'day', label: '일간', icon: CalendarIcon },
   ];
 
+  // 로딩 중일 때
+  if (loading) {
+    return (
+      <div className="space-y-8">
+        <div className="flex items-center justify-center py-12">
+          <div className="flex items-center space-x-3">
+            <div className="w-5 h-5 border-2 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
+            <span className="text-gray-600">캘린더를 불러오는 중...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
       <div className="space-y-8">
         {/* Error Display */}
@@ -196,14 +210,6 @@ const CalendarPage: React.FC = () => {
               >
                 ✕
               </button>
-            </div>
-        )}
-
-        {/* Loading Indicator */}
-        {loading && (
-            <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded flex items-center">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-700 mr-2"></div>
-              데이터를 불러오는 중...
             </div>
         )}
 
@@ -352,55 +358,57 @@ const CalendarPage: React.FC = () => {
         </div>
 
         {/* Calendar Content */}
-        <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
-        >
-          {currentView === 'year' && (
-              <YearView
-                  currentDate={currentDate}
-                  events={events}
-                  mode={mode}
-                  onDateClick={handleDateClick}
-                  getEventsForDate={getFilteredEventsForDate}
-              />
-          )}
-          {currentView === 'month' && (
-              <MonthView
-                  currentDate={currentDate}
-                  onDateClick={handleDateClick}
-                  onEventClick={handleEventClick}
-                  getEventsForDate={getFilteredEventsForDate}
-                  getEventStyle={getEventStyle}
-                  renderEventIcon={renderEventIcon}
-                  renderEventLabel={renderEventLabel}
-              />
-          )}
-          {currentView === 'week' && (
-              <WeekView
-                  currentDate={currentDate}
-                  onDateClick={handleDateClick}
-                  onEventClick={handleEventClick}
-                  getEventsForDate={getFilteredEventsForDate}
-                  getEventStyle={getEventStyle}
-                  renderEventIcon={renderEventIcon}
-                  renderEventLabel={renderEventLabel}
-              />
-          )}
-          {currentView === 'day' && (
-              <DayView
-                  currentDate={currentDate}
-                  onDateClick={handleDateClick}
-                  onEventClick={handleEventClick}
-                  getEventsForDate={getFilteredEventsForDate}
-                  getEventStyle={getEventStyle}
-                  renderEventIcon={renderEventIcon}
-                  renderEventLabel={renderEventLabel}
-              />
-          )}
-        </motion.div>
+        {!loading && (
+          <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+          >
+            {currentView === 'year' && (
+                <YearView
+                    currentDate={currentDate}
+                    events={events}
+                    mode={mode}
+                    onDateClick={handleDateClick}
+                    getEventsForDate={getFilteredEventsForDate}
+                />
+            )}
+            {currentView === 'month' && (
+                <MonthView
+                    currentDate={currentDate}
+                    onDateClick={handleDateClick}
+                    onEventClick={handleEventClick}
+                    getEventsForDate={getFilteredEventsForDate}
+                    getEventStyle={getEventStyle}
+                    renderEventIcon={renderEventIcon}
+                    renderEventLabel={renderEventLabel}
+                />
+            )}
+            {currentView === 'week' && (
+                <WeekView
+                    currentDate={currentDate}
+                    onDateClick={handleDateClick}
+                    onEventClick={handleEventClick}
+                    getEventsForDate={getFilteredEventsForDate}
+                    getEventStyle={getEventStyle}
+                    renderEventIcon={renderEventIcon}
+                    renderEventLabel={renderEventLabel}
+                />
+            )}
+            {currentView === 'day' && (
+                <DayView
+                    currentDate={currentDate}
+                    onDateClick={handleDateClick}
+                    onEventClick={handleEventClick}
+                    getEventsForDate={getFilteredEventsForDate}
+                    getEventStyle={getEventStyle}
+                    renderEventIcon={renderEventIcon}
+                    renderEventLabel={renderEventLabel}
+                />
+            )}
+          </motion.div>
+        )}
 
         {/* Event Modal */}
         {showEventModal && (
