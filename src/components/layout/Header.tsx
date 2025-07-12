@@ -252,19 +252,6 @@ const Header: React.FC = () => {
     { icon: ExternalLink, label: "청년정책", path: "/youth-policy" },
   ];
 
-  const getProviderIcon = (provider: string) => {
-    switch (provider) {
-      case "google":
-        return <FaGoogle className="w-4 h-4" />;
-      case "kakao":
-        return <FaComment className="w-4 h-4 text-yellow-500" />;
-      case "naver":
-        return <SiNaver className="w-4 h-4" />;
-      default:
-        return <User className="w-4 h-4" />;
-    }
-  };
-
   return (
     <header className="bg-white/80 backdrop-blur-md border-b border-gray-200/20 sticky top-0 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -275,11 +262,12 @@ const Header: React.FC = () => {
             whileHover={{ scale: 1.05 }}
             onClick={() => navigate(isAuthenticated ? "/dashboard" : "/")}
           >
-            <img
-              src="/image/Logo.png"
-              alt="우리.zip"
-              className="w-12 h-12 sm:w-16 sm:h-16"
-            />
+            <span
+              className="text-2xl sm:text-3xl font-bold font-gong whitespace-nowrap"
+              style={{ color: "#E69975" }}
+            >
+              우리.zip
+            </span>
           </motion.div>
 
           {/* Desktop Navigation */}
@@ -614,8 +602,13 @@ const Header: React.FC = () => {
                                       }}
                                     >
                                       <div className="flex-1 min-w-0">
-                                        <div className="text-sm font-medium text-gray-900 truncate">
-                                          {group.name}
+                                        <div
+                                          className="text-sm font-medium text-gray-900 truncate"
+                                          title={group.name}
+                                        >
+                                          {group.name.length > 10
+                                            ? `${group.name.substring(0, 10)}...`
+                                            : group.name}
                                         </div>
                                         <div className="text-xs text-gray-500">
                                           {group.members.length}명
