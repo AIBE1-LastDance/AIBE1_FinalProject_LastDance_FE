@@ -101,6 +101,8 @@ export const expenseAPI = {
         month: number;
         page?: number;
         size?: number;
+        category?: string;
+        search?: string;
     }) => {
         const response = await apiClient.get(`/api/v1/expenses/group/${groupId}/shares/paging`, { params });
         return response.data;

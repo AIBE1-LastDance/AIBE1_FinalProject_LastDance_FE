@@ -20,7 +20,7 @@ interface UseCalendarReturn {
     currentView: 'day' | 'week' | 'month' | 'year';
 
     // 액션
-    loadEvents: (query?: CalendarsQuery) => Promise<void>;
+    loadEvents: (query?: CalendarsQuery, shouldReplace?: boolean) => Promise<void>;
     createEvent: (eventData: Partial<Event>) => Promise<Event | null>;
     updateEvent: (eventId: string, eventData: Partial<Event>) => Promise<Event | null>;
     // 이벤트 삭제 (모든 반복 일정 삭제)
@@ -31,6 +31,7 @@ interface UseCalendarReturn {
     setCurrentDate: (date: Date) => void;
     setCurrentView: (view: 'day' | 'week' | 'month' | 'year') => void;
     goToToday: () => void;
+    goToMonth: (date: Date) => void;
     goToPrevious: () => void;
     goToNext: () => void;
 
@@ -48,11 +49,19 @@ export const useCalendar = (options: UseCalendarOptions = {}): UseCalendarReturn
     } = options;
 
     // 상태
-    const [events, setEvents] = useState<Event[]>([]);
+    const [eventsCache, setEventsCache] = useState<{[key: string]: Event[]}>({});
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [currentDate, setCurrentDate] = useState<Date>(initialDate);
     const [currentView, setCurrentView] = useState<'day' | 'week' | 'month' | 'year'>(initialView);
+
+    // 현재 모드의 키 생성
+    const getCurrentCacheKey = useCallback(() => {
+        return groupId ? `group_${groupId}` : 'personal';
+    }, [groupId]);
+
+    // 현재 이벤트 데이터 가져오기
+    const events = eventsCache[getCurrentCacheKey()] || [];
 
     // 에러 클리어
     const clearError = useCallback(() => {
@@ -60,7 +69,7 @@ export const useCalendar = (options: UseCalendarOptions = {}): UseCalendarReturn
     }, []);
 
     // 이벤트 로드
-    const loadEvents = useCallback(async (query: CalendarsQuery = {}) => {
+    const loadEvents = useCallback(async (query: CalendarsQuery = {}, shouldReplace = true) => {
         // 이미 로딩 중이면 중복 요청 방지
         if (loading) {
             return;
@@ -79,7 +88,25 @@ export const useCalendar = (options: UseCalendarOptions = {}): UseCalendarReturn
             }
 
             if (response.success && response.data) {
-                setEvents(response.data);
+                const cacheKey = getCurrentCacheKey();
+                
+                if (shouldReplace) {
+                    setEventsCache(prev => ({
+                        ...prev,
+                        [cacheKey]: response.data!
+                    }));
+                } else {
+                    // 기존 데이터와 병합
+                    setEventsCache(prev => {
+                        const existingEvents = prev[cacheKey] || [];
+                        const existingIds = new Set(existingEvents.map(event => event.id));
+                        const newEvents = response.data!.filter(event => !existingIds.has(event.id));
+                        return {
+                            ...prev,
+                            [cacheKey]: [...existingEvents, ...newEvents]
+                        };
+                    });
+                }
             } else {
                 const errorMsg = response.error || 'Failed to load events';
                 // 401 에러는 이미 api.ts에서 처리하므로 여기서는 다른 에러만 표시
@@ -98,7 +125,7 @@ export const useCalendar = (options: UseCalendarOptions = {}): UseCalendarReturn
         } finally {
             setLoading(false);
         }
-    }, [groupId]); // loading 의존성 제거
+    }, [groupId, getCurrentCacheKey]); // loading 의존성 제거
 
     // 현재 뷰와 날짜에 맞는 이벤트 로드
     const refreshEvents = useCallback(async () => {
@@ -136,7 +163,11 @@ export const useCalendar = (options: UseCalendarOptions = {}): UseCalendarReturn
             const response = await calendarApi.createCalendar(eventData);
 
             if (response.success && response.data) {
-                setEvents(prev => [...prev, response.data!]);
+                const cacheKey = getCurrentCacheKey();
+                setEventsCache(prev => ({
+                    ...prev,
+                    [cacheKey]: [...(prev[cacheKey] || []), response.data!]
+                }));
                 await refreshEvents();
                 toast.success('일정이 추가되었습니다');
                 return response.data;
@@ -158,7 +189,7 @@ export const useCalendar = (options: UseCalendarOptions = {}): UseCalendarReturn
         } finally {
             setLoading(false);
         }
-    }, [loading]);
+    }, [loading, getCurrentCacheKey]);
 
     // 이벤트 수정
     const updateEvent = useCallback(async (eventId: string, eventData: Partial<Event>): Promise<Event | null> => {
@@ -171,9 +202,13 @@ export const useCalendar = (options: UseCalendarOptions = {}): UseCalendarReturn
             const response = await calendarApi.updateCalendar(eventId, eventData);
 
             if (response.success && response.data) {
-                setEvents(prev => prev.map(event =>
-                    event.id === eventId ? response.data! : event
-                ));
+                const cacheKey = getCurrentCacheKey();
+                setEventsCache(prev => ({
+                    ...prev,
+                    [cacheKey]: (prev[cacheKey] || []).map(event =>
+                        event.id === eventId ? response.data! : event
+                    )
+                }));
                 toast.success('일정이 수정되었습니다');
                 return response.data;
             } else {
@@ -194,7 +229,7 @@ export const useCalendar = (options: UseCalendarOptions = {}): UseCalendarReturn
         } finally {
             setLoading(false);
         }
-    }, [loading]);
+    }, [loading, getCurrentCacheKey]);
 
     // 이벤트 삭제 (모든 반복 일정 삭제)
     const deleteEvent = useCallback(async (eventId: string): Promise<boolean> => {
@@ -208,7 +243,11 @@ export const useCalendar = (options: UseCalendarOptions = {}): UseCalendarReturn
 
             if (response.success) {
                 // 모든 반복 일정 삭제이므로 해당 이벤트를 완전히 제거
-                setEvents(prev => prev.filter(event => event.id !== eventId));
+                const cacheKey = getCurrentCacheKey();
+                setEventsCache(prev => ({
+                    ...prev,
+                    [cacheKey]: (prev[cacheKey] || []).filter(event => event.id !== eventId)
+                }));
                 toast.success('일정이 삭제되었습니다');
                 return true;
             } else {
@@ -229,11 +268,18 @@ export const useCalendar = (options: UseCalendarOptions = {}): UseCalendarReturn
         } finally {
             setLoading(false);
         }
-    }, [loading]);
+    }, [loading, getCurrentCacheKey]);
 
     // 네비게이션 함수들
     const goToToday = useCallback(() => {
         setCurrentDate(new Date());
+    }, []);
+
+    // 월 이동 (데이터 유지)
+    const goToMonth = useCallback((targetDate: Date) => {
+        setCurrentDate(targetDate);
+        setCurrentView('month');
+        // 데이터는 유지하고 새로운 데이터만 필요시 추가 로드
     }, []);
 
     const goToPrevious = useCallback(() => {
