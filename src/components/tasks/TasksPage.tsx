@@ -152,12 +152,16 @@ const TasksPage: React.FC = () => {
               {mode === "personal" ? (
                   "내 할일"
               ) : (
-                  <div className="flex items-center space-x-2 lg:space-x-3 flex-wrap">
-                    <span className="whitespace-nowrap">공용 할일</span>
-                    <span className="text-lg lg:text-xl text-primary-600">•</span>
-                    <span className="text-lg lg:text-2xl text-primary-600 font-semibold whitespace-nowrap">
-                    {currentGroup?.name || "그룹 선택 필요"}
-                  </span>
+                  <div className="space-y-1">
+                    <div className="text-base font-medium text-gray-500">
+                      공용 할일
+                    </div>
+                    <div
+                        className="text-2xl lg:text-3xl font-bold text-primary-600 truncate"
+                        title={currentGroup?.name || "그룹 선택 필요"}
+                    >
+                      {currentGroup?.name || "그룹 선택 필요"}
+                    </div>
                   </div>
               )}
             </h1>
