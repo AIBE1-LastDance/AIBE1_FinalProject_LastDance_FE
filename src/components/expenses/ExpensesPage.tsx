@@ -285,10 +285,11 @@ const ExpensesPage: React.FC = () => {
   useEffect(() => {
     if (isInitialLoad) { // Only run refreshAllData on initial load
       refreshAllData();
+      // AI 분석 내역도 함께 로드
+      loadSavedAnalysesPaginated({page: 0, size: 10}); // 초기 페이지 로드
       setIsInitialLoad(false); // Set to false after initial load
     }
     // AI 분석 내역도 함께 로드
-    loadSavedAnalysesPaginated({page: 0, size: 10}); // 초기 페이지 로드
   }, [refreshAllData, isInitialLoad, loadSavedAnalysesPaginated]);
 
   useEffect(() => {
@@ -364,7 +365,7 @@ const ExpensesPage: React.FC = () => {
       const refreshFilteredData = async () => {
         setPageLoading(true);
         try {
-          const params = {
+          const commonParams = {
             mode,
             year: currentMonth.getFullYear(),
             month: currentMonth.getMonth() + 1,
@@ -374,7 +375,20 @@ const ExpensesPage: React.FC = () => {
             category: categoryFilter === "all" ? undefined : categoryFilter,
             search: searchTerm || undefined,
           };
-          await loadCombinedExpenses(params);
+
+          const promises = [
+            loadCombinedExpenses(commonParams)
+          ];
+
+          if (mode === 'group' && currentGroup?.id) {
+            promises.push(loadGroupSharesPaginated({
+              ...commonParams,
+              size: 5, // 분담금은 사이즈 5
+            }));
+          }
+
+          await Promise.all(promises);
+
         } catch (error) {
           console.error("필터링된 데이터 로드 실패:", error);
         } finally {
@@ -1044,7 +1058,7 @@ const ExpensesPage: React.FC = () => {
       <div className="space-y-8">
         <div className="flex items-center justify-center py-12">
           <div className="flex items-center space-x-3">
-            <RefreshCw className="w-6 h-6 animate-spin text-primary-600" />
+            <div className="w-5 h-5 border-2 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
             <span className="text-gray-600">지출 내역을 불러오는 중...</span>
           </div>
         </div>
@@ -1059,7 +1073,7 @@ const ExpensesPage: React.FC = () => {
       <div>
         <div className="flex flex-col lg:flex-row lg:items-center space-y-2 lg:space-y-0 lg:space-x-4">
           <div className="lg:w-80">
-            <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">
+            <h1 className="text-2xl lg:text-3xl font-bold text-gray-500">
               {mode === "personal" ? (
                 "내 가계부"
               ) : (
@@ -1803,7 +1817,7 @@ const ExpensesPage: React.FC = () => {
             {/* 분담금 페이징 로딩 오버레이 추가 */}
             {sharePageLoading && (
               <div className="absolute inset-0 bg-white bg-opacity-50 flex items-center justify-center z-10 rounded-2xl">
-                <RefreshCw className="w-6 h-6 animate-spin text-primary-600" />
+                <div className="w-6 h-6 border-2 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
               </div>
             )}
 
@@ -1967,7 +1981,7 @@ const ExpensesPage: React.FC = () => {
             <div className="relative">
               {pageLoading && (
                 <div className="absolute inset-0 bg-white bg-opacity-50 flex items-center justify-center z-10 rounded-2xl">
-                  <RefreshCw className="w-6 h-6 animate-spin text-primary-600" />
+                  <div className="w-6 h-6 border-2 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
                 </div>
               )}
               {filteredExpenses.length > 0 ? (
