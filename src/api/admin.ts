@@ -169,6 +169,46 @@ export interface AIJudgmentStats {
   }[];
 }
 
+export interface ExpenseAnalyzerFeedbackStats {
+  totalFeedbacks: number;
+  upCount: number;
+  downCount: number;
+  satisfactionRate: number;
+  trends: {
+    date: string;
+    totalCount: number;
+    upCount: number;
+    downCount: number;
+    satisfactionRate: number;
+  }[];
+}
+
+export interface AdminExpenseAnalyzerHistory {
+  id: number;
+  email: string;
+  nickname: string;
+  createdAt: string;
+  up: boolean | null;
+  down: boolean | null;
+}
+
+export interface AdminExpenseAnalyzerHistoryDetail {
+  id: number;
+  startDate: string;
+  endDate: string;
+  budgetUsagePercentage: number;
+  budgetUsageCurrentSpending: number;
+  budgetUsageTotalBudget: number;
+  dailySpendingAverageSoFar: number;
+  dailySpendingEstimatedEom: number;
+  mainFinding: string;
+  suggestionTitle: string;
+  suggestionDescription: string;
+  suggestionEffect: string;
+  suggestionDifficulty: string;
+  createdAt: string;
+}
+
 export interface PaginationResponse<T> {
   [key: string]: T[];
   pagination: {
@@ -434,6 +474,31 @@ export class AdminAPI {
   // AI 판단 통계 조회
   static async getAIJudgmentStats(period: 'daily' | 'weekly' | 'monthly' = 'weekly'): Promise<AIJudgmentStats> {
     const response = await apiClient.get('/api/v1/admin/ai/judgment/stats', { params: { period } });
+    return response.data.data;
+  }
+
+  // LLM 지출분석 피드백 통계 조회
+  static async getExpenseAnalyzerFeedbackStats(period: 'daily' | 'weekly' | 'monthly' = 'weekly'): Promise<ExpenseAnalyzerFeedbackStats> {
+    const response = await apiClient.get('/api/v1/admin/expense/analyzer/stats', { params: { period } });
+    return response.data.data;
+  }
+
+  // LLM 지출분석 내역 조회
+  static async getExpenseAnalyzerHistory(params: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    rating?: string;
+    dateFrom?: string;
+    dateTo?: string;
+  } = {}): Promise<PaginationResponse<AdminExpenseAnalyzerHistory>> {
+    const response = await apiClient.get('/api/v1/admin/expense/analyzer', { params });
+    return response.data.data;
+  }
+
+  // LLM 지출분석 상세 조회
+  static async getExpenseAnalyzerHistoryDetail(historyId: number): Promise<AdminExpenseAnalyzerHistoryDetail> {
+    const response = await apiClient.get(`/api/v1/admin/expense/analyzer/${historyId}`);
     return response.data.data;
   }
 
