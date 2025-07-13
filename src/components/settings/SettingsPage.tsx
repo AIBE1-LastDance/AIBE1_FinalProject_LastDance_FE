@@ -453,22 +453,24 @@ const SettingsPage: React.FC = () => {
                         <div className="flex space-x-4 mt-1">
                             <button
                                 onClick={async () => {
-                                    try {
-                                        await profileApi.deleteAvatar();
-                                        // 로컬 상태 업데이트
-                                        setProfileData(prev => ({...prev, avatar: ''}));
+                                    if (window.confirm('정말로 프로필 사진을 삭제하시겠습니까?')) {
+                                        try {
+                                            await profileApi.deleteAvatar();
+                                            // 로컬 상태 업데이트
+                                            setProfileData(prev => ({...prev, avatar: ''}));
 
-                                        // 전역 상태 업데이트
-                                        const {updateUser} = useAuthStore.getState();
-                                        updateUser({
-                                            ...user,
-                                            avatar: ''
-                                        })
+                                            // 전역 상태 업데이트
+                                            const {updateUser} = useAuthStore.getState();
+                                            updateUser({
+                                                ...user,
+                                                avatar: ''
+                                            })
 
-                                        toast.success('프로필 사진이 삭제되었습니다.')
-                                    } catch (error) {
-                                        toast.error('이미지 삭제에 실패했습니다.');
-                                        console.error('Profile image delete error: ', error);
+                                            toast.success('프로필 사진이 삭제되었습니다.')
+                                        } catch (error) {
+                                            toast.error('이미지 삭제에 실패했습니다.');
+                                            console.error('Profile image delete error: ', error);
+                                        }
                                     }
                                 }}
                                 className="text-sm text-red-600 hover:text-red-700"
