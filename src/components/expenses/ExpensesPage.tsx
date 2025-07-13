@@ -738,8 +738,7 @@ const ExpensesPage: React.FC = () => {
         insights.push({
           type: "category",
           title: `${cat.label} 지출 집중`,
-          message: `전체 지출의 ${cat.percentage.toFixed(1)}%가 ${
-            cat.label
+          message: `전체 지출의 ${cat.percentage.toFixed(1)}%가 ${cat.label
           }에 집중되어 있습니다.`,
           icon: AlertTriangle,
           color: "text-orange-600",
@@ -955,6 +954,8 @@ const ExpensesPage: React.FC = () => {
         groupId: currentGroup?.id,
         page: zeroBasedPage,
         size: 5,
+        category: categoryFilter === "all" ? undefined : categoryFilter,
+        search: searchTerm || undefined,
       });
     } finally {
       setSharePageLoading(false);
@@ -2363,9 +2364,7 @@ const ExpensesPage: React.FC = () => {
                           <div className="flex-1">
                             <div className="prose prose-green max-w-none prose-headings:text-green-800 prose-p:text-green-700 prose-strong:text-green-800 prose-li:text-green-700 prose-table:border-green-300 prose-th:bg-green-100 prose-td:border-green-200 prose-blockquote:border-green-300 prose-code:text-green-800 prose-code:bg-green-100 prose-code:px-2 prose-code:py-1 prose-code:rounded prose-a:text-green-600">
                               <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                {`### ${rec.title}
-
-${rec.message}`}
+                                {`### ${rec.title}\n\n${rec.message}`}
                               </ReactMarkdown>
                             </div>
                             <hr className="my-4 border-green-200" />
