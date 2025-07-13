@@ -26,6 +26,7 @@ const AISystemManagement: React.FC = () => {
   const { judgments, pagination, stats, overallStats, loading, error, fetchJudgments, fetchStats, fetchOverallStats } = useAdminAI();
   const { stats: expenseStats, histories: expenseHistories, pagination: expensePagination, loading: expenseLoading, error: expenseError, fetchStats: fetchExpenseStats, fetchHistories: fetchExpenseHistories } = useAdminExpenseAnalyzer();
   
+  const [activeTab, setActiveTab] = useState('aiJudgment');
   const [searchTerm, setSearchTerm] = useState('');
   const [ratingFilter, setRatingFilter] = useState<'all' | 'UP' | 'DOWN'>('all');
   const [selectedJudgment, setSelectedJudgment] = useState<AIJudgmentDetail | null>(null);
@@ -57,7 +58,11 @@ const AISystemManagement: React.FC = () => {
       params.rating = ratingFilter;
     }
 
-    fetchJudgments(params);
+    if (activeTab === 'aiJudgment') {
+      fetchJudgments(params);
+    } else {
+      fetchExpenseHistories(params);
+    }
   };
 
   const handlePageChange = (page: number) => {
@@ -75,7 +80,11 @@ const AISystemManagement: React.FC = () => {
       params.rating = ratingFilter;
     }
 
-    fetchJudgments(params);
+    if (activeTab === 'aiJudgment') {
+      fetchJudgments(params);
+    } else {
+      fetchExpenseHistories(params);
+    }
   };
 
   const handleJudgmentDetail = async (judgmentId: string) => {
@@ -369,305 +378,320 @@ const AISystemManagement: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">AI 시스템 관리</h1>
-          <p className="text-gray-600 mt-1">AI 판단 로그 및 성능 분석</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => fetchStats('daily')}
-            className="px-3 py-1 text-xs bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition-colors"
-          >
-            일별
-          </button>
-          <button
-            onClick={() => fetchStats('weekly')}
-            className="px-3 py-1 text-xs bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition-colors"
-          >
-            주별
-          </button>
-          <button
-            onClick={() => fetchStats('monthly')}
-            className="px-3 py-1 text-xs bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition-colors"
-          >
-            월별
-          </button>
+          <p className="text-gray-600 mt-1">AI 판단 및 LLM 지출 분석</p>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard
-          title="총 판단 요청"
-          value={formatNumber(overallStats?.totalJudgments || stats?.totalJudgments || 0)}
-          icon={Brain}
-          color="bg-purple-500"
-        />
-        <StatCard
-          title="만족 건수"
-          value={formatNumber(overallStats?.satisfactionCount || stats?.satisfactionCount || 0)}
-          icon={ThumbsUp}
-          color="bg-green-500"
-        />
-        <StatCard
-          title="불만족 건수"
-          value={formatNumber(overallStats?.dissatisfactionCount || stats?.dissatisfactionCount || 0)}
-          icon={ThumbsDown}
-          color="bg-red-500"
-        />
-        <StatCard
-          title="만족도"
-          value={
-            overallStats?.satisfactionRate !== undefined ? 
-              formatPercentage(overallStats.satisfactionRate) : 
-              (stats?.satisfactionRate !== undefined ? formatPercentage(stats.satisfactionRate) : '0%')
-          }
-          icon={TrendingUp}
-          color="bg-blue-500"
-        />
+      {/* Tabs */}
+      <div className="border-b border-gray-200">
+        <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+          <button
+            onClick={() => setActiveTab('aiJudgment')}
+            className={`${ activeTab === 'aiJudgment' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+          >
+            AI 판단 분석
+          </button>
+          <button
+            onClick={() => setActiveTab('expenseAnalyzer')}
+            className={`${ activeTab === 'expenseAnalyzer' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+          >
+            LLM 지출 분석
+          </button>
+        </nav>
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 gap-6">
-        {/* AI Usage Trend */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 lg:p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">AI 만족도 추이</h3>
-          {stats?.trends && stats.trends.length > 0 ? (
-            <div className="w-full overflow-hidden">
-              <ResponsiveContainer width="100%" height={250} className="min-w-0">
-                <LineChart data={stats.trends}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis yAxisId="left" />
-                  <YAxis yAxisId="right" orientation="right" />
-                  <Tooltip />
-                  <Bar yAxisId="left" dataKey="judgmentCount" fill="#8884d8" name="요청 수" />
-                  <Line yAxisId="right" type="monotone" dataKey="satisfactionRate" stroke="#82ca9d" name="만족도(%)" />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          ) : (
-            <div className="h-[250px] flex items-center justify-center text-gray-500">
-              통계 데이터가 없습니다.
-            </div>
-          )}
-        </div>
-      </div>
+      {activeTab === 'aiJudgment' && (
+        <div className="space-y-6">
+          {/* AI Judgment Content */}
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => fetchStats('daily')}
+              className="px-3 py-1 text-xs bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition-colors"
+            >
+              일별
+            </button>
+            <button
+              onClick={() => fetchStats('weekly')}
+              className="px-3 py-1 text-xs bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition-colors"
+            >
+              주별
+            </button>
+            <button
+              onClick={() => fetchStats('monthly')}
+              className="px-3 py-1 text-xs bg-blue-100 text-blue-600 rounded hover:bg-blue-200 transition-colors"
+            >
+              월별
+            </button>
+          </div>
 
-      {/* Filters */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 lg:p-6">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input
-              type="text"
-              placeholder="사용자 검색"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <StatCard
+              title="총 판단 요청"
+              value={formatNumber(overallStats?.totalJudgments || stats?.totalJudgments || 0)}
+              icon={Brain}
+              color="bg-purple-500"
+            />
+            <StatCard
+              title="만족 건수"
+              value={formatNumber(overallStats?.satisfactionCount || stats?.satisfactionCount || 0)}
+              icon={ThumbsUp}
+              color="bg-green-500"
+            />
+            <StatCard
+              title="불만족 건수"
+              value={formatNumber(overallStats?.dissatisfactionCount || stats?.dissatisfactionCount || 0)}
+              icon={ThumbsDown}
+              color="bg-red-500"
+            />
+            <StatCard
+              title="만족도"
+              value={
+                overallStats?.satisfactionRate !== undefined ? 
+                  formatPercentage(overallStats.satisfactionRate) : 
+                  (stats?.satisfactionRate !== undefined ? formatPercentage(stats.satisfactionRate) : '0%')
+              }
+              icon={TrendingUp}
+              color="bg-blue-500"
             />
           </div>
-          
-          <select
-            value={ratingFilter}
-            onChange={(e) => setRatingFilter(e.target.value as 'all' | 'UP' | 'DOWN')}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-          >
-            <option value="all">모든 평가</option>
-            <option value="UP">만족</option>
-            <option value="DOWN">불만족</option>
-          </select>
 
-          <button 
-            onClick={handleSearch}
-            disabled={loading}
-            className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 text-sm"
-          >
-            <Filter className="w-4 h-4 mr-2" />
-            {loading ? '로딩...' : '필터 적용'}
-          </button>
-        </div>
-      </div>
-
-      {/* AI Judgments Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">AI 판단 로그</h3>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[100px]">
-                  판단 ID
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
-                  요청자
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px] max-w-[250px]">
-                  요청 내용
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px] max-w-[250px]">
-                  AI 응답
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[100px]">
-                  사용자 평가
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[100px]">
-                  요청일시
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[80px]">
-                  액션
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {loading ? (
-                <tr>
-                  <td colSpan={7} className="px-6 py-4 text-center">
-                    <div className="flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                      <span className="ml-2">로딩 중...</span>
-                    </div>
-                  </td>
-                </tr>
-              ) : judgments.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
-                    AI 판단 기록이 없습니다.
-                  </td>
-                </tr>
+          {/* Charts */}
+          <div className="grid grid-cols-1 gap-6">
+            {/* AI Usage Trend */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 lg:p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">AI 만족도 추이</h3>
+              {stats?.trends && stats.trends.length > 0 ? (
+                <div className="w-full overflow-hidden">
+                  <ResponsiveContainer width="100%" height={250} className="min-w-0">
+                    <LineChart data={stats.trends}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" />
+                      <YAxis yAxisId="left" />
+                      <YAxis yAxisId="right" orientation="right" />
+                      <Tooltip />
+                      <Bar yAxisId="left" dataKey="judgmentCount" fill="#8884d8" name="요청 수" />
+                      <Line yAxisId="right" type="monotone" dataKey="satisfactionRate" stroke="#82ca9d" name="만족도(%)" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
               ) : (
-                safeArray(judgments).map((judgment) => (
-                  <tr key={judgment.judgmentId} className="hover:bg-gray-50">
-                    <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      <span className="hidden sm:inline">#{judgment.judgmentId.slice(0, 8)}...</span>
-                      <span className="sm:hidden">#{judgment.judgmentId.slice(0, 6)}</span>
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900 truncate max-w-[100px]">{judgment.user?.nickname || 'N/A'}</div>
-                      <div className="text-xs text-gray-500 truncate max-w-[100px] hidden sm:block">{judgment.user?.email || 'N/A'}</div>
-                    </td>
-                    <td className="px-4 py-4 max-w-[200px] truncate">
-                      <div className="text-sm text-gray-900 truncate" title={judgment.requestSummary}>
-                        {judgment.requestSummary || 'N/A'}
-                      </div>
-                    </td>
-                    <td className="px-4 py-4 max-w-[200px] truncate">
-                      <div className="text-sm text-gray-900 truncate" title={judgment.aiResponse}>
-                        {judgment.aiResponse || 'N/A'}
-                      </div>
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
-                      {getFeedbackBadge(judgment.userRating)}
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                      <div className="hidden sm:block">{new Date(judgment.createdAt).toLocaleDateString('ko-KR')}</div>
-                      <div className="sm:hidden">{new Date(judgment.createdAt).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}</div>
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
-                      <button
-                        onClick={() => handleJudgmentDetail(judgment.judgmentId)}
-                        className="text-blue-600 hover:text-blue-900 flex items-center"
-                      >
-                        <Eye className="w-4 h-4 mr-1" />
-                        <span className="hidden sm:inline">상세</span>
-                      </button>
-                    </td>
-                  </tr>
-                ))
+                <div className="h-[250px] flex items-center justify-center text-gray-500">
+                  통계 데이터가 없습니다.
+                </div>
               )}
-            </tbody>
-          </table>
-        </div>
+            </div>
+          </div>
 
-        {/* Pagination */}
-        {pagination && (
-          <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-            <div className="flex-1 flex justify-between sm:hidden">
-              <button 
-                onClick={() => handlePageChange(pagination.currentPage - 1)}
-                disabled={!pagination.hasPrevious}
-                className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          {/* Filters */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 lg:p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <input
+                  type="text"
+                  placeholder="사용자 검색"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                />
+              </div>
+              
+              <select
+                value={ratingFilter}
+                onChange={(e) => setRatingFilter(e.target.value as 'all' | 'UP' | 'DOWN')}
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
               >
-                이전
-              </button>
+                <option value="all">모든 평가</option>
+                <option value="UP">만족</option>
+                <option value="DOWN">불만족</option>
+              </select>
+
               <button 
-                onClick={() => handlePageChange(pagination.currentPage + 1)}
-                disabled={!pagination.hasNext}
-                className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={handleSearch}
+                disabled={loading}
+                className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 text-sm"
               >
-                다음
+                <Filter className="w-4 h-4 mr-2" />
+                {loading ? '로딩...' : '필터 적용'}
               </button>
             </div>
-            <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm text-gray-700">
-                  총 <span className="font-medium">{safeString(pagination?.totalItems)}</span>건의 AI 판단 중{' '}
-                  <span className="font-medium">
-                    {safeString(pagination ? ((safeNumber(pagination.currentPage, 1) - 1) * safeNumber(pagination.itemsPerPage, 20)) + 1 : 0)}
-                  </span>
-                  -{' '}
-                  <span className="font-medium">
-                    {safeString(pagination ? Math.min(safeNumber(pagination.currentPage, 1) * safeNumber(pagination.itemsPerPage, 20), safeNumber(pagination.totalItems)) : 0)}
-                  </span>
-                  건 표시
-                </p>
-              </div>
-              <div>
-                <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+          </div>
+
+          {/* AI Judgments Table */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">AI 판단 로그</h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[100px]">
+                      판단 ID
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
+                      요청자
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px] max-w-[250px]">
+                      요청 내용
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px] max-w-[250px]">
+                      AI 응답
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[100px]">
+                      사용자 평가
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[100px]">
+                      요청일시
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[80px]">
+                      액션
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {loading ? (
+                    <tr>
+                      <td colSpan={7} className="px-6 py-4 text-center">
+                        <div className="flex items-center justify-center">
+                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                          <span className="ml-2">로딩 중...</span>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : judgments.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
+                        AI 판단 기록이 없습니다.
+                      </td>
+                    </tr>
+                  ) : (
+                    safeArray(judgments).map((judgment) => (
+                      <tr key={judgment.judgmentId} className="hover:bg-gray-50">
+                        <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          <span className="hidden sm:inline">#{judgment.judgmentId.slice(0, 8)}...</span>
+                          <span className="sm:hidden">#{judgment.judgmentId.slice(0, 6)}</span>
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900 truncate max-w-[100px]">{judgment.user?.nickname || 'N/A'}</div>
+                          <div className="text-xs text-gray-500 truncate max-w-[100px] hidden sm:block">{judgment.user?.email || 'N/A'}</div>
+                        </td>
+                        <td className="px-4 py-4 max-w-[200px] truncate">
+                          <div className="text-sm text-gray-900 truncate" title={judgment.requestSummary}>
+                            {judgment.requestSummary || 'N/A'}
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 max-w-[200px] truncate">
+                          <div className="text-sm text-gray-900 truncate" title={judgment.aiResponse}>
+                            {judgment.aiResponse || 'N/A'}
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          {getFeedbackBadge(judgment.userRating)}
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                          <div className="hidden sm:block">{new Date(judgment.createdAt).toLocaleDateString('ko-KR')}</div>
+                          <div className="sm:hidden">{new Date(judgment.createdAt).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}</div>
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
+                          <button
+                            onClick={() => handleJudgmentDetail(judgment.judgmentId)}
+                            className="text-blue-600 hover:text-blue-900 flex items-center"
+                          >
+                            <Eye className="w-4 h-4 mr-1" />
+                            <span className="hidden sm:inline">상세</span>
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            {pagination && (
+              <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+                <div className="flex-1 flex justify-between sm:hidden">
                   <button 
-                    onClick={() => handlePageChange(safeNumber(pagination?.currentPage, 1) - 1)}
-                    disabled={!pagination?.hasPrevious}
-                    className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={() => handlePageChange(pagination.currentPage - 1)}
+                    disabled={!pagination.hasPrevious}
+                    className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <ChevronLeft className="w-5 h-5" />
+                    이전
                   </button>
-                  
-                  {/* Page Numbers */}
-                  {Array.from({ length: Math.min(5, safeNumber(pagination?.totalPages, 1)) }, (_, i) => {
-                    const pageNumber = Math.max(1, safeNumber(pagination?.currentPage, 1) - 2) + i;
-                    if (pageNumber > safeNumber(pagination?.totalPages, 1)) return null;
-                    
-                    return (
-                      <button
-                        key={pageNumber}
-                        onClick={() => handlePageChange(pageNumber)}
-                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                          pageNumber === safeNumber(pagination?.currentPage, 1)
-                            ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
-                            : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                        }`}
+                  <button 
+                    onClick={() => handlePageChange(pagination.currentPage + 1)}
+                    disabled={!pagination.hasNext}
+                    className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    다음
+                  </button>
+                </div>
+                <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm text-gray-700">
+                      총 <span className="font-medium">{safeString(pagination?.totalItems)}</span>건의 AI 판단 중{' '}
+                      <span className="font-medium">
+                        {safeString(pagination ? ((safeNumber(pagination.currentPage, 1) - 1) * safeNumber(pagination.itemsPerPage, 20)) + 1 : 0)}
+                      </span>
+                      -{' '}
+                      <span className="font-medium">
+                        {safeString(pagination ? Math.min(safeNumber(pagination.currentPage, 1) * safeNumber(pagination.itemsPerPage, 20), safeNumber(pagination.totalItems)) : 0)}
+                      </span>
+                      건 표시
+                    </p>
+                  </div>
+                  <div>
+                    <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                      <button 
+                        onClick={() => handlePageChange(safeNumber(pagination?.currentPage, 1) - 1)}
+                        disabled={!pagination?.hasPrevious}
+                        className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        {safeString(pageNumber)}
+                        <ChevronLeft className="w-5 h-5" />
                       </button>
-                    );
-                  })}
-                  
-                  <button 
-                    onClick={() => handlePageChange(safeNumber(pagination?.currentPage, 1) + 1)}
-                    disabled={!pagination?.hasNext}
-                    className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <ChevronRight className="w-5 h-5" />
-                  </button>
-                </nav>
+                      
+                      {/* Page Numbers */}
+                      {Array.from({ length: Math.min(5, safeNumber(pagination?.totalPages, 1)) }, (_, i) => {
+                        const pageNumber = Math.max(1, safeNumber(pagination?.currentPage, 1) - 2) + i;
+                        if (pageNumber > safeNumber(pagination?.totalPages, 1)) return null;
+                        
+                        return (
+                          <button
+                            key={pageNumber}
+                            onClick={() => handlePageChange(pageNumber)}
+                            className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                              pageNumber === safeNumber(pagination?.currentPage, 1)
+                                ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
+                                : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                            }`}
+                          >
+                            {safeString(pageNumber)}
+                          </button>
+                        );
+                      })}
+                      
+                      <button 
+                        onClick={() => handlePageChange(safeNumber(pagination?.currentPage, 1) + 1)}
+                        disabled={!pagination?.hasNext}
+                        className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <ChevronRight className="w-5 h-5" />
+                      </button>
+                    </nav>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* Modal */}
-      {showJudgmentDetail && <JudgmentDetailModal />}
-      {showExpenseHistoryDetail && <ExpenseHistoryDetailModal />}
-
-      {/* LLM Expense Analyzer Section */}
-      <div className="space-y-6 max-w-full overflow-hidden">
-        {/* Section Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">LLM 지출 분석</h1>
-            <p className="text-gray-600 mt-1">LLM 지출 분석 피드백 및 성능 분석</p>
-          </div>
+      {activeTab === 'expenseAnalyzer' && (
+        <div className="space-y-6">
+          {/* Expense Analyzer Content */}
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => fetchExpenseStats('daily')}
@@ -688,251 +712,255 @@ const AISystemManagement: React.FC = () => {
               월별
             </button>
           </div>
-        </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard
-            title="총 피드백"
-            value={formatNumber(expenseStats?.totalFeedbacks || 0)}
-            icon={Brain}
-            color="bg-purple-500"
-          />
-          <StatCard
-            title="만족 건수"
-            value={formatNumber(expenseStats?.upCount || 0)}
-            icon={ThumbsUp}
-            color="bg-green-500"
-          />
-          <StatCard
-            title="불만족 건수"
-            value={formatNumber(expenseStats?.downCount || 0)}
-            icon={ThumbsDown}
-            color="bg-red-500"
-          />
-          <StatCard
-            title="만족도"
-            value={formatPercentage(expenseStats?.satisfactionRate || 0)}
-            icon={TrendingUp}
-            color="bg-blue-500"
-          />
-        </div>
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <StatCard
+              title="총 피드백"
+              value={formatNumber(expenseStats?.totalFeedbacks || 0)}
+              icon={Brain}
+              color="bg-purple-500"
+            />
+            <StatCard
+              title="만족 건수"
+              value={formatNumber(expenseStats?.upCount || 0)}
+              icon={ThumbsUp}
+              color="bg-green-500"
+            />
+            <StatCard
+              title="불만족 건수"
+              value={formatNumber(expenseStats?.downCount || 0)}
+              icon={ThumbsDown}
+              color="bg-red-500"
+            />
+            <StatCard
+              title="만족도"
+              value={formatPercentage(expenseStats?.satisfactionRate || 0)}
+              icon={TrendingUp}
+              color="bg-blue-500"
+            />
+          </div>
 
-        {/* Charts */}
-        <div className="grid grid-cols-1 gap-6">
-          {/* Expense Analyzer Feedback Trend */}
+          {/* Charts */}
+          <div className="grid grid-cols-1 gap-6">
+            {/* Expense Analyzer Feedback Trend */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 lg:p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">LLM 지출 분석 만족도 추이</h3>
+              {expenseStats?.trends && expenseStats.trends.length > 0 ? (
+                <div className="w-full overflow-hidden">
+                  <ResponsiveContainer width="100%" height={250} className="min-w-0">
+                    <LineChart data={expenseStats.trends}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" />
+                      <YAxis yAxisId="left" />
+                      <YAxis yAxisId="right" orientation="right" />
+                      <Tooltip />
+                      <Bar yAxisId="left" dataKey="totalCount" fill="#8884d8" name="피드백 수" />
+                      <Line yAxisId="right" type="monotone" dataKey="satisfactionRate" stroke="#82ca9d" name="만족도(%)" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="h-[250px] flex items-center justify-center text-gray-500">
+                  통계 데이터가 없습니다.
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Filters */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 lg:p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">LLM 지출 분석 만족도 추이</h3>
-            {expenseStats?.trends && expenseStats.trends.length > 0 ? (
-              <div className="w-full overflow-hidden">
-                <ResponsiveContainer width="100%" height={250} className="min-w-0">
-                  <LineChart data={expenseStats.trends}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis yAxisId="left" />
-                    <YAxis yAxisId="right" orientation="right" />
-                    <Tooltip />
-                    <Bar yAxisId="left" dataKey="totalCount" fill="#8884d8" name="피드백 수" />
-                    <Line yAxisId="right" type="monotone" dataKey="satisfactionRate" stroke="#82ca9d" name="만족도(%)" />
-                  </LineChart>
-                </ResponsiveContainer>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <input
+                  type="text"
+                  placeholder="사용자 검색"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                />
               </div>
-            ) : (
-              <div className="h-[250px] flex items-center justify-center text-gray-500">
-                통계 데이터가 없습니다.
+              
+              <select
+                value={ratingFilter}
+                onChange={(e) => setRatingFilter(e.target.value as 'all' | 'UP' | 'DOWN')}
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              >
+                <option value="all">모든 평가</option>
+                <option value="UP">만족</option>
+                <option value="DOWN">불만족</option>
+              </select>
+
+              <button 
+                onClick={handleSearch}
+                disabled={expenseLoading}
+                className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 text-sm"
+              >
+                <Filter className="w-4 h-4 mr-2" />
+                {expenseLoading ? '로딩...' : '필터 적용'}
+              </button>
+            </div>
+          </div>
+
+          {/* Expense Analyzer Histories Table */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">LLM 지출 분석 내역</h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[100px]">
+                      내역 ID
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
+                      요청자
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[100px]">
+                      사용자 평가
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[100px]">
+                      요청일시
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[80px]">
+                      액션
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {expenseLoading ? (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-4 text-center">
+                        <div className="flex items-center justify-center">
+                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                          <span className="ml-2">로딩 중...</span>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : expenseHistories.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
+                        LLM 지출 분석 내역이 없습니다.
+                      </td>
+                    </tr>
+                  ) : (
+                    safeArray(expenseHistories).map((history) => (
+                      <tr key={history.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          <span className="hidden sm:inline">#{history.id}</span>
+                          <span className="sm:hidden">#{history.id}</span>
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900 truncate max-w-[100px]">{history.nickname || 'N/A'}</div>
+                          <div className="text-xs text-gray-500 truncate max-w-[100px] hidden sm:block">{history.email || 'N/A'}</div>
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          {getFeedbackBadge(history.up ? 'UP' : history.down ? 'DOWN' : null)}
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                          <div className="hidden sm:block">{new Date(history.createdAt).toLocaleDateString('ko-KR')}</div>
+                          <div className="sm:hidden">{new Date(history.createdAt).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}</div>
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
+                          <button
+                            onClick={() => handleExpenseHistoryDetail(history.id)}
+                            className="text-blue-600 hover:text-blue-900 flex items-center"
+                          >
+                            <Eye className="w-4 h-4 mr-1" />
+                            <span className="hidden sm:inline">상세</span>
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            {expensePagination && (
+              <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+                <div className="flex-1 flex justify-between sm:hidden">
+                  <button 
+                    onClick={() => fetchExpenseHistories({ page: expensePagination.currentPage - 1, search: searchTerm, rating: ratingFilter === 'all' ? undefined : ratingFilter })}
+                    disabled={!expensePagination.hasPrevious}
+                    className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    이전
+                  </button>
+                  <button 
+                    onClick={() => fetchExpenseHistories({ page: expensePagination.currentPage + 1, search: searchTerm, rating: ratingFilter === 'all' ? undefined : ratingFilter })}
+                    disabled={!expensePagination.hasNext}
+                    className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    다음
+                  </button>
+                </div>
+                <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm text-gray-700">
+                      총 <span className="font-medium">{safeString(expensePagination?.totalItems)}</span>건의 내역 중{' '}
+                      <span className="font-medium">
+                        {safeString(expensePagination ? ((safeNumber(expensePagination.currentPage, 1) - 1) * safeNumber(expensePagination.itemsPerPage, 20)) + 1 : 0)}
+                      </span>
+                      -{' '}
+                      <span className="font-medium">
+                        {safeString(expensePagination ? Math.min(safeNumber(expensePagination.currentPage, 1) * safeNumber(expensePagination.itemsPerPage, 20), safeNumber(expensePagination.totalItems)) : 0)}
+                      </span>
+                      건 표시
+                    </p>
+                  </div>
+                  <div>
+                    <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                      <button 
+                        onClick={() => fetchExpenseHistories({ page: safeNumber(expensePagination?.currentPage, 1) - 1, search: searchTerm, rating: ratingFilter === 'all' ? undefined : ratingFilter })}
+                        disabled={!expensePagination?.hasPrevious}
+                        className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <ChevronLeft className="w-5 h-5" />
+                      </button>
+                      
+                      {/* Page Numbers */}
+                      {Array.from({ length: Math.min(5, safeNumber(expensePagination?.totalPages, 1)) }, (_, i) => {
+                        const pageNumber = Math.max(1, safeNumber(expensePagination?.currentPage, 1) - 2) + i;
+                        if (pageNumber > safeNumber(expensePagination?.totalPages, 1)) return null;
+                        
+                        return (
+                          <button
+                            key={pageNumber}
+                            onClick={() => fetchExpenseHistories({ page: pageNumber, search: searchTerm, rating: ratingFilter === 'all' ? undefined : ratingFilter })}
+                            className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                              pageNumber === safeNumber(expensePagination?.currentPage, 1)
+                                ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
+                                : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                            }`}
+                          >
+                            {safeString(pageNumber)}
+                          </button>
+                        );
+                      })}
+                      
+                      <button 
+                        onClick={() => fetchExpenseHistories({ page: safeNumber(expensePagination?.currentPage, 1) + 1, search: searchTerm, rating: ratingFilter === 'all' ? undefined : ratingFilter })}
+                        disabled={!expensePagination?.hasNext}
+                        className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <ChevronRight className="w-5 h-5" />
+                      </button>
+                    </nav>
+                  </div>
+                </div>
               </div>
             )}
           </div>
         </div>
+      )}
 
-        {/* Filters */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 lg:p-6">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
-                type="text"
-                placeholder="사용자 검색"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-              />
-            </div>
-            
-            <select
-              value={ratingFilter}
-              onChange={(e) => setRatingFilter(e.target.value as 'all' | 'UP' | 'DOWN')}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-            >
-              <option value="all">모든 평가</option>
-              <option value="UP">만족</option>
-              <option value="DOWN">불만족</option>
-            </select>
-
-            <button 
-              onClick={() => fetchExpenseHistories({ search: searchTerm, rating: ratingFilter === 'all' ? undefined : ratingFilter })}
-              disabled={expenseLoading}
-              className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 text-sm"
-            >
-              <Filter className="w-4 h-4 mr-2" />
-              {expenseLoading ? '로딩...' : '필터 적용'}
-            </button>
-          </div>
-        </div>
-
-        {/* Expense Analyzer Histories Table */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">LLM 지출 분석 내역</h3>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[100px]">
-                    내역 ID
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
-                    요청자
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[100px]">
-                    사용자 평가
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[100px]">
-                    요청일시
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[80px]">
-                    액션
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {expenseLoading ? (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-4 text-center">
-                      <div className="flex items-center justify-center">
-                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                        <span className="ml-2">로딩 중...</span>
-                      </div>
-                    </td>
-                  </tr>
-                ) : expenseHistories.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
-                      LLM 지출 분석 내역이 없습니다.
-                    </td>
-                  </tr>
-                ) : (
-                  safeArray(expenseHistories).map((history) => (
-                    <tr key={history.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        <span className="hidden sm:inline">#{history.id}</span>
-                        <span className="sm:hidden">#{history.id}</span>
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900 truncate max-w-[100px]">{history.nickname || 'N/A'}</div>
-                        <div className="text-xs text-gray-500 truncate max-w-[100px] hidden sm:block">{history.email || 'N/A'}</div>
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap">
-                        {getFeedbackBadge(history.up ? 'UP' : history.down ? 'DOWN' : null)}
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                        <div className="hidden sm:block">{new Date(history.createdAt).toLocaleDateString('ko-KR')}</div>
-                        <div className="sm:hidden">{new Date(history.createdAt).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}</div>
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
-                        <button
-                          onClick={() => handleExpenseHistoryDetail(history.id)}
-                          className="text-blue-600 hover:text-blue-900 flex items-center"
-                        >
-                          <Eye className="w-4 h-4 mr-1" />
-                          <span className="hidden sm:inline">상세</span>
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination */}
-          {expensePagination && (
-            <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-              <div className="flex-1 flex justify-between sm:hidden">
-                <button 
-                  onClick={() => fetchExpenseHistories({ page: expensePagination.currentPage - 1, search: searchTerm, rating: ratingFilter === 'all' ? undefined : ratingFilter })}
-                  disabled={!expensePagination.hasPrevious}
-                  className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  이전
-                </button>
-                <button 
-                  onClick={() => fetchExpenseHistories({ page: expensePagination.currentPage + 1, search: searchTerm, rating: ratingFilter === 'all' ? undefined : ratingFilter })}
-                  disabled={!expensePagination.hasNext}
-                  className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  다음
-                </button>
-              </div>
-              <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm text-gray-700">
-                    총 <span className="font-medium">{safeString(expensePagination?.totalItems)}</span>건의 내역 중{' '}
-                    <span className="font-medium">
-                      {safeString(expensePagination ? ((safeNumber(expensePagination.currentPage, 1) - 1) * safeNumber(expensePagination.itemsPerPage, 20)) + 1 : 0)}
-                    </span>
-                    -{' '}
-                    <span className="font-medium">
-                      {safeString(expensePagination ? Math.min(safeNumber(expensePagination.currentPage, 1) * safeNumber(expensePagination.itemsPerPage, 20), safeNumber(expensePagination.totalItems)) : 0)}
-                    </span>
-                    건 표시
-                  </p>
-                </div>
-                <div>
-                  <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                    <button 
-                      onClick={() => fetchExpenseHistories({ page: safeNumber(expensePagination?.currentPage, 1) - 1, search: searchTerm, rating: ratingFilter === 'all' ? undefined : ratingFilter })}
-                      disabled={!expensePagination?.hasPrevious}
-                      className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <ChevronLeft className="w-5 h-5" />
-                    </button>
-                    
-                    {/* Page Numbers */}
-                    {Array.from({ length: Math.min(5, safeNumber(expensePagination?.totalPages, 1)) }, (_, i) => {
-                      const pageNumber = Math.max(1, safeNumber(expensePagination?.currentPage, 1) - 2) + i;
-                      if (pageNumber > safeNumber(expensePagination?.totalPages, 1)) return null;
-                      
-                      return (
-                        <button
-                          key={pageNumber}
-                          onClick={() => fetchExpenseHistories({ page: pageNumber, search: searchTerm, rating: ratingFilter === 'all' ? undefined : ratingFilter })}
-                          className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                            pageNumber === safeNumber(expensePagination?.currentPage, 1)
-                              ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
-                              : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                          }`}
-                        >
-                          {safeString(pageNumber)}
-                        </button>
-                      );
-                    })}
-                    
-                    <button 
-                      onClick={() => fetchExpenseHistories({ page: safeNumber(expensePagination?.currentPage, 1) + 1, search: searchTerm, rating: ratingFilter === 'all' ? undefined : ratingFilter })}
-                      disabled={!expensePagination?.hasNext}
-                      className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <ChevronRight className="w-5 h-5" />
-                    </button>
-                  </nav>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+      {/* Modal */}
+      {showJudgmentDetail && <JudgmentDetailModal />}
+      {showExpenseHistoryDetail && <ExpenseHistoryDetailModal />}
     </div>
   );
 };
