@@ -232,9 +232,6 @@ export const useAdminAI = () => {
   const [pagination, setPagination] = useState<any>(null);
   const [stats, setStats] = useState<AIJudgmentStats | null>(null);
   const [overallStats, setOverallStats] = useState<any>(null); // 전체 통계용
-  const [expenseAnalyzerStats, setExpenseAnalyzerStats] = useState<ExpenseAnalyzerFeedbackStats | null>(null);
-  const [expenseAnalyzerHistories, setExpenseAnalyzerHistories] = useState<AdminExpenseAnalyzerHistory[]>([]);
-  const [expenseAnalyzerPagination, setExpenseAnalyzerPagination] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -290,54 +287,14 @@ export const useAdminAI = () => {
       });
       
       const allJudgments = allJudgmentsResponse.aiJudgments || [];
-      console.log('전체 AI 판단 데이터:', allJudgments);
       
-      if (allJudgments.length > 0) {
-        console.log('첫 번째 데이터 예시:', allJudgments[0]);
-        console.log('모든 userRating 값들:', allJudgments.map(j => j.userRating));
-      }
+      const totalJudgments = allJudgments.length;
+      const satisfiedCount = allJudgments.filter(j => j.userRating === 'UP').length;
+      const dissatisfiedCount = allJudgments.filter(j => j.userRating === 'DOWN').length;
       
-      // 데이터 변환: up/down boolean을 UP/DOWN 문자열로 변환 (백엔드 수정 전 임시방편)
-      const processedJudgments = allJudgments.map(judgment => {
-        let userRating = judgment.userRating;
-        
-        // 백엔드에서 up/down boolean으로 온다면 변환
-        if ((judgment as any).up === true && (judgment as any).down === false) {
-          userRating = 'UP';
-        } else if ((judgment as any).up === false && (judgment as any).down === true) {
-          userRating = 'DOWN';
-        }
-        
-        return {
-          ...judgment,
-          userRating
-        };
-      });
-      
-      const totalJudgments = processedJudgments.length;
-      const satisfiedCount = processedJudgments.filter(j => j.userRating === 'UP').length;
-      const dissatisfiedCount = processedJudgments.filter(j => j.userRating === 'DOWN').length;
-      
-      // 명시적으로 UP 또는 DOWN만 평가된 것으로 간주
-      const ratedJudgments = processedJudgments.filter(j => 
-        j.userRating === 'UP' || j.userRating === 'DOWN'
-      );
-      
-      console.log('통계 계산:', {
-        totalJudgments,
-        satisfiedCount,
-        dissatisfiedCount,
-        ratedCount: ratedJudgments.length,
-        processedRatings: processedJudgments.map(j => j.userRating)
-      });
-      
-      // 0으로 나누기 방지 및 NaN 체크
       let satisfactionRate = 0;
-      if (ratedJudgments.length > 0) {
-        satisfactionRate = (satisfiedCount / ratedJudgments.length) * 100;
-        if (isNaN(satisfactionRate)) {
-          satisfactionRate = 0;
-        }
+      if ((satisfiedCount + dissatisfiedCount) > 0) {
+        satisfactionRate = (satisfiedCount / (satisfiedCount + dissatisfiedCount)) * 100;
       }
 
       setOverallStats({
@@ -348,7 +305,6 @@ export const useAdminAI = () => {
       });
     } catch (err: any) {
       console.error('전체 AI 판단 통계 조회 실패:', err);
-      // API 실패 시 기본값 설정
       setOverallStats({
         totalJudgments: 0,
         satisfactionCount: 0,
@@ -382,7 +338,15 @@ export const useAdminExpenseAnalyzer = () => {
   const fetchStats = async (period: 'daily' | 'weekly' | 'monthly' = 'weekly') => {
     try {
       const statsData = await AdminAPI.getExpenseAnalyzerFeedbackStats(period);
-      setStats(statsData);
+      
+      // Calculate satisfactionRate for each trend item
+      const processedTrends = statsData.trends.map(trend => {
+        const totalRated = (trend.upCount || 0) + (trend.downCount || 0);
+        const satisfactionRate = totalRated > 0 ? ((trend.upCount || 0) / totalRated) * 100 : 0;
+        return { ...trend, satisfactionRate: parseFloat(satisfactionRate.toFixed(1)) };
+      });
+
+      setStats({ ...statsData, trends: processedTrends });
     } catch (err: any) {
       console.error('LLM 지출 분석 통계 조회 실패:', err);
       setStats(null);

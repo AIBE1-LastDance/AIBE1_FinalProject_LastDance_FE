@@ -179,6 +179,7 @@ export interface ExpenseAnalyzerFeedbackStats {
     totalCount: number;
     upCount: number;
     downCount: number;
+    satisfactionRate: number;
   }[];
 }
 
