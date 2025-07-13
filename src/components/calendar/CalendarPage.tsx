@@ -16,6 +16,10 @@ const CalendarPage: React.FC = () => {
   const [showEventModal, setShowEventModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [showViewDropdown, setShowViewDropdown] = useState(false);
+  const [showDayEventsModal, setShowDayEventsModal] = useState(false);
+  const [dayEventsModalDate, setDayEventsModalDate] = useState<Date | null>(null);
+  const [showMonthEventsModal, setShowMonthEventsModal] = useState(false);
+  const [monthEventsModalDate, setMonthEventsModalDate] = useState<Date | null>(null);
 
   // useCalendar 훅 사용 - 그룹 모드일 때 currentGroup.id 전달
   const {
@@ -102,6 +106,19 @@ const CalendarPage: React.FC = () => {
     setShowEventModal(true);
   };
 
+  const handleShowMoreEvents = (date: Date, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDayEventsModalDate(date);
+    setShowDayEventsModal(true);
+  };
+
+  // 월의 모든 일정을 보여주는 모달 열기
+  const handleShowMonthEvents = (month: Date, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setMonthEventsModalDate(month);
+    setShowMonthEventsModal(true);
+  };
+
   // 모드에 따른 이벤트 필터링
   const getFilteredEventsForDate = (date: Date) => {
     const allEvents = getEventsForDate(date);
@@ -184,6 +201,20 @@ const CalendarPage: React.FC = () => {
     { value: 'day', label: '일간', icon: CalendarIcon },
   ];
 
+  // 로딩 중일 때
+  if (loading) {
+    return (
+      <div className="space-y-8">
+        <div className="flex items-center justify-center py-12">
+          <div className="flex items-center space-x-3">
+            <div className="w-5 h-5 border-2 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
+            <span className="text-gray-600">캘린더를 불러오는 중...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
       <div className="space-y-8">
         {/* Error Display */}
@@ -199,26 +230,19 @@ const CalendarPage: React.FC = () => {
             </div>
         )}
 
-        {/* Loading Indicator */}
-        {loading && (
-            <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded flex items-center">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-700 mr-2"></div>
-              데이터를 불러오는 중...
-            </div>
-        )}
-
         {/* Header */}
         <div className="flex flex-col xl:flex-row xl:items-center justify-between space-y-2 xl:space-y-0 mb-2">
           <div>
             <div className="flex flex-col lg:flex-row lg:items-center space-y-1 lg:space-y-0 lg:space-x-4">
               <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 leading-tight">
                 {mode === 'personal' ? '내 캘린더' : (
-                    <div className="flex items-center space-x-2 lg:space-x-3 flex-wrap">
-                      <span className="whitespace-nowrap">공유 캘린더</span>
-                      <span className="text-lg lg:text-xl text-primary-600">•</span>
-                      <span className="text-lg lg:text-2xl text-primary-600 font-semibold whitespace-nowrap">
-            {currentGroup?.name || '그룹 선택 필요'}
-          </span>
+                    <div className="space-y-1">
+                      <div className="text-base font-medium text-gray-500">
+                        공유 캘린더
+                      </div>
+                      <div className="text-2xl lg:text-3xl font-bold text-primary-600 truncate" title={currentGroup?.name || "그룹 선택 필요"}>
+                        {currentGroup?.name || "그룹 선택 필요"}
+                      </div>
                     </div>
                 )}
               </h1>
@@ -351,55 +375,58 @@ const CalendarPage: React.FC = () => {
         </div>
 
         {/* Calendar Content */}
-        <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
-        >
-          {currentView === 'year' && (
-              <YearView
-                  currentDate={currentDate}
-                  events={events}
-                  mode={mode}
-                  onDateClick={handleDateClick}
-                  getEventsForDate={getFilteredEventsForDate}
-              />
-          )}
-          {currentView === 'month' && (
-              <MonthView
-                  currentDate={currentDate}
-                  onDateClick={handleDateClick}
-                  onEventClick={handleEventClick}
-                  getEventsForDate={getFilteredEventsForDate}
-                  getEventStyle={getEventStyle}
-                  renderEventIcon={renderEventIcon}
-                  renderEventLabel={renderEventLabel}
-              />
-          )}
-          {currentView === 'week' && (
-              <WeekView
-                  currentDate={currentDate}
-                  onDateClick={handleDateClick}
-                  onEventClick={handleEventClick}
-                  getEventsForDate={getFilteredEventsForDate}
-                  getEventStyle={getEventStyle}
-                  renderEventIcon={renderEventIcon}
-                  renderEventLabel={renderEventLabel}
-              />
-          )}
-          {currentView === 'day' && (
-              <DayView
-                  currentDate={currentDate}
-                  onDateClick={handleDateClick}
-                  onEventClick={handleEventClick}
-                  getEventsForDate={getFilteredEventsForDate}
-                  getEventStyle={getEventStyle}
-                  renderEventIcon={renderEventIcon}
-                  renderEventLabel={renderEventLabel}
-              />
-          )}
-        </motion.div>
+        {!loading && (
+          <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+          >
+            {currentView === 'year' && (
+                <YearView
+                    currentDate={currentDate}
+                    events={events}
+                    mode={mode}
+                    onMonthClick={handleShowMonthEvents}
+                    getEventsForDate={getFilteredEventsForDate}
+                />
+            )}
+            {currentView === 'month' && (
+                <MonthView
+                    currentDate={currentDate}
+                    onDateClick={handleDateClick}
+                    onEventClick={handleEventClick}
+                    getEventsForDate={getFilteredEventsForDate}
+                    getEventStyle={getEventStyle}
+                    renderEventIcon={renderEventIcon}
+                    renderEventLabel={renderEventLabel}
+                    onShowMoreEvents={handleShowMoreEvents}
+                />
+            )}
+            {currentView === 'week' && (
+                <WeekView
+                    currentDate={currentDate}
+                    onDateClick={handleDateClick}
+                    onEventClick={handleEventClick}
+                    getEventsForDate={getFilteredEventsForDate}
+                    getEventStyle={getEventStyle}
+                    renderEventIcon={renderEventIcon}
+                    renderEventLabel={renderEventLabel}
+                />
+            )}
+            {currentView === 'day' && (
+                <DayView
+                    currentDate={currentDate}
+                    onDateClick={handleDateClick}
+                    onEventClick={handleEventClick}
+                    getEventsForDate={getFilteredEventsForDate}
+                    getEventStyle={getEventStyle}
+                    renderEventIcon={renderEventIcon}
+                    renderEventLabel={renderEventLabel}
+                />
+            )}
+          </motion.div>
+        )}
 
         {/* Event Modal */}
         {showEventModal && (
@@ -417,6 +444,61 @@ const CalendarPage: React.FC = () => {
                 onDelete={handleDeleteEvent}
             />
         )}
+
+        {/* Month Events Modal */}
+        {showMonthEventsModal && monthEventsModalDate && (
+          <MonthEventsModal
+            month={monthEventsModalDate}
+            events={events}
+            getEventsForDate={getFilteredEventsForDate}
+            getEventStyle={getEventStyle}
+            renderEventIcon={renderEventIcon}
+            renderEventLabel={renderEventLabel}
+            onClose={() => {
+              setShowMonthEventsModal(false);
+              setMonthEventsModalDate(null);
+            }}
+            onEventClick={(event, date) => {
+              setShowMonthEventsModal(false);
+              setSelectedEvent(event);
+              setSelectedDate(date);
+              setShowEventModal(true);
+            }}
+            onAddEvent={(date) => {
+              setShowMonthEventsModal(false);
+              setSelectedEvent(null);
+              setSelectedDate(date);
+              setShowEventModal(true);
+            }}
+          />
+        )}
+
+        {/* Day Events Modal */}
+        {showDayEventsModal && dayEventsModalDate && (
+          <DayEventsModal
+            date={dayEventsModalDate}
+            events={getFilteredEventsForDate(dayEventsModalDate)}
+            getEventStyle={getEventStyle}
+            renderEventIcon={renderEventIcon}
+            renderEventLabel={renderEventLabel}
+            onClose={() => {
+              setShowDayEventsModal(false);
+              setDayEventsModalDate(null);
+            }}
+            onEventClick={(event) => {
+              setShowDayEventsModal(false);
+              setSelectedEvent(event);
+              setSelectedDate(dayEventsModalDate);
+              setShowEventModal(true);
+            }}
+            onAddEvent={() => {
+              setShowDayEventsModal(false);
+              setSelectedEvent(null);
+              setSelectedDate(dayEventsModalDate);
+              setShowEventModal(true);
+            }}
+          />
+        )}
       </div>
   );
 };
@@ -426,9 +508,9 @@ const YearView: React.FC<{
   currentDate: Date;
   events: any[];
   mode: string;
-  onDateClick: (date: Date) => void;
+  onMonthClick: (month: Date) => void;
   getEventsForDate: (date: Date) => any[];
-}> = ({ currentDate, onDateClick, getEventsForDate }) => {
+}> = ({ currentDate, onMonthClick, getEventsForDate }) => {
   const yearStart = startOfYear(currentDate);
   const yearEnd = endOfYear(currentDate);
   const months = eachMonthOfInterval({ start: yearStart, end: yearEnd });
@@ -457,7 +539,7 @@ const YearView: React.FC<{
                         isCurrentMonth ? 'bg-primary-50 border-primary-200' : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
                     }`}
                     whileHover={{ scale: 1.02 }}
-                    onClick={() => onDateClick(month)}
+                    onClick={() => onMonthClick(month)}
                 >
                   <div className={`text-sm font-medium ${isCurrentMonth ? 'text-primary-600' : 'text-gray-700'}`}>
                     {format(month, 'M월', { locale: ko })}
@@ -484,7 +566,8 @@ const MonthView: React.FC<{
   getEventStyle: (event: any) => string;
   renderEventIcon: (event: any) => React.ReactNode;
   renderEventLabel: (event: any) => React.ReactNode;
-}> = ({ currentDate, onDateClick, onEventClick, getEventsForDate, getEventStyle, renderEventIcon, renderEventLabel }) => {
+  onShowMoreEvents: (date: Date, e: React.MouseEvent) => void;
+}> = ({ currentDate, onDateClick, onEventClick, getEventsForDate, getEventStyle, renderEventIcon, renderEventLabel, onShowMoreEvents }) => {
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   const calendarStart = startOfWeek(monthStart, { weekStartsOn: 0 });
@@ -561,9 +644,13 @@ const MonthView: React.FC<{
                         </motion.div>
                     ))}
                     {dayEvents.length > 3 && (
-                        <div className="text-xs text-gray-500 px-2">
+                        <motion.button
+                          className="text-xs text-blue-600 hover:text-blue-800 px-2 py-1 hover:bg-blue-50 rounded transition-colors font-medium"
+                          whileHover={{ scale: 1.02 }}
+                          onClick={(e) => onShowMoreEvents(day, e)}
+                        >
                           +{dayEvents.length - 3}개
-                        </div>
+                        </motion.button>
                     )}
                   </div>
                 </motion.div>
@@ -735,6 +822,300 @@ const DayView: React.FC<{
           )}
         </div>
       </div>
+  );
+};
+
+// Day Events Modal Component
+const DayEventsModal: React.FC<{
+  date: Date;
+  events: any[];
+  getEventStyle: (event: any) => string;
+  renderEventIcon: (event: any) => React.ReactNode;
+  renderEventLabel: (event: any) => React.ReactNode;
+  onClose: () => void;
+  onEventClick: (event: any) => void;
+  onAddEvent: () => void;
+}> = ({ date, events, getEventStyle, renderEventIcon, renderEventLabel, onClose, onEventClick, onAddEvent }) => {
+  return (
+    <AnimatePresence>
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[80vh] overflow-hidden"
+        >
+          {/* Header */}
+          <div className="bg-primary-600 text-white p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold">
+                  {format(date, 'M월 d일 (E)', { locale: ko })} 일정
+                </h2>
+                <p className="text-primary-100 text-sm mt-1">
+                  총 {events.length}개의 일정
+                </p>
+              </div>
+              <button
+                onClick={onClose}
+                className="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center hover:bg-opacity-30 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+
+          {/* Events List */}
+          <div className="p-6 overflow-y-auto max-h-[60vh]">
+            {events.length > 0 ? (
+              <div className="space-y-3">
+                {events.map((event) => (
+                  <motion.div
+                    key={event.id}
+                    className={`p-4 rounded-lg cursor-pointer hover:shadow-md transition-all border ${getEventStyle(event)}`}
+                    whileHover={{ scale: 1.02 }}
+                    onClick={() => onEventClick(event)}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-2">
+                          {renderEventIcon(event)}
+                          <h4 className="font-semibold text-gray-800">{event.title}</h4>
+                          {event.repeat !== 'none' && (
+                            <Repeat className="w-4 h-4 opacity-60" />
+                          )}
+                        </div>
+                        
+                        <div className="flex items-center justify-between">
+                          {renderEventLabel(event)}
+                          <div className="text-right">
+                            {event.isAllDay ? (
+                              <span className="text-sm text-gray-500">하루 종일</span>
+                            ) : (
+                              <span className="text-sm text-gray-500">
+                                {event.startTime} - {event.endTime}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        
+                        {event.description && (
+                          <p className="text-sm text-gray-600 mt-2">{event.description}</p>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <CalendarIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                <p className="text-gray-500">이 날에는 일정이 없습니다</p>
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="bg-gray-50 p-4 border-t">
+            <div className="flex items-center justify-between">
+              <button
+                onClick={onClose}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+              >
+                닫기
+              </button>
+              <motion.button
+                className="flex items-center space-x-2 px-4 py-2 bg-accent-500 text-white rounded-lg hover:bg-accent-600 transition-colors"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={onAddEvent}
+              >
+                <Plus className="w-4 h-4" />
+                <span>일정 추가</span>
+              </motion.button>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    </AnimatePresence>
+  );
+};
+
+// Month Events Modal Component
+const MonthEventsModal: React.FC<{
+  month: Date;
+  events: any[];
+  getEventsForDate: (date: Date) => any[];
+  getEventStyle: (event: any) => string;
+  renderEventIcon: (event: any) => React.ReactNode;
+  renderEventLabel: (event: any) => React.ReactNode;
+  onClose: () => void;
+  onEventClick: (event: any, date: Date) => void;
+  onAddEvent: (date: Date) => void;
+}> = ({ month, getEventsForDate, getEventStyle, renderEventIcon, renderEventLabel, onClose, onEventClick, onAddEvent }) => {
+  const monthStart = startOfMonth(month);
+  const monthEnd = endOfMonth(month);
+  const monthDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
+
+  // 해당 월의 모든 일정 가져오기
+  const allMonthEvents = monthDays.reduce((acc, day) => {
+    const dayEvents = getEventsForDate(day);
+    dayEvents.forEach(event => {
+      acc.push({ ...event, eventDate: day });
+    });
+    return acc;
+  }, [] as any[]);
+
+  // 날짜별로 그룹화
+  const eventsByDate = monthDays.map(day => ({
+    date: day,
+    events: getEventsForDate(day)
+  })).filter(item => item.events.length > 0);
+
+  return (
+    <AnimatePresence>
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[85vh] overflow-hidden"
+        >
+          {/* Header */}
+          <div className="bg-primary-600 text-white p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold">
+                  {format(month, 'yyyy년 M월', { locale: ko })} 일정
+                </h2>
+                <p className="text-primary-100 text-sm mt-1">
+                  총 {allMonthEvents.length}개의 일정
+                </p>
+              </div>
+              <button
+                onClick={onClose}
+                className="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center hover:bg-opacity-30 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+
+          {/* Events List */}
+          <div className="p-6 overflow-y-auto max-h-[65vh]">
+            {eventsByDate.length > 0 ? (
+              <div className="space-y-6">
+                {eventsByDate.map(({ date, events }) => (
+                  <div key={date.toString()} className="border-b border-gray-200 pb-6 last:border-b-0">
+                    {/* Date Header */}
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-gray-800">
+                        {format(date, 'M월 d일 (E)', { locale: ko })}
+                        {isSameDay(date, new Date()) && (
+                          <span className="ml-2 text-sm bg-primary-100 text-primary-600 px-2 py-1 rounded-full">
+                            오늘
+                          </span>
+                        )}
+                      </h3>
+                      <span className="text-sm text-gray-500">
+                        {events.length}개 일정
+                      </span>
+                    </div>
+
+                    {/* Events for this date */}
+                    <div className="grid gap-3 md:grid-cols-2">
+                      {events.map((event) => (
+                        <motion.div
+                          key={event.id}
+                          className={`p-4 rounded-lg cursor-pointer hover:shadow-md transition-all border ${getEventStyle(event)}`}
+                          whileHover={{ scale: 1.02 }}
+                          onClick={() => onEventClick(event, date)}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-2 mb-2">
+                                {renderEventIcon(event)}
+                                <h4 className="font-semibold text-gray-800 truncate">{event.title}</h4>
+                                {event.repeat !== 'none' && (
+                                  <Repeat className="w-4 h-4 opacity-60 flex-shrink-0" />
+                                )}
+                              </div>
+                              
+                              <div className="flex items-center justify-between mb-2">
+                                {renderEventLabel(event)}
+                                <div className="text-right">
+                                  {event.isAllDay ? (
+                                    <span className="text-sm text-gray-500">하루 종일</span>
+                                  ) : (
+                                    <span className="text-sm text-gray-500">
+                                      {event.startTime} - {event.endTime}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              
+                              {event.description && (
+                                <p className="text-sm text-gray-600 mt-2 overflow-hidden" style={{
+                                  display: '-webkit-box',
+                                  WebkitLineClamp: 2,
+                                  WebkitBoxOrient: 'vertical'
+                                }}>{event.description}</p>
+                              )}
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+
+                    {/* Add event button for this date */}
+                    <motion.button
+                      className="mt-3 flex items-center space-x-2 text-sm text-primary-600 hover:text-primary-800 hover:bg-primary-50 px-3 py-2 rounded-lg transition-colors"
+                      whileHover={{ scale: 1.02 }}
+                      onClick={() => onAddEvent(date)}
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>이 날에 일정 추가</span>
+                    </motion.button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <CalendarIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-600 mb-2">
+                  {format(month, 'M월', { locale: ko })}에는 일정이 없습니다
+                </h3>
+                <p className="text-gray-500 mb-6">새로운 일정을 추가해보세요</p>
+                <motion.button
+                  className="inline-flex items-center space-x-2 px-6 py-3 bg-accent-500 text-white rounded-lg hover:bg-accent-600 transition-colors"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => onAddEvent(monthStart)}
+                >
+                  <Plus className="w-5 h-5" />
+                  <span>일정 추가</span>
+                </motion.button>
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="bg-gray-50 p-4 border-t">
+            <div className="flex items-center justify-between">
+              <button
+                onClick={onClose}
+                className="px-6 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+              >
+                닫기
+              </button>
+              <div className="text-sm text-gray-500">
+                {format(month, 'yyyy년 M월', { locale: ko })} 일정 요약
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    </AnimatePresence>
   );
 };
 
