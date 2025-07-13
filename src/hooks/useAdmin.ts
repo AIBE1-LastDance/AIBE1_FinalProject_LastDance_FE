@@ -232,6 +232,9 @@ export const useAdminAI = () => {
   const [pagination, setPagination] = useState<any>(null);
   const [stats, setStats] = useState<AIJudgmentStats | null>(null);
   const [overallStats, setOverallStats] = useState<any>(null); // 전체 통계용
+  const [expenseAnalyzerStats, setExpenseAnalyzerStats] = useState<ExpenseAnalyzerFeedbackStats | null>(null);
+  const [expenseAnalyzerHistories, setExpenseAnalyzerHistories] = useState<AdminExpenseAnalyzerHistory[]>([]);
+  const [expenseAnalyzerPagination, setExpenseAnalyzerPagination] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -365,5 +368,56 @@ export const useAdminAI = () => {
     fetchJudgments,
     fetchStats,
     fetchOverallStats
+  };
+};
+
+// LLM 지출 분석 관리 훅
+export const useAdminExpenseAnalyzer = () => {
+  const [stats, setStats] = useState<ExpenseAnalyzerFeedbackStats | null>(null);
+  const [histories, setHistories] = useState<AdminExpenseAnalyzerHistory[]>([]);
+  const [pagination, setPagination] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchStats = async (period: 'daily' | 'weekly' | 'monthly' = 'weekly') => {
+    try {
+      const statsData = await AdminAPI.getExpenseAnalyzerFeedbackStats(period);
+      setStats(statsData);
+    } catch (err: any) {
+      console.error('LLM 지출 분석 통계 조회 실패:', err);
+      setStats(null);
+    }
+  };
+
+  const fetchHistories = async (params: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    rating?: string;
+    dateFrom?: string;
+    dateTo?: string;
+  } = {}) => {
+    try {
+      setLoading(true);
+      const response = await AdminAPI.getExpenseAnalyzerHistory(params);
+      setHistories(response.histories || []);
+      setPagination(response.pagination);
+      setError(null);
+    } catch (err: any) {
+      console.error('LLM 지출 분석 내역 조회 실패:', err);
+      setError(err.response?.data?.message || 'LLM 지출 분석 내역을 불러올 수 없습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return {
+    stats,
+    histories,
+    pagination,
+    loading,
+    error,
+    fetchStats,
+    fetchHistories
   };
 };
