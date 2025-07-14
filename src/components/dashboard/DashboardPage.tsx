@@ -122,15 +122,15 @@ const DashboardPage: React.FC = () => {
     }
   }, [location.search, navigate]); // showEventModal 의존성도 제거
 
-    // Expense categories matching ExpensesPage
-    const categoryData = [
-        {category: 'FOOD', label: '식비', color: '#FFB3B3'},
-        {category: 'UTILITIES', label: '공과금', color: '#B3E0E0'},
-        {category: 'TRANSPORT', label: '교통비', color: '#99D6EA'},
-        {category: 'SHOPPING', label: '쇼핑', color: '#C4E2C4'},
-        {category: 'ENTERTAINMENT', label: '유흥', color: '#FFF2B3'},
-        {category: 'OTHER', label: '기타', color: '#E6B3E6'},
-    ];
+  // Expense categories matching ExpensesPage
+  const categoryData = [
+    { category: "FOOD", label: "식비", color: "#FF6B6B" },
+    { category: "UTILITIES", label: "공과금", color: "#4ECDC4" },
+    { category: "TRANSPORT", label: "교통비", color: "#45B7D1" },
+    { category: "SHOPPING", label: "쇼핑", color: "#96CEB4" },
+    { category: "ENTERTAINMENT", label: "유흥", color: "#FFEAA7" },
+    { category: "OTHER", label: "기타", color: "#DDA0DD" },
+  ];
 
   // Filter expenses for current mode
   const filteredExpenses = expenses.filter((expense) => {
@@ -249,46 +249,47 @@ const DashboardPage: React.FC = () => {
     })
     .slice(0, 2); // Show only first 2 tasks
 
-    const getPriorityColor = (priority: string) => {
-        switch (priority?.toLowerCase()) {
-            case 'high':
-                return 'text-priority-high';
-            case 'medium':
-                return 'text-priority-medium';
-            case 'low':
-                return 'text-priority-low';
-            default:
-                return 'text-gray-600';
-        }
-    };
+  const getPriorityColor = (priority: string) => {
+    switch (priority?.toLowerCase()) {
+      case "high":
+        return "text-red-600";
+      case "medium":
+        return "text-yellow-600";
+      case "low":
+        return "text-green-600";
+      default:
+        return "text-gray-600";
+    }
+  };
 
-    const personalFeatures = [
-        {
-            icon: Calendar,
-            title: '내 캘린더',
-            description: '개인 일정 관리',
-            color: 'from-primary-500 to-primary-600',
-            path: '/calendar',
-            count: events.filter(e => !e.groupId).length,
-        },
-        {
-            icon: CheckSquare,
-            title: '할 일 목록',
-            description: '개인 할 일 관리',
-            color: 'from-primary-500 to-primary-600',
-            path: '/tasks',
-            count: checklists.filter(t => !t.isCompleted).length, // API 체크리스트 사용
-        },
-        {
-            icon: CreditCard,
-            title: '가계부',
-            description: '개인 지출 관리',
-            color: 'from-accent-500 to-accent-600',
-            path: '/expenses',
-            count: expenses.filter(e => e.expenseType === 'PERSONAL' || e.expenseType === 'SHARE').length,
-
-        },
-    ];
+  const personalFeatures = [
+    {
+      icon: Calendar,
+      title: "내 캘린더",
+      description: "개인 일정 관리",
+      color: "from-primary-500 to-primary-600",
+      path: "/calendar",
+      count: events.filter((e) => !e.groupId).length,
+    },
+    {
+      icon: CheckSquare,
+      title: "할 일 목록",
+      description: "개인 할 일 관리",
+      color: "from-green-500 to-green-600",
+      path: "/tasks",
+      count: checklists.filter((t) => !t.isCompleted).length, // API 체크리스트 사용
+    },
+    {
+      icon: CreditCard,
+      title: "가계부",
+      description: "개인 지출 관리",
+      color: "from-purple-500 to-purple-600",
+      path: "/expenses",
+      count: expenses.filter(
+        (e) => e.expenseType === "PERSONAL" || e.expenseType === "SHARE"
+      ).length,
+    },
+  ];
 
   const groupFeatures = [];
 
@@ -395,26 +396,26 @@ const DashboardPage: React.FC = () => {
           </div>
         </motion.div>
 
-                <motion.div
-                    initial={{opacity: 0, scale: 0.8}}
-                    animate={{opacity: 1, scale: 1}}
-                    transition={{duration: 0.6, delay: 0.2}}
-                    className="bg-white rounded-2xl p-3 shadow-sm border border-gray-200 cursor-pointer hover:shadow-lg transition-all duration-200"
-                    whileHover={{scale: 1.05}}
-                    whileTap={{scale: 0.95}}
-                    onClick={() => navigate('/expenses')}
-                >
-                    <div className="flex items-center justify-between mb-2">
-                        <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center">
-                            <CreditCard className="w-4 h-4 text-primary-600"/>
-                        </div>
-                        <TrendingUp className="w-3 h-3 text-status-success"/>
-                    </div>
-                    <div className="text-lg font-bold text-gray-900 mb-1">
-                        ₩{monthlyExpenses.toLocaleString()}
-                    </div>
-                    <div className="text-xs text-gray-500">이번 달 지출</div>
-                </motion.div>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="bg-white rounded-2xl p-3 shadow-sm border border-gray-200 cursor-pointer hover:shadow-lg transition-all duration-200"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => navigate("/expenses")}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center">
+              <CreditCard className="w-4 h-4 text-primary-600" />
+            </div>
+            <TrendingUp className="w-3 h-3 text-green-500" />
+          </div>
+          <div className="text-lg font-bold text-gray-900 mb-1">
+            ₩{monthlyExpenses.toLocaleString()}
+          </div>
+          <div className="text-xs text-gray-500">이번 달 지출</div>
+        </motion.div>
 
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
@@ -440,50 +441,55 @@ const DashboardPage: React.FC = () => {
           <div className="text-xs text-gray-500">다가오는 일정</div>
         </motion.div>
 
-                <motion.div
-                    initial={{opacity: 0, scale: 0.8}}
-                    animate={{opacity: 1, scale: 1}}
-                    transition={{duration: 0.6, delay: 0.4}}
-                    className="bg-white rounded-2xl p-3 shadow-sm border border-gray-200 cursor-pointer hover:shadow-lg transition-all duration-200"
-                    whileHover={{scale: 1.05}}
-                    whileTap={{scale: 0.95}}
-                    onClick={() => navigate('/tasks')} // 목표 달성률도 할일 페이지로 연결
-                >
-                    <div className="flex items-center justify-between mb-2">
-                        <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center">
-                            <Target className="w-4 h-4 text-primary-600"/>
-                        </div>
-                        <div className={`text-xs font-medium ${
-                            completionRate >= 80 ? 'text-status-success' :
-                                completionRate >= 60 ? 'text-status-warning' : 'text-status-error'
-                        }`}>
-                            {completionRate >= 80 ? '🎉' : completionRate >= 60 ? '📈' : '📊'}
-                        </div>
-                    </div>
-                    <div className="text-lg font-bold text-gray-900 mb-1">{completionRate}%</div>
-                    <div className="text-xs text-gray-500">목표 달성률</div>
-                </motion.div>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+          className="bg-white rounded-2xl p-3 shadow-sm border border-gray-200 cursor-pointer hover:shadow-lg transition-all duration-200"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => navigate("/tasks")} // 목표 달성률도 할일 페이지로 연결
+        >
+          <div className="flex items-center justify-between mb-2">
+            <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center">
+              <Target className="w-4 h-4 text-primary-600" />
             </div>
+            <div
+              className={`text-xs font-medium ${
+                completionRate >= 80
+                  ? "text-green-500"
+                  : completionRate >= 60
+                  ? "text-yellow-500"
+                  : "text-red-500"
+              }`}
+            ></div>
+          </div>
+          <div className="text-lg font-bold text-gray-900 mb-1">
+            {completionRate}%
+          </div>
+          <div className="text-xs text-gray-500">목표 달성률</div>
+        </motion.div>
+      </div>
 
-            {/* Charts Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Activity Chart */}
-                <motion.div
-                    initial={{opacity: 0, y: 20}}
-                    animate={{opacity: 1, y: 0}}
-                    transition={{duration: 0.6, delay: 0.3}}
-                    className="bg-white rounded-2xl p-4 shadow-sm border border-gray-200 flex flex-col cursor-pointer hover:shadow-lg transition-all duration-200"
-                    whileHover={{scale: 1.02}}
-                    whileTap={{scale: 0.98}}
-                    onClick={() => navigate('/tasks')}
-                >
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-bold text-gray-900">주간 완료 현황</h3>
-                        <Activity className="w-5 h-5 text-primary-600"/>
-                    </div>
-                    <div className="flex-1 min-h-[200px]">
-                        <ResponsiveContainer width="100%" height={200}>
-                            <AreaChart data={activityData}>
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Activity Chart */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="bg-white rounded-2xl p-4 shadow-sm border border-gray-200 flex flex-col cursor-pointer hover:shadow-lg transition-all duration-200"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => navigate("/tasks")}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-bold text-gray-900">주간 완료 현황</h3>
+            <Activity className="w-5 h-5 text-primary-600" />
+          </div>
+          <div className="flex-1 min-h-[200px] flex items-center justify-center">
+            <ResponsiveContainer width="100%" height={200}>
+              <AreaChart data={activityData} margin={{ left: -20, right: 20 }}>
                                 <CartesianGrid strokeDasharray="3 3"/>
                                 <XAxis dataKey="day"/>
                                 <YAxis/>
@@ -495,14 +501,14 @@ const DashboardPage: React.FC = () => {
                                     type="monotone"
                                     dataKey="tasks"
                                     stackId="1"
-                                    stroke="#E69975"
-                                    fill="#E69975"
+                                    stroke="#df6d14"
+                                    fill="#df6d14"
                                     fillOpacity={0.3}
                                 />
                             </AreaChart>
-                        </ResponsiveContainer>
-                    </div>
-                </motion.div>
+            </ResponsiveContainer>
+          </div>
+        </motion.div>
 
         {/* Expense Categories */}
         <motion.div
@@ -741,48 +747,55 @@ const DashboardPage: React.FC = () => {
               </div>
             </div>
 
-                        {/* Events for Selected Date */}
-                        <div>
-                            <h4 className="text-sm font-semibold text-gray-700 mb-3">
-                                {format(selectedDate, 'M월 d일 일정', {locale: ko})}
-                            </h4>
-                            <div className="space-y-2 max-h-48 overflow-y-auto">
-                                {selectedDateEvents.length > 0 ? (
-                                    selectedDateEvents.map((event) => (
-                                        <motion.div
-                                            key={event.id}
-                                            className={`text-xs p-2 rounded cursor-pointer hover:opacity-80 transition-opacity ${
-                                                event.category === 'bill' ? 'bg-status-error text-white' :
-                                                    event.category === 'cleaning' ? 'bg-status-success text-white' :
-                                                        event.category === 'meeting' ? 'bg-accent-500 text-white' :
-                                                            event.category === 'appointment' ? 'bg-primary-500 text-white' :
-                                                                event.category === 'health' ? 'bg-priority-medium text-white' :
-                                                                    event.category === 'shopping' ? 'bg-status-warning text-gray-900' :
-                                                                        event.category === 'travel' ? 'bg-accent-700 text-white' :
-                                                                            'bg-gray-100 text-gray-800'
-                                            }`}
-                                            whileHover={{scale: 1.02}}
-                                            whileTap={{scale: 0.98}}
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                navigate(`/calendar?eventId=${event.id}`);
-                                            }}
-                                        >
-                                            <div className="font-medium">{event.title}</div>
-                                            <div className="text-xs opacity-75">
-                                                {event.startTime} - {event.endTime}
-                                            </div>
-                                        </motion.div>
-                                    ))
-                                ) : (
-                                    <div className="text-xs text-gray-500 text-center py-4">
-                                        일정이 없습니다
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </motion.div>
+            {/* Events for Selected Date */}
+            <div>
+              <h4 className="text-sm font-semibold text-gray-700 mb-3">
+                {format(selectedDate, "M월 d일 일정", { locale: ko })}
+              </h4>
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {selectedDateEvents.length > 0 ? (
+                  selectedDateEvents.map((event) => (
+                    <motion.div
+                      key={event.id}
+                      className={`text-xs p-2 rounded cursor-pointer hover:opacity-80 transition-opacity ${
+                        event.category === "bill"
+                          ? "bg-red-100 text-red-800"
+                          : event.category === "cleaning"
+                          ? "bg-green-100 text-green-800"
+                          : event.category === "meeting"
+                          ? "bg-blue-100 text-blue-800"
+                          : event.category === "appointment"
+                          ? "bg-purple-100 text-purple-800"
+                          : event.category === "health"
+                          ? "bg-pink-100 text-pink-800"
+                          : event.category === "shopping"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : event.category === "travel"
+                          ? "bg-indigo-100 text-indigo-800"
+                          : "bg-gray-100 text-gray-800"
+                      }`}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/calendar?eventId=${event.id}`);
+                      }}
+                    >
+                      <div className="font-medium">{event.title}</div>
+                      <div className="text-xs opacity-75">
+                        {event.startTime} - {event.endTime}
+                      </div>
+                    </motion.div>
+                  ))
+                ) : (
+                  <div className="text-xs text-gray-500 text-center py-4">
+                    일정이 없습니다
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </motion.div>
 
         {/* Tasks Section */}
         <motion.div
@@ -910,39 +923,42 @@ const DashboardPage: React.FC = () => {
         </motion.div>
       </div>
 
-            {/* Features Grid - 개인모드에서는 숨김 */}
-            {mode === 'group' && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {features.map((feature, index) => (
-                        <motion.div
-                            key={feature.title}
-                            initial={{opacity: 0, y: 20}}
-                            animate={{opacity: 1, y: 0}}
-                            transition={{duration: 0.6, delay: index * 0.1}}
-                            className="bg-white rounded-2xl p-8 shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-300 cursor-pointer group"
-                            whileHover={{scale: 1.02, y: -4}}
-                            whileTap={{scale: 0.98}}
-                            onClick={() => navigate(feature.path)}
-                        >
-                            <div className="flex items-center justify-between mb-6">
-                                <div
-                                    className={`w-14 h-14 bg-gradient-to-r ${feature.color} rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
-                                    <feature.icon className="w-7 h-7 text-white"/>
-                                </div>
-                                {feature.count > 0 && (
-                                    <div className="px-3 py-1 bg-status-error text-white rounded-full text-sm font-medium">
-                                        {feature.count}
-                                    </div>
-                                )}
-                            </div>
-                            <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-primary-600 transition-colors">
-                                {feature.title}
-                            </h3>
-                            <p className="text-gray-600 leading-relaxed">{feature.description}</p>
-                        </motion.div>
-                    ))}
+      {/* Features Grid - 개인모드에서는 숨김 */}
+      {mode === "group" && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {features.map((feature, index) => (
+            <motion.div
+              key={feature.title}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: index * 0.1 }}
+              className="bg-white rounded-2xl p-8 shadow-sm border border-gray-200 hover:shadow-lg transition-all duration-300 cursor-pointer group"
+              whileHover={{ scale: 1.02, y: -4 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => navigate(feature.path)}
+            >
+              <div className="flex items-center justify-between mb-6">
+                <div
+                  className={`w-14 h-14 bg-gradient-to-r ${feature.color} rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}
+                >
+                  <feature.icon className="w-7 h-7 text-white" />
                 </div>
-            )}
+                {feature.count > 0 && (
+                  <div className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-medium">
+                    {feature.count}
+                  </div>
+                )}
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-primary-600 transition-colors">
+                {feature.title}
+              </h3>
+              <p className="text-gray-600 leading-relaxed">
+                {feature.description}
+              </p>
+            </motion.div>
+          ))}
+        </div>
+      )}
 
       {/* Group Management CTA */}
       {mode === "group" && !currentGroup && (
