@@ -136,16 +136,16 @@ const CalendarPage: React.FC = () => {
   // 일정 타입별 스타일 가져오기
   const getEventStyle = (event: any) => {
     const baseStyles = {
-      bill: 'bg-red-100 text-red-700 border-red-200',
-      cleaning: 'bg-green-100 text-green-700 border-green-200', 
-      meeting: 'bg-blue-100 text-blue-700 border-blue-200',
-      appointment: 'bg-purple-100 text-purple-700 border-purple-200',
-      health: 'bg-teal-100 text-teal-700 border-teal-200',
-      shopping: 'bg-orange-100 text-orange-700 border-orange-200',
-      travel: 'bg-indigo-100 text-indigo-700 border-indigo-200',
+      bill: 'bg-red-50 text-red-700 border-red-200',
+      cleaning: 'bg-green-50 text-green-700 border-green-200', 
+      meeting: 'bg-blue-50 text-blue-700 border-blue-200',
+      appointment: 'bg-purple-50 text-purple-700 border-purple-200',
+      health: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+      shopping: 'bg-orange-50 text-orange-700 border-orange-200',
+      travel: 'bg-yellow-50 text-yellow-700 border-yellow-200',
     };
     
-    const categoryStyle = baseStyles[event.category as keyof typeof baseStyles] || 'bg-gray-100 text-gray-700 border-gray-200';
+    const categoryStyle = baseStyles[event.category as keyof typeof baseStyles] || 'bg-gray-50 text-gray-700 border-gray-200';
     
     // 그룹 일정인 경우 보더 추가
     if (event.groupId) {

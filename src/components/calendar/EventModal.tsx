@@ -172,14 +172,14 @@ const EventModal: React.FC<EventModalProps> = ({
   };
 
   const categories = [
-    { value: 'general', label: '일반', color: 'bg-gray-100 text-gray-700' },
-    { value: 'bill', label: '청구서/결제', color: 'bg-red-100 text-red-700' },
-    { value: 'cleaning', label: '청소', color: 'bg-green-100 text-green-700' },
-    { value: 'meeting', label: '회의', color: 'bg-blue-100 text-blue-700' },
-    { value: 'appointment', label: '약속', color: 'bg-purple-100 text-purple-700' },
-    { value: 'health', label: '건강', color: 'bg-teal-100 text-teal-700' },
-    { value: 'shopping', label: '쇼핑', color: 'bg-orange-100 text-orange-700' },
-    { value: 'travel', label: '여행', color: 'bg-indigo-100 text-indigo-700' },
+    { value: 'general', label: '일반', color: '#D1D5DB' },      // 더 밝은 회색 파스텔
+    { value: 'bill', label: '청구서/결제', color: '#FECACA' },    // 더 밝은 빨간색 파스텔
+    { value: 'cleaning', label: '청소', color: '#BBF7D0' },      // 더 밝은 연두색 파스텔
+    { value: 'meeting', label: '회의', color: '#BFDBFE' },       // 더 밝은 하늘색 파스텔
+    { value: 'appointment', label: '약속', color: '#E9D5FF' },   // 더 밝은 연보라색 파스텔
+    { value: 'health', label: '건강', color: '#C7D2FE' },        // 더 밝은 남색 파스텔 (완전히 다른 색상)
+    { value: 'shopping', label: '쇼핑', color: '#FED7D7' },      // 더 밝은 복숭아색 파스텔
+    { value: 'travel', label: '여행', color: '#FEF3C7' },        // 더 밝은 노란색 파스텔
   ];
 
   const repeatOptions = [
@@ -369,18 +369,34 @@ const EventModal: React.FC<EventModalProps> = ({
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   카테고리
                 </label>
-                <select
-                    value={formData.category}
-                    onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value as Event['category'] }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    disabled={isSubmitting}
-                >
+                <div className="grid grid-cols-2 gap-2">
                   {categories.map((category) => (
-                      <option key={category.value} value={category.value}>
-                        {category.label}
-                      </option>
+                    <motion.button
+                      key={category.value}
+                      type="button"
+                      className={`p-3 rounded-lg border-2 transition-colors ${
+                        formData.category === category.value
+                          ? 'border-accent-500 bg-accent-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => setFormData(prev => ({ ...prev, category: category.value as Event['category'] }))}
+                      disabled={isSubmitting}
+                    >
+                      <div
+                        className="w-8 h-8 rounded-lg mx-auto mb-2 flex items-center justify-center"
+                        style={{ backgroundColor: category.color + '33' }}
+                      >
+                        <div
+                          className="w-3 h-3 rounded-full"
+                          style={{ backgroundColor: category.color }}
+                        />
+                      </div>
+                      <span className="text-sm font-medium">{category.label}</span>
+                    </motion.button>
                   ))}
-                </select>
+                </div>
               </div>
 
               {/* Repeat */}
