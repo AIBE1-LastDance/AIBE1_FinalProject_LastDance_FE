@@ -21,7 +21,7 @@ import type {
 import HistorySidebar from "./HistorySidebar";
 import ResultDisplay from "./ResultDisplay";
 import ConflictInputModal from "./ConflictInputModal.tsx";
-import TipsModal from "./TipsModal.tsx";
+import TipsModal from "./TipsModal.tsx"; // TipsModal도 여전히 사용됩니다.
 
 type PageState = "INITIAL" | "LOADING" | "RESULT";
 
@@ -30,7 +30,8 @@ const personLabels = ["A", "B", "C", "D"];
 const AIAssistantPage: React.FC = () => {
   const [pageState, setPageState] = useState<PageState>("INITIAL");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isTipsModalOpen, setIsTipsModalOpen] = useState(false);
+  // TipsModal 상태는 ConflictInputModal 내부에서 관리되므로, AIAssistantPage에서는 더 이상 필요 없습니다.
+  // const [isTipsModalOpen, setIsTipsModalOpen] = useState(false);
   const [situations, setSituations] = useState<{ [key: string]: string }>({
     A: "",
     B: "",
@@ -39,14 +40,19 @@ const AIAssistantPage: React.FC = () => {
     useState<AiJudgmentResponse | null>(null);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
-  const openModal = () => setIsModalOpen(true);
+  const openModal = () => {
+    setIsModalOpen(true);
+    // ConflictInputModal이 열릴 때 TipsModal도 자동으로 열리게 하려면 여기서 호출
+    // openTipsModal(); // 이 함수는 이제 ConflictInputModal 내부에서 제어됩니다.
+  };
   const closeModal = () => {
     setIsModalOpen(false);
     setSituations({ A: "", B: "" });
   };
 
-  const openTipsModal = () => setIsTipsModalOpen(true);
-  const closeTipsModal = () => setIsTipsModalOpen(false);
+  // TipsModal의 열림/닫힘 함수는 이제 ConflictInputModal 내부에서 처리되므로 제거합니다.
+  // const openTipsModal = () => setIsTipsModalOpen(true);
+  // const closeTipsModal = () => setIsTipsModalOpen(false);
 
   const handleSituationChange = (person: string, value: string) => {
     setSituations((prev) => ({ ...prev, [person]: value }));
@@ -135,113 +141,12 @@ const AIAssistantPage: React.FC = () => {
     <>
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
         <div className="max-w-6xl w-full mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-12"
-          >
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl mb-6 shadow-lg">
-              <Bot className="w-8 h-8 text-white" />
-            </div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent mb-4">
-              AI 판단 도우미
-            </h1>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              룸메이트 갈등을 공정하고 객관적으로 해결하는 똑똑한 AI 조언자
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="bg-white rounded-3xl shadow-xl border border-gray-200 overflow-hidden"
-          >
-            <div className="p-8 lg:p-12">
-              <AnimatePresence mode="wait">
-                {pageState === "INITIAL" && (
-                  <motion.div
-                    key="initial"
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 1.05 }}
-                    transition={{ duration: 0.5 }}
-                    className="text-center"
-                  >
-                    <div className="mb-8">
-                      <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl mb-6 shadow-lg">
-                        <MessageCircle className="w-8 h-8 text-white" />
-                      </div>
-                      <h2 className="text-3xl font-bold text-gray-800 mb-4">
-                        룸메이트 갈등을 해결해보세요
-                      </h2>
-                      <p className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
-                        복잡한 갈등 상황에서 각자의 입장을 명확히 입력하면, AI가
-                        공정하고 객관적인 판단을 내려드립니다.
-                      </p>
-                    </div>
-                    <motion.button
-                      className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-2xl text-lg font-semibold hover:from-primary-600 hover:to-primary-700 transition-all duration-200 shadow-lg hover:shadow-xl"
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={openModal}
-                    >
-                      <PlusCircle className="w-5 h-5 mr-2" />
-                      갈등 상황 입력하기
-                    </motion.button>
-                  </motion.div>
-                )}
-
-                {pageState === "LOADING" && (
-                  <motion.div
-                    key="loading"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.5 }}
-                    className="text-center py-16"
-                  >
-                    <div className="relative mb-8 flex justify-center items-center">
-                      <div className="w-16 h-16 border-2 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
-                      <motion.div
-                        className="absolute"
-                        animate={{ rotate: 360 }}
-                        transition={{
-                          duration: 2,
-                          repeat: Number.POSITIVE_INFINITY,
-                          ease: "linear",
-                        }}
-                      >
-                        <Sparkles className="w-8 h-8 text-primary-500" />
-                      </motion.div>
-                    </div>
-                    <h3 className="text-2xl font-bold text-gray-800 mb-3">
-                      AI가 상황을 분석하고 있습니다
-                    </h3>
-                    <p className="text-gray-600">
-                      공정한 판단을 위해 모든 입장을 신중히 검토 중입니다...
-                    </p>
-                  </motion.div>
-                )}
-
-                {pageState === "RESULT" && (
-                  <ResultDisplay
-                    aiJudgmentResult={aiJudgmentResult}
-                    onReset={resetPage}
-                    onFeedbackSent={handleFeedbackSent}
-                  />
-                )}
-              </AnimatePresence>
-            </div>
-          </motion.div>
-
           {pageState !== "RESULT" && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
-              className="mt-12 bg-white rounded-2xl p-8 border border-gray-200"
+              className="mb-12 bg-white rounded-2xl p-8 border border-gray-200"
             >
               <div className="text-center mb-8">
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl mb-4 shadow-lg">
@@ -312,21 +217,104 @@ const AIAssistantPage: React.FC = () => {
               </div>
             </motion.div>
           )}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="bg-white rounded-3xl shadow-xl border border-gray-200 overflow-hidden"
+          >
+            <div className="p-8 lg:p-12">
+              <AnimatePresence mode="wait">
+                {pageState === "INITIAL" && (
+                  <motion.div
+                    key="initial"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 1.05 }}
+                    transition={{ duration: 0.5 }}
+                    className="text-center"
+                  >
+                    <div className="mb-8">
+                      <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl mb-6 shadow-lg">
+                        <MessageCircle className="w-8 h-8 text-white" />
+                      </div>
+                      <h2 className="text-3xl font-bold text-gray-800 mb-4">
+                        룸메이트 갈등을 해결해보세요
+                      </h2>
+                      <p className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
+                        복잡한 갈등 상황에서 각자의 입장을 명확히 입력하면, AI가
+                        공정하고 객관적인 판단을 내려드립니다.
+                      </p>
+                    </div>
+                    <motion.button
+                      className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-2xl text-lg font-semibold hover:from-primary-600 hover:to-primary-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={openModal} // 이 버튼 클릭 시 ConflictInputModal이 열립니다.
+                    >
+                      <PlusCircle className="w-5 h-5 mr-2" />
+                      갈등 상황 입력하기
+                    </motion.button>
+                  </motion.div>
+                )}
+
+                {pageState === "LOADING" && (
+                  <motion.div
+                    key="loading"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className="text-center py-16"
+                  >
+                    <div className="relative mb-8 flex justify-center items-center">
+                      <div className="w-16 h-16 border-2 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+                      <motion.div
+                        className="absolute"
+                        animate={{ rotate: 360 }}
+                        transition={{
+                          duration: 2,
+                          repeat: Number.POSITIVE_INFINITY,
+                          ease: "linear",
+                        }}
+                      >
+                        <Sparkles className="w-8 h-8 text-primary-500" />
+                      </motion.div>
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-800 mb-3">
+                      AI가 상황을 분석하고 있습니다
+                    </h3>
+                    <p className="text-gray-600">
+                      공정한 판단을 위해 모든 입장을 신중히 검토 중입니다...
+                    </p>
+                  </motion.div>
+                )}
+
+                {pageState === "RESULT" && (
+                  <ResultDisplay
+                    aiJudgmentResult={aiJudgmentResult}
+                    onReset={resetPage}
+                    onFeedbackSent={handleFeedbackSent}
+                  />
+                )}
+              </AnimatePresence>
+            </div>
+          </motion.div>
         </div>
       </div>
 
       <motion.button
-        className="fixed bottom-6 left-6 w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center z-40"
+        className="fixed bottom-6 left-6 w-14 h-14 bg-primary-500 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center z-40"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
         onClick={toggleHistory}
         initial={{ opacity: 0, x: -100 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 1, duration: 0.5 }}
-        style={{ 
-          position: 'fixed',
-          bottom: '1.5rem',
-          left: '1.5rem',
+        style={{
+          position: "fixed",
+          bottom: "1.5rem",
+          left: "1.5rem",
         }}
       >
         <History className="w-6 h-6" />
@@ -345,10 +333,13 @@ const AIAssistantPage: React.FC = () => {
         onAddPerson={addPerson}
         onRemovePerson={removePerson}
         onSubmit={handleSendSituations}
-        onOpenTips={openTipsModal}
+        // onOpenTips prop은 ConflictInputModal에서 더 이상 받지 않습니다.
+        // ConflictsInputModal 내부에서 TipsModal의 상태를 관리합니다.
+        // onOpenTips={openTipsModal} // 이 줄을 제거하거나 주석 처리합니다.
       />
 
-      <TipsModal isOpen={isTipsModalOpen} onClose={closeTipsModal} />
+      {/* TipsModal은 ConflictInputModal 내부에서 렌더링되므로, 여기서 직접 렌더링할 필요가 없습니다. */}
+      {/* <TipsModal isOpen={isTipsModalOpen} onClose={closeTipsModal} /> */}
 
       <Toaster position="top-center" reverseOrder={false} />
     </>

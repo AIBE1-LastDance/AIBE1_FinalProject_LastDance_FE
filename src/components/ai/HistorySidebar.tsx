@@ -221,7 +221,7 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
                     className="mb-4 bg-white rounded-2xl p-4 shadow-sm border border-orange-200"
                   >
                     <div className="flex items-center space-x-3 mb-4">
-                      <div className="w-8 h-8 bg-gradient-to-br from-orange-300 to-orange-400 rounded-xl flex items-center justify-center">
+                      <div className="w-8 h-8 bg-orange-300 rounded-xl flex items-center justify-center">
                         <Star className="w-4 h-4 text-white" />
                       </div>
                       <div>
@@ -278,7 +278,7 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
                 <div className="p-4">
                   {historyData.length === 0 ? (
                     <div className="text-center py-12">
-                      <div className="w-16 h-16 bg-gradient-to-br from-orange-300 to-orange-400 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                      <div className="w-16 h-16 bg-orange-300 rounded-2xl flex items-center justify-center mx-auto mb-4">
                         <History className="w-8 h-8 text-white" />
                       </div>
                       <h3 className="text-xl font-bold text-gray-800 mb-2">
@@ -303,7 +303,7 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
                         >
                           <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center space-x-3">
-                              <div className="w-8 h-8 bg-gradient-to-br from-orange-300 to-orange-400 rounded-xl flex items-center justify-center">
+                              <div className="w-8 h-8 bg-orange-300 rounded-xl flex items-center justify-center">
                                 <ShieldCheck className="w-4 h-4 text-white" />
                               </div>
                               <span className="font-bold text-gray-800">

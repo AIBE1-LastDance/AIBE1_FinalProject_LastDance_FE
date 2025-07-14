@@ -1,7 +1,8 @@
 "use client";
-import type React from "react";
+import React, { useEffect, useState } from "react"; // useState 추가
 import { motion, AnimatePresence } from "framer-motion";
 import { PlusCircle, XCircle, MessageCircle, Info } from "lucide-react";
+import TipsModal from "./TipsModal"; // TipsModal 컴포넌트 import (경로 확인 필수)
 
 interface ConflictInputModalProps {
   isOpen: boolean;
@@ -11,7 +12,7 @@ interface ConflictInputModalProps {
   onAddPerson: () => void;
   onRemovePerson: (person: string) => void;
   onSubmit: () => void;
-  onOpenTips: () => void;
+  // onOpenTips prop은 더 이상 필요 없습니다. TipsModal 상태를 이 컴포넌트 내부에서 관리합니다.
 }
 
 const personLabelColor = "border-2 border-orange-300 text-orange-700 bg-white";
@@ -25,9 +26,28 @@ const ConflictInputModal: React.FC<ConflictInputModalProps> = ({
   onAddPerson,
   onRemovePerson,
   onSubmit,
-  onOpenTips,
+  // onOpenTips, // prop에서 제거
 }) => {
   const nextPersonLabel = personLabels[Object.keys(situations).length];
+  // TipsModal의 열림/닫힘 상태를 ConflictInputModal 내부에서 관리
+  const [isTipsModalOpen, setIsTipsModalOpen] = useState(false);
+
+  // ConflictInputModal이 열릴 때 TipsModal을 자동으로 열도록 설정
+  useEffect(() => {
+    if (isOpen) {
+      setIsTipsModalOpen(true);
+    }
+  }, [isOpen]);
+
+  // "작성 팁" 모달을 여는 함수
+  const handleOpenTips = () => {
+    setIsTipsModalOpen(true);
+  };
+
+  // "작성 팁" 모달을 닫는 함수
+  const handleCloseTips = () => {
+    setIsTipsModalOpen(false);
+  };
 
   return (
     <AnimatePresence>
@@ -74,7 +94,7 @@ const ConflictInputModal: React.FC<ConflictInputModalProps> = ({
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={onOpenTips}
+                  onClick={handleOpenTips} // handleOpenTips 함수 호출
                   className="p-2 text-gray-500 hover:text-orange-600 transition-colors flex items-center space-x-1"
                 >
                   <Info className="w-5 h-5" />
@@ -159,7 +179,7 @@ const ConflictInputModal: React.FC<ConflictInputModalProps> = ({
                       Object.values(situations).some((s) => s.trim() === "") ||
                       Object.keys(situations).length < 2
                     }
-                    className="px-8 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-lg font-semibold hover:from-primary-600 hover:to-primary-700 transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-8 py-3 bg-primary-500 text-white rounded-lg font-semibold hover:bg-primary-600 transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     AI 판단 요청
                   </motion.button>
@@ -169,6 +189,8 @@ const ConflictInputModal: React.FC<ConflictInputModalProps> = ({
           </motion.div>
         </motion.div>
       )}
+      {/* TipsModal을 ConflictInputModal 내부에서 제어 */}
+      <TipsModal isOpen={isTipsModalOpen} onClose={handleCloseTips} />
     </AnimatePresence>
   );
 };

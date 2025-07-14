@@ -264,7 +264,7 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
         </motion.button>
 
         <motion.button
-          className="flex items-center px-8 py-4 rounded-2xl bg-gradient-to-r from-primary-500 to-primary-600 text-white font-semibold hover:from-orange-600 hover:to-orange-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+          className="flex items-center px-8 py-4 rounded-2xl bg-primary-500 text-white font-semibold hover:bg-orange-600 transition-all duration-200 shadow-lg hover:shadow-xl"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={onReset}
