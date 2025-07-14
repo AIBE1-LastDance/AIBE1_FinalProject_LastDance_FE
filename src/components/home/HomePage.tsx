@@ -280,9 +280,9 @@ const HomePage: React.FC = () => {
               ].map((item) => (
                 <motion.button
                   key={item.label}
-                  className="flex items-center space-x-2 px-4 py-2 rounded-xl transition-all duration-200 text-gray-600 hover:text-[#df6d14] hover:bg-gray-50"
-                  whileHover={{scale: 1.05}}
-                  whileTap={{scale: 0.95}}
+                  className="flex items-center space-x-2 px-4 py-2 rounded-xl transition-all duration-200 text-gray-600 hover:text-primary-600 hover:bg-gray-50"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => scrollToSection(item.section)}
                 >
                   <item.icon className="w-5 h-5"/>
@@ -305,8 +305,7 @@ const HomePage: React.FC = () => {
                     >
                       <Bell className="w-6 h-6 text-gray-600"/>
                       {unreadCount > 0 && (
-                        <span
-                          className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
+                        <span className="absolute -top-1 -right-1 w-5 h-5 bg-status-error text-white text-xs rounded-full flex items-center justify-center font-medium">
                           {unreadCount > 9 ? '9+' : unreadCount}
                         </span>
                       )}
@@ -327,8 +326,7 @@ const HomePage: React.FC = () => {
                             <div className="flex items-center space-x-2">
                               <h3 className="font-semibold font-body text-gray-900">알림</h3>
                               {unreadCount > 0 && (
-                                <span
-                                  className="px-2 py-1 bg-red-100 text-red-600 text-xs rounded-full font-medium font-body">
+                                <span className="px-2 py-1 bg-status-error text-white text-xs rounded-full font-medium font-body">
                                   {unreadCount}개 안읽음
                                 </span>
                               )}
@@ -336,7 +334,7 @@ const HomePage: React.FC = () => {
                             {unreadCount > 0 && (
                               <button
                                 onClick={markAllAsRead}
-                                className="text-xs text-blue-600 hover:text-blue-700 font-medium font-body"
+                                className="text-xs text-accent-600 hover:text-accent-700 font-medium font-body"
                               >
                                 모두 읽음
                               </button>
@@ -355,9 +353,9 @@ const HomePage: React.FC = () => {
                                 <motion.div
                                   key={notification.id}
                                   className={`px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer border-l-4 ${
-                                    notification.read
-                                      ? 'border-transparent bg-white'
-                                      : 'border-blue-500 bg-blue-50'
+                                    notification.read 
+                                      ? 'border-transparent bg-white' 
+                                      : 'border-accent-500 bg-accent-50'
                                   }`}
                                   whileHover={{x: 2}}
                                   onClick={() => {
@@ -378,7 +376,7 @@ const HomePage: React.FC = () => {
                                           {notification.title}
                                         </p>
                                         {!notification.read && (
-                                          <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 ml-2"/>
+                                          <div className="w-2 h-2 bg-accent-500 rounded-full flex-shrink-0 ml-2" />
                                         )}
                                       </div>
                                       <p className={`text-sm mt-1 font-body ${
@@ -438,39 +436,39 @@ const HomePage: React.FC = () => {
                             </div>
                           </div>
 
-                          <motion.button
-                            className="w-full flex items-center space-x-3 px-4 py-2 text-left text-gray-700 hover:bg-gray-50 transition-colors"
-                            whileHover={{x: 4}}
-                            onClick={() => {
-                              navigate('/dashboard');
-                              setShowUserMenu(false);
-                            }}
-                          >
-                            <BarChart3 className="w-4 h-4"/>
-                            <span className="font-body">대시보드로 이동</span>
-                          </motion.button>
-                          <motion.button
-                            className="w-full flex items-center space-x-3 px-4 py-2 text-left text-gray-700 hover:bg-gray-50 transition-colors"
-                            whileHover={{x: 4}}
-                            onClick={() => {
-                              navigate('/settings');
-                              setShowUserMenu(false);
-                            }}
-                          >
-                            <Settings className="w-4 h-4"/>
-                            <span className="font-body">설정</span>
-                          </motion.button>
-                          <motion.button
-                            className="w-full flex items-center space-x-3 px-4 py-2 text-left text-red-600 hover:bg-red-50 transition-colors"
-                            whileHover={{x: 4}}
-                            onClick={handleLogout}
-                          >
-                            <LogOut className="w-4 h-4"/>
-                            <span className="font-body">로그아웃</span>
-                          </motion.button>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
+                        <motion.button
+                          className="w-full flex items-center space-x-3 px-4 py-2 text-left text-gray-700 hover:bg-gray-50 transition-colors"
+                          whileHover={{ x: 4 }}
+                          onClick={() => {
+                            navigate('/dashboard');
+                            setShowUserMenu(false);
+                          }}
+                        >
+                          <BarChart3 className="w-4 h-4" />
+                          <span className="font-body">대시보드로 이동</span>
+                        </motion.button>
+                        <motion.button
+                          className="w-full flex items-center space-x-3 px-4 py-2 text-left text-gray-700 hover:bg-gray-50 transition-colors"
+                          whileHover={{ x: 4 }}
+                          onClick={() => {
+                            navigate('/settings');
+                            setShowUserMenu(false);
+                          }}
+                        >
+                          <Settings className="w-4 h-4" />
+                          <span className="font-body">설정</span>
+                        </motion.button>
+                        <motion.button
+                          className="w-full flex items-center space-x-3 px-4 py-2 text-left text-status-error hover:bg-red-50 transition-colors"
+                          whileHover={{ x: 4 }}
+                          onClick={handleLogout}
+                        >
+                          <LogOut className="w-4 h-4" />
+                          <span className="font-body">로그아웃</span>
+                        </motion.button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                   </div>
                 </>
               ) : (
