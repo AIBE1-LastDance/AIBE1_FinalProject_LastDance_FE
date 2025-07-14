@@ -737,7 +737,7 @@ const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({isOpen, onClose,
                                 <div className="flex items-center space-x-2">
                                     <span className="font-medium text-gray-900">{request.nickname}</span>
                                     <span
-                                        className="px-2 py-1 bg-orange-100 text-orange-800 rounded-full text-xs">대기중</span>
+                                        className="px-2 py-1 bg-primary-100 text-primary-800 rounded-full text-xs">대기중</span>
                                 </div>
                                 <p className="text-sm text-gray-500">{request.email}</p>
                                 <p className="text-xs text-gray-400">

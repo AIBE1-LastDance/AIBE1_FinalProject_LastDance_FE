@@ -273,9 +273,14 @@ const GamesPage: React.FC = () => {
                             <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                                 <div className="flex items-center space-x-3">
                                     <div>
-                                        <div className="text-sm font-medium text-gray-800">
+                                        <div className="w-16 min-w-[4rem] max-w-[4rem] text-sm font-medium text-gray-800 text-center">
                                             {getGameTypeName(result.gameType)}
                                         </div>
+                                    </div>
+
+                                    <div className="w-px bg-gray-300 h-12" />
+
+                                    <div>
                                         <div className="text-xs text-gray-600">
                                             참여자: {result.participants.join(', ')}
                                         </div>

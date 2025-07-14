@@ -51,23 +51,23 @@ const PostCard: React.FC<PostCardProps> = ({
     > = {
       LIFE_TIPS: {
         icon: GraduationCap,
-        borderColor: "border-orange-600",
-        textColor: "text-orange-700",
+        borderColor: "border-primary-600",
+        textColor: "text-primary-700",
       },
       FREE_BOARD: {
         icon: MessageSquare,
-        borderColor: "border-orange-700",
-        textColor: "text-orange-800",
+        borderColor: "border-primary-700",
+        textColor: "text-primary-800",
       },
       FIND_MATE: {
         icon: Megaphone,
-        borderColor: "border-orange-500",
-        textColor: "text-orange-600",
+        borderColor: "border-primary-500",
+        textColor: "text-primary-600",
       },
       QNA: {
         icon: Handshake,
-        borderColor: "border-orange-800",
-        textColor: "text-orange-900",
+        borderColor: "border-primary-800",
+        textColor: "text-primary-900",
       },
     };
     return (
@@ -201,7 +201,7 @@ const PostCard: React.FC<PostCardProps> = ({
               className="w-10 h-10 rounded-full object-cover border border-gray-200"
             />
           ) : (
-            <div className="w-10 h-10 bg-gradient-to-r from-orange-400 to-amber-500 rounded-full flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-r from-primary-400 to-amber-500 rounded-full flex items-center justify-center">
               <span className="text-white font-medium text-sm">
                 {displayAuthorNickname.charAt(0)}
               </span>
@@ -255,8 +255,8 @@ const PostCard: React.FC<PostCardProps> = ({
             onClick={handleLike}
             className={`flex items-center space-x-2 ${
               isLiked
-                ? "text-orange-500"
-                : "text-gray-500 hover:text-orange-500"
+                ? "text-primary-500"
+                : "text-gray-500 hover:text-primary-500"
             } transition-colors`}
           >
             <Heart className={`w-5 h-5 ${isLiked ? "fill-current" : ""}`} />

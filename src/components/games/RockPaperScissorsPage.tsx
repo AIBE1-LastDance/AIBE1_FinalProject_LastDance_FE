@@ -420,7 +420,7 @@ const RockPaperScissorsPage: React.FC = () => {
               exit={{ opacity: 0, scale: 0.8 }}
               className="text-center"
             >
-              <div className="bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl p-12 text-white">
+              <div className="bg-gradient-to-br from-yellow-400 to-primary-500 rounded-2xl p-12 text-white">
                 <motion.div
                   initial={{ rotate: 0 }}
                   animate={{ rotate: 360 }}
@@ -437,7 +437,7 @@ const RockPaperScissorsPage: React.FC = () => {
                 </div>
                 <button
                   onClick={resetGame}
-                  className="px-8 py-3 bg-white text-orange-500 rounded-xl font-bold text-lg hover:bg-gray-100 transition-colors"
+                  className="px-8 py-3 bg-white text-primary-500 rounded-xl font-bold text-lg hover:bg-gray-100 transition-colors"
                 >
                   다시 플레이
                 </button>

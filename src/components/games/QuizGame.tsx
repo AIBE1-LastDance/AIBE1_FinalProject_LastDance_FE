@@ -189,7 +189,7 @@ const QuizGame: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-900 via-red-900 to-pink-900 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-primary-900 via-red-900 to-pink-900 p-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <motion.div
@@ -199,7 +199,7 @@ const QuizGame: React.FC = () => {
         >
           <button
             onClick={() => navigate('/games')}
-            className="flex items-center space-x-2 text-white hover:text-orange-300 transition-colors"
+            className="flex items-center space-x-2 text-white hover:text-primary-300 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
             <span>게임 목록</span>
@@ -208,7 +208,7 @@ const QuizGame: React.FC = () => {
           <div className="text-center">
             <h1 className="text-3xl font-bold text-white mb-2">하우스메이트 퀴즈</h1>
             {gameState !== 'setup' && (
-              <div className="text-orange-300">
+              <div className="text-primary-300">
                 문제 {currentQuestionIndex + 1}/{questions.length}
               </div>
             )}
@@ -238,7 +238,7 @@ const QuizGame: React.FC = () => {
                   <div 
                     key={player.id}
                     className={`p-4 rounded-xl text-center ${
-                      index === 0 ? 'bg-gradient-to-br from-yellow-400 to-orange-500' : 'bg-white bg-opacity-20'
+                      index === 0 ? 'bg-gradient-to-br from-yellow-400 to-primary-500' : 'bg-white bg-opacity-20'
                     }`}
                   >
                     <div className="text-2xl mb-2">{player.avatar}</div>
@@ -262,13 +262,13 @@ const QuizGame: React.FC = () => {
           >
             <div className="text-6xl mb-6">🧠</div>
             <h2 className="text-2xl font-bold text-white mb-4">집안일 퀴즈에 도전하세요!</h2>
-            <p className="text-orange-300 mb-8">
+            <p className="text-primary-300 mb-8">
               총 {questions.length}문제의 집안일 관련 퀴즈를 풀어보세요.<br/>
               빠르게 정답을 맞힐수록 높은 점수를 얻습니다!
             </p>
             <button
               onClick={startGame}
-              className="px-8 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-bold text-lg hover:from-orange-600 hover:to-red-600 transition-all"
+              className="px-8 py-3 bg-gradient-to-r from-primary-500 to-red-500 text-white rounded-xl font-bold text-lg hover:from-primary-600 hover:to-red-600 transition-all"
             >
               <HelpCircle className="w-5 h-5 inline mr-2" />
               퀴즈 시작!
@@ -361,7 +361,7 @@ const QuizGame: React.FC = () => {
                   {currentQuestion.options[currentQuestion.correctAnswer]}
                 </span>
               </div>
-              <div className="text-orange-300">
+              <div className="text-primary-300">
                 {currentQuestion.explanation}
               </div>
             </div>
@@ -407,7 +407,7 @@ const QuizGame: React.FC = () => {
               exit={{ opacity: 0, scale: 0.8 }}
               className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80"
             >
-              <div className="bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl p-12 text-center text-white max-w-md mx-4">
+              <div className="bg-gradient-to-br from-yellow-400 to-primary-500 rounded-2xl p-12 text-center text-white max-w-md mx-4">
                 <motion.div
                   animate={{ 
                     rotate: [0, 10, -10, 0],
@@ -429,13 +429,13 @@ const QuizGame: React.FC = () => {
                 <div className="space-y-3">
                   <button
                     onClick={resetGame}
-                    className="w-full px-6 py-3 bg-white text-orange-500 rounded-xl font-bold hover:bg-gray-100 transition-colors"
+                    className="w-full px-6 py-3 bg-white text-primary-500 rounded-xl font-bold hover:bg-gray-100 transition-colors"
                   >
                     다시 플레이
                   </button>
                   <button
                     onClick={() => navigate('/games')}
-                    className="w-full px-6 py-3 bg-orange-600 text-white rounded-xl font-bold hover:bg-orange-700 transition-colors"
+                    className="w-full px-6 py-3 bg-primary-600 text-white rounded-xl font-bold hover:bg-primary-700 transition-colors"
                   >
                     게임 목록으로
                   </button>

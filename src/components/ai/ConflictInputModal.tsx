@@ -14,7 +14,7 @@ interface ConflictInputModalProps {
   onOpenTips: () => void;
 }
 
-const personLabelColor = "border-2 border-orange-300 text-orange-700 bg-white";
+const personLabelColor = "border-2 border-primary-300 text-primary-700 bg-white";
 const personLabels = ["A", "B", "C", "D"];
 
 const ConflictInputModal: React.FC<ConflictInputModalProps> = ({
@@ -53,7 +53,7 @@ const ConflictInputModal: React.FC<ConflictInputModalProps> = ({
                   </div>
                   <div>
                     <h2 className="text-2xl font-bold">갈등 상황 입력</h2>
-                    <p className="text-orange-100 text-sm">
+                    <p className="text-primary-100 text-sm">
                       각자의 입장을 자세히 설명해주세요
                     </p>
                   </div>
@@ -75,7 +75,7 @@ const ConflictInputModal: React.FC<ConflictInputModalProps> = ({
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={onOpenTips}
-                  className="p-2 text-gray-500 hover:text-orange-600 transition-colors flex items-center space-x-1"
+                  className="p-2 text-gray-500 hover:text-primary-600 transition-colors flex items-center space-x-1"
                 >
                   <Info className="w-5 h-5" />
                   <span>작성 팁</span>
@@ -122,7 +122,7 @@ const ConflictInputModal: React.FC<ConflictInputModalProps> = ({
                         }
                         placeholder={`${person}의 입장과 상황을 자세히 설명해주세요...`}
                         rows={4}
-                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none transition-all duration-200 hover:border-gray-300"
+                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none transition-all duration-200 hover:border-gray-300"
                       />
                     </motion.div>
                   ))}

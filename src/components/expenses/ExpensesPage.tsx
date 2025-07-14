@@ -798,7 +798,7 @@ const ExpensesPage: React.FC = () => {
             cat.label
           }에 집중되어 있습니다.`,
           icon: AlertTriangle,
-          color: "text-orange-600",
+          color: "text-primary-600",
         });
       }
     });
@@ -2408,7 +2408,7 @@ const ExpensesPage: React.FC = () => {
                   {aiAnalysis.warnings.length > 0 && (
                     <div className="mb-6">
                       <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
-                        <AlertTriangle className="w-5 h-5 text-orange-500 mr-2" />
+                        <AlertTriangle className="w-5 h-5 text-primary-500 mr-2" />
                         주의사항
                       </h3>
                       <div className="space-y-3">
@@ -2418,14 +2418,14 @@ const ExpensesPage: React.FC = () => {
                             className={`p-4 rounded-xl border-l-4 ${
                               warning.severity === "high"
                                 ? "bg-red-50 border-red-500"
-                                : "bg-orange-50 border-orange-500"
+                                : "bg-primary-50 border-primary-500"
                             }`}
                           >
                             <h4
                               className={`font-semibold ${
                                 warning.severity === "high"
                                   ? "text-red-800"
-                                  : "text-orange-800"
+                                  : "text-primary-800"
                               }`}
                             >
                               {warning.title}
@@ -2434,7 +2434,7 @@ const ExpensesPage: React.FC = () => {
                               className={`text-sm mt-1 ${
                                 warning.severity === "high"
                                   ? "text-red-600"
-                                  : "text-orange-600"
+                                  : "text-primary-600"
                               }`}
                             >
                               {warning.message}
