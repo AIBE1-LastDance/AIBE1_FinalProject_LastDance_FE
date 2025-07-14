@@ -223,19 +223,22 @@ const Header: React.FC = () => {
   const getNotificationTypeConfig = (type: string) => {
     const configs = {
       SCHEDULE: {
-        icon: "📅",
+        icon: Calendar,
         bgColor: "bg-blue-50",
         borderColor: "border-blue-500",
+        iconColor: "text-blue-600"
       },
       PAYMENT: {
-        icon: "💳",
+        icon: CreditCard,
         bgColor: "bg-green-50",
         borderColor: "border-green-500",
+        iconColor: "text-green-600"
       },
       CHECKLIST: {
-        icon: "✅",
+        icon: CheckSquare,
         bgColor: "bg-purple-50",
         borderColor: "border-purple-500",
+        iconColor: "text-purple-600"
       },
     };
     return configs[type as keyof typeof configs] || configs.SCHEDULE;
@@ -418,8 +421,8 @@ const Header: React.FC = () => {
                                 }
                               >
                                 <div className="flex items-start space-x-3">
-                                  <div className="flex-shrink-0 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-sm">
-                                    {notification.icon}
+                                  <div className={`flex-shrink-0 w-8 h-8 ${typeConfig.bgColor} rounded-lg flex items-center justify-center`}>
+                                    <typeConfig.icon className={`w-4 h-4 ${typeConfig.iconColor}`} />
                                   </div>
                                   <div className="flex-1 min-w-0">
                                     <div className="flex items-center justify-between">
@@ -432,21 +435,9 @@ const Header: React.FC = () => {
                                       >
                                         {notification.title}
                                       </p>
-                                      <div className="flex items-center space-x-2">
-                                        {(notification.url ||
-                                          notification.relatedId ||
-                                          notification.type) && (
-                                          <div className="flex items-center space-x-1">
-                                            <ExternalLink className="w-3 h-3 text-blue-500" />
-                                            <span className="text-xs text-blue-500 font-medium">
-                                              보기
-                                            </span>
-                                          </div>
-                                        )}
-                                        {!notification.read && (
-                                          <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0" />
-                                        )}
-                                      </div>
+                                      {!notification.read && (
+                                        <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0" />
+                                      )}
                                     </div>
                                     <p
                                         className={`text-sm mt-1 ${
