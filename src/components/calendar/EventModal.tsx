@@ -172,14 +172,14 @@ const EventModal: React.FC<EventModalProps> = ({
   };
 
   const categories = [
-    { value: 'general', label: '일반', color: 'bg-gray-100 text-gray-800' },
-    { value: 'bill', label: '청구서/결제', color: 'bg-status-error text-gray-800' },
-    { value: 'cleaning', label: '청소', color: 'bg-status-success text-gray-800' },
-    { value: 'meeting', label: '회의', color: 'bg-accent-100 text-accent-800' },
-    { value: 'appointment', label: '약속', color: 'bg-primary-100 text-primary-800' },
-    { value: 'health', label: '건강', color: 'bg-category-mint text-gray-800' },
-    { value: 'shopping', label: '쇼핑', color: 'bg-category-orange text-gray-800' },
-    { value: 'travel', label: '여행', color: 'bg-category-lavender text-gray-800' },
+    { value: 'general', label: '일반', color: 'bg-gray-100 text-gray-700' },
+    { value: 'bill', label: '청구서/결제', color: 'bg-red-100 text-red-700' },
+    { value: 'cleaning', label: '청소', color: 'bg-green-100 text-green-700' },
+    { value: 'meeting', label: '회의', color: 'bg-blue-100 text-blue-700' },
+    { value: 'appointment', label: '약속', color: 'bg-purple-100 text-purple-700' },
+    { value: 'health', label: '건강', color: 'bg-teal-100 text-teal-700' },
+    { value: 'shopping', label: '쇼핑', color: 'bg-orange-100 text-orange-700' },
+    { value: 'travel', label: '여행', color: 'bg-indigo-100 text-indigo-700' },
   ];
 
   const repeatOptions = [

@@ -136,20 +136,20 @@ const CalendarPage: React.FC = () => {
   // 일정 타입별 스타일 가져오기
   const getEventStyle = (event: any) => {
     const baseStyles = {
-      bill: 'bg-status-error text-gray-800 border-status-error',
-      cleaning: 'bg-status-success text-gray-800 border-status-success', 
-      meeting: 'bg-accent-100 text-accent-800 border-accent-200',
-      appointment: 'bg-primary-100 text-primary-800 border-primary-200',
-      health: 'bg-category-mint text-gray-800 border-category-mint',
-      shopping: 'bg-category-orange text-gray-800 border-category-orange',
-      travel: 'bg-category-lavender text-gray-800 border-category-lavender',
+      bill: 'bg-red-100 text-red-700 border-red-200',
+      cleaning: 'bg-green-100 text-green-700 border-green-200', 
+      meeting: 'bg-blue-100 text-blue-700 border-blue-200',
+      appointment: 'bg-purple-100 text-purple-700 border-purple-200',
+      health: 'bg-teal-100 text-teal-700 border-teal-200',
+      shopping: 'bg-orange-100 text-orange-700 border-orange-200',
+      travel: 'bg-indigo-100 text-indigo-700 border-indigo-200',
     };
     
-    const categoryStyle = baseStyles[event.category as keyof typeof baseStyles] || 'bg-gray-100 text-gray-800 border-gray-200';
+    const categoryStyle = baseStyles[event.category as keyof typeof baseStyles] || 'bg-gray-100 text-gray-700 border-gray-200';
     
     // 그룹 일정인 경우 보더 추가
     if (event.groupId) {
-      return `${categoryStyle} border-l-4 border-l-accent-500`;
+      return `${categoryStyle} border-l-4 border-l-primary-500`;
     }
     
     return categoryStyle;
@@ -158,7 +158,7 @@ const CalendarPage: React.FC = () => {
   // 일정 아이콘 렌더링
   const renderEventIcon = (event: any) => {
     if (event.groupId) {
-      return <Users className="w-3 h-3 text-accent-600 flex-shrink-0" />;
+      return <Users className="w-3 h-3 text-gray-600 flex-shrink-0" />;
     } else {
       return <User className="w-3 h-3 text-gray-600 flex-shrink-0" />;
     }
@@ -169,7 +169,7 @@ const CalendarPage: React.FC = () => {
     if (event.groupId) {
       return (
         <div 
-          className="text-[10px] text-accent-600 font-medium truncate min-w-0 flex-1" 
+          className="text-[10px] text-gray-600 font-medium truncate min-w-0 flex-1" 
           title={event.groupName || '그룹'}
           style={{ maxWidth: '80px', wordBreak: 'break-all' }}
         >
