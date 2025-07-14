@@ -136,20 +136,20 @@ const CalendarPage: React.FC = () => {
   // 일정 타입별 스타일 가져오기
   const getEventStyle = (event: any) => {
     const baseStyles = {
-      bill: 'bg-status-error text-gray-800 border-status-error',
-      cleaning: 'bg-status-success text-gray-800 border-status-success', 
-      meeting: 'bg-accent-100 text-accent-800 border-accent-200',
-      appointment: 'bg-primary-100 text-primary-800 border-primary-200',
-      health: 'bg-category-mint text-gray-800 border-category-mint',
-      shopping: 'bg-category-orange text-gray-800 border-category-orange',
-      travel: 'bg-category-lavender text-gray-800 border-category-lavender',
+      bill: 'bg-red-50 text-red-700 border-red-200',
+      cleaning: 'bg-green-50 text-green-700 border-green-200', 
+      meeting: 'bg-blue-50 text-blue-700 border-blue-200',
+      appointment: 'bg-purple-50 text-purple-700 border-purple-200',
+      health: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+      shopping: 'bg-orange-50 text-orange-700 border-orange-200',
+      travel: 'bg-yellow-50 text-yellow-700 border-yellow-200',
     };
     
-    const categoryStyle = baseStyles[event.category as keyof typeof baseStyles] || 'bg-gray-100 text-gray-800 border-gray-200';
+    const categoryStyle = baseStyles[event.category as keyof typeof baseStyles] || 'bg-gray-50 text-gray-700 border-gray-200';
     
     // 그룹 일정인 경우 보더 추가
     if (event.groupId) {
-      return `${categoryStyle} border-l-4 border-l-accent-500`;
+      return `${categoryStyle} border-l-4 border-l-primary-500`;
     }
     
     return categoryStyle;
@@ -158,9 +158,9 @@ const CalendarPage: React.FC = () => {
   // 일정 아이콘 렌더링
   const renderEventIcon = (event: any) => {
     if (event.groupId) {
-      return <Users className="w-3 h-3 text-accent-600" />;
+      return <Users className="w-3 h-3 text-gray-600 flex-shrink-0" />;
     } else {
-      return <User className="w-3 h-3 text-gray-600" />;
+      return <User className="w-3 h-3 text-gray-600 flex-shrink-0" />;
     }
   };
 
@@ -168,7 +168,11 @@ const CalendarPage: React.FC = () => {
   const renderEventLabel = (event: any) => {
     if (event.groupId) {
       return (
-        <div className="text-[10px] text-accent-600 font-medium">
+        <div 
+          className="text-[10px] text-gray-600 font-medium truncate min-w-0 flex-1" 
+          title={event.groupName || '그룹'}
+          style={{ maxWidth: '80px', wordBreak: 'break-all' }}
+        >
           <span>{event.groupName || '그룹'}</span>
         </div>
       );
@@ -240,7 +244,10 @@ const CalendarPage: React.FC = () => {
                       <div className="text-base font-medium text-gray-500">
                         공유 캘린더
                       </div>
-                      <div className="text-2xl lg:text-3xl font-bold text-primary-600 truncate" title={currentGroup?.name || "그룹 선택 필요"}>
+                      <div 
+                        className="text-2xl lg:text-3xl font-bold text-primary-600 truncate max-w-[200px] lg:max-w-[300px]" 
+                        title={currentGroup?.name || "그룹 선택 필요"}
+                      >
                         {currentGroup?.name || "그룹 선택 필요"}
                       </div>
                     </div>
@@ -617,26 +624,26 @@ const MonthView: React.FC<{
                     {dayEvents.slice(0, 3).map((event) => (
                         <motion.div
                             key={event.id}
-                            className={`text-[10px] sm:text-xs px-1 sm:px-2 py-1 rounded cursor-pointer hover:opacity-80 transition-all border ${getEventStyle(event)}`}
+                            className={`text-[10px] sm:text-xs px-1 sm:px-2 py-1 rounded cursor-pointer hover:opacity-80 transition-all border ${getEventStyle(event)} break-words overflow-hidden`}
                             whileHover={{ scale: 1.02 }}
                             onClick={(e) => onEventClick(event, e, day)} // ✅ day 파라미터 추가
                         >
-                          <div className="flex items-center justify-between mb-1">
-                            <div className="font-medium truncate flex items-center space-x-1">
-                              <span className="hidden sm:inline">{renderEventIcon(event)}</span>
+                          <div className="flex items-center justify-between mb-1 min-w-0">
+                            <div className="font-medium flex items-center space-x-1 min-w-0 flex-1">
+                              <span className="hidden sm:inline flex-shrink-0">{renderEventIcon(event)}</span>
                               {event.repeat !== 'none' && (
-                                  <Repeat className="w-3 h-3 opacity-60" />
+                                  <Repeat className="w-3 h-3 opacity-60 flex-shrink-0" />
                               )}
-                              <span className="truncate">{event.title}</span>
+                              <span className="truncate min-w-0" style={{ wordBreak: 'break-all' }}>{event.title}</span>
                             </div>
                           </div>
                           
-                          <div className="flex items-center justify-between">
-                            {renderEventLabel(event)}
+                          <div className="flex items-center justify-between min-w-0">
+                            <div className="flex-1 min-w-0">{renderEventLabel(event)}</div>
                             {event.isAllDay ? (
-                                <div className="text-xs opacity-75">하루 종일</div>
+                                <div className="text-xs opacity-75 flex-shrink-0 ml-1">하루 종일</div>
                             ) : (
-                                <div className="text-xs opacity-75">
+                                <div className="text-xs opacity-75 flex-shrink-0 ml-1">
                                   {event.startTime}
                                 </div>
                             )}
@@ -711,22 +718,22 @@ const WeekView: React.FC<{
                     {dayEvents.map((event) => (
                         <motion.div
                             key={event.id}
-                            className={`text-[10px] sm:text-xs px-1 sm:px-2 py-1 rounded cursor-pointer hover:opacity-80 transition-all border ${getEventStyle(event)}`}
+                            className={`text-[10px] sm:text-xs px-1 sm:px-2 py-1 rounded cursor-pointer hover:opacity-80 transition-all border ${getEventStyle(event)} break-words overflow-hidden`}
                             whileHover={{ scale: 1.02 }}
                             onClick={(e) => onEventClick(event, e, day)} // ✅ day 파라미터 추가
                         >
-                          <div className="font-medium flex items-center space-x-1 mb-1">
-                            <span className="hidden sm:inline">{renderEventIcon(event)}</span>
+                          <div className="font-medium flex items-center space-x-1 mb-1 min-w-0">
+                            <span className="hidden sm:inline flex-shrink-0">{renderEventIcon(event)}</span>
                             {event.repeat !== 'none' && (
-                                <Repeat className="w-3 h-3 opacity-60" />
+                                <Repeat className="w-3 h-3 opacity-60 flex-shrink-0" />
                             )}
-                            <span className="truncate">{event.title}</span>
+                            <span className="truncate min-w-0 flex-1" style={{ wordBreak: 'break-all' }}>{event.title}</span>
                           </div>
                           
-                          <div className="flex items-center justify-between">
-                            {renderEventLabel(event)}
+                          <div className="flex items-center justify-between min-w-0">
+                            <div className="flex-1 min-w-0">{renderEventLabel(event)}</div>
                             {!event.isAllDay && (
-                                <div className="text-xs opacity-75">
+                                <div className="text-xs opacity-75 flex-shrink-0 ml-1">
                                   {event.startTime}
                                 </div>
                             )}
@@ -773,23 +780,23 @@ const DayView: React.FC<{
               dayEvents.map((event) => (
                   <motion.div
                       key={event.id}
-                      className={`p-3 sm:p-4 rounded-lg cursor-pointer hover:shadow-md transition-all border-2 ${getEventStyle(event)}`}
+                      className={`p-3 sm:p-4 rounded-lg cursor-pointer hover:shadow-md transition-all border-2 ${getEventStyle(event)} break-words overflow-hidden`}
                       whileHover={{ scale: 1.02 }}
                       onClick={(e) => onEventClick(event, e, currentDate)} // ✅ currentDate 파라미터 추가
                   >
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <span className="hidden sm:inline">{renderEventIcon(event)}</span>
-                          <h4 className="font-semibold text-gray-800">{event.title}</h4>
+                    <div className="flex justify-between items-start min-w-0">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center space-x-2 mb-2 min-w-0">
+                          <span className="hidden sm:inline flex-shrink-0">{renderEventIcon(event)}</span>
+                          <h4 className="font-semibold text-gray-800 truncate min-w-0 flex-1" style={{ wordBreak: 'break-all' }}>{event.title}</h4>
                           {event.repeat !== 'none' && (
-                              <Repeat className="w-4 h-4 opacity-60" />
+                              <Repeat className="w-4 h-4 opacity-60 flex-shrink-0" />
                           )}
                         </div>
                         
-                        <div className="flex items-center justify-between mb-2">
-                          {renderEventLabel(event)}
-                          <div className="text-right">
+                        <div className="flex items-center justify-between mb-2 min-w-0">
+                          <div className="flex-1 min-w-0">{renderEventLabel(event)}</div>
+                          <div className="text-right flex-shrink-0">
                             {event.isAllDay ? (
                                 <span className="text-sm text-gray-500">하루 종일</span>
                             ) : (
@@ -801,7 +808,7 @@ const DayView: React.FC<{
                         </div>
                         
                         {event.description && (
-                            <p className="text-sm text-gray-600 mt-1">{event.description}</p>
+                            <p className="text-sm text-gray-600 mt-1 break-words" style={{ wordBreak: 'break-all' }}>{event.description}</p>
                         )}
                       </div>
                     </div>
@@ -872,23 +879,23 @@ const DayEventsModal: React.FC<{
                 {events.map((event) => (
                   <motion.div
                     key={event.id}
-                    className={`p-4 rounded-lg cursor-pointer hover:shadow-md transition-all border ${getEventStyle(event)}`}
+                    className={`p-4 rounded-lg cursor-pointer hover:shadow-md transition-all border ${getEventStyle(event)} break-words overflow-hidden`}
                     whileHover={{ scale: 1.02 }}
                     onClick={() => onEventClick(event)}
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-2">
-                          {renderEventIcon(event)}
-                          <h4 className="font-semibold text-gray-800">{event.title}</h4>
+                    <div className="flex items-start justify-between min-w-0">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center space-x-2 mb-2 min-w-0">
+                          <span className="flex-shrink-0">{renderEventIcon(event)}</span>
+                          <h4 className="font-semibold text-gray-800 truncate min-w-0 flex-1" style={{ wordBreak: 'break-all' }}>{event.title}</h4>
                           {event.repeat !== 'none' && (
-                            <Repeat className="w-4 h-4 opacity-60" />
+                            <Repeat className="w-4 h-4 opacity-60 flex-shrink-0" />
                           )}
                         </div>
                         
-                        <div className="flex items-center justify-between">
-                          {renderEventLabel(event)}
-                          <div className="text-right">
+                        <div className="flex items-center justify-between min-w-0">
+                          <div className="flex-1 min-w-0">{renderEventLabel(event)}</div>
+                          <div className="text-right flex-shrink-0">
                             {event.isAllDay ? (
                               <span className="text-sm text-gray-500">하루 종일</span>
                             ) : (
@@ -900,7 +907,7 @@ const DayEventsModal: React.FC<{
                         </div>
                         
                         {event.description && (
-                          <p className="text-sm text-gray-600 mt-2">{event.description}</p>
+                          <p className="text-sm text-gray-600 mt-2 break-words" style={{ wordBreak: 'break-all' }}>{event.description}</p>
                         )}
                       </div>
                     </div>
@@ -1027,23 +1034,23 @@ const MonthEventsModal: React.FC<{
                       {events.map((event) => (
                         <motion.div
                           key={event.id}
-                          className={`p-4 rounded-lg cursor-pointer hover:shadow-md transition-all border ${getEventStyle(event)}`}
+                          className={`p-4 rounded-lg cursor-pointer hover:shadow-md transition-all border ${getEventStyle(event)} break-words overflow-hidden`}
                           whileHover={{ scale: 1.02 }}
                           onClick={() => onEventClick(event, date)}
                         >
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center space-x-2 mb-2">
-                                {renderEventIcon(event)}
-                                <h4 className="font-semibold text-gray-800 truncate">{event.title}</h4>
+                          <div className="flex items-start justify-between min-w-0">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center space-x-2 mb-2 min-w-0">
+                                <span className="flex-shrink-0">{renderEventIcon(event)}</span>
+                                <h4 className="font-semibold text-gray-800 truncate min-w-0 flex-1" style={{ wordBreak: 'break-all' }}>{event.title}</h4>
                                 {event.repeat !== 'none' && (
                                   <Repeat className="w-4 h-4 opacity-60 flex-shrink-0" />
                                 )}
                               </div>
                               
-                              <div className="flex items-center justify-between mb-2">
-                                {renderEventLabel(event)}
-                                <div className="text-right">
+                              <div className="flex items-center justify-between mb-2 min-w-0">
+                                <div className="flex-1 min-w-0">{renderEventLabel(event)}</div>
+                                <div className="text-right flex-shrink-0">
                                   {event.isAllDay ? (
                                     <span className="text-sm text-gray-500">하루 종일</span>
                                   ) : (
@@ -1055,10 +1062,11 @@ const MonthEventsModal: React.FC<{
                               </div>
                               
                               {event.description && (
-                                <p className="text-sm text-gray-600 mt-2 overflow-hidden" style={{
+                                <p className="text-sm text-gray-600 mt-2 overflow-hidden break-words" style={{
                                   display: '-webkit-box',
                                   WebkitLineClamp: 2,
-                                  WebkitBoxOrient: 'vertical'
+                                  WebkitBoxOrient: 'vertical',
+                                  wordBreak: 'break-all'
                                 }}>{event.description}</p>
                               )}
                             </div>

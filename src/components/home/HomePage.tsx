@@ -370,9 +370,10 @@ const HomePage: React.FC = () => {
                                     </div>
                                     <div className="flex-1 min-w-0">
                                       <div className="flex items-center justify-between">
-                                        <p className={`text-sm font-medium font-body truncate ${
+                                        <p className={`text-sm font-medium font-body ${
                                           notification.read ? 'text-gray-700' : 'text-gray-900'
-                                        }`}>
+                                        } break-words overflow-hidden`}
+                                          style={{ wordBreak: 'break-all' }}>
                                           {notification.title}
                                         </p>
                                         {!notification.read && (
@@ -381,7 +382,8 @@ const HomePage: React.FC = () => {
                                       </div>
                                       <p className={`text-sm mt-1 font-body ${
                                         notification.read ? 'text-gray-500' : 'text-gray-700'
-                                      }`}>
+                                      } break-words overflow-hidden`}
+                                        style={{ wordBreak: 'break-all' }}>
                                         {notification.message}
                                       </p>
                                       <p className="text-xs text-gray-400 mt-1">
