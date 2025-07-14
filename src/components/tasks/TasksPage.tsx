@@ -80,9 +80,9 @@ const TasksPage: React.FC = () => {
 
   const getPriorityColor = (priority: string) => {
     switch (priority?.toLowerCase()) {
-      case 'high': return 'bg-transparent text-red-600 border-red-300';
-      case 'medium': return 'bg-transparent text-yellow-600 border-yellow-300';
-      case 'low': return 'bg-transparent text-green-600 border-green-300';
+      case 'high': return 'bg-transparent text-priority-high border-priority-high';
+      case 'medium': return 'bg-transparent text-priority-medium border-priority-medium';
+      case 'low': return 'bg-transparent text-priority-low border-priority-low';
       default: return 'bg-transparent text-gray-600 border-gray-300';
     }
   };
@@ -147,8 +147,8 @@ const TasksPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0">
         <div className="flex items-center space-x-6">
-          <div>
-            <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">
+          <div className="lg:w-80">
+            <h1 className="text-2xl lg:text-3xl font-bold text-gray-500">
               {mode === "personal" ? (
                   "내 할일"
               ) : (
@@ -308,9 +308,9 @@ const TasksPage: React.FC = () => {
                             <div 
                               className={`absolute left-0 top-0 w-1 h-full ${
                                 checklist.dueDate && new Date(checklist.dueDate) < new Date() && !checklist.isCompleted
-                                  ? 'bg-red-500 animate-pulse' // 마감일 지난 것은 빨간색 + 깜빡임
-                                  : checklist.priority?.toLowerCase() === 'high' ? 'bg-red-500' : 
-                                    checklist.priority?.toLowerCase() === 'medium' ? 'bg-yellow-500' : 'bg-green-500'
+                                  ? 'bg-status-error animate-pulse' // 마감일 지난 것은 빨간색 + 깜빡임
+                                  : checklist.priority?.toLowerCase() === 'high' ? 'bg-priority-high' : 
+                                    checklist.priority?.toLowerCase() === 'medium' ? 'bg-priority-medium' : 'bg-priority-low'
                               }`}
                             />
 
@@ -344,23 +344,23 @@ const TasksPage: React.FC = () => {
                                     </span>
                                     {/* 그룹 체크리스트인 경우 그룹명 표시 */}
                                     {checklist.type === 'GROUP' && checklist.groupName && (
-                                      <span className="px-3 py-1 rounded-full text-xs font-medium bg-transparent text-purple-600 border border-purple-300">
+                                      <span className="px-3 py-1 rounded-full text-xs font-medium bg-transparent text-primary-600 border border-primary-300">
                                         {checklist.groupName}
                                       </span>
                                     )}
                                     {/* 상태 태그 */}
                                     {checklist.isCompleted ? (
-                                      <span className="px-3 py-1 rounded-full text-xs font-medium bg-transparent text-green-600 border border-green-300">
+                                      <span className="px-3 py-1 rounded-full text-xs font-medium bg-transparent text-status-success border border-status-success">
                                         <CheckCircle className="w-3 h-3 inline mr-1" />
                                         완료
                                       </span>
                                     ) : checklist.dueDate && new Date(checklist.dueDate) < new Date() ? (
-                                      <span className="px-3 py-1 rounded-full text-xs font-medium bg-transparent text-red-600 border border-red-300 animate-pulse">
+                                      <span className="px-3 py-1 rounded-full text-xs font-medium bg-transparent text-status-error border border-status-error animate-pulse">
                                         <Clock className="w-3 h-3 inline mr-1" />
                                         지연
                                       </span>
                                     ) : (
-                                      <span className="px-3 py-1 rounded-full text-xs font-medium bg-transparent text-blue-600 border border-blue-300">
+                                      <span className="px-3 py-1 rounded-full text-xs font-medium bg-transparent text-accent-600 border border-accent-300">
                                         <Circle className="w-3 h-3 inline mr-1" />
                                         진행중
                                       </span>
@@ -380,12 +380,12 @@ const TasksPage: React.FC = () => {
                                 <div className="flex items-center space-x-6 text-sm text-gray-500">
                                   {checklist.dueDate && (
                                     <div className={`flex items-center space-x-1 ${
-                                      new Date(checklist.dueDate) < new Date() && !checklist.isCompleted ? 'text-red-500' : ''
+                                      new Date(checklist.dueDate) < new Date() && !checklist.isCompleted ? 'text-status-error' : ''
                                     }`}>
                                       <Calendar className="w-4 h-4" />
                                       <span>{format(new Date(checklist.dueDate), 'M월 d일', { locale: ko })}</span>
                                       {new Date(checklist.dueDate) < new Date() && !checklist.isCompleted && (
-                                        <span className="text-red-500 font-medium">(지연)</span>
+                                        <span className="text-status-error font-medium">(지연)</span>
                                       )}
                                     </div>
                                   )}

@@ -54,6 +54,7 @@ import ExpenseModal from "./ExpenseModal";
 import { expenseAPI } from "../../api/expense";
 import toast from "react-hot-toast";
 import Pagination from "../common/Pagination";
+import {createPortal} from "react-dom";
 
 interface GroupSummary {
   groupId: string;
@@ -61,6 +62,10 @@ interface GroupSummary {
   myShareAmount: number;
   totalAmount: number;
   expenseCount: number;
+}
+
+const Portal = ({children}) => {
+  return createPortal(children, document.body)
 }
 
 const ExpensesPage: React.FC = () => {
@@ -1141,8 +1146,7 @@ const ExpensesPage: React.FC = () => {
   };
 
   const categoryCount = allCategoryData.length;
-  const dynamicHeight =
-    categoryCount <= 3 ? 280 : Math.max(320, categoryCount * 60 + 200);
+  const dynamicHeight = categoryCount <= 3 ? 280 : Math.max(320, categoryCount * 60 + 200);
   const chartHeight = dynamicHeight - 50; // 여백 비율 조정
 
   if (
@@ -1165,88 +1169,88 @@ const ExpensesPage: React.FC = () => {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div className="flex flex-col xl:flex-row xl:items-center justify-between space-y-4 xl:space-y-0">
-        <div>
-          <div className="flex flex-col lg:flex-row lg:items-center space-y-2 lg:space-y-0 lg:space-x-4">
-            <div className="lg:w-80">
-              <h1 className="text-2xl lg:text-3xl font-bold text-gray-500">
-                {mode === "personal" ? (
-                  "내 가계부"
-                ) : (
-                  <div className="space-y-1">
-                    <div className="text-base font-medium text-gray-500">
-                      공동 가계부
-                    </div>
-                    <div
-                      className="text-2xl lg:text-3xl font-bold text-primary-600 truncate"
-                      title={currentGroup?.name || "그룹 선택 필요"}
-                    >
-                      {currentGroup?.name || "그룹 선택 필요"}
-                    </div>
+    {/* Header */}
+    <div className="flex flex-col xl:flex-row xl:items-center justify-between space-y-4 xl:space-y-0">
+      <div>
+        <div className="flex flex-col lg:flex-row lg:items-center space-y-2 lg:space-y-0 lg:space-x-4">
+          <div className="lg:w-48">
+            <h1 className="text-2xl lg:text-3xl font-bold text-gray-500">
+              {mode === "personal" ? (
+                "내 가계부"
+              ) : (
+                <div className="space-y-1">
+                  <div className="text-base font-medium text-gray-500">
+                    공동 가계부
                   </div>
-                )}
-              </h1>
-            </div>
+                  <div
+                    className="text-2xl lg:text-3xl font-bold text-primary-600 truncate"
+                    title={currentGroup?.name || "그룹 선택 필요"}
+                  >
+                    {currentGroup?.name || "그룹 선택 필요"}
+                  </div>
+                </div>
+              )}
+            </h1>
+          </div>
 
-            <div className="flex items-center space-x-2">
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={handlePreviousMonth}
-                className="p-2 rounded-lg hover:bg-gray-100"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </motion.button>
+          <div className="flex items-center space-x-2">
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={handlePreviousMonth}
+              className="p-2 rounded-lg hover:bg-gray-100"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </motion.button>
 
-              <p className="text-gray-600 whitespace-nowrap">
-                {format(currentMonth, "yyyy년 M월", { locale: ko })}
-              </p>
+            <h2 className="text-sm sm:text-lg font-medium text-gray-700 min-w-[160px] sm:min-w-[200px] text-center px-2 whitespace-nowrap">
+              {format(currentMonth, "yyyy년 M월", {locale: ko})}
+            </h2>
 
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={handleNextMonth}
-                className="p-2 rounded-lg hover:bg-gray-100"
-                disabled={
-                  new Date(
-                    currentMonth.getFullYear(),
-                    currentMonth.getMonth() + 1,
-                    1
-                  ) > new Date()
-                }
-              >
-                <ChevronRight className="w-5 h-5" />
-              </motion.button>
-            </div>
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={handleNextMonth}
+              className="p-2 rounded-lg hover:bg-gray-100"
+              disabled={
+                new Date(
+                  currentMonth.getFullYear(),
+                  currentMonth.getMonth() + 1,
+                  1
+                ) > new Date()
+              }
+            >
+              <ChevronRight className="w-5 h-5" />
+            </motion.button>
           </div>
         </div>
+      </div>
 
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
-          {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input
-              type="text"
-              placeholder="지출 검색..."
-              className="pl-10 pr-4 py-3 border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white hover:bg-gray-50 transition-colors font-medium text-gray-700 placeholder-gray-400 shadow-sm w-full sm:w-auto"
-              value={searchTerm}
-              onChange={handleSearchChange}
-            />
-          </div>
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
+        {/* Search */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <input
+            type="text"
+            placeholder="지출 검색..."
+            className="pl-10 pr-4 py-3 border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white hover:bg-gray-50 transition-colors font-medium text-gray-700 placeholder-gray-400 shadow-sm w-full sm:w-auto"
+            value={searchTerm}
+            onChange={handleSearchChange}
+          />
+        </div>
 
-          {/* Category Filter */}
-          <div className="relative">
-            <motion.button
-              className="flex items-center space-x-3 pl-4 pr-4 py-3 border border-gray-200 rounded-2xl text-sm bg-white hover:bg-gray-50 transition-colors font-medium text-gray-700 cursor-pointer shadow-md hover:shadow-lg w-full sm:w-auto whitespace-nowrap"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-            >
-              <Filter className="w-4 h-4 text-gray-400" />
-              <span className="flex-1 text-left">
-                {categories.find((cat) => cat.value === categoryFilter)?.label}
-              </span>
+        {/* Category Filter */}
+        <div className="relative">
+          <motion.button
+            className="flex items-center space-x-3 pl-4 pr-4 py-3 border border-gray-200 rounded-2xl text-sm bg-white hover:bg-gray-50 transition-colors font-medium text-gray-700 cursor-pointer shadow-md hover:shadow-lg w-full sm:w-auto whitespace-nowrap"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+          >
+            <Filter className="w-4 h-4 text-gray-400" />
+            <span className="flex-1 text-left">
+              {categories.find((cat) => cat.value === categoryFilter)?.label}
+            </span>
               <motion.svg
                 className="w-4 h-4 text-gray-400"
                 fill="none"
@@ -2011,8 +2015,8 @@ const ExpensesPage: React.FC = () => {
                                   {share.splitType === "EQUAL"
                                     ? "균등분할"
                                     : share.splitType === "SPECIFIC"
-                                    ? "지정분할"
-                                    : "사용자정의"}
+                                      ? "지정분할"
+                                      : "사용자정의"}
                                 </span>
                               </div>
                             </div>
@@ -2314,6 +2318,7 @@ const ExpensesPage: React.FC = () => {
       {/* AI Analysis Modal */}
       <AnimatePresence>
         {showAnalysis && (
+          <Portal>
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
@@ -2649,6 +2654,7 @@ const ExpensesPage: React.FC = () => {
               </div>
             </motion.div>
           </div>
+          </Portal>
         )}
       </AnimatePresence>
 
@@ -2666,37 +2672,39 @@ const ExpensesPage: React.FC = () => {
 
       {/* Receipt Modal */}
       {showReceiptModal && currentReceiptUrl && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            className="bg-white rounded-2xl max-w-4xl max-h-[90vh] overflow-hidden"
-          >
-            {/* 모달 헤더 */}
-            <div className="flex items-center justify-between p-4 border-b">
-              <h3 className="text-lg font-semibold text-gray-900">영수증</h3>
-              <button
-                onClick={() => {
-                  setShowReceiptModal(false);
-                  setCurrentReceiptUrl(null);
-                }}
-                className="p-2 hover:bg-gray-100 rounded-lg"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+        <Portal>
+          <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+            <motion.div
+              initial={{opacity: 0, scale: 0.8}}
+              animate={{opacity: 1, scale: 1}}
+              exit={{opacity: 0, scale: 0.8}}
+              className="bg-white rounded-2xl max-w-4xl max-h-[90vh] overflow-hidden"
+            >
+              {/* 모달 헤더 */}
+              <div className="flex items-center justify-between p-4 border-b">
+                <h3 className="text-lg font-semibold text-gray-900">영수증</h3>
+                <button
+                  onClick={() => {
+                    setShowReceiptModal(false);
+                    setCurrentReceiptUrl(null);
+                  }}
+                  className="p-2 hover:bg-gray-100 rounded-lg"
+                >
+                  <X className="w-5 h-5"/>
+                </button>
+              </div>
 
-            {/* 영수증 이미지 */}
-            <div className="p-4">
-              <img
-                src={currentReceiptUrl}
-                alt="영수증"
-                className="w-full h-auto max-h-[70vh] object-contain rounded-lg"
-              />
-            </div>
-          </motion.div>
-        </div>
+              {/* 영수증 이미지 */}
+              <div className="p-4">
+                <img
+                  src={currentReceiptUrl}
+                  alt="영수증"
+                  className="w-full h-auto max-h-[70vh] object-contain rounded-lg"
+                />
+              </div>
+            </motion.div>
+          </div>
+        </Portal>
       )}
     </div>
   );

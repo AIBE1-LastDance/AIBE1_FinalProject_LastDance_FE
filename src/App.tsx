@@ -26,6 +26,7 @@ import PostDetailPage from "./components/community/PostDetailPage";
 import SettingsPage from "./components/settings/SettingsPage";
 import { useAuth } from "./hooks/useAuth";
 import React, { useEffect, useState } from "react";
+import { Toaster } from "react-hot-toast";
 import AdminRouter from "./components/admin/AdminRouter";
 // SSE 관리를 위해 추가
 import { useNotifications } from "./hooks/useNotifications";
@@ -139,6 +140,7 @@ function App() {
       >
         v{VERSION} ({BUILD_TIME.substring(0, 16).replace("T", " ")})
       </div>
+      <Toaster position="top-right" reverseOrder={false} />
       <Routes>
         <Route
           path="/login"
