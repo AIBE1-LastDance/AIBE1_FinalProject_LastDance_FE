@@ -1,3 +1,4 @@
+// 기존 코드 유지
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAppStore } from "../../store/appStore";
@@ -20,19 +21,20 @@ const PostDetailPage: React.FC = () => {
 
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
-  const [notFound, setNotFound] = useState(false);
+  const [notFound, setNotFound] = useState(false); // 이 상태를 사용하여 메시지를 띄우는 방식은 이제 필요 없습니다.
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
   const loadPost = useCallback(async () => {
     if (!postId) {
-      setNotFound(true);
-      setLoading(false);
+      // postId가 없을 때 바로 토스트 메시지를 띄우고 커뮤니티로 이동
+      toast.error("유효하지 않은 게시글 ID입니다.");
+      navigate("/community"); // 게시글 목록 페이지로 리다이렉트
       return;
     }
 
     setLoading(true);
-    setNotFound(false);
+    // setNotFound(false); // 이제 필요 없음
     try {
       const data = await fetchPostById(postId);
       // authorNickname이 "deleted_"로 시작하는 경우 탈퇴한 회원으로 간주
@@ -55,12 +57,13 @@ const PostDetailPage: React.FC = () => {
       setPost(fetchedPost);
     } catch (error: any) {
       console.error("게시글 불러오기 실패:", error);
-      setNotFound(true);
-      toast.error("게시글을 불러오는 데 실패했습니다.");
+      // 게시글을 찾을 수 없거나 에러 발생 시 토스트 메시지를 띄우고 커뮤니티로 이동
+      toast.error("게시글을 찾을 수 없거나 불러오는 데 실패했습니다.");
+      navigate("/community"); // 게시글 목록 페이지로 리다이렉트
     } finally {
       setLoading(false);
     }
-  }, [postId]);
+  }, [postId, navigate]); // navigate를 의존성 배열에 추가
 
   useEffect(() => {
     loadPost();
@@ -111,37 +114,16 @@ const PostDetailPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen bg-gray-50">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-purple-500"></div>
-        <p className="ml-4 text-lg text-gray-700">게시글 로딩 중...</p>
+      <div className="flex justify-center items-center h-screen">
+        <p className="text-gray-500">게시글을 불러오는 중...</p>
       </div>
     );
   }
 
-  if (notFound || !post) {
+  if (!post) {
     return (
-      <div className="max-w-4xl mx-auto p-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center py-12"
-        >
-          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <ArrowLeft className="w-8 h-8 text-gray-400" />
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            게시글을 찾을 수 없습니다
-          </h2>
-          <p className="text-gray-600 mb-6">
-            요청하신 게시글이 삭제되었거나 존재하지 않습니다.
-          </p>
-          <button
-            onClick={() => navigate("/community")}
-            className="bg-purple-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-purple-700 transition-colors"
-          >
-            커뮤니티로 돌아가기
-          </button>
-        </motion.div>
+      <div className="flex justify-center items-center h-screen">
+        <p className="text-gray-500">게시글을 찾을 수 없습니다.</p>
       </div>
     );
   }

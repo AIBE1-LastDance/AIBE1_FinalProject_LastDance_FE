@@ -339,6 +339,17 @@ const PostDetail: React.FC<PostDetailProps> = ({
   };
 
   // 삭제된 게시글 처리
+  if (!post) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="flex items-center space-x-3">
+          <div className="w-5 h-5 border-2 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
+          <span className="text-gray-600">게시글을 불러오는 중입니다...</span>
+        </div>
+      </div>
+    );
+  }
+
   if (post.deleted) {
     return (
       <div className="max-w-4xl mx-auto space-y-6">
@@ -348,14 +359,14 @@ const PostDetail: React.FC<PostDetailProps> = ({
           className="flex items-center space-x-4"
         >
           <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={onBack}
-            className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span>목록으로</span>
-          </motion.button>
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={onBack}
+              className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span>목록으로</span>
+            </motion.button>
         </motion.div>
 
         <motion.div
@@ -464,7 +475,7 @@ const PostDetail: React.FC<PostDetailProps> = ({
           <div className="flex items-center space-x-6">
             <motion.button
               whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
+              whileTap={{ scale: 0.9 }}
               onClick={handleToggleLike}
               className={`flex items-center space-x-2 transition-colors ${
                 localPost.userLiked
@@ -489,7 +500,7 @@ const PostDetail: React.FC<PostDetailProps> = ({
           <div className="flex items-center space-x-2">
             <motion.button
               whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
+              whileTap={{ scale: 0.9 }}
               onClick={handleToggleBookmark}
               className={`transition-colors p-2 rounded-lg ${
                 localPost.userBookmarked
@@ -587,7 +598,7 @@ const PostDetail: React.FC<PostDetailProps> = ({
               >
                 {isSubmittingComment ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <div className="w-5 h-5 border-2 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
                     <span>작성 중...</span>
                   </>
                 ) : (

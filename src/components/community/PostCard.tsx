@@ -1,3 +1,4 @@
+// 기존 코드 유지
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import {
@@ -280,6 +281,7 @@ const PostCard: React.FC<PostCardProps> = ({
 
       <div className="flex items-center justify-between pt-4 border-t border-gray-100">
         <div className="flex items-center space-x-6">
+          {/* 좋아요 버튼 추가 및 수정된 부분 */}
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
@@ -290,7 +292,7 @@ const PostCard: React.FC<PostCardProps> = ({
                 : "text-gray-500 hover:text-orange-500"
             } transition-colors`}
           >
-            <Heart className={`w-5 h-5 ${isLiked ? "fill-orange-500" : ""}`} />
+            <Heart className={`w-5 h-5 ${isLiked ? "fill-current" : ""}`} />
             <span className="text-sm font-medium">{post.likeCount || 0}</span>
           </motion.button>
 
