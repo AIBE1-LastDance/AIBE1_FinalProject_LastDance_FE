@@ -169,13 +169,13 @@ const MemoryGamePage: React.FC = () => {
               animate={{ opacity: 1, scale: 1 }}
               className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80"
             >
-              <div className="bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl p-12 text-center text-white">
+              <div className="bg-gradient-to-br from-yellow-400 to-primary-500 rounded-2xl p-12 text-center text-white">
                 <div className="text-6xl mb-4">🏆</div>
                 <h2 className="text-3xl font-bold mb-4">축하합니다!</h2>
                 <div className="text-lg mb-6">{moves}번 만에 완성!</div>
                 <button
                   onClick={() => window.location.reload()}
-                  className="px-6 py-3 bg-white text-orange-500 rounded-xl font-bold"
+                  className="px-6 py-3 bg-white text-primary-500 rounded-xl font-bold"
                 >
                   다시 플레이
                 </button>

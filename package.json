@@ -6,10 +6,10 @@
   "scripts": {
     "dev": "vite",
     "start": "vite",
-    "build": "tsc && vite build",
-    "build:prod": "vite build",
+    "build": "tsc && vite build --minify",
+    "build:prod": "vite build --minify",
     "type-check": "tsc --noEmit",
-    "preview": "vite preview",
+    "preview": "vite preview --port 3000",
     "lint": "eslint ."
   },
   "dependencies": {

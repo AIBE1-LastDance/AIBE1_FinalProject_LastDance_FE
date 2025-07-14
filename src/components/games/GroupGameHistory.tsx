@@ -152,7 +152,7 @@ const GroupGameHistory: React.FC<GroupGameHistoryProps> = ({ groupId, groupName 
                       <span className={`text-sm font-bold ${
                         index === 0 ? 'text-yellow-600' : 
                         index === 1 ? 'text-gray-500' : 
-                        index === 2 ? 'text-orange-600' : 'text-gray-400'
+                        index === 2 ? 'text-primary-600' : 'text-gray-400'
                       }`}>
                         {index + 1}위
                       </span>

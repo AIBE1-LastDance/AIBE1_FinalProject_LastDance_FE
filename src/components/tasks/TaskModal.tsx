@@ -153,7 +153,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onSave }) => {
               type="text"
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:outline-none"
               placeholder="할일 제목을 입력하세요"
               disabled={isSubmitting}
               maxLength={100}
@@ -168,7 +168,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onSave }) => {
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:outline-none"
               placeholder="할일 설명을 입력하세요"
               rows={3}
               disabled={isSubmitting}
@@ -186,7 +186,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onSave }) => {
               type="date"
               value={formData.dueDate}
               onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:outline-none"
               disabled={isSubmitting}
               min={new Date().toISOString().split('T')[0]} // 오늘 이후만 선택 가능
             />
@@ -231,7 +231,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onSave }) => {
               <select
                 value={formData.assigneeId}
                 onChange={(e) => setFormData({ ...formData, assigneeId: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent-500 focus:border-transparent focus:outline-none"
                 disabled={isSubmitting}
               >
                 <option value="">담당자를 선택하세요</option>

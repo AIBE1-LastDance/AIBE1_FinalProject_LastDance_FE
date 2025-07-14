@@ -30,10 +30,10 @@ const personLabels = ["A", "B", "C", "D"];
 
 const personThemes = {
   A: {
-    gradient: "bg-gradient-to-br from-orange-50 to-orange-100",
-    border: "border-orange-200",
+    gradient: "bg-gradient-to-br from-primary-50 to-primary-100",
+    border: "border-primary-200",
     label: "bg-gradient-to-br from-primary-500 to-primary-600 text-white",
-    accent: "border-l-4 border-orange-400",
+    accent: "border-l-4 border-primary-400",
   },
   B: {
     gradient: "bg-gradient-to-br from-amber-50 to-amber-100",
@@ -120,7 +120,7 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
         <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-primary-500 to-primary-600 rounded-3xl mb-6 shadow-xl">
           <ShieldCheck className="w-10 h-10 text-white" />
         </div>
-        <h2 className="text-4xl font-bold bg-gradient-to-r from-orange-600 to-orange-800 bg-clip-text text-transparent mb-4">
+        <h2 className="text-4xl font-bold bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent mb-4">
           AI의 공정한 판결
         </h2>
         <p className="text-xl text-gray-600 max-w-2xl mx-auto">
@@ -132,7 +132,7 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.1 }}
-        className="bg-white rounded-3xl p-8 mb-8 border border-gray-200 shadow-xl border-l-4 border-l-orange-400"
+        className="bg-white rounded-3xl p-8 mb-8 border border-gray-200 shadow-xl border-l-4 border-l-primary-400"
       >
         <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
           <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center mr-4 shadow-lg">
@@ -184,7 +184,7 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.2 }}
-        className="relative bg-white border border-gray-200 border-l-4 border-l-orange-400 rounded-3xl p-8 shadow-xl transition-all duration-300 mb-8"
+        className="relative bg-white border border-gray-200 border-l-4 border-l-primary-400 rounded-3xl p-8 shadow-xl transition-all duration-300 mb-8"
       >
         <div className="flex items-center space-x-4 mb-6">
           <div className="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center">
@@ -192,13 +192,13 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
           </div>
           <div>
             <h3 className="text-3xl font-bold text-gray-800">AI 판결 결과</h3>
-            <p className="text-orange-700 font-medium">
+            <p className="text-primary-700 font-medium">
               공정하고 객관적인 분석 결과
             </p>
           </div>
         </div>
 
-        <div className="bg-white/100 backdrop-blur-sm rounded-2xl p-6 border border-orange-200/50 shadow-inner">
+        <div className="bg-white/100 backdrop-blur-sm rounded-2xl p-6 border border-primary-200/50 shadow-inner">
           <div className="prose prose-lg prose-gray max-w-none text-gray-800 leading-relaxed">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
               {aiJudgmentResult.judgmentResult}
@@ -264,7 +264,7 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
         </motion.button>
 
         <motion.button
-          className="flex items-center px-8 py-4 rounded-2xl bg-gradient-to-r from-primary-500 to-primary-600 text-white font-semibold hover:from-orange-600 hover:to-orange-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+          className="flex items-center px-8 py-4 rounded-2xl bg-gradient-to-r from-primary-500 to-primary-600 text-white font-semibold hover:from-primary-600 hover:to-primary-700 transition-all duration-200 shadow-lg hover:shadow-xl"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={onReset}

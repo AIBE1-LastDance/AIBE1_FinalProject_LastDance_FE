@@ -266,7 +266,7 @@ const ContentManagement: React.FC = () => {
             {/* 액션 버튼 */}
             <div className="flex space-x-3 pt-6 border-t">
               {selectedContent.status === 'public' ? (
-                <button className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors">
+                <button className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors">
                   <EyeOff className="w-4 h-4 mr-2" />
                   숨기기
                 </button>
