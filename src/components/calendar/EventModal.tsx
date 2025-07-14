@@ -227,7 +227,7 @@ const EventModal: React.FC<EventModalProps> = ({
                     type="text"
                     value={formData.title}
                     onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
                     placeholder="일정 제목을 입력하세요"
                     disabled={isSubmitting}
                 />
@@ -241,7 +241,7 @@ const EventModal: React.FC<EventModalProps> = ({
                 <textarea
                     value={formData.description}
                     onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent resize-none"
                     placeholder="일정에 대한 상세 설명을 입력하세요"
                     rows={3}
                     disabled={isSubmitting}
@@ -261,7 +261,7 @@ const EventModal: React.FC<EventModalProps> = ({
                       ...prev,
                       date: new Date(e.target.value)
                     }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:outline-none focus:ring-accent-500 focus:border-transparent"
                     disabled={isSubmitting}
                 />
               </div>
@@ -278,7 +278,7 @@ const EventModal: React.FC<EventModalProps> = ({
                       ...prev,
                       endDate: e.target.value ? new Date(e.target.value) : undefined
                     }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
                     disabled={isSubmitting}
                 />
               </div>
@@ -290,7 +290,7 @@ const EventModal: React.FC<EventModalProps> = ({
                     id="allDay"
                     checked={formData.isAllDay}
                     onChange={(e) => setFormData(prev => ({ ...prev, isAllDay: e.target.checked }))}
-                    className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                    className="rounded border-gray-300 text-accent-600 focus:ring-accent-500 focus:outline-none"
                     disabled={isSubmitting}
                 />
                 <label htmlFor="allDay" className="text-sm font-medium text-gray-700">
@@ -332,7 +332,7 @@ const EventModal: React.FC<EventModalProps> = ({
                               endTime: endTime
                             }));
                           }}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:outline-none focus:ring-accent-500 focus:border-transparent"
                           disabled={isSubmitting}
                       />
                     </div>
@@ -344,7 +344,7 @@ const EventModal: React.FC<EventModalProps> = ({
                           type="time"
                           value={formData.endTime}
                           onChange={(e) => setFormData(prev => ({ ...prev, endTime: e.target.value }))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:outline-none focus:ring-accent-500 focus:border-transparent"
                           disabled={isSubmitting}
                       />
                     </div>
@@ -379,7 +379,7 @@ const EventModal: React.FC<EventModalProps> = ({
                 <select
                     value={formData.repeat}
                     onChange={(e) => setFormData(prev => ({ ...prev, repeat: e.target.value as Event['repeat'] }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:outline-none focus:ring-accent-500 focus:border-transparent"
                     disabled={isSubmitting}
                 >
                   {repeatOptions.map((option) => (
@@ -403,7 +403,7 @@ const EventModal: React.FC<EventModalProps> = ({
                           ...prev,
                           repeatEndDate: e.target.value ? new Date(e.target.value) : undefined
                         }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:outline-none focus:ring-accent-500 focus:border-transparent"
                         disabled={isSubmitting}
                     />
                   </div>
@@ -442,10 +442,10 @@ const EventModal: React.FC<EventModalProps> = ({
                 </motion.button>
                 <motion.button
                     type="submit"
-                    className={`px-4 py-2 bg-primary-600 text-white rounded-lg font-medium transition-colors ${
+                    className={`px-4 py-2 bg-accent-500 text-white rounded-lg font-medium transition-colors ${
                         isSubmitting
                             ? 'opacity-50 cursor-not-allowed'
-                            : 'hover:bg-primary-700'
+                            : 'hover:bg-accent-600'
                     }`}
                     whileHover={isSubmitting ? {} : { scale: 1.02 }}
                     whileTap={isSubmitting ? {} : { scale: 0.98 }}

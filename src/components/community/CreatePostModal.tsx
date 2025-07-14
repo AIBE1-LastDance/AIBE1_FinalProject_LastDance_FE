@@ -169,7 +169,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ post, onClose }) => {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="제목을 입력하세요..."
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:outline-none focus:ring-primary-500 focus:border-transparent"
                   maxLength={100}
                 />
                 <div className="text-xs text-gray-500 mt-1">
@@ -187,7 +187,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ post, onClose }) => {
                   onChange={(e) => setContent(e.target.value)}
                   placeholder="내용을 입력하세요..."
                   rows={8}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:outline-none focus:ring-primary-500 focus:border-transparent resize-none"
                   maxLength={2000}
                 />
                 <div className="text-xs text-gray-500 mt-1">
