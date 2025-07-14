@@ -7,7 +7,6 @@ import {
   Send,
   Clock,
   Share2,
-  Flag,
   Users,
   Lightbulb,
   MessageSquare,
@@ -21,6 +20,7 @@ import {
   ScrollText,
   Handshake,
   Megaphone,
+  BellRing, // Added BellRing for report icon
 } from "lucide-react";
 
 import { Comment } from "../../types/community/comment";
@@ -339,6 +339,17 @@ const PostDetail: React.FC<PostDetailProps> = ({
   };
 
   // 삭제된 게시글 처리
+  if (!post) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="flex items-center space-x-3">
+          <div className="w-5 h-5 border-2 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
+          <span className="text-gray-600">게시글을 불러오는 중입니다...</span>
+        </div>
+      </div>
+    );
+  }
+
   if (post.deleted) {
     return (
       <div className="max-w-4xl mx-auto space-y-6">
@@ -348,14 +359,14 @@ const PostDetail: React.FC<PostDetailProps> = ({
           className="flex items-center space-x-4"
         >
           <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={onBack}
-            className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span>목록으로</span>
-          </motion.button>
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={onBack}
+              className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span>목록으로</span>
+            </motion.button>
         </motion.div>
 
         <motion.div
@@ -371,7 +382,8 @@ const PostDetail: React.FC<PostDetailProps> = ({
             운영정책을 위반하여 관리자에 의해 삭제되었습니다.
           </p>
           <div className="mt-4 text-sm text-gray-400">
-            작성일: {formatDistanceToNow(new Date(post.createdAt), {
+            작성일:{" "}
+            {formatDistanceToNow(new Date(post.createdAt), {
               addSuffix: true,
               locale: ko,
             })}
@@ -415,7 +427,7 @@ const PostDetail: React.FC<PostDetailProps> = ({
             ) : post.authorProfileImageUrl ? (
               <img
                 src={post.authorProfileImageUrl}
-                alt={`${post.authorNickname || "익명"}의 프로필`}
+                alt={`${post.authorNickname || "익명"}`}
                 className="w-10 h-10 rounded-full object-cover"
               />
             ) : (
@@ -452,42 +464,6 @@ const PostDetail: React.FC<PostDetailProps> = ({
                 </div>
               );
             })()}
-
-            {isAuthor && (
-              <div className="flex items-center space-x-2">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleEditPost}
-                  className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                  disabled={isDeletingPost}
-                >
-                  <Pencil className="w-4 h-4" />
-                  <span className="sr-only">편집</span>
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={triggerDeletePost}
-                  className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                  disabled={isDeletingPost}
-                >
-                  <Trash2 className="w-4 h-4" />
-                  <span className="sr-only">삭제</span>
-                </motion.button>
-              </div>
-            )}
-            {!isAuthor && (
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handleReportPost}
-                className="flex items-center space-x-1 px-3 py-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-              >
-                <Flag className="w-4 h-4" />
-                <span className="text-sm">신고</span>
-              </motion.button>
-            )}
           </div>
         </div>
 
@@ -499,7 +475,7 @@ const PostDetail: React.FC<PostDetailProps> = ({
           <div className="flex items-center space-x-6">
             <motion.button
               whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
+              whileTap={{ scale: 0.9 }}
               onClick={handleToggleLike}
               className={`flex items-center space-x-2 transition-colors ${
                 localPost.userLiked
@@ -523,23 +499,13 @@ const PostDetail: React.FC<PostDetailProps> = ({
 
           <div className="flex items-center space-x-2">
             <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleShare}
-              className="flex items-center space-x-1 px-3 py-2 text-gray-500 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
-            >
-              <Share2 className="w-4 h-4" />
-              <span className="text-sm">공유</span>
-            </motion.button>
-
-            <motion.button
               whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
+              whileTap={{ scale: 0.9 }}
               onClick={handleToggleBookmark}
-              className={`transition-colors ${
+              className={`transition-colors p-2 rounded-lg ${
                 localPost.userBookmarked
-                  ? "text-yellow-500"
-                  : "text-gray-400 hover:text-yellow-500"
+                  ? "text-yellow-500 bg-yellow-50"
+                  : "text-gray-400 hover:text-yellow-500 hover:bg-yellow-50"
               }`}
             >
               <Bookmark
@@ -548,6 +514,53 @@ const PostDetail: React.FC<PostDetailProps> = ({
                 }`}
               />
             </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleShare}
+              className="flex items-center space-x-1 px-3 py-2 text-gray-500 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
+            >
+              <Share2 className="w-4 h-4" />
+              <span className="text-sm">공유</span>
+            </motion.button>
+            {isAuthor && (
+              <>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleEditPost}
+                  className="flex items-center space-x-1 px-3 py-2 text-gray-500 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors text-sm" // 추가: text-sm
+                  disabled={isDeletingPost}
+                >
+                  <Pencil className="w-4 h-4" />
+                  <span>편집</span>
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={triggerDeletePost}
+                  className="flex items-center space-x-1 px-3 py-2 text-gray-500 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors text-sm" // 추가: text-sm
+                  disabled={isDeletingPost}
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>삭제</span>
+                </motion.button>
+              </>
+            )}
+
+            {!isAuthor && (
+              <>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleReportPost}
+                  className="flex items-center space-x-1 px-3 py-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                >
+                  <BellRing className="w-4 h-4" />
+                  <span className="text-sm">신고</span>
+                </motion.button>
+              </>
+            )}
           </div>
         </div>
       </motion.article>
@@ -585,7 +598,7 @@ const PostDetail: React.FC<PostDetailProps> = ({
               >
                 {isSubmittingComment ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <div className="w-5 h-5 border-2 border-primary-600 border-t-transparent rounded-full animate-spin"></div>
                     <span>작성 중...</span>
                   </>
                 ) : (
@@ -627,7 +640,9 @@ const PostDetail: React.FC<PostDetailProps> = ({
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center space-x-2 mb-1">
-                          <span className="text-sm font-medium text-gray-600">신고로 인해 삭제된 댓글입니다</span>
+                          <span className="text-sm font-medium text-gray-600">
+                            신고로 인해 삭제된 댓글입니다
+                          </span>
                         </div>
                         <div className="text-xs text-gray-400">
                           {formatDistanceToNow(new Date(comment.createdAt), {
@@ -655,7 +670,7 @@ const PostDetail: React.FC<PostDetailProps> = ({
                     ) : comment.authorProfileImageUrl ? (
                       <img
                         src={comment.authorProfileImageUrl}
-                        alt={`${comment.authorNickname || "익명"}의 프로필`}
+                        alt={`${comment.authorNickname || "익명"}`}
                         className="w-8 h-8 rounded-full object-cover"
                       />
                     ) : (
@@ -726,7 +741,7 @@ const PostDetail: React.FC<PostDetailProps> = ({
                               }
                               className="flex items-center space-x-1 px-2 py-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
                             >
-                              <Flag className="w-3 h-3" />
+                              <BellRing className="w-3 h-3" />
                               <span className="text-xs">신고</span>
                             </motion.button>
                           )}

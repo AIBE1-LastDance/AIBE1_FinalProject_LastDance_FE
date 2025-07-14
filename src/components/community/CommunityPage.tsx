@@ -215,42 +215,6 @@ const CommunityPage: React.FC = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-2xl p-6 text-white"
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-              <MessageSquare className="w-6 h-6" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold">커뮤니티</h1>
-              <p className="text-orange-100">
-                다양한 생활 정보를 공유하고 소통해보세요!
-              </p>
-              <div className="flex items-center mt-2 text-orange-50">
-                <ThumbsUp className="w-4 h-4 mr-1" />
-                <span className="text-sm font-medium">
-                  총 좋아요: {totalLikes}개
-                </span>
-              </div>
-            </div>
-          </div>
-          <button
-            onClick={() => {
-              setEditingPost(null);
-              setIsCreateModalOpen(true);
-            }}
-            className="flex items-center space-x-2 bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-xl transition-colors"
-          >
-            <Plus className="w-5 h-5" />
-            <span className="font-medium">글쓰기</span>
-          </button>
-        </div>
-      </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
         className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200"
       >
@@ -301,72 +265,87 @@ const CommunityPage: React.FC = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15 }}
-        className="flex justify-end items-center space-x-4"
+        className="flex justify-between items-center"
       >
-        <div className="flex items-center space-x-2">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => {
-              setFilterBy(filterBy === "bookmarked" ? "all" : "bookmarked");
-              setCurrentPage(1);
-            }}
-            className={`p-2 rounded-lg transition-colors ${
-              filterBy === "bookmarked"
-                ? "bg-blue-100 text-blue-700 border border-blue-300"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            }`}
-          >
-            <Bookmark
-              className={`w-5 h-5 ${
-                filterBy === "bookmarked" ? "fill-current" : ""
-              }`}
-            />
-          </motion.button>
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => {
+            setEditingPost(null);
+            setIsCreateModalOpen(true);
+          }}
+          className="flex items-center space-x-2 bg-accent-600 text-white px-4 py-2 rounded-xl font-medium hover:bg-accent-700 transition-colors shadow-sm"
+        >
+          <Plus className="w-5 h-5" />
+          <span>글 작성</span>
+        </motion.button>
 
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => {
-              setFilterBy(filterBy === "liked" ? "all" : "liked");
-              setCurrentPage(1);
-            }}
-            className={`p-2 rounded-lg transition-colors ${
-              filterBy === "liked"
-                ? "bg-accent-100 text-accent-700 border border-accent-300"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            }`}
-          >
-            <Heart
-              className={`w-5 h-5 ${
-                filterBy === "liked" ? "fill-current" : ""
-              }`}
-            />
-          </motion.button>
-        </div>
-
-        <div className="flex items-center space-x-2 bg-gray-50 rounded-xl p-1">
-          {[
-            { key: "latest", label: "최신순", icon: Clock },
-            { key: "likes", label: "좋아요순", icon: ThumbsUp },
-            { key: "comments", label: "댓글순", icon: MessageCircle },
-          ].map((option) => (
-            <button
-              key={option.key}
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => {
-                setSortBy(option.key as any);
+                setFilterBy(filterBy === "bookmarked" ? "all" : "bookmarked");
                 setCurrentPage(1);
               }}
-              className={`flex items-center space-x-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                sortBy === option.key
-                  ? "bg-white text-accent-600 shadow-sm"
-                  : "text-gray-600 hover:text-gray-800"
+              className={`p-2 rounded-lg transition-colors ${
+                filterBy === "bookmarked"
+                  ? "bg-blue-100 text-blue-700 border border-blue-300"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
-              <option.icon className="w-4 h-4" />
-              <span>{option.label}</span>
-            </button>
-          ))}
+              <Bookmark
+                className={`w-5 h-5 ${
+                  filterBy === "bookmarked" ? "fill-current" : ""
+                }`}
+              />
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                setFilterBy(filterBy === "liked" ? "all" : "liked");
+                setCurrentPage(1);
+              }}
+              className={`p-2 rounded-lg transition-colors ${
+                filterBy === "liked"
+                  ? "bg-accent-100 text-accent-700 border border-accent-300"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+            >
+              <Heart
+                className={`w-5 h-5 ${
+                  filterBy === "liked" ? "fill-current" : ""
+                }`}
+              />
+            </motion.button>
+          </div>
+
+          <div className="flex items-center space-x-2 bg-gray-50 rounded-xl p-1">
+            {[
+              { key: "latest", label: "최신순", icon: Clock },
+              { key: "likes", label: "좋아요순", icon: ThumbsUp },
+              { key: "comments", label: "댓글순", icon: MessageCircle },
+            ].map((option) => (
+              <button
+                key={option.key}
+                onClick={() => {
+                  setSortBy(option.key as any);
+                  setCurrentPage(1);
+                }}
+                className={`flex items-center space-x-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  sortBy === option.key
+                    ? "bg-white text-accent-600 shadow-sm"
+                    : "text-gray-600 hover:text-gray-800"
+                }`}
+              >
+                <option.icon className="w-4 h-4" />
+                <span>{option.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
       </motion.div>
 
