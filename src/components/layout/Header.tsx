@@ -314,7 +314,7 @@ const Header: React.FC = () => {
                   {/* SSE 연결 상태 표시 */}
                   <div
                     className={`absolute -top-1 -left-1 w-2 h-2 rounded-full ${
-                      isSSEConnected ? "bg-green-500" : "bg-red-400"
+                      isSSEConnected ? "bg-green-500" : "bg-gray-400"
                     }`}
                     title={isSSEConnected ? "SSE 연결됨" : "SSE 연결 끊김"}
                   />
@@ -358,7 +358,7 @@ const Header: React.FC = () => {
                               className={`px-2 py-1 text-xs rounded-full font-medium ${
                                 isSSEConnected
                                   ? "bg-green-500 text-white"
-                                  : "bg-red-400 text-white"
+                                  : "bg-gray-100 text-gray-600"
                               }`}
                             >
                               {isSSEConnected ? "실시간" : "오프라인"}
