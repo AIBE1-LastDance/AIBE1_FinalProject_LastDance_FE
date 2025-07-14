@@ -167,13 +167,13 @@ const EventModal: React.FC<EventModalProps> = ({
 
   const categories = [
     { value: 'general', label: '일반', color: 'bg-gray-100 text-gray-800' },
-    { value: 'bill', label: '청구서/결제', color: 'bg-red-100 text-red-800' },
-    { value: 'cleaning', label: '청소', color: 'bg-green-100 text-green-800' },
-    { value: 'meeting', label: '회의', color: 'bg-blue-100 text-blue-800' },
-    { value: 'appointment', label: '약속', color: 'bg-purple-100 text-purple-800' },
-    { value: 'health', label: '건강', color: 'bg-pink-100 text-pink-800' },
-    { value: 'shopping', label: '쇼핑', color: 'bg-yellow-100 text-yellow-800' },
-    { value: 'travel', label: '여행', color: 'bg-indigo-100 text-indigo-800' },
+    { value: 'bill', label: '청구서/결제', color: 'bg-status-error text-gray-800' },
+    { value: 'cleaning', label: '청소', color: 'bg-status-success text-gray-800' },
+    { value: 'meeting', label: '회의', color: 'bg-accent-100 text-accent-800' },
+    { value: 'appointment', label: '약속', color: 'bg-primary-100 text-primary-800' },
+    { value: 'health', label: '건강', color: 'bg-category-mint text-gray-800' },
+    { value: 'shopping', label: '쇼핑', color: 'bg-category-orange text-gray-800' },
+    { value: 'travel', label: '여행', color: 'bg-category-lavender text-gray-800' },
   ];
 
   const repeatOptions = [
@@ -415,7 +415,7 @@ const EventModal: React.FC<EventModalProps> = ({
                 {event && (
                     <motion.button
                         type="button"
-                        className={`px-4 py-2 border border-red-300 text-red-700 rounded-lg font-medium transition-colors ${
+                        className={`px-4 py-2 border border-status-error text-status-error rounded-lg font-medium transition-colors ${
                             isSubmitting
                                 ? 'opacity-50 cursor-not-allowed'
                                 : 'hover:bg-red-50'

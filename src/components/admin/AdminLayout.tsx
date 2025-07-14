@@ -39,10 +39,10 @@ const AdminLayout: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 transform ${
+      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 transform ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       } transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`}>
-        <div className="flex items-center justify-between h-16 px-6 bg-slate-800">
+        <div className="flex items-center justify-between h-16 px-6 bg-gray-800">
           <h1 className="text-xl font-bold text-white">관리자 패널</h1>
           <button
             onClick={() => setSidebarOpen(false)}
@@ -64,8 +64,8 @@ const AdminLayout: React.FC = () => {
                 }}
                 className={`w-full flex items-center px-6 py-3 text-left text-sm font-medium transition-colors ${
                   isActive(item.path)
-                    ? 'bg-slate-800 text-white border-r-2 border-accent-500'
-                    : 'text-gray-300 hover:bg-slate-800 hover:text-white'
+                    ? 'bg-gray-800 text-white border-r-2 border-accent-500'
+                    : 'text-gray-300 hover:bg-gray-800 hover:text-white'
                 }`}
               >
                 <Icon className="w-5 h-5 mr-3" />
@@ -78,7 +78,7 @@ const AdminLayout: React.FC = () => {
         <div className="absolute bottom-0 w-full p-6">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-slate-800 hover:text-white rounded-md transition-colors"
+            className="w-full flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white rounded-md transition-colors"
           >
             <LogOut className="w-4 h-4 mr-3" />
             로그아웃
