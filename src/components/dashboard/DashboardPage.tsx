@@ -453,7 +453,7 @@ const DashboardPage: React.FC = () => {
                         <h3 className="text-lg font-bold text-gray-900">주간 완료 현황</h3>
                         <Activity className="w-5 h-5 text-primary-600"/>
                     </div>
-                    <div className="flex-1 min-h-[200px]">
+                    <div className="flex-1 min-h-[200px] flex items-center justify-center">
                         <ResponsiveContainer width="100%" height={200}>
                             <AreaChart data={activityData}>
                                 <CartesianGrid strokeDasharray="3 3"/>
@@ -908,3 +908,4 @@ const DashboardPage: React.FC = () => {
 };
 
 export default DashboardPage;
+
