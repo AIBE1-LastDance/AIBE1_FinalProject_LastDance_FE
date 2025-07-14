@@ -136,20 +136,20 @@ const CalendarPage: React.FC = () => {
   // 일정 타입별 스타일 가져오기
   const getEventStyle = (event: any) => {
     const baseStyles = {
-      bill: 'bg-red-100 text-red-800 border-red-200',
-      cleaning: 'bg-green-100 text-green-800 border-green-200',
-      meeting: 'bg-blue-100 text-blue-800 border-blue-200',
-      appointment: 'bg-purple-100 text-purple-800 border-purple-200',
-      health: 'bg-pink-100 text-pink-800 border-pink-200',
-      shopping: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      travel: 'bg-indigo-100 text-indigo-800 border-indigo-200',
+      bill: 'bg-status-error text-gray-800 border-status-error',
+      cleaning: 'bg-status-success text-gray-800 border-status-success', 
+      meeting: 'bg-accent-100 text-accent-800 border-accent-200',
+      appointment: 'bg-primary-100 text-primary-800 border-primary-200',
+      health: 'bg-category-mint text-gray-800 border-category-mint',
+      shopping: 'bg-category-orange text-gray-800 border-category-orange',
+      travel: 'bg-category-lavender text-gray-800 border-category-lavender',
     };
     
     const categoryStyle = baseStyles[event.category as keyof typeof baseStyles] || 'bg-gray-100 text-gray-800 border-gray-200';
     
     // 그룹 일정인 경우 보더 추가
     if (event.groupId) {
-      return `${categoryStyle} border-l-4 border-l-blue-500`;
+      return `${categoryStyle} border-l-4 border-l-accent-500`;
     }
     
     return categoryStyle;
@@ -158,7 +158,7 @@ const CalendarPage: React.FC = () => {
   // 일정 아이콘 렌더링
   const renderEventIcon = (event: any) => {
     if (event.groupId) {
-      return <Users className="w-3 h-3 text-blue-600" />;
+      return <Users className="w-3 h-3 text-accent-600" />;
     } else {
       return <User className="w-3 h-3 text-gray-600" />;
     }
@@ -168,7 +168,7 @@ const CalendarPage: React.FC = () => {
   const renderEventLabel = (event: any) => {
     if (event.groupId) {
       return (
-        <div className="text-[10px] text-blue-600 font-medium">
+        <div className="text-[10px] text-accent-600 font-medium">
           <span>{event.groupName || '그룹'}</span>
         </div>
       );
@@ -645,7 +645,7 @@ const MonthView: React.FC<{
                     ))}
                     {dayEvents.length > 3 && (
                         <motion.button
-                          className="text-xs text-blue-600 hover:text-blue-800 px-2 py-1 hover:bg-blue-50 rounded transition-colors font-medium"
+                          className="text-xs text-accent-600 hover:text-accent-800 px-2 py-1 hover:bg-accent-50 rounded transition-colors font-medium"
                           whileHover={{ scale: 1.02 }}
                           onClick={(e) => onShowMoreEvents(day, e)}
                         >
