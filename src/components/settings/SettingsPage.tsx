@@ -1002,23 +1002,6 @@ const SettingsPage: React.FC = () => {
 
     return (
         <div className="space-y-8">
-            {/* Header */}
-            <motion.div
-                initial={{opacity: 0, y: 20}}
-                animate={{opacity: 1, y: 0}}
-                transition={{duration: 0.6}}
-                className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-3xl p-8 text-white"
-            >
-                <div className="flex items-center space-x-4">
-                    <div className="w-16 h-16 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center">
-                        <Settings className="w-8 h-8"/>
-                    </div>
-                    <div>
-                        <h1 className="text-3xl font-bold">설정</h1>
-                        <p className="text-primary-100">계정 및 알림 설정을 관리하세요</p>
-                    </div>
-                </div>
-            </motion.div>
 
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 relative">
                 {/* Sidebar */}
