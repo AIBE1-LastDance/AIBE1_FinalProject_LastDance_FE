@@ -416,7 +416,7 @@ const EventModal: React.FC<EventModalProps> = ({
                 {event && (
                     <motion.button
                         type="button"
-                        className={`px-4 py-2 border border-status-error text-status-error rounded-lg font-medium transition-colors ${
+                        className={`px-4 py-2 border border-red-300 text-red-700 rounded-lg font-medium transition-colors ${
                             isSubmitting
                                 ? 'opacity-50 cursor-not-allowed'
                                 : 'hover:bg-red-50'
@@ -430,19 +430,10 @@ const EventModal: React.FC<EventModalProps> = ({
                     </motion.button>
                 )}
 
-                <motion.button
-                    type="button"
-                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={onClose}
-                    disabled={isSubmitting}
-                >
-                  취소
-                </motion.button>
+
                 <motion.button
                     type="submit"
-                    className={`px-4 py-2 bg-accent-500 text-white rounded-lg font-medium transition-colors ${
+                    className={`flex-1 px-4 py-2 bg-accent-500 text-white rounded-lg font-medium transition-colors ${
                         isSubmitting
                             ? 'opacity-50 cursor-not-allowed'
                             : 'hover:bg-accent-600'
@@ -452,13 +443,24 @@ const EventModal: React.FC<EventModalProps> = ({
                     disabled={isSubmitting}
                 >
                   {isSubmitting ? (
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center justify-center space-x-2">
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"/>
                         <span>저장 중...</span>
                       </div>
                   ) : (
                       '저장'
                   )}
+                </motion.button>
+
+                <motion.button
+                  type="button"
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={onClose}
+                  disabled={isSubmitting}
+                >
+                  취소
                 </motion.button>
                 </div>
             </form>

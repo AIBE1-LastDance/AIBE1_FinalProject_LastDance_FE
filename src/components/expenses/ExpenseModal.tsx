@@ -676,21 +676,10 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                 </motion.button>
               )}
 
-              <motion.button
-                type="button"
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
-                whileHover={{scale: 1.02}}
-                whileTap={{scale: 0.98}}
-                onClick={onClose}
-                disabled={isSubmitting || isDeleting}
-              >
-                취소
-              </motion.button>
-
               {!expense?.isGroupShare && (
                 <motion.button
                   type="submit"
-                  className={`px-4 py-2 bg-accent-500 text-white rounded-lg font-medium transition-colors ${
+                  className={`flex-1 px-4 py-2 bg-accent-500 text-white rounded-lg font-medium transition-colors ${
                     isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-accent-600'
                   }`}
                   whileHover={isSubmitting ? {} : {scale: 1.02}}
@@ -698,7 +687,7 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                   disabled={isSubmitting || isDeleting}
                 >
                   {isSubmitting ? (
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center justify-center space-x-2">
                       <div
                         className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"/>
                       <span>{expense ? '수정 중...' : '추가 중...'}</span>
@@ -708,6 +697,18 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                   )}
                 </motion.button>
               )}
+
+              <motion.button
+                type="button"
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                whileHover={{scale: 1.02}}
+                whileTap={{scale: 0.98}}
+                onClick={onClose}
+                disabled={isSubmitting || isDeleting}
+              >
+                취소
+              </motion.button>
+
             </div>
           </form>
         </motion.div>

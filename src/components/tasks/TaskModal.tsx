@@ -259,24 +259,25 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onSave }) => {
                 {isSubmitting ? '삭제 중...' : '삭제'}
               </motion.button>
             )}
+
+            <motion.button
+              type="submit"
+              className="flex-1 px-4 py-2 bg-accent-500 text-white rounded-lg font-medium hover:bg-accent-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
+              whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (task ? '수정 중...' : '추가 중...') : (task ? '수정' : '추가')}
+            </motion.button>
             <motion.button
               type="button"
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
               whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
               onClick={onClose}
               disabled={isSubmitting}
             >
               취소
-            </motion.button>
-            <motion.button
-              type="submit"
-              className="px-4 py-2 bg-accent-600 text-white rounded-lg font-medium hover:bg-accent-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
-              whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (task ? '수정 중...' : '추가 중...') : (task ? '수정' : '추가')}
             </motion.button>
           </div>
         </form>
