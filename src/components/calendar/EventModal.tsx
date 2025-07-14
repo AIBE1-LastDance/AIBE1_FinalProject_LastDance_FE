@@ -4,6 +4,7 @@ import { X, Calendar, Clock, Repeat, Trash2, Save } from 'lucide-react';
 import { format } from 'date-fns';
 import {Event, Group} from '../../types';
 import toast from 'react-hot-toast';
+import {createPortal} from "react-dom";
 
 interface EventModalProps {
   selectedDate: Date | null;
@@ -184,7 +185,7 @@ const EventModal: React.FC<EventModalProps> = ({
     { value: 'yearly', label: '매년' },
   ];
 
-  return (
+  const modalContent = (
       <AnimatePresence>
         <motion.div
             initial={{ opacity: 0 }}
@@ -464,7 +465,8 @@ const EventModal: React.FC<EventModalProps> = ({
           </motion.div>
         </motion.div>
       </AnimatePresence>
-  );
+  )
+  return createPortal(modalContent, document.body)
 };
 
 export default EventModal;

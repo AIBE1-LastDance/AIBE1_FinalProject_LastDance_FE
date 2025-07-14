@@ -6,6 +6,7 @@ import { useAuthStore } from '../../store/authStore';
 import { ChecklistResponseDTO, ChecklistRequestDTO } from '../../types/checklist';
 import { ChecklistService } from '../../api/checklist';
 import toast from 'react-hot-toast';
+import {createPortal} from "react-dom";
 
 interface TaskModalProps {
   task: ChecklistResponseDTO | null;
@@ -117,7 +118,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onSave }) => {
     }
   };
 
-  return (
+  const modalContent = (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
@@ -282,6 +283,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onSave }) => {
       </motion.div>
     </div>
   );
+  return createPortal(modalContent, document.body);
 };
 
 export default TaskModal;

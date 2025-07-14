@@ -12,6 +12,7 @@ import { useAuthStore } from "../../store/authStore";
 import toast from "react-hot-toast";
 import { Post } from "../../types/community/community";
 import { createPost, updatePost } from "../../api/community/community";
+import {createPortal} from "react-dom";
 
 interface CreatePostModalProps {
   post?: Post | null;
@@ -110,7 +111,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ post, onClose }) => {
     }
   };
 
-  return (
+  const modalContent =  (
     <AnimatePresence>
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
         <motion.div
@@ -233,6 +234,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ post, onClose }) => {
       </div>
     </AnimatePresence>
   );
+  return createPortal(modalContent, document.body);
 };
 
 export default CreatePostModal;
