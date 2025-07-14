@@ -4,7 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { Calendar, CheckSquare, CreditCard, Users, Gamepad2, Bot, ArrowRight, ChevronDown, BarChart3, User, ChevronDown as ChevronDownIcon, Settings, LogOut, Bell, ExternalLink } from 'lucide-react';
 import { FaGoogle, FaComment } from 'react-icons/fa';
 import { SiNaver } from 'react-icons/si';
-import { useAuthStore } from '../../store/authStore';
+import Footer from '../layout/Footer';
+import {useAuthStore} from "../../store/authStore.ts";
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -632,14 +633,7 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* Footer */}
-      <footer className="py-16 border-t border-gray-200 bg-white">
-        <div className="max-w-7xl mx-auto px-6 text-center">
-          <div className="flex items-center justify-center mb-8">
-            <img src={logoUrl} alt="우리.zip" className="w-16 h-16" />
-          </div>
-          <p className="text-gray-500 font-body">&copy; 2024 우리.zip. All rights reserved.</p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };

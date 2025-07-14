@@ -34,7 +34,7 @@ const Footer: React.FC = () => {
   const logoUrl = import.meta.env.VITE_LOGO_URL;
 
   return (
-    <footer className="bg-white border-t border-gray-200 mt-20 hidden md:block">
+    <footer className="bg-white border-t border-gray-200 hidden md:block">
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Company Info */}
