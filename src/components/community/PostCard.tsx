@@ -28,6 +28,7 @@ interface PostCardProps {
   onDelete?: (postId: string) => void;
   onToggleLike: (postId: string) => void;
   onToggleBookmark: (postId: string) => void;
+  showActions?: boolean;
 }
 
 const PostCard: React.FC<PostCardProps> = ({
@@ -37,6 +38,7 @@ const PostCard: React.FC<PostCardProps> = ({
   onDelete,
   onToggleLike,
   onToggleBookmark,
+  showActions = true,
 }) => {
   const { user } = useAuthStore();
   const [showMenu, setShowMenu] = useState(false);
@@ -230,7 +232,7 @@ const PostCard: React.FC<PostCardProps> = ({
             <span>{post.categoryName}</span>
           </div>
 
-          {isAuthor && (
+          {isAuthor && showActions && (
             <div className="relative">
               <motion.button
                 whileHover={{ scale: 1.1 }}
@@ -248,14 +250,14 @@ const PostCard: React.FC<PostCardProps> = ({
                 <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[120px]">
                   <button
                     onClick={handleEdit}
-                    className="flex items-center space-x-2 w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="flex items-center space-x-1 px-3 py-2 w-full text-gray-500 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
                   >
                     <Edit className="w-4 h-4" />
                     <span>편집</span>
                   </button>
                   <button
                     onClick={handleDelete}
-                    className="flex items-center space-x-2 w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                    className="flex items-center space-x-1 px-3 py-2 w-full text-gray-500 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
                     <span>삭제</span>
@@ -298,11 +300,6 @@ const PostCard: React.FC<PostCardProps> = ({
               {post.commentCount || 0}
             </span>
           </div>
-
-          <button className="flex items-center space-x-2 text-gray-500 hover:text-blue-500 transition-colors">
-            <Share2 className="w-5 h-5" />
-            <span className="text-sm font-medium">공유</span>
-          </button>
         </div>
 
         <motion.button
