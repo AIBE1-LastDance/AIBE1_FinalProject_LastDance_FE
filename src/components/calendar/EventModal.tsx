@@ -100,6 +100,11 @@ const EventModal: React.FC<EventModalProps> = ({
       return;
     }
 
+    if (formData.title.length > 200) {
+      toast.error('제목은 200자 이내로 입력해주세요.');
+      return;
+    }
+
     // 하루 종일이 아닌 경우 시간 검증
     if (!formData.isAllDay && formData.startTime && formData.endTime) {
       if (formData.startTime >= formData.endTime) {
@@ -221,14 +226,22 @@ const EventModal: React.FC<EventModalProps> = ({
               {/* Title */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  제목 *
+                  제목 * <span className="text-xs text-gray-500">({formData.title?.length || 0}/200자)</span>
                 </label>
                 <input
                     type="text"
                     value={formData.title}
-                    onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value.length > 200) {
+                        toast.error('제목은 200자 이내로 입력해주세요.');
+                        return;
+                      }
+                      setFormData(prev => ({ ...prev, title: value }));
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
                     placeholder="일정 제목을 입력하세요"
+                    maxLength={200}
                     disabled={isSubmitting}
                 />
               </div>

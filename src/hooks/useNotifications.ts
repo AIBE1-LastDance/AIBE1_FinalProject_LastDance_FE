@@ -37,7 +37,7 @@ class SSEManager {
     private currentUserId: string | null = null;
     private listeners = new Set<() => void>();
     private readonly maxReconnectAttempts = 5;
-    
+
     // 🔥 중복 연결 방지를 위한 추가 플래그
     private connectionInProgress = false;
     private lastConnectAttempt = 0;
@@ -75,9 +75,9 @@ class SSEManager {
     // SSE 연결 - 개선된 중복 방지 로직
     connect(userId: string) {
         const now = Date.now();
-        
+
         sseDebugger.log('SSE 연결 시도', { userId, currentUserId: this.currentUserId, isConnected: this.isConnected() }, userId);
-        
+
         // 🔥 중복 연결 방지 체크들
         // 1. 너무 빈번한 연결 시도 방지
         if (now - this.lastConnectAttempt < this.minConnectInterval) {
@@ -85,21 +85,21 @@ class SSEManager {
             sseDebugger.log('연결 시도 스킵 - 빈번한 시도', { timeDiff: now - this.lastConnectAttempt }, userId);
             return;
         }
-        
+
         // 2. 이미 연결 진행 중인 경우
         if (this.connectionInProgress) {
             console.log('[SSEManager] 이미 연결 진행 중, 스킵');
             sseDebugger.log('연결 시도 스킵 - 진행 중', { connectionInProgress: this.connectionInProgress }, userId);
             return;
         }
-        
+
         // 3. 이미 같은 사용자로 연결되어 있고 연결 상태가 정상인 경우
         if (this.currentUserId === userId && this.isConnected()) {
             console.log('[SSEManager] 이미 연결되어 있음, 스킵');
             sseDebugger.log('연결 시도 스킵 - 이미 연결됨', { userId, isConnected: true }, userId);
             return;
         }
-        
+
         // 4. 연결 중이거나 이미 연결되어 있지만 다른 사용자인 경우
         if (this.isConnecting || (this.eventSource && this.currentUserId !== userId)) {
             console.log('[SSEManager] 기존 연결 해제 후 재연결');
@@ -152,16 +152,16 @@ class SSEManager {
                             default: return '/dashboard';
                         }
                     }
-                    
+
                     // relatedId가 있으면 상세 페이지로
                     switch (type) {
-                        case 'SCHEDULE': 
+                        case 'SCHEDULE':
                             return `/calendar?eventId=${relatedId}`;
-                        case 'PAYMENT': 
+                        case 'PAYMENT':
                             return `/expenses?splitId=${relatedId}`;
-                        case 'CHECKLIST': 
+                        case 'CHECKLIST':
                             return `/tasks?taskId=${relatedId}`;
-                        default: 
+                        default:
                             return '/dashboard';
                     }
                 };
@@ -293,7 +293,7 @@ export const useNotifications = () => {
 
     const sseManager = SSEManager.getInstance();
     const stateUpdateRef = useRef<() => void>();
-    
+
     // 🔥 중복 실행 방지를 위한 ref
     const initializationRef = useRef(false);
 
@@ -544,7 +544,7 @@ export const useNotifications = () => {
         if (initializationRef.current) {
             return;
         }
-        
+
         console.log('[useNotifications] 초기화 시작');
         initializationRef.current = true;
 
@@ -604,12 +604,12 @@ export const useNotifications = () => {
 
         if (user?.id) {
             console.log('[useNotifications] 사용자 로그인됨, SSE 연결 확인/시작');
-            sseDebugger.log('사용자 로그인됨 - SSE 연결 확인', { 
-                userId: user.id, 
+            sseDebugger.log('사용자 로그인됨 - SSE 연결 확인', {
+                userId: user.id,
                 currentSSEUser: sseManager.getCurrentUserId(),
                 isConnected: sseManager.isConnected()
             }, user.id);
-            
+
             // 현재 연결된 사용자와 다르면 설정 확인 후 연결
             if (sseManager.getCurrentUserId() !== user.id) {
                 // 🔥 설정 확인 후 연결하도록 수정

@@ -168,7 +168,10 @@ const CalendarPage: React.FC = () => {
   const renderEventLabel = (event: any) => {
     if (event.groupId) {
       return (
-        <div className="text-[10px] text-accent-600 font-medium">
+        <div 
+          className="text-[10px] text-accent-600 font-medium truncate max-w-[80px]" 
+          title={event.groupName || '그룹'}
+        >
           <span>{event.groupName || '그룹'}</span>
         </div>
       );
@@ -240,7 +243,10 @@ const CalendarPage: React.FC = () => {
                       <div className="text-base font-medium text-gray-500">
                         공유 캘린더
                       </div>
-                      <div className="text-2xl lg:text-3xl font-bold text-primary-600 truncate" title={currentGroup?.name || "그룹 선택 필요"}>
+                      <div 
+                        className="text-2xl lg:text-3xl font-bold text-primary-600 truncate max-w-[200px] lg:max-w-[300px]" 
+                        title={currentGroup?.name || "그룹 선택 필요"}
+                      >
                         {currentGroup?.name || "그룹 선택 필요"}
                       </div>
                     </div>
