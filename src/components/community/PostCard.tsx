@@ -233,40 +233,7 @@ const PostCard: React.FC<PostCardProps> = ({
             <span>{post.categoryName}</span>
           </div>
 
-          {isAuthor && showActions && (
-            <div className="relative">
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowMenu(!showMenu);
-                }}
-                className="p-1 rounded-full hover:bg-gray-100 transition-colors"
-              >
-                <MoreVertical className="w-4 h-4 text-gray-500" />
-              </motion.button>
-
-              {showMenu && (
-                <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[120px]">
-                  <button
-                    onClick={handleEdit}
-                    className="flex items-center space-x-1 px-3 py-2 w-full text-gray-500 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
-                  >
-                    <Edit className="w-4 h-4" />
-                    <span>편집</span>
-                  </button>
-                  <button
-                    onClick={handleDelete}
-                    className="flex items-center space-x-1 px-3 py-2 w-full text-gray-500 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    <span>삭제</span>
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
+          
         </div>
       </div>
 
