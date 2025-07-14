@@ -48,6 +48,7 @@ import {
   isSameDay,
   addMonths,
   isToday,
+  startOfToday
 } from "date-fns";
 import { ko } from "date-fns/locale";
 import { expenseAPI } from "../../api/expense.ts";
@@ -236,8 +237,10 @@ const DashboardPage: React.FC = () => {
     [getEventsForDate, selectedDate]
   );
 
-  // Filter tasks for current mode (API 체크리스트 사용) - 마감일 순 정렬
+  // Filter tasks for current mode (API 체크리스트 사용) - 오늘 마감일 기준
+  const today = startOfToday();
   const filteredTasks = checklists
+    .filter(task => task.dueDate && isSameDay(new Date(task.dueDate), today))
     .sort((a, b) => {
       // 마감일이 없는 것은 맨 아래로
       if (!a.dueDate && !b.dueDate) return 0;
