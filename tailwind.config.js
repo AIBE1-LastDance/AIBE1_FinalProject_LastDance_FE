@@ -7,29 +7,29 @@ export default {
         // Background color
         background: '#FFFFFF',
         
-        // Primary color - Orange theme (#E69975가 가장 진한색)
+        // Primary color - Soft Orange/Peach theme (파스텔 톤)
         primary: {
           50: '#fef9f7',
-          100: '#fdf2ee',
-          200: '#fae1d4',
-          300: '#f6ccb3',
-          400: '#f1b088',
-          500: '#E69975', // Main primary color - 가장 진한색
-          600: '#d4845f',
-          700: '#b86a47',
-          800: '#9a5439',
-          900: '#7d452f',
-          950: '#422317',
+          100: '#fdf0ec',
+          200: '#fbe0d3',
+          300: '#f7c8b1',
+          400: '#f2ad87',
+          500: '#E69975', // Main primary color
+          600: '#d17c56',
+          700: '#b06242',
+          800: '#914f37',
+          900: '#74412e',
+          950: '#3f2218',
         },
         
-        // Accent color - Blue theme (#6C92E6가 가장 진한색)
+        // Accent color - Soft Blue theme (파스텔 톤)
         accent: {
           50: '#f0f6ff',
           100: '#e1efff', 
           200: '#c7e0ff',
           300: '#a3ccff',
           400: '#7fb0ff',
-          500: '#6C92E6', // Main accent color - 가장 진한색
+          500: '#6C92E6', // Main accent color
           600: '#5a7bc7',
           700: '#4a66a8',
           800: '#3c5489',
@@ -44,33 +44,35 @@ export default {
           muted: '#999999',
         },
         
-        // Category colors (keep colorful for categorization)
+        // Category colors (파스텔 톤으로 변경 - 구분 명확화)
         category: {
-          red: '#FF6B6B',
-          blue: '#4ECDC4', 
-          cyan: '#45B7D1',
-          green: '#96CEB4',
-          yellow: '#FFEAA7',
-          purple: '#DDA0DD',
-          indigo: '#6C5CE7',
-          pink: '#FD79A8',
-          orange: '#FDCB6E',
-          teal: '#00B894',
+          red: '#FFB3B3',        // 파스텔 빨강
+          mint: '#B3F5E6',       // 민트 (건강용) - 상쾌한 느낌
+          blue: '#B3E0E0',       // 파스텔 청록
+          cyan: '#99D6EA',       // 파스텔 시안
+          green: '#C4E2C4',      // 파스텔 그린
+          yellow: '#FFF2B3',     // 파스텔 노랑
+          purple: '#E6B3E6',     // 파스텔 보라
+          indigo: '#B3B3FF',     // 파스텔 인디고
+          pink: '#FFB3D9',       // 파스텔 핑크
+          orange: '#FFCC99',     // 파스텔 오렌지 (쇼핑용)
+          teal: '#99E6D9',       // 파스텔 틸
+          lavender: '#D9B3FF',   // 라벤더 (여행용)
         },
         
-        // Priority colors (keep for task/priority classification)
+        // Priority colors (파스텔 톤으로 변경)
         priority: {
-          high: '#EF4444',
-          medium: '#F59E0B', 
-          low: '#10B981',
+          high: '#FFB3B3',       // 파스텔 빨강
+          medium: '#FFDFB3',     // 파스텔 오렌지
+          low: '#B3E6B3',        // 파스텔 그린
         },
         
-        // Status colors
+        // Status colors (파스텔 톤으로 변경)
         status: {
-          success: '#10B981',
-          warning: '#F59E0B',
-          error: '#EF4444',
-          info: '#3B82F6',
+          success: '#B3E6B3',    // 파스텔 그린
+          warning: '#FFDFB3',    // 파스텔 오렌지
+          error: '#FFB3B3',      // 파스텔 빨강
+          info: '#B3D9FF',       // 파스텔 블루
         },
       },
       fontFamily: {

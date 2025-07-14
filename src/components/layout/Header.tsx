@@ -224,21 +224,21 @@ const Header: React.FC = () => {
     const configs = {
       SCHEDULE: {
         icon: Calendar,
-        bgColor: "bg-blue-50",
-        borderColor: "border-blue-500",
-        iconColor: "text-blue-600"
+        bgColor: "bg-accent-50",
+        borderColor: "border-accent-500",
+        iconColor: "text-accent-600"
       },
       PAYMENT: {
         icon: CreditCard,
         bgColor: "bg-green-50",
-        borderColor: "border-green-500",
-        iconColor: "text-green-600"
+        borderColor: "border-status-success",
+        iconColor: "text-status-success"
       },
       CHECKLIST: {
         icon: CheckSquare,
-        bgColor: "bg-purple-50",
-        borderColor: "border-purple-500",
-        iconColor: "text-purple-600"
+        bgColor: "bg-primary-50",
+        borderColor: "border-primary-500",
+        iconColor: "text-primary-600"
       },
     };
     return configs[type as keyof typeof configs] || configs.SCHEDULE;
@@ -314,13 +314,13 @@ const Header: React.FC = () => {
                   {/* SSE 연결 상태 표시 */}
                   <div
                     className={`absolute -top-1 -left-1 w-2 h-2 rounded-full ${
-                      isSSEConnected ? "bg-green-500" : "bg-gray-400"
+                      isSSEConnected ? "bg-status-success" : "bg-gray-400"
                     }`}
                     title={isSSEConnected ? "SSE 연결됨" : "SSE 연결 끊김"}
                   />
                 </div>
                 {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-red-500 text-white text-[10px] sm:text-xs rounded-full flex items-center justify-center font-medium">
+                  <span className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-status-error text-white text-[10px] sm:text-xs rounded-full flex items-center justify-center font-medium">
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </span>
                 )}
@@ -349,7 +349,7 @@ const Header: React.FC = () => {
                           <h3 className="font-semibold text-gray-900">알림</h3>
                           <div className="flex items-center space-x-1">
                             {unreadCount > 0 && (
-                              <span className="px-2 py-1 bg-red-100 text-red-600 text-xs rounded-full font-medium">
+                              <span className="px-2 py-1 bg-status-error text-white text-xs rounded-full font-medium">
                                 {unreadCount}개 안읽음
                               </span>
                             )}
@@ -357,7 +357,7 @@ const Header: React.FC = () => {
                             <span
                               className={`px-2 py-1 text-xs rounded-full font-medium ${
                                 isSSEConnected
-                                  ? "bg-green-100 text-green-600"
+                                  ? "bg-status-success text-white"
                                   : "bg-gray-100 text-gray-600"
                               }`}
                             >
@@ -368,7 +368,7 @@ const Header: React.FC = () => {
                         {unreadCount > 0 && (
                           <button
                             onClick={handleMarkAllAsRead}
-                            className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                            className="text-xs text-accent-600 hover:text-accent-700 font-medium"
                           >
                             모두 읽음
                           </button>
@@ -406,7 +406,7 @@ const Header: React.FC = () => {
                                   notification.url ||
                                   notification.relatedId ||
                                   notification.type
-                                    ? "hover:border-blue-300"
+                                    ? "hover:border-accent-300"
                                     : ""
                                 }`}
                                 whileHover={{ x: 4, scale: 1.01 }}
@@ -436,7 +436,7 @@ const Header: React.FC = () => {
                                         {notification.title}
                                       </p>
                                       {!notification.read && (
-                                        <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0" />
+                                        <div className="w-2 h-2 bg-accent-500 rounded-full flex-shrink-0" />
                                       )}
                                     </div>
                                     <p
@@ -455,11 +455,11 @@ const Header: React.FC = () => {
                                       <span
                                         className={`text-xs px-2 py-1 rounded-full ${
                                           notification.type === "SCHEDULE"
-                                            ? "bg-blue-100 text-blue-600"
+                                            ? "bg-accent-100 text-accent-600"
                                             : notification.type === "PAYMENT"
-                                            ? "bg-green-100 text-green-600"
+                                            ? "bg-green-100 text-status-success"
                                             : notification.type === "CHECKLIST"
-                                            ? "bg-purple-100 text-purple-600"
+                                            ? "bg-primary-100 text-primary-600"
                                             : "bg-gray-100 text-gray-600"
                                         }`}
                                       >
@@ -545,7 +545,7 @@ const Header: React.FC = () => {
                         <span>설정</span>
                       </motion.button>
                       <motion.button
-                        className="w-full flex items-center space-x-3 px-4 py-3 sm:py-2 text-left text-red-600 hover:bg-red-50 active:bg-red-100 transition-colors"
+                        className="w-full flex items-center space-x-3 px-4 py-3 sm:py-2 text-left text-status-error hover:bg-red-50 active:bg-red-100 transition-colors"
                         whileHover={{ x: 4 }}
                         onClick={handleLogout}
                       >
