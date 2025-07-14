@@ -341,7 +341,7 @@ const AIAssistantPage: React.FC = () => {
 
       <TipsModal isOpen={showTipsModal} onClose={handleCloseTipsModal} />
 
-      <Toaster position="top-center" reverseOrder={false} />
+      
     </>
   );
 };

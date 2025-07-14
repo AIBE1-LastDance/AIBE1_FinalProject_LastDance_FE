@@ -344,26 +344,7 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
               )}
             </div>
 
-            {selectedHistoryItem && (
-              <div className="absolute bottom-4 right-4 z-50">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => handleCopy(selectedHistoryItem.judgmentResult)}
-                  className={`flex items-center justify-center p-3 rounded-xl font-medium transition-all duration-200 shadow-sm ${
-                    copySuccess
-                      ? "bg-orange-400 text-white"
-                      : "bg-white text-gray-700 hover:bg-orange-50 hover:text-orange-500 border border-orange-200"
-                  }`}
-                >
-                  {copySuccess ? (
-                    <Check className="w-5 h-5" />
-                  ) : (
-                    <Copy className="w-5 h-5" />
-                  )}
-                </motion.button>
-              </div>
-            )}
+            
           </motion.div>
         </>
       )}
