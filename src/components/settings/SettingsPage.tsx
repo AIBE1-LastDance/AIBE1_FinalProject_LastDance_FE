@@ -662,7 +662,7 @@ const SettingsPage: React.FC = () => {
                                 animate={{ opacity: 1, y: 0 }}
                                 className={`relative overflow-hidden rounded-xl border-2 transition-all duration-300 ${
                                     notifications.sseEnabled
-                                        ? 'border-blue-200 bg-gradient-to-r from-blue-50 to-blue-100/50'
+                                        ? 'border-primary-200 bg-primary-50'
                                         : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
                                 }`}
                             >
@@ -671,7 +671,7 @@ const SettingsPage: React.FC = () => {
                                         <div className="flex items-center space-x-4">
                                             {/* 아이콘 영역 */}
                                             <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                                                notifications.sseEnabled ? 'bg-orange-500' : 'bg-gray-400'
+                                                notifications.sseEnabled ? 'bg-primary-400' : 'bg-gray-400'
                                             } text-white shadow-sm`}>
                                                 <Bell className="w-6 h-6" />
                                             </div>
@@ -702,7 +702,7 @@ const SettingsPage: React.FC = () => {
                                             />
                                             <div className={`relative w-16 h-8 transition-all duration-300 ease-in-out rounded-full shadow-inner ${
                                                 notifications.sseEnabled
-                                                    ? 'bg-orange-500'
+                                                    ? 'bg-primary-400'
                                                     : 'bg-gray-300'
                                             } ${notificationLoading ? 'opacity-50 cursor-not-allowed' : ''}`}>
                                                 <div className={`absolute top-0.5 w-7 h-7 bg-white rounded-full shadow-lg transition-all duration-300 ease-in-out ${
@@ -726,7 +726,7 @@ const SettingsPage: React.FC = () => {
                                 transition={{ delay: 0.1 }}
                                 className={`relative overflow-hidden rounded-xl border-2 transition-all duration-300 ${
                                     notifications.emailEnabled
-                                        ? 'border-blue-200 bg-gradient-to-r from-blue-50 to-blue-100/50'
+                                        ? 'border-primary-200 bg-primary-50'
                                         : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
                                 }`}
                             >
@@ -735,7 +735,7 @@ const SettingsPage: React.FC = () => {
                                         <div className="flex items-center space-x-4">
                                             {/* 아이콘 영역 */}
                                             <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                                                notifications.emailEnabled ? 'bg-orange-500' : 'bg-gray-400'
+                                                notifications.emailEnabled ? 'bg-primary-400' : 'bg-gray-400'
                                             } text-white shadow-sm`}>
                                                 <Mail className="w-6 h-6" />
                                             </div>
@@ -769,7 +769,7 @@ const SettingsPage: React.FC = () => {
                                             />
                                             <div className={`relative w-16 h-8 transition-all duration-300 ease-in-out rounded-full shadow-inner ${
                                                 notifications.emailEnabled
-                                                    ? 'bg-orange-500'
+                                                    ? 'bg-primary-400'
                                                     : 'bg-gray-300'
                                             } ${notificationLoading ? 'opacity-50 cursor-not-allowed' : ''}`}>
                                                 <div className={`absolute top-0.5 w-7 h-7 bg-white rounded-full shadow-lg transition-all duration-300 ease-in-out ${
@@ -820,19 +820,19 @@ const SettingsPage: React.FC = () => {
                                         label: '일정 알림',
                                         description: '일정 시작 15분 전에 미리 알려드려요',
                                         icon: Calendar,
-                                        color: 'bg-orange-500'
+                                        color: 'bg-primary-400'
                                     },
                                     paymentReminder: {
                                         label: '정산 알림',
                                         description: '그룹 정산 및 지출 관련 소식을 전해드려요',
                                         icon: CreditCard,
-                                        color: 'bg-orange-500'
+                                        color: 'bg-primary-400'
                                     },
                                     checklistReminder: {
                                         label: '할일 알림',
                                         description: '새 할일 등록과 마감일을 놓치지 마세요',
                                         icon: CheckSquare,
-                                        color: 'bg-orange-500'
+                                        color: 'bg-primary-400'
                                     }
                                 };
 
@@ -846,7 +846,7 @@ const SettingsPage: React.FC = () => {
                                         transition={{ delay: index * 0.1 }}
                                         className={`relative overflow-hidden rounded-xl border-2 transition-all duration-300 ${
                                             value
-                                                ? 'border-primary-200 bg-gradient-to-r from-primary-50 to-primary-100/50'
+                                                ? 'border-primary-200 bg-primary-50'
                                                 : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
                                         }`}
                                     >
@@ -889,7 +889,7 @@ const SettingsPage: React.FC = () => {
                                                     />
                                                     <div className={`relative w-16 h-8 transition-all duration-300 ease-in-out rounded-full shadow-inner ${
                                                         value
-                                                            ? 'bg-orange-500'
+                                                            ? 'bg-primary-400'
                                                             : 'bg-gray-300'
                                                     } ${notificationLoading ? 'opacity-50 cursor-not-allowed' : ''}`}>
                                                         <div className={`absolute top-0.5 w-7 h-7 bg-white rounded-full shadow-lg transition-all duration-300 ease-in-out ${
