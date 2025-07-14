@@ -138,6 +138,7 @@ const CommunityPage: React.FC = () => {
       icon: MessageSquare,
       color: "text-orange-600",
     },
+    //질문답변
     {
       id: "QNA",
       name: "질문답변",
