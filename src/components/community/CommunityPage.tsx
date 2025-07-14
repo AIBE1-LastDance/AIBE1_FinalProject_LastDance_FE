@@ -102,30 +102,30 @@ const CommunityPage: React.FC = () => {
   };
 
   const categories = [
-    { id: "all", name: "전체", icon: Filter, color: "text-orange-600" },
+    { id: "all", name: "전체", icon: Filter, color: "text-primary-600" },
     {
       id: "FIND_MATE",
       name: "메이트구하기",
       icon: Megaphone,
-      color: "text-orange-600",
+      color: "text-primary-600",
     },
     {
       id: "LIFE_TIPS",
       name: "생활팁",
       icon: GraduationCap,
-      color: "text-orange-600",
+      color: "text-primary-600",
     },
     {
       id: "FREE_BOARD",
       name: "자유게시판",
       icon: MessageSquare,
-      color: "text-orange-600",
+      color: "text-primary-600",
     },
     {
       id: "QNA",
       name: "질문답변",
       icon: Handshake,
-      color: "text-orange-600",
+      color: "text-primary-600",
     },
   ];
 
@@ -238,7 +238,7 @@ const CommunityPage: React.FC = () => {
                 setSearchQuery(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
           <button
@@ -337,7 +337,7 @@ const CommunityPage: React.FC = () => {
               }}
               className={`p-2 rounded-lg transition-colors ${
                 filterBy === "liked"
-                  ? "bg-orange-100 text-orange-700 border border-orange-300"
+                  ? "bg-primary-100 text-primary-700 border border-primary-300"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >

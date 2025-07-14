@@ -84,7 +84,7 @@ const AnalyticsPage: React.FC = () => {
           value="734"
           change={15.7}
           icon={MessageSquare}
-          color="bg-orange-500"
+          color="bg-primary-500"
         />
       </div>
 

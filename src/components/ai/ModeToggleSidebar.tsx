@@ -74,7 +74,7 @@ const ModeToggleSidebar: React.FC<ModeToggleSidebarProps> = ({
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
               className="fixed right-0 top-0 h-full w-96 bg-white z-50 overflow-hidden flex flex-col rounded-l-2xl shadow-lg"
             >
-              <div className="bg-primary-300 p-5 text-white rounded-tl-2xl relative overflow-hidden">
+              <div className="bg-gradient-to-r from-primary-400 to-primary-500 p-5 text-white rounded-tl-2xl relative overflow-hidden">
                 <div className="flex items-center justify-between relative z-10">
                   <div className="flex items-center space-x-3">
                     <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">

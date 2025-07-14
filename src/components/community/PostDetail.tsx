@@ -192,32 +192,32 @@ const PostDetail: React.FC<PostDetailProps> = ({
       LIFE_TIPS: {
         name: "생활팁",
         icon: GraduationCap,
-        borderColor: "border-orange-500",
-        textColor: "text-orange-600",
+        borderColor: "border-primary-500",
+        textColor: "text-primary-600",
       },
       FREE_BOARD: {
         name: "자유게시판",
         icon: MessageSquare,
-        borderColor: "border-orange-600",
-        textColor: "text-orange-700",
+        borderColor: "border-primary-600",
+        textColor: "text-primary-700",
       },
       FIND_MATE: {
         name: "메이트구하기",
         icon: Megaphone,
-        borderColor: "border-orange-700",
-        textColor: "text-orange-800",
+        borderColor: "border-primary-700",
+        textColor: "text-primary-800",
       },
       QNA: {
         name: "질문답변",
         icon: Handshake,
-        borderColor: "border-orange-800",
-        textColor: "text-orange-900",
+        borderColor: "border-primary-800",
+        textColor: "text-primary-900",
       },
       POLICY: {
         name: "정책게시판",
         icon: ScrollText,
-        borderColor: "border-orange-900",
-        textColor: "text-orange-950",
+        borderColor: "border-primary-900",
+        textColor: "text-primary-950",
       },
     };
 
@@ -431,7 +431,7 @@ const PostDetail: React.FC<PostDetailProps> = ({
                 className="w-10 h-10 rounded-full object-cover"
               />
             ) : (
-              <div className="w-10 h-10 bg-gradient-to-r from-orange-400 to-amber-500 rounded-full flex items-center justify-center">
+              <div className="w-10 h-10 bg-gradient-to-r from-primary-400 to-amber-500 rounded-full flex items-center justify-center">
                 <span className="text-white font-medium text-sm">
                   {post.authorNickname?.charAt(0) || "U"}
                 </span>
@@ -479,8 +479,8 @@ const PostDetail: React.FC<PostDetailProps> = ({
               onClick={handleToggleLike}
               className={`flex items-center space-x-2 transition-colors ${
                 localPost.userLiked
-                  ? "text-orange-500"
-                  : "text-gray-500 hover:text-orange-600"
+                  ? "text-primary-500"
+                  : "text-gray-500 hover:text-primary-600"
               }`}
             >
               <Heart
@@ -518,7 +518,7 @@ const PostDetail: React.FC<PostDetailProps> = ({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={handleShare}
-              className="flex items-center space-x-1 px-3 py-2 text-gray-500 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
+              className="flex items-center space-x-1 px-3 py-2 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
             >
               <Share2 className="w-4 h-4" />
               <span className="text-sm">공유</span>
@@ -529,7 +529,7 @@ const PostDetail: React.FC<PostDetailProps> = ({
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={handleEditPost}
-                  className="flex items-center space-x-1 px-3 py-2 text-gray-500 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors text-sm" // 추가: text-sm
+                  className="flex items-center space-x-1 px-3 py-2 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors text-sm" // 추가: text-sm
                   disabled={isDeletingPost}
                 >
                   <Pencil className="w-4 h-4" />
@@ -539,7 +539,7 @@ const PostDetail: React.FC<PostDetailProps> = ({
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={triggerDeletePost}
-                  className="flex items-center space-x-1 px-3 py-2 text-gray-500 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors text-sm" // 추가: text-sm
+                  className="flex items-center space-x-1 px-3 py-2 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors text-sm" // 추가: text-sm
                   disabled={isDeletingPost}
                 >
                   <Trash2 className="w-4 h-4" />
@@ -582,7 +582,7 @@ const PostDetail: React.FC<PostDetailProps> = ({
               onChange={(e) => setNewComment(e.target.value)}
               placeholder="댓글을 작성해보세요..."
               rows={3}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
               maxLength={500}
             />
             <div className="flex items-center justify-between mt-3">
@@ -594,7 +594,7 @@ const PostDetail: React.FC<PostDetailProps> = ({
                 whileTap={{ scale: 0.98 }}
                 onClick={handleSubmitComment}
                 disabled={isSubmittingComment || !newComment.trim()}
-                className="flex items-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
               >
                 {isSubmittingComment ? (
                   <>
@@ -674,7 +674,7 @@ const PostDetail: React.FC<PostDetailProps> = ({
                         className="w-8 h-8 rounded-full object-cover"
                       />
                     ) : (
-                      <div className="w-8 h-8 bg-gradient-to-r from-orange-400 to-amber-500 rounded-full flex items-center justify-center">
+                      <div className="w-8 h-8 bg-gradient-to-r from-primary-400 to-amber-500 rounded-full flex items-center justify-center">
                         <span className="text-white font-medium text-xs">
                           {comment.authorNickname?.charAt(0) || "U"}
                         </span>
@@ -762,7 +762,7 @@ const PostDetail: React.FC<PostDetailProps> = ({
                               onClick={() =>
                                 handleSaveEditedComment(comment.commentId)
                               }
-                              className="px-3 py-1 bg-orange-600 text-white text-sm rounded hover:bg-orange-700 transition-colors"
+                              className="px-3 py-1 bg-primary-600 text-white text-sm rounded hover:bg-primary-700 transition-colors"
                             >
                               저장
                             </button>

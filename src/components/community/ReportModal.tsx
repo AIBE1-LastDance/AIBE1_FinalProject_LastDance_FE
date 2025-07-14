@@ -51,7 +51,7 @@ const ReportModal: React.FC<ReportModalProps> = ({
       label: "스팸/도배",
       description: "반복적인 광고나 의미없는 내용",
       icon: Trash2,
-      color: "text-orange-600",
+      color: "text-primary-600",
     },
     {
       id: ReportReasonType.INAPPROPRIATE, // ReportReasonType 값 사용
