@@ -134,47 +134,6 @@ const TipsModal: React.FC<TipsModalProps> = ({ isOpen, onClose }) => {
                   </motion.div>
                 ))}
               </div>
-
-              <div className="bg-gray-50 rounded-xl p-6">
-                <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
-                  <MessageSquare className="w-5 h-5 text-orange-600 mr-2" />
-                  작성 예시
-                </h3>
-                <div className="bg-white rounded-lg p-4 border border-gray-200">
-                  <div className="text-sm text-gray-700 leading-relaxed">
-                    <p className="mb-3">
-                      <strong className="text-orange-600">좋은 예시:</strong>
-                    </p>
-                    <p className="bg-green-50 p-3 rounded-lg border-l-4 border-green-400 mb-4">
-                      "저는 룸메이트 A입니다.{" "}
-                      <span className="text-green-700 font-medium">(누가)</span>
-                      어제 밤 새벽 2시부터 4시까지{" "}
-                      <span className="text-green-700 font-medium">(언제)</span>
-                      거실에서{" "}
-                      <span className="text-green-700 font-medium">
-                        (어디서)
-                      </span>
-                      룸메이트 B가 친구 3명과 함께 큰 소리로 게임을 하며
-                      대화했습니다.
-                      <span className="text-green-700 font-medium">
-                        (무엇을)
-                      </span>
-                      저는 다음 날 오전 9시에 중요한 면접이 있어서 일찍 잠들어야
-                      했는데, 소음 때문에 잠을 잘 수 없었습니다.{" "}
-                      <span className="text-green-700 font-medium">
-                        (왜/어떻게)
-                      </span>
-                      "
-                    </p>
-                    <p className="mb-3">
-                      <strong className="text-red-600">피해야 할 예시:</strong>
-                    </p>
-                    <p className="bg-red-50 p-3 rounded-lg border-l-4 border-red-400">
-                      "룸메이트가 너무 시끄럽게 해서 짜증나요. 맨날 이래요."
-                    </p>
-                  </div>
-                </div>
-              </div>
             </div>
 
             <div className="p-6 bg-gray-50 border-t border-gray-200">
@@ -185,7 +144,7 @@ const TipsModal: React.FC<TipsModalProps> = ({ isOpen, onClose }) => {
                   onClick={onClose}
                   className="px-6 py-3 bg-primary-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition-all duration-200 shadow-lg"
                 >
-                  이해했어요
+                  알겠습니다.
                 </motion.button>
               </div>
             </div>

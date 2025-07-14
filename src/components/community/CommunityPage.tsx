@@ -39,8 +39,8 @@ const CommunityPage: React.FC = () => {
   const location = useLocation();
 
   useEffect(() => {
-    if (!location.pathname.startsWith('/community')) {
-      localStorage.removeItem('communityCurrentPage');
+    if (!location.pathname.startsWith("/community")) {
+      localStorage.removeItem("communityCurrentPage");
     }
   }, [location.pathname]);
 
@@ -388,15 +388,6 @@ const CommunityPage: React.FC = () => {
                 ? "검색 조건에 맞는 게시글을 찾을 수 없습니다."
                 : "첫 번째 게시글을 작성해보세요!"}
             </p>
-            <button
-              onClick={() => {
-                setEditingPost(null);
-                setIsCreateModalOpen(true);
-              }}
-              className="flex items-center space-x-2 px-6 py-3 bg-accent-500 text-white rounded-2xl font-medium hover:bg-accent-600 transition-colors shadow-md hover:shadow-lg whitespace-nowrap"
-            >
-              글쓰기
-            </button>
           </div>
         ) : (
           <div className="w-full space-y-4">

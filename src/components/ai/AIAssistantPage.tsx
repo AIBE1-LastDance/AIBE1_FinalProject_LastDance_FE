@@ -30,6 +30,7 @@ const personLabels = ["A", "B", "C", "D"];
 const AIAssistantPage: React.FC = () => {
   const [pageState, setPageState] = useState<PageState>("INITIAL");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showTipsModal, setShowTipsModal] = useState(false); // TipsModal 상태 추가
   // TipsModal 상태는 ConflictInputModal 내부에서 관리되므로, AIAssistantPage에서는 더 이상 필요 없습니다.
   // const [isTipsModalOpen, setIsTipsModalOpen] = useState(false);
   const [situations, setSituations] = useState<{ [key: string]: string }>({
@@ -42,12 +43,15 @@ const AIAssistantPage: React.FC = () => {
 
   const openModal = () => {
     setIsModalOpen(true);
-    // ConflictInputModal이 열릴 때 TipsModal도 자동으로 열리게 하려면 여기서 호출
-    // openTipsModal(); // 이 함수는 이제 ConflictInputModal 내부에서 제어됩니다.
+    setShowTipsModal(true); // ConflictInputModal이 열릴 때 TipsModal도 함께 열기
   };
   const closeModal = () => {
     setIsModalOpen(false);
     setSituations({ A: "", B: "" });
+  };
+
+  const handleCloseTipsModal = () => {
+    setShowTipsModal(false);
   };
 
   // TipsModal의 열림/닫힘 함수는 이제 ConflictInputModal 내부에서 처리되므로 제거합니다.
@@ -333,13 +337,9 @@ const AIAssistantPage: React.FC = () => {
         onAddPerson={addPerson}
         onRemovePerson={removePerson}
         onSubmit={handleSendSituations}
-        // onOpenTips prop은 ConflictInputModal에서 더 이상 받지 않습니다.
-        // ConflictsInputModal 내부에서 TipsModal의 상태를 관리합니다.
-        // onOpenTips={openTipsModal} // 이 줄을 제거하거나 주석 처리합니다.
       />
 
-      {/* TipsModal은 ConflictInputModal 내부에서 렌더링되므로, 여기서 직접 렌더링할 필요가 없습니다. */}
-      {/* <TipsModal isOpen={isTipsModalOpen} onClose={closeTipsModal} /> */}
+      <TipsModal isOpen={showTipsModal} onClose={handleCloseTipsModal} />
 
       <Toaster position="top-center" reverseOrder={false} />
     </>

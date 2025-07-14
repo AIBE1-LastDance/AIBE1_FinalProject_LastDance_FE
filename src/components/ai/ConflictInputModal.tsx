@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react"; // useState 추가
 import { motion, AnimatePresence } from "framer-motion";
 import { PlusCircle, XCircle, MessageCircle, Info } from "lucide-react";
-import TipsModal from "./TipsModal"; // TipsModal 컴포넌트 import (경로 확인 필수)
+import MiniTipsModal from "./MiniTipsModal"; // MiniTipsModal 컴포넌트 import
 
 interface ConflictInputModalProps {
   isOpen: boolean;
@@ -12,7 +12,6 @@ interface ConflictInputModalProps {
   onAddPerson: () => void;
   onRemovePerson: (person: string) => void;
   onSubmit: () => void;
-  // onOpenTips prop은 더 이상 필요 없습니다. TipsModal 상태를 이 컴포넌트 내부에서 관리합니다.
 }
 
 const personLabelColor = "border-2 border-orange-300 text-orange-700 bg-white";
@@ -26,33 +25,23 @@ const ConflictInputModal: React.FC<ConflictInputModalProps> = ({
   onAddPerson,
   onRemovePerson,
   onSubmit,
-  // onOpenTips, // prop에서 제거
 }) => {
   const nextPersonLabel = personLabels[Object.keys(situations).length];
-  // TipsModal의 열림/닫힘 상태를 ConflictInputModal 내부에서 관리
-  const [isTipsModalOpen, setIsTipsModalOpen] = useState(false);
+  const [isMiniTipsModalOpen, setIsMiniTipsModalOpen] = useState(false);
 
-  // ConflictInputModal이 열릴 때 TipsModal을 자동으로 열도록 설정
-  useEffect(() => {
-    if (isOpen) {
-      setIsTipsModalOpen(true);
-    }
-  }, [isOpen]);
-
-  // "작성 팁" 모달을 여는 함수
   const handleOpenTips = () => {
-    setIsTipsModalOpen(true);
+    setIsMiniTipsModalOpen(true);
   };
 
-  // "작성 팁" 모달을 닫는 함수
   const handleCloseTips = () => {
-    setIsTipsModalOpen(false);
+    setIsMiniTipsModalOpen(false);
   };
 
   return (
     <AnimatePresence>
       {isOpen && (
         <motion.div
+          key="conflict-input-modal-overlay" // Unique key for AnimatePresence child
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -63,8 +52,7 @@ const ConflictInputModal: React.FC<ConflictInputModalProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden"
-          >
+            className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden relative">
             <div className="bg-gradient-to-r from-primary-500 to-primary-600 p-6 text-white">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
@@ -189,8 +177,8 @@ const ConflictInputModal: React.FC<ConflictInputModalProps> = ({
           </motion.div>
         </motion.div>
       )}
-      {/* TipsModal을 ConflictInputModal 내부에서 제어 */}
-      <TipsModal isOpen={isTipsModalOpen} onClose={handleCloseTips} />
+      {/* MiniTipsModal을 ConflictInputModal 내부에서 제어 */}
+      <MiniTipsModal isOpen={isMiniTipsModalOpen} onClose={handleCloseTips} />
     </AnimatePresence>
   );
 };
