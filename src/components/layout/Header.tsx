@@ -427,16 +427,17 @@ const Header: React.FC = () => {
                                   <div className="flex-1 min-w-0">
                                     <div className="flex items-center justify-between">
                                       <p
-                                        className={`text-sm font-medium truncate ${
+                                        className={`text-sm font-medium ${
                                           notification.read
                                             ? "text-gray-700"
                                             : "text-gray-900"
-                                        }`}
+                                        } break-words overflow-hidden`}
+                                        style={{ wordBreak: 'break-all' }}
                                       >
                                         {notification.title}
                                       </p>
                                       {!notification.read && (
-                                        <div className="w-2 h-2 bg-accent-500 rounded-full flex-shrink-0" />
+                                        <div className="w-2 h-2 bg-accent-500 rounded-full flex-shrink-0 ml-2" />
                                       )}
                                     </div>
                                     <p
@@ -444,7 +445,8 @@ const Header: React.FC = () => {
                                             notification.read
                                                 ? "text-gray-500"
                                                 : "text-gray-700"
-                                        } group-hover:text-gray-800 transition-colors`}
+                                        } group-hover:text-gray-800 transition-colors break-words overflow-hidden`}
+                                        style={{ wordBreak: 'break-all' }}
                                     >
                                       {notification.content}
                                     </p>
@@ -453,7 +455,7 @@ const Header: React.FC = () => {
                                         {formatTimeAgo(notification.timestamp)}
                                       </p>
                                       <span
-                                        className={`text-xs px-2 py-1 rounded-full ${
+                                        className={`text-xs px-2 py-1 rounded-full flex-shrink-0 ${
                                           notification.type === "SCHEDULE"
                                             ? "bg-accent-100 text-accent-600"
                                             : notification.type === "PAYMENT"

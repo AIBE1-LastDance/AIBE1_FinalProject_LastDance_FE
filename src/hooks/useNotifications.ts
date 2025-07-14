@@ -198,7 +198,10 @@ class SSEManager {
                             boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
                             borderRadius: '12px',
                             maxWidth: '400px',
-                            cursor: 'pointer'
+                            cursor: 'pointer',
+                            wordBreak: 'break-all',
+                            overflowWrap: 'break-word',
+                            whiteSpace: 'pre-wrap'
                         },
                         onClick: () => {
                             // 토스트 클릭 시 상세 페이지로 이동
