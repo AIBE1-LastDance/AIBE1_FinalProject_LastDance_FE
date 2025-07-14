@@ -7,7 +7,6 @@ import {
   History,
   ChevronLeft,
   ShieldCheck,
-  Eye,
   ThumbsUp,
   ThumbsDown,
   Users,
@@ -15,10 +14,11 @@ import {
   Check,
   Clock,
   Star,
+  Trash2, // Add Trash2 icon
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { fetchAiJudgmentHistory } from "../../api/aijudgment/aiJudgment";
+import { fetchAiJudgmentHistory, deleteAiJudgmentHistory } from "../../api/aijudgment/aiJudgment";
 import type { AiJudgmentHistoryResponse } from "../../types/aijudgment/aiMessage";
 import { copyToClipboard } from "../../utils/api.ts";
 import toast from "react-hot-toast";
@@ -83,6 +83,21 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
       );
     } finally {
       setHistoryLoading(false);
+    }
+  };
+
+  const handleDelete = async (judgmentId: string) => {
+    if (window.confirm("정말로 이 기록을 삭제하시겠습니까?")) {
+      try {
+        await deleteAiJudgmentHistory(judgmentId);
+        toast.success("기록이 성공적으로 삭제되었습니다.");
+        fetchHistory(); // Refresh the history list
+        setSelectedHistoryItem(null); // Deselect if the deleted item was selected
+      } catch (error) {
+        toast.error(
+          (error as Error).message || "기록 삭제에 실패했습니다."
+        );
+      }
     }
   };
 
@@ -310,7 +325,17 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
                                 AI 판단
                               </span>
                             </div>
-                            <Eye className="w-4 h-4 text-gray-400 group-hover:text-orange-400 transition-colors" />
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              onClick={(e) => {
+                                e.stopPropagation(); // Prevent triggering onClick of parent div
+                                handleDelete(item.judgmentId);
+                              }}
+                              className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </motion.button>
                           </div>
                           <div className="text-sm text-gray-600 mb-3">
                             <span className="font-medium text-gray-700">
