@@ -30,15 +30,15 @@ const Footer: React.FC = () => {
     { icon: Instagram, href: '#', label: 'Instagram' },
   ];
 
-  // 로고 URL 환경 변수
-  const logoUrl = import.meta.env.VITE_LOGO_URL;
+  // 로고 URL - favicon과 동일한 이미지 사용
+  const logoUrl = "dist/image/Logo.png";
 
   return (
     <footer className="bg-white border-t border-gray-200 mt-20 hidden md:block">
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Company Info */}
-          <div className="md:col-span-2 lg:col-span-2">
+          <div className="lg:col-span-6 lg:col-start-2">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -68,33 +68,31 @@ const Footer: React.FC = () => {
             </motion.div>
           </div>
 
-          {/* Footer Links - 가운데 정렬을 위한 컨테이너 */}
-          <div className="md:col-span-1 lg:col-span-2 flex justify-center">
-            <div className="grid grid-cols-2 gap-8 max-w-md w-full">
-              {footerLinks.map((section, index) => (
-                <motion.div
-                  key={section.title}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: index * 0.1 }}
-                >
-                  <h3 className="font-semibold text-gray-900 mb-4">{section.title}</h3>
-                  <ul className="space-y-3">
-                    {section.links.map((link) => (
-                      <li key={link.name}>
-                        <motion.a
-                          href={link.href}
-                          className="text-gray-600 hover:text-primary-600 transition-colors"
-                          whileHover={{ x: 4 }}
-                        >
-                          {link.name}
-                        </motion.a>
-                      </li>
-                    ))}
-                  </ul>
-                </motion.div>
-              ))}
-            </div>
+          {/* Footer Links */}
+          <div className="lg:col-span-4 grid grid-cols-2 gap-8">
+            {footerLinks.map((section, index) => (
+              <motion.div
+                key={section.title}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+              >
+                <h3 className="font-semibold text-gray-900 mb-4">{section.title}</h3>
+                <ul className="space-y-3">
+                  {section.links.map((link) => (
+                    <li key={link.name}>
+                      <motion.a
+                        href={link.href}
+                        className="text-gray-600 hover:text-primary-600 transition-colors"
+                        whileHover={{ x: 4 }}
+                      >
+                        {link.name}
+                      </motion.a>
+                    </li>
+                  ))}
+                </ul>
+              </motion.div>
+            ))}
           </div>
         </div>
 
