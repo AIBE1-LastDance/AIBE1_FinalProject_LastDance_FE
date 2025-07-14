@@ -1133,8 +1133,8 @@ const ExpensesPage: React.FC = () => {
       <div className="flex flex-col xl:flex-row xl:items-center justify-between space-y-4 xl:space-y-0">
         <div>
           <div className="flex flex-col lg:flex-row lg:items-center space-y-2 lg:space-y-0 lg:space-x-4">
-            <div className="lg:w-80">
-              <h1 className="text-2xl lg:text-3xl font-bold text-gray-500">
+            <div className="lg:w-48">
+              <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">
                 {mode === "personal" ? (
                   "내 가계부"
                 ) : (
@@ -1163,9 +1163,9 @@ const ExpensesPage: React.FC = () => {
                 <ChevronLeft className="w-5 h-5"/>
               </motion.button>
 
-              <p className="text-gray-600 whitespace-nowrap">
+              <h2 className="text-sm sm:text-lg font-medium text-gray-700 min-w-[160px] sm:min-w-[200px] text-center px-2 whitespace-nowrap">
                 {format(currentMonth, "yyyy년 M월", {locale: ko})}
-              </p>
+              </h2>
 
               <motion.button
                 whileHover={{scale: 1.1}}
