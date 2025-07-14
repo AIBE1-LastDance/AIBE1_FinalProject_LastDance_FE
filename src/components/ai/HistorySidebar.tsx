@@ -123,7 +123,7 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
             className="fixed left-0 top-0 h-full w-96 bg-white z-50 overflow-hidden flex flex-col rounded-r-2xl shadow-lg"
           >
-            <div className="bg-gradient-to-r from-primary-300 to-primary-400 p-5 text-white rounded-tr-2xl relative overflow-hidden">
+            <div className="bg-gradient-to-r from-primary-400 to-primary-500 p-5 text-white rounded-tr-2xl relative overflow-hidden">
               <div className="flex items-center justify-between relative z-10">
                 <div className="flex items-center space-x-3">
                   <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
@@ -166,7 +166,7 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => setSelectedHistoryItem(null)}
-                    className="flex items-center mb-4 px-3 py-2 text-gray-600 hover:text-orange-500 hover:bg-orange-50 transition-all duration-200 rounded-xl font-medium text-sm"
+                    className="flex items-center mb-4 px-3 py-2 text-gray-600 hover:text-primary-500 hover:bg-primary-50 transition-all duration-200 rounded-xl font-medium text-sm"
                   >
                     <ChevronLeft className="w-4 h-4 mr-2" />
                     목록으로 돌아가기
@@ -175,10 +175,10 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
                   <motion.div
                     initial={{ opacity: 0, y: 15 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="mb-4 bg-white rounded-2xl p-4 shadow-sm border border-orange-200"
+                    className="mb-4 bg-white rounded-2xl p-4 shadow-sm border border-primary-200"
                   >
                     <h4 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
-                      <div className="w-8 h-8 bg-gradient-to-br from-orange-300 to-orange-400 rounded-xl flex items-center justify-center mr-3">
+                      <div className="w-8 h-8 bg-gradient-to-br from-primary-300 to-primary-400 rounded-xl flex items-center justify-center mr-3">
                         <Users className="w-4 h-4 text-white" />
                       </div>
                       갈등 상황
@@ -218,22 +218,22 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
                     initial={{ opacity: 0, y: 15 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
-                    className="mb-4 bg-white rounded-2xl p-4 shadow-sm border border-orange-200"
+                    className="mb-4 bg-white rounded-2xl p-4 shadow-sm border border-primary-200"
                   >
                     <div className="flex items-center space-x-3 mb-4">
-                      <div className="w-8 h-8 bg-gradient-to-br from-orange-300 to-orange-400 rounded-xl flex items-center justify-center">
+                      <div className="w-8 h-8 bg-gradient-to-br from-primary-300 to-primary-400 rounded-xl flex items-center justify-center">
                         <Star className="w-4 h-4 text-white" />
                       </div>
                       <div>
                         <h4 className="text-lg font-bold text-gray-800">
                           AI 판결
                         </h4>
-                        <p className="text-orange-500 text-xs">
+                        <p className="text-primary-500 text-xs">
                           공정한 분석 결과
                         </p>
                       </div>
                     </div>
-                    <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-4 border border-orange-200">
+                    <div className="bg-gradient-to-br from-primary-50 to-primary-100 rounded-xl p-4 border border-primary-200">
                       <div className="prose prose-sm prose-gray max-w-none text-gray-700 leading-relaxed">
                         <ReactMarkdown remarkPlugins={[remarkGfm]}>
                           {selectedHistoryItem.judgmentResult}
@@ -247,10 +247,10 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
                       initial={{ opacity: 0, y: 15 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.2 }}
-                      className="mb-4 bg-white rounded-2xl p-4 shadow-sm border border-orange-200"
+                      className="mb-4 bg-white rounded-2xl p-4 shadow-sm border border-primary-200"
                     >
                       <h4 className="text-lg font-bold text-gray-800 mb-3 flex items-center">
-                        <div className="w-8 h-8 bg-gradient-to-br from-orange-300 to-orange-400 rounded-xl flex items-center justify-center mr-3">
+                        <div className="w-8 h-8 bg-gradient-to-br from-primary-300 to-primary-400 rounded-xl flex items-center justify-center mr-3">
                           <ThumbsUp className="w-4 h-4 text-white" />
                         </div>
                         피드백
@@ -278,7 +278,7 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
                 <div className="p-4">
                   {historyData.length === 0 ? (
                     <div className="text-center py-12">
-                      <div className="w-16 h-16 bg-gradient-to-br from-orange-300 to-orange-400 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                      <div className="w-16 h-16 bg-gradient-to-br from-primary-300 to-primary-400 rounded-2xl flex items-center justify-center mx-auto mb-4">
                         <History className="w-8 h-8 text-white" />
                       </div>
                       <h3 className="text-xl font-bold text-gray-800 mb-2">
@@ -296,27 +296,27 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
                           initial={{ opacity: 0, x: -15 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: index * 0.05 }}
-                          className="bg-white rounded-xl p-4 hover:shadow-md transition-all duration-200 cursor-pointer border border-orange-200 group hover:border-orange-300"
+                          className="bg-white rounded-xl p-4 hover:shadow-md transition-all duration-200 cursor-pointer border border-primary-200 group hover:border-primary-300"
                           onClick={() => setSelectedHistoryItem(item)}
                           whileHover={{ scale: 1.01 }}
                           whileTap={{ scale: 0.99 }}
                         >
                           <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center space-x-3">
-                              <div className="w-8 h-8 bg-gradient-to-br from-orange-300 to-orange-400 rounded-xl flex items-center justify-center">
+                              <div className="w-8 h-8 bg-gradient-to-br from-primary-300 to-primary-400 rounded-xl flex items-center justify-center">
                                 <ShieldCheck className="w-4 h-4 text-white" />
                               </div>
                               <span className="font-bold text-gray-800">
                                 AI 판단
                               </span>
                             </div>
-                            <Eye className="w-4 h-4 text-gray-400 group-hover:text-orange-400 transition-colors" />
+                            <Eye className="w-4 h-4 text-gray-400 group-hover:text-primary-400 transition-colors" />
                           </div>
                           <div className="text-sm text-gray-600 mb-3">
                             <span className="font-medium text-gray-700">
                               참여자:
                             </span>{" "}
-                            <span className="text-orange-500 font-medium">
+                            <span className="text-primary-500 font-medium">
                               {Object.keys(item.situations).join(", ")}
                             </span>
                           </div>
@@ -352,8 +352,8 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
                   onClick={() => handleCopy(selectedHistoryItem.judgmentResult)}
                   className={`flex items-center justify-center p-3 rounded-xl font-medium transition-all duration-200 shadow-sm ${
                     copySuccess
-                      ? "bg-orange-400 text-white"
-                      : "bg-white text-gray-700 hover:bg-orange-50 hover:text-orange-500 border border-orange-200"
+                      ? "bg-primary-400 text-white"
+                      : "bg-white text-gray-700 hover:bg-primary-50 hover:text-primary-500 border border-primary-200"
                   }`}
                 >
                   {copySuccess ? (

@@ -128,7 +128,7 @@ const AdminDashboard: React.FC = () => {
           </button>
           <button 
             onClick={() => navigate('/admin/reports')}
-            className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-orange-500 hover:text-orange-500 transition-colors"
+            className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary-500 hover:text-primary-500 transition-colors"
           >
             <AlertTriangle className="w-5 h-5 mr-2" />
             신고 처리

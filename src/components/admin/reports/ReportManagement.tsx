@@ -385,7 +385,7 @@ const ReportManagement: React.FC = () => {
     const getReasonBadge = (reason: string) => {
         const reasonLabels: { [key: string]: { label: string; color: string } } = {
             'SPAM': {label: '스팸', color: 'bg-red-100 text-red-800'},
-            'INAPPROPRIATE': {label: '부적절한 콘텐츠', color: 'bg-orange-100 text-orange-800'},
+            'INAPPROPRIATE': {label: '부적절한 콘텐츠', color: 'bg-primary-100 text-primary-800'},
             'HARASSMENT': {label: '괴롭힘', color: 'bg-purple-100 text-purple-800'},
             'MISINFORMATION': {label: '허위정보', color: 'bg-yellow-100 text-yellow-800'},
             'COPYRIGHT': {label: '저작권 침해', color: 'bg-blue-100 text-blue-800'},
@@ -713,19 +713,19 @@ const ReportManagement: React.FC = () => {
                             processType === 'approve'
                                 ? 'bg-red-50 border-red-500'
                                 : processType === 'deleteOnly'
-                                    ? 'bg-orange-50 border-orange-500'
+                                    ? 'bg-primary-50 border-primary-500'
                                     : processType === 'reject'
                                         ? 'bg-gray-50 border-gray-500'
                                         : 'bg-blue-50 border-blue-500'
                         }`}>
                             <div className="flex items-center space-x-2">
                                 {processType === 'approve' && <XCircle className="w-5 h-5 text-red-600"/>}
-                                {processType === 'deleteOnly' && <AlertTriangle className="w-5 h-5 text-orange-600"/>}
+                                {processType === 'deleteOnly' && <AlertTriangle className="w-5 h-5 text-primary-600"/>}
                                 {processType === 'reject' && <XCircle className="w-5 h-5 text-gray-600"/>}
                                 {processType === 'review' && <Eye className="w-5 h-5 text-blue-600"/>}
                                 <h4 className={`font-medium ${
                                     processType === 'approve' ? 'text-red-800' :
-                                        processType === 'deleteOnly' ? 'text-orange-800' :
+                                        processType === 'deleteOnly' ? 'text-primary-800' :
                                             processType === 'reject' ? 'text-gray-800' : 'text-blue-800'
                                 }`}>
                                     선택된 처리 방법: {
@@ -791,7 +791,7 @@ const ReportManagement: React.FC = () => {
                                         onClick={() => handleProcessTypeChange('deleteOnly')}
                                         className={`cursor-pointer p-4 rounded-lg border-2 transition-all duration-200 hover:shadow-md ${
                                             processType === 'deleteOnly'
-                                                ? 'border-orange-500 bg-orange-50 shadow-sm'
+                                                ? 'border-primary-500 bg-primary-50 shadow-sm'
                                                 : 'border-gray-200 bg-white hover:border-gray-300'
                                         }`}
                                     >
@@ -799,7 +799,7 @@ const ReportManagement: React.FC = () => {
                                             <div
                                                 className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mt-0.5 ${
                                                     processType === 'deleteOnly'
-                                                        ? 'border-orange-500 bg-orange-500'
+                                                        ? 'border-primary-500 bg-primary-500'
                                                         : 'border-gray-300'
                                                 }`}>
                                                 {processType === 'deleteOnly' && (
@@ -809,12 +809,12 @@ const ReportManagement: React.FC = () => {
                                             <div className="flex-1">
                                                 <div className="flex items-center space-x-2">
                                                     <AlertTriangle
-                                                        className={`w-4 h-4 ${processType === 'deleteOnly' ? 'text-orange-600' : 'text-gray-400'}`}/>
-                                                    <h4 className={`font-medium ${processType === 'deleteOnly' ? 'text-orange-900' : 'text-gray-900'}`}>
+                                                        className={`w-4 h-4 ${processType === 'deleteOnly' ? 'text-primary-600' : 'text-gray-400'}`}/>
+                                                    <h4 className={`font-medium ${processType === 'deleteOnly' ? 'text-primary-900' : 'text-gray-900'}`}>
                                                         콘텐츠 삭제
                                                     </h4>
                                                 </div>
-                                                <p className={`text-sm mt-1 ${processType === 'deleteOnly' ? 'text-orange-700' : 'text-gray-600'}`}>
+                                                <p className={`text-sm mt-1 ${processType === 'deleteOnly' ? 'text-primary-700' : 'text-gray-600'}`}>
                                                     콘텐츠만 삭제 (사용자 제재 없음)
                                                 </p>
                                             </div>
@@ -994,7 +994,7 @@ const ReportManagement: React.FC = () => {
                                         processType === 'approve'
                                             ? 'bg-red-600 text-white hover:bg-red-700 shadow-lg hover:shadow-xl'
                                             : processType === 'deleteOnly'
-                                                ? 'bg-orange-600 text-white hover:bg-orange-700 shadow-lg hover:shadow-xl'
+                                                ? 'bg-primary-600 text-white hover:bg-primary-700 shadow-lg hover:shadow-xl'
                                                 : processType === 'reject'
                                                     ? 'bg-gray-600 text-white hover:bg-gray-700 shadow-lg hover:shadow-xl'
                                                     : 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg hover:shadow-xl'

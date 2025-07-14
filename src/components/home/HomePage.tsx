@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, useScroll, useTransform, useInView, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, CheckSquare, CreditCard, Users, Gamepad2, Bot, ArrowRight, ChevronDown, BarChart3, User, ChevronDown as ChevronDownIcon, Settings, LogOut, Bell } from 'lucide-react';
+import { Calendar, CheckSquare, CreditCard, Users, Gamepad2, Bot, ArrowRight, ChevronDown, BarChart3, User, ChevronDown as ChevronDownIcon, Settings, LogOut, Bell, ExternalLink } from 'lucide-react';
 import { FaGoogle, FaComment } from 'react-icons/fa';
 import { SiNaver } from 'react-icons/si';
-import { useAuthStore } from '../../store/authStore';
+import Footer from '../layout/Footer';
+import {useAuthStore} from "../../store/authStore.ts";
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -194,6 +195,15 @@ const HomePage: React.FC = () => {
       color: "from-primary-500 to-primary-600",
       image: logoUrl,
       path: "/community"
+    },
+    {
+      title: "청년정책",
+      subtitle: "청년을 위한 혜택",
+      description: "청년을 위한 다양한 정책 정보와 혜택을 한곳에서 확인하세요. 주거, 취업, 창업, 교육 등 분야별 정책을 쉽게 찾아보세요.",
+      icon: ExternalLink,
+      color: "from-primary-500 to-primary-600",
+      image: logoUrl,
+      path: "/youth-policy"
     }
   ];
 
@@ -259,6 +269,7 @@ const HomePage: React.FC = () => {
                 { label: '게임', section: 5, icon: Gamepad2 },
                 { label: 'AI 도우미', section: 6, icon: Bot },
                 { label: '커뮤니티', section: 7, icon: Users },
+                { label: '청년정책', section: 8, icon: ExternalLink },
               ].map((item) => (
                 <motion.button
                   key={item.label}
@@ -475,7 +486,8 @@ const HomePage: React.FC = () => {
           { index: 5, label: '게임' },
           { index: 6, label: 'AI' },
           { index: 7, label: '커뮤니티' },
-          { index: 8, label: '시작하기' }
+          { index: 8, label: '청년정책' },
+          { index: 9, label: '시작하기' }
         ].map((section) => (
           <motion.div
             key={section.index}
@@ -593,7 +605,7 @@ const HomePage: React.FC = () => {
       ))}
 
       {/* CTA Section */}
-      <section className="section-observer min-h-screen flex items-center justify-center relative bg-gray-50" data-section="8">
+      <section className="section-observer min-h-screen flex items-center justify-center relative bg-gray-50" data-section="9">
         <div className="text-center z-10 max-w-4xl mx-auto px-6">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
@@ -621,14 +633,7 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* Footer */}
-      <footer className="py-16 border-t border-gray-200 bg-white">
-        <div className="max-w-7xl mx-auto px-6 text-center">
-          <div className="flex items-center justify-center mb-8">
-            <img src={logoUrl} alt="우리.zip" className="w-16 h-16" />
-          </div>
-          <p className="text-gray-500 font-body">&copy; 2024 우리.zip. All rights reserved.</p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };

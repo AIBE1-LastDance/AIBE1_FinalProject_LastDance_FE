@@ -36,7 +36,7 @@ const LandingPage: React.FC = () => {
       icon: Users,
       title: '커뮤니티',
       description: '같은 관심사를 가진 사람들과 소통하고 정보 공유',
-      color: 'from-orange-500 to-red-500'
+      color: 'from-primary-500 to-red-500'
     },
     {
       icon: Gamepad2,
@@ -49,6 +49,12 @@ const LandingPage: React.FC = () => {
       title: 'AI 도우미',
       description: '똑똑한 AI가 일상을 더욱 편리하게',
       color: 'from-pink-500 to-rose-500'
+    },
+    {
+      icon: Star,
+      title: '청년정책',
+      description: '청년을 위한 다양한 정책 정보와 혜택을 확인하세요',
+      color: 'from-amber-500 to-yellow-500'
     }
   ];
 
@@ -355,6 +361,7 @@ const LandingPage: React.FC = () => {
                 <li>그룹 모드</li>
                 <li>AI 도우미</li>
                 <li>미니게임</li>
+                <li>청년정책</li>
               </ul>
             </div>
 

@@ -453,22 +453,24 @@ const SettingsPage: React.FC = () => {
                         <div className="flex space-x-4 mt-1">
                             <button
                                 onClick={async () => {
-                                    try {
-                                        await profileApi.deleteAvatar();
-                                        // 로컬 상태 업데이트
-                                        setProfileData(prev => ({...prev, avatar: ''}));
+                                    if (window.confirm('정말로 프로필 사진을 삭제하시겠습니까?')) {
+                                        try {
+                                            await profileApi.deleteAvatar();
+                                            // 로컬 상태 업데이트
+                                            setProfileData(prev => ({...prev, avatar: ''}));
 
-                                        // 전역 상태 업데이트
-                                        const {updateUser} = useAuthStore.getState();
-                                        updateUser({
-                                            ...user,
-                                            avatar: ''
-                                        })
+                                            // 전역 상태 업데이트
+                                            const {updateUser} = useAuthStore.getState();
+                                            updateUser({
+                                                ...user,
+                                                avatar: ''
+                                            })
 
-                                        toast.success('프로필 사진이 삭제되었습니다.')
-                                    } catch (error) {
-                                        toast.error('이미지 삭제에 실패했습니다.');
-                                        console.error('Profile image delete error: ', error);
+                                            toast.success('프로필 사진이 삭제되었습니다.')
+                                        } catch (error) {
+                                            toast.error('이미지 삭제에 실패했습니다.');
+                                            console.error('Profile image delete error: ', error);
+                                        }
                                     }
                                 }}
                                 className="text-sm text-red-600 hover:text-red-700"
@@ -636,12 +638,12 @@ const SettingsPage: React.FC = () => {
 
         return (
             <div className="space-y-6">
-                {/* 이메일 알림 설정 카드 */}
+                {/* 알림 방식 설정 카드 */}
                 <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
                     <div className="flex items-center justify-between mb-6">
                         <div>
-                            <h3 className="text-xl font-bold text-gray-900">이메일 알림</h3>
-                            <p className="text-sm text-gray-600 mt-1">중요한 알림을 이메일로 받아보세요</p>
+                            <h3 className="text-xl font-bold text-gray-900">알림 방식</h3>
+                            <p className="text-sm text-gray-600 mt-1">원하는 방식으로 알림을 받아보세요</p>
                         </div>
                     </div>
 
@@ -653,72 +655,137 @@ const SettingsPage: React.FC = () => {
                             </div>
                         </div>
                     ) : (
-                        <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className={`relative overflow-hidden rounded-xl border-2 transition-all duration-300 ${
-                                notifications.emailEnabled
-                                    ? 'border-blue-200 bg-gradient-to-r from-blue-50 to-blue-100/50'
-                                    : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
-                            }`}
-                        >
-                            <div className="p-5">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center space-x-4">
-                                        {/* 아이콘 영역 */}
-                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                                            notifications.emailEnabled ? 'bg-orange-500' : 'bg-gray-400'
-                                        } text-white shadow-sm`}>
-                                            <Mail className="w-6 h-6" />
-                                        </div>
+                        <div className="space-y-4">
+                            {/* 인앱 알림 */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className={`relative overflow-hidden rounded-xl border-2 transition-all duration-300 ${
+                                    notifications.sseEnabled
+                                        ? 'border-primary-200 bg-primary-50'
+                                        : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
+                                }`}
+                            >
+                                <div className="p-5">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center space-x-4">
+                                            {/* 아이콘 영역 */}
+                                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                                                notifications.sseEnabled ? 'bg-primary-400' : 'bg-gray-400'
+                                            } text-white shadow-sm`}>
+                                                <Bell className="w-6 h-6" />
+                                            </div>
 
-                                        {/* 텍스트 영역 */}
-                                        <div className="flex-1">
-                                            <h4 className={`font-semibold text-lg transition-colors ${
-                                                notifications.emailEnabled ? 'text-gray-900' : 'text-gray-600'
-                                            }`}>
-                                                이메일 알림
-                                            </h4>
-                                            <p className={`text-sm mt-1 transition-colors ${
-                                                notifications.emailEnabled ? 'text-gray-700' : 'text-gray-500'
-                                            }`}>
-                                                아래 선택한 알림들을 이메일로도 받을 수 있어요
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    {/* 토글 스위치 */}
-                                    <label className="relative inline-flex items-center cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            checked={notifications.emailEnabled}
-                                            onChange={(e) => setNotifications(prev => ({
-                                                ...prev,
-                                                emailEnabled: e.target.checked
-                                            }))}
-                                            disabled={notificationLoading}
-                                            className="sr-only peer"
-                                        />
-                                        <div className={`relative w-16 h-8 transition-all duration-300 ease-in-out rounded-full shadow-inner ${
-                                            notifications.emailEnabled
-                                                ? 'bg-orange-500'
-                                                : 'bg-gray-300'
-                                        } ${notificationLoading ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                                            <div className={`absolute top-0.5 w-7 h-7 bg-white rounded-full shadow-lg transition-all duration-300 ease-in-out ${
-                                                notifications.emailEnabled ? 'right-0.5' : 'left-0.5'
-                                            }`}>
-                                                <div className={`w-full h-full rounded-full flex items-center justify-center text-xs transition-colors ${
-                                                    notifications.emailEnabled ? 'text-primary-600' : 'text-gray-400'
+                                            {/* 텍스트 영역 */}
+                                            <div className="flex-1">
+                                                <h4 className={`font-semibold text-lg transition-colors ${
+                                                    notifications.sseEnabled ? 'text-gray-900' : 'text-gray-600'
                                                 }`}>
-                                                </div>
+                                                    인앱 알림
+                                                </h4>
+                                                <p className={`text-sm mt-1 transition-colors ${
+                                                    notifications.sseEnabled ? 'text-gray-700' : 'text-gray-500'
+                                                }`}>
+                                                    웹페이지 내에서 실시간으로 알림을 받을 수 있어요
+                                                </p>
                                             </div>
                                         </div>
-                                    </label>
-                                </div>
-                            </div>
 
-                            {/* 밑줄 제거 */}
-                        </motion.div>
+                                        {/* 토글 스위치 */}
+                                        <label className="relative inline-flex items-center cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={notifications.sseEnabled}
+                                                onChange={(e) => handleSpecialMethodToggle('sseEnabled', e.target.checked)}
+                                                disabled={notificationLoading}
+                                                className="sr-only peer"
+                                            />
+                                            <div className={`relative w-16 h-8 transition-all duration-300 ease-in-out rounded-full shadow-inner ${
+                                                notifications.sseEnabled
+                                                    ? 'bg-primary-400'
+                                                    : 'bg-gray-300'
+                                            } ${notificationLoading ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                                <div className={`absolute top-0.5 w-7 h-7 bg-white rounded-full shadow-lg transition-all duration-300 ease-in-out ${
+                                                    notifications.sseEnabled ? 'right-0.5' : 'left-0.5'
+                                                }`}>
+                                                    <div className={`w-full h-full rounded-full flex items-center justify-center text-xs transition-colors ${
+                                                        notifications.sseEnabled ? 'text-primary-600' : 'text-gray-400'
+                                                    }`}>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </motion.div>
+
+                            {/* 이메일 알림 */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.1 }}
+                                className={`relative overflow-hidden rounded-xl border-2 transition-all duration-300 ${
+                                    notifications.emailEnabled
+                                        ? 'border-primary-200 bg-primary-50'
+                                        : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
+                                }`}
+                            >
+                                <div className="p-5">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center space-x-4">
+                                            {/* 아이콘 영역 */}
+                                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                                                notifications.emailEnabled ? 'bg-primary-400' : 'bg-gray-400'
+                                            } text-white shadow-sm`}>
+                                                <Mail className="w-6 h-6" />
+                                            </div>
+
+                                            {/* 텍스트 영역 */}
+                                            <div className="flex-1">
+                                                <h4 className={`font-semibold text-lg transition-colors ${
+                                                    notifications.emailEnabled ? 'text-gray-900' : 'text-gray-600'
+                                                }`}>
+                                                    이메일 알림
+                                                </h4>
+                                                <p className={`text-sm mt-1 transition-colors ${
+                                                    notifications.emailEnabled ? 'text-gray-700' : 'text-gray-500'
+                                                }`}>
+                                                    아래 선택한 알림들을 이메일로도 받을 수 있어요
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* 토글 스위치 */}
+                                        <label className="relative inline-flex items-center cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={notifications.emailEnabled}
+                                                onChange={(e) => setNotifications(prev => ({
+                                                    ...prev,
+                                                    emailEnabled: e.target.checked
+                                                }))}
+                                                disabled={notificationLoading}
+                                                className="sr-only peer"
+                                            />
+                                            <div className={`relative w-16 h-8 transition-all duration-300 ease-in-out rounded-full shadow-inner ${
+                                                notifications.emailEnabled
+                                                    ? 'bg-primary-400'
+                                                    : 'bg-gray-300'
+                                            } ${notificationLoading ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                                <div className={`absolute top-0.5 w-7 h-7 bg-white rounded-full shadow-lg transition-all duration-300 ease-in-out ${
+                                                    notifications.emailEnabled ? 'right-0.5' : 'left-0.5'
+                                                }`}>
+                                                    <div className={`w-full h-full rounded-full flex items-center justify-center text-xs transition-colors ${
+                                                        notifications.emailEnabled ? 'text-primary-600' : 'text-gray-400'
+                                                    }`}>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        </div>
                     )}
                 </div>
 
@@ -753,19 +820,19 @@ const SettingsPage: React.FC = () => {
                                         label: '일정 알림',
                                         description: '일정 시작 15분 전에 미리 알려드려요',
                                         icon: Calendar,
-                                        color: 'bg-orange-500'
+                                        color: 'bg-primary-400'
                                     },
                                     paymentReminder: {
                                         label: '정산 알림',
                                         description: '그룹 정산 및 지출 관련 소식을 전해드려요',
                                         icon: CreditCard,
-                                        color: 'bg-orange-500'
+                                        color: 'bg-primary-400'
                                     },
                                     checklistReminder: {
                                         label: '할일 알림',
                                         description: '새 할일 등록과 마감일을 놓치지 마세요',
                                         icon: CheckSquare,
-                                        color: 'bg-orange-500'
+                                        color: 'bg-primary-400'
                                     }
                                 };
 
@@ -779,7 +846,7 @@ const SettingsPage: React.FC = () => {
                                         transition={{ delay: index * 0.1 }}
                                         className={`relative overflow-hidden rounded-xl border-2 transition-all duration-300 ${
                                             value
-                                                ? 'border-primary-200 bg-gradient-to-r from-primary-50 to-primary-100/50'
+                                                ? 'border-primary-200 bg-primary-50'
                                                 : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
                                         }`}
                                     >
@@ -822,7 +889,7 @@ const SettingsPage: React.FC = () => {
                                                     />
                                                     <div className={`relative w-16 h-8 transition-all duration-300 ease-in-out rounded-full shadow-inner ${
                                                         value
-                                                            ? 'bg-orange-500'
+                                                            ? 'bg-primary-400'
                                                             : 'bg-gray-300'
                                                     } ${notificationLoading ? 'opacity-50 cursor-not-allowed' : ''}`}>
                                                         <div className={`absolute top-0.5 w-7 h-7 bg-white rounded-full shadow-lg transition-all duration-300 ease-in-out ${
@@ -873,205 +940,6 @@ const SettingsPage: React.FC = () => {
                             </>
                         )}
                     </motion.button>
-                </div>
-
-                {/* 하이브리드 알림 시스템 카드 */}
-                <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
-                    <div className="flex items-center justify-between mb-6">
-                        <div>
-                            <h3 className="text-xl font-bold text-gray-900">스마트 알림 시스템</h3>
-                            <p className="text-sm text-gray-600 mt-1">실시간 연결과 백그라운드 알림으로 놓치는 알림이 없어요</p>
-                        </div>
-                        <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-3 py-1 rounded-full text-xs font-medium">
-                            실시간 • 백그라운드
-                        </div>
-                    </div>
-
-                    {/* 시스템 흐름도 */}
-                    <div className="relative mb-6">
-                        <div className="flex items-center justify-between">
-                            {/* 1단계 */}
-                            <div className="flex flex-col items-center space-y-2 flex-1">
-                                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all ${
-                                    isSSEConnected ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
-                                }`}>
-                                    <Wifi className="w-8 h-8" />
-                                </div>
-                                <div className="text-center">
-                                    <p className="font-medium text-sm">실시간 연결</p>
-                                    <p className={`text-xs ${isSSEConnected ? 'text-green-600' : 'text-red-600'}`}>
-                                        {isSSEConnected ? '연결됨' : '연결 끊김'}
-                                    </p>
-                                </div>
-                            </div>
-
-                            {/* 화살표 */}
-                            <div className="flex-shrink-0 px-4 flex items-center">
-                                <ArrowRight className="w-6 h-6 text-gray-400" />
-                            </div>
-
-                            {/* 2단계 */}
-                            <div className="flex flex-col items-center space-y-2 flex-1">
-                                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all ${
-                                    isWebPushSubscribed ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400'
-                                }`}>
-                                    <Smartphone className="w-8 h-8" />
-                                </div>
-                                <div className="text-center">
-                                    <p className="font-medium text-sm">백그라운드</p>
-                                    <p className={`text-xs ${isWebPushSubscribed ? 'text-blue-600' : 'text-gray-400'}`}>
-                                        {isWebPushSubscribed ? '구독됨' : '미구독'}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* 상세 설정 카드들 */}
-                    <div className="space-y-4">
-                        {/* SSE 연결 설정 */}
-                        <div className={`p-4 rounded-xl border-2 transition-all ${
-                            isSSEConnected ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'
-                        }`}>
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center space-x-3">
-                                    <div className={`w-3 h-3 rounded-full ${isSSEConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                                    <div>
-                                        <p className="font-medium text-gray-900">실시간 연결 (SSE)</p>
-                                        <p className="text-sm text-gray-600">
-                                            {isSSEConnected ? '웹페이지가 열려있으면 즉시 알림을 받을 수 있어요' : '연결이 끊어져 실시간 알림을 받을 수 없어요'}
-                                        </p>
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={async () => {
-                                        const newSSEEnabled = !isSSEConnected;
-
-                                        // 🔥 설정만 업데이트하고, 실제 연결/해제는 useNotifications에서 감지
-                                        setNotifications(prev => ({ ...prev, sseEnabled: newSSEEnabled }));
-
-                                        try {
-                                            const currentSettings = await notificationApi.getMySettings();
-                                            await notificationApi.updateMySettings({
-                                                ...currentSettings,
-                                                sseEnabled: newSSEEnabled
-                                            });
-
-                                            // 설정 저장 후 SSE 연결 상태에 따라 연결/해제
-                                            if (newSSEEnabled) {
-                                                connectSSE?.();
-                                                toast.success('실시간 알림이 활성화되었습니다.');
-                                            } else {
-                                                disconnectSSE?.();
-                                                toast.success('실시간 알림이 비활성화되었습니다.');
-                                            }
-                                        } catch (error) {
-                                            console.error('SSE 설정 저장 실패:', error);
-                                            toast.error('설정 저장에 실패했습니다.');
-                                            // 에러 시 설정 되돌리기
-                                            setNotifications(prev => ({ ...prev, sseEnabled: !newSSEEnabled }));
-                                        }
-                                    }}
-                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                                        isSSEConnected
-                                            ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                                            : 'bg-green-100 text-green-700 hover:bg-green-200'
-                                    }`}
-                                >
-                                    {isSSEConnected ? '연결 해제' : '다시 연결'}
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* 웹푸시 설정 */}
-                        <div className={`p-4 rounded-xl border-2 transition-all ${
-                            isWebPushSubscribed ? 'border-blue-200 bg-blue-50' : 'border-gray-200 bg-gray-50'
-                        }`}>
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center space-x-3">
-                                    <div className={`w-3 h-3 rounded-full ${
-                                        isWebPushSubscribed ? 'bg-blue-500' : 'bg-gray-400'
-                                    }`}></div>
-                                    <div>
-                                        <p className="font-medium text-gray-900">백그라운드 알림 (웹푸시)</p>
-                                        <p className="text-sm text-gray-600">
-                                            {isWebPushSubscribed
-                                                ? '웹페이지를 닫아도 브라우저 알림을 받을 수 있어요'
-                                                : '브라우저 알림 권한이 필요해요'}
-                                        </p>
-                                        {!isWebPushSupported && (
-                                            <p className="text-xs text-orange-600 mt-1">⚠️ 현재 브라우저에서 지원되지 않습니다</p>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="flex space-x-2">
-                                    {notificationPermission !== 'granted' && (
-                                        <button
-                                            onClick={() => requestNotificationPermission?.()}
-                                            className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
-                                        >
-                                            권한 요청
-                                        </button>
-                                    )}
-                                    {isWebPushSupported && notificationPermission === 'granted' && (
-                                        <button
-                                            onClick={async () => {
-                                                if (isWebPushSubscribed) {
-                                                    const success = await unsubscribeFromWebPush?.();
-                                                    if (success) {
-                                                        setNotifications(prev => ({ ...prev, webpushEnabled: false }));
-
-                                                        // 👇 즉시 백엔드에 저장
-                                                        try {
-                                                            const currentSettings = await notificationApi.getMySettings();
-                                                            await notificationApi.updateMySettings({
-                                                                ...currentSettings,
-                                                                webpushEnabled: false
-                                                            });
-                                                            toast.success('웹푸시 알림이 비활성화되었습니다.');
-                                                        } catch (error) {
-                                                            console.error('웹푸시 설정 저장 실패:', error);
-                                                            toast.error('설정 저장에 실패했습니다.');
-                                                        }
-                                                    }
-                                                } else {
-                                                    const success = await subscribeToWebPush?.();
-                                                    if (success) {
-                                                        setNotifications(prev => ({ ...prev, webpushEnabled: true }));
-
-                                                        // 👇 즉시 백엔드에 저장
-                                                        try {
-                                                            const currentSettings = await notificationApi.getMySettings();
-                                                            await notificationApi.updateMySettings({
-                                                                ...currentSettings,
-                                                                webpushEnabled: true
-                                                            });
-                                                            toast.success('웹푸시 알림이 활성화되었습니다.');
-                                                        } catch (error) {
-                                                            console.error('웹푸시 설정 저장 실패:', error);
-                                                            toast.error('설정 저장에 실패했습니다.');
-                                                        }
-                                                    }
-                                                }
-                                            }}
-                                            disabled={!import.meta.env.VITE_VAPID_PUBLIC_KEY ||
-                                                import.meta.env.VITE_VAPID_PUBLIC_KEY === 'your_vapid_public_key_here'}
-                                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                                                !import.meta.env.VITE_VAPID_PUBLIC_KEY ||
-                                                import.meta.env.VITE_VAPID_PUBLIC_KEY === 'your_vapid_public_key_here'
-                                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                                    : isWebPushSubscribed
-                                                        ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                                                        : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                                            }`}
-                                        >
-                                            {isWebPushSubscribed ? '구독 해제' : '구독하기'}
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         );
@@ -1134,23 +1002,6 @@ const SettingsPage: React.FC = () => {
 
     return (
         <div className="space-y-8">
-            {/* Header */}
-            <motion.div
-                initial={{opacity: 0, y: 20}}
-                animate={{opacity: 1, y: 0}}
-                transition={{duration: 0.6}}
-                className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-3xl p-8 text-white"
-            >
-                <div className="flex items-center space-x-4">
-                    <div className="w-16 h-16 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center">
-                        <Settings className="w-8 h-8"/>
-                    </div>
-                    <div>
-                        <h1 className="text-3xl font-bold">설정</h1>
-                        <p className="text-primary-100">계정 및 알림 설정을 관리하세요</p>
-                    </div>
-                </div>
-            </motion.div>
 
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 relative">
                 {/* Sidebar */}

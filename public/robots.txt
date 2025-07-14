@@ -1,3 +1,17 @@
+# Allow monitoring services
+User-agent: UptimeRobot*
+Allow: /
+
+User-agent: Pingdom*
+Allow: /
+
+User-agent: StatusCake*
+Allow: /
+
+User-agent: Freshping*
+Allow: /
+
+# Block all other crawlers
 User-agent: *
 Disallow: /
 
@@ -15,6 +29,18 @@ User-agent: dirb
 Disallow: /
 
 User-agent: dirbuster
+Disallow: /
+
+User-agent: gobuster
+Disallow: /
+
+User-agent: wfuzz
+Disallow: /
+
+User-agent: masscan
+Disallow: /
+
+User-agent: nmap
 Disallow: /
 
 Crawl-delay: 10

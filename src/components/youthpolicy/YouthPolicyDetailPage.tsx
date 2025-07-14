@@ -23,6 +23,9 @@ const YouthPolicyDetailPage: React.FC = () => {
 
   useEffect(() => {
     if (plcyNo) {
+      // 상세페이지 경로를 세션 스토리지에 저장
+      sessionStorage.setItem("lastVisitedPath", `/youth-policy/${plcyNo}`);
+      
       fetchYouthPolicyById(plcyNo)
         .then((data) => {
           setPolicy(data);
@@ -51,6 +54,57 @@ const YouthPolicyDetailPage: React.FC = () => {
       )}.${dateString.substring(6, 8)}`;
     }
     return dateString; // 8자리 숫자가 아니면 그대로 반환
+  };
+
+  // 신청 기간 형식 변환 함수 (20240205 ~ 20240222 -> 2024.02.05 ~ 2024.02.22)
+  const formatApplicationPeriod = (periodString?: string) => {
+    if (!periodString) return "정보 없음";
+    
+    // "20240205 ~ 20240222" 형태의 문자열을 분리
+    const dates = periodString.split(' ~ ');
+    if (dates.length === 2) {
+      const startDate = formatDate(dates[0].trim());
+      const endDate = formatDate(dates[1].trim());
+      return `${startDate} ~ ${endDate}`;
+    }
+    
+    // 단일 날짜인 경우
+    if (periodString.length === 8) {
+      return formatDate(periodString);
+    }
+    
+    return periodString; // 다른 형태면 그대로 반환
+  };
+
+  // 카테고리별 색상 매핑
+  const getCategoryColor = (category: string) => {
+    const colorMap: Record<string, { border: string; text: string; bg: string }> = {
+      // 대분류 5가지
+      '일자리': { border: 'border-blue-500', text: 'text-blue-700', bg: 'bg-transparent' },
+      '교육': { border: 'border-purple-500', text: 'text-purple-700', bg: 'bg-transparent' },
+      '주거': { border: 'border-primary-500', text: 'text-primary-700', bg: 'bg-transparent' },
+      '복지문화': { border: 'border-emerald-500', text: 'text-emerald-700', bg: 'bg-transparent' },
+      '참여권리': { border: 'border-red-500', text: 'text-red-700', bg: 'bg-transparent' },
+      
+      // 중분류들
+      '취업': { border: 'border-blue-600', text: 'text-blue-800', bg: 'bg-transparent' },
+      '창업': { border: 'border-green-500', text: 'text-green-700', bg: 'bg-transparent' },
+      '재직자': { border: 'border-cyan-500', text: 'text-cyan-700', bg: 'bg-transparent' },
+      '미래역량강화': { border: 'border-purple-600', text: 'text-purple-800', bg: 'bg-transparent' },
+      '교육비지원': { border: 'border-indigo-500', text: 'text-indigo-700', bg: 'bg-transparent' },
+      '주택 및 거주지': { border: 'border-primary-600', text: 'text-primary-800', bg: 'bg-transparent' },
+      '전월세 및 주거급여 지원': { border: 'border-orange-500', text: 'text-orange-700', bg: 'bg-transparent' },
+      '취약계층 및 금융지원': { border: 'border-emerald-600', text: 'text-emerald-800', bg: 'bg-transparent' },
+      '문화활동': { border: 'border-teal-500', text: 'text-teal-700', bg: 'bg-transparent' },
+      '예술인지원': { border: 'border-green-600', text: 'text-green-800', bg: 'bg-transparent' },
+      '건강': { border: 'border-lime-500', text: 'text-lime-700', bg: 'bg-transparent' },
+      '청년참여': { border: 'border-red-600', text: 'text-red-800', bg: 'bg-transparent' },
+      '청년국제교류': { border: 'border-red-400', text: 'text-red-600', bg: 'bg-transparent' },
+      '권익보호': { border: 'border-red-700', text: 'text-red-900', bg: 'bg-transparent' },
+      '정책인프라구축': { border: 'border-slate-500', text: 'text-slate-700', bg: 'bg-transparent' },
+    };
+    
+    return colorMap[category] || { border: 'border-gray-500', text: 'text-gray-700', bg: 'bg-transparent' };
   };
 
   if (loading) {
@@ -95,21 +149,21 @@ const YouthPolicyDetailPage: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-      <motion.button
+      <motion.div
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         onClick={() => navigate("/youth-policy")}
-        className="flex items-center text-gray-600 hover:text-accent-600 transition-colors mb-6 font-medium"
+        className="flex items-center text-gray-600 hover:text-accent-600 transition-colors mb-6 font-medium cursor-pointer"
       >
         <ArrowLeft className="w-5 h-5 mr-2" />
         목록으로 돌아가기
-      </motion.button>
+      </motion.div>
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden"
+        className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden"
       >
         {/* 정책 헤더 */}
         <div className="bg-gradient-to-r from-accent-500 to-accent-600 p-8 text-white">
@@ -124,11 +178,11 @@ const YouthPolicyDetailPage: React.FC = () => {
             <div className="flex items-center">
               <Tag className="w-5 h-5 text-accent-600 mr-2 flex-shrink-0" />
               <div className="flex flex-wrap gap-2">
-                <span className="bg-accent-50 text-accent-700 px-3 py-1 rounded-full text-sm font-medium">
+                <span className={`border px-3 py-1 rounded-full text-sm font-medium ${getCategoryColor(policy.lclsfNm).border} ${getCategoryColor(policy.lclsfNm).text} ${getCategoryColor(policy.lclsfNm).bg}`}>
                   {policy.lclsfNm}
                 </span>
                 {policy.mclsfNm && policy.lclsfNm !== policy.mclsfNm && (
-                  <span className="bg-accent-50 text-accent-700 px-3 py-1 rounded-full text-sm font-medium">
+                  <span className={`border px-3 py-1 rounded-full text-sm font-medium ${getCategoryColor(policy.mclsfNm).border} ${getCategoryColor(policy.mclsfNm).text} ${getCategoryColor(policy.mclsfNm).bg}`}>
                     {policy.mclsfNm}
                   </span>
                 )}
@@ -148,9 +202,7 @@ const YouthPolicyDetailPage: React.FC = () => {
             <div className="flex items-center">
               <CalendarDays className="w-5 h-5 text-accent-600 mr-2 flex-shrink-0" />
               <p className="text-gray-700 text-sm">
-                신청 기간: {formatDate(policy.plcyStDt)} ~{" "}
-                {formatDate(policy.plcyEndDt)} (신청 연월일:{" "}
-                {formatDate(policy.aplyYmd)})
+                신청 기간: {formatApplicationPeriod(policy.aplyYmd)}
               </p>
             </div>
           </div>

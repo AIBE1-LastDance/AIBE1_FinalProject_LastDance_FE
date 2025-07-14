@@ -365,7 +365,7 @@ const DartsGame: React.FC = () => {
                           player.id === players[currentPlayerIndex].id
                             ? 'bg-cyan-500 bg-opacity-30 border-2 border-cyan-400'
                             : index === 0
-                              ? 'bg-gradient-to-r from-yellow-400 to-orange-500'
+                              ? 'bg-gradient-to-r from-yellow-400 to-primary-500'
                               : 'bg-white bg-opacity-20'
                         }`}
                       >
@@ -409,7 +409,7 @@ const DartsGame: React.FC = () => {
               exit={{ opacity: 0, scale: 0.8 }}
               className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80"
             >
-              <div className="bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl p-12 text-center text-white max-w-md mx-4">
+              <div className="bg-gradient-to-br from-yellow-400 to-primary-500 rounded-2xl p-12 text-center text-white max-w-md mx-4">
                 <motion.div
                   animate={{ 
                     rotate: [0, 10, -10, 0],
@@ -431,13 +431,13 @@ const DartsGame: React.FC = () => {
                 <div className="space-y-3">
                   <button
                     onClick={resetGame}
-                    className="w-full px-6 py-3 bg-white text-orange-500 rounded-xl font-bold hover:bg-gray-100 transition-colors"
+                    className="w-full px-6 py-3 bg-white text-primary-500 rounded-xl font-bold hover:bg-gray-100 transition-colors"
                   >
                     다시 플레이
                   </button>
                   <button
                     onClick={() => navigate('/games')}
-                    className="w-full px-6 py-3 bg-orange-600 text-white rounded-xl font-bold hover:bg-orange-700 transition-colors"
+                    className="w-full px-6 py-3 bg-primary-600 text-white rounded-xl font-bold hover:bg-primary-700 transition-colors"
                   >
                     게임 목록으로
                   </button>
