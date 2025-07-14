@@ -1,6 +1,6 @@
-"use client";
-import type React from "react";
-import { motion, AnimatePresence } from "framer-motion";
+'use client';
+import type React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   XCircle,
   Lightbulb,
@@ -10,7 +10,7 @@ import {
   MapPin,
   HelpCircle,
   Target,
-} from "lucide-react";
+} from 'lucide-react';
 
 interface TipsModalProps {
   isOpen: boolean;
@@ -21,39 +21,39 @@ const TipsModal: React.FC<TipsModalProps> = ({ isOpen, onClose }) => {
   const tips = [
     {
       icon: Users,
-      title: "누가 (Who)",
-      description: "갈등에 관련된 사람들을 명확히 구분해주세요",
-      example: "나, 룸메이트 B, 방문 친구", // 수정된 예시
+      title: '누가 (Who)',
+      description: '갈등에 관련된 사람들을 명확히 구분해주세요',
+      example: '나, 룸메이트 B, 방문 친구', // 수정된 예시
     },
     {
       icon: Clock,
-      title: "언제 (When)",
-      description: "갈등이 발생한 구체적인 시간을 알려주세요",
-      example: "어제 밤 11시, 지난주 화요일", // 수정된 예시
+      title: '언제 (When)',
+      description: '갈등이 발생한 구체적인 시간을 알려주세요',
+      example: '어제 밤 11시, 지난주 화요일', // 수정된 예시
     },
     {
       icon: MapPin,
-      title: "어디서 (Where)",
-      description: "갈등이 일어난 장소를 구체적으로 명시해주세요",
-      example: "내 방, 주방, 거실", // 수정된 예시
+      title: '어디서 (Where)',
+      description: '갈등이 일어난 장소를 구체적으로 명시해주세요',
+      example: '내 방, 주방, 거실', // 수정된 예시
     },
     {
       icon: MessageSquare,
-      title: "무엇을 (What)",
-      description: "실제로 일어난 사건이나 행동을 객관적으로 서술해주세요",
-      example: "개인 물건 사용, 설거지 안 함, 소음 발생", // 수정된 예시
+      title: '무엇을 (What)',
+      description: '실제로 일어난 사건이나 행동을 객관적으로 서술해주세요',
+      example: '개인 물건 사용, 설거지 안 함, 소음 발생', // 수정된 예시
     },
     {
       icon: Target,
-      title: "어떻게 (How)",
-      description: "상황이 어떤 방식으로 전개되었는지 설명해주세요",
-      example: "미리 양해 없이, 여러 번 반복적으로", // 수정된 예시
+      title: '어떻게 (How)',
+      description: '상황이 어떤 방식으로 전개되었는지 설명해주세요',
+      example: '미리 양해 없이, 여러 번 반복적으로', // 수정된 예시
     },
     {
       icon: HelpCircle,
-      title: "왜 (Why)",
-      description: "각자의 입장과 이유를 이해할 수 있도록 설명해주세요",
-      example: "개인 공간 침해, 위생 문제", // 수정된 예시
+      title: '왜 (Why)',
+      description: '각자의 입장과 이유를 이해할 수 있도록 설명해주세요',
+      example: '개인 공간 침해, 위생 문제', // 수정된 예시
     },
   ];
 
@@ -70,10 +70,10 @@ const TipsModal: React.FC<TipsModalProps> = ({ isOpen, onClose }) => {
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
             className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden"
           >
-            <div className="bg-gradient-to-r from-primary-500 to-primary-600 p-6 text-white">
+            <div className="bg-primary-500 p-6 text-white">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
@@ -81,7 +81,7 @@ const TipsModal: React.FC<TipsModalProps> = ({ isOpen, onClose }) => {
                   </div>
                   <div>
                     <h2 className="text-2xl font-bold">효과적인 작성 가이드</h2>
-                    <p className="text-orange-100 text-sm">
+                    <p className="text-primary-100 text-sm">
                       육하원칙으로 상황을 구체적으로 설명해주세요
                     </p>
                   </div>
@@ -98,8 +98,8 @@ const TipsModal: React.FC<TipsModalProps> = ({ isOpen, onClose }) => {
             </div>
 
             <div className="p-6 max-h-[70vh] overflow-y-auto">
-              <div className="mb-6 p-4 bg-orange-50 rounded-xl border border-orange-200">
-                <p className="text-orange-800 text-sm leading-relaxed">
+              <div className="mb-6 p-4 bg-primary-50 rounded-xl border border-primary-200">
+                <p className="text-primary-800 text-sm leading-relaxed">
                   <strong>💡 핵심 포인트:</strong> AI가 정확하고 공정한 판단을
                   내리기 위해서는 감정적인 표현보다는{" "}
                   <strong>구체적인 사실과 상황</strong>을 중심으로 작성해주세요.
@@ -113,11 +113,11 @@ const TipsModal: React.FC<TipsModalProps> = ({ isOpen, onClose }) => {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.1 }}
-                    className="p-4 border border-gray-200 rounded-xl hover:border-orange-300 transition-colors"
+                    className="p-4 border border-gray-200 rounded-xl hover:border-primary-300 transition-colors"
                   >
                     <div className="flex items-start space-x-3">
-                      <div className="flex-shrink-0 w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                        <tip.icon className="w-5 h-5 text-orange-600" />
+                      <div className="flex-shrink-0 w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+                        <tip.icon className="w-5 h-5 text-primary-500" />
                       </div>
                       <div className="flex-1">
                         <h4 className="font-semibold text-gray-800 mb-1">
@@ -126,7 +126,7 @@ const TipsModal: React.FC<TipsModalProps> = ({ isOpen, onClose }) => {
                         <p className="text-sm text-gray-600 mb-2">
                           {tip.description}
                         </p>
-                        <div className="text-xs text-orange-700 bg-orange-50 px-2 py-1 rounded">
+                        <div className="text-xs text-primary-700 bg-primary-50 px-2 py-1 rounded">
                           예: {tip.example}
                         </div>
                       </div>
@@ -142,7 +142,7 @@ const TipsModal: React.FC<TipsModalProps> = ({ isOpen, onClose }) => {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={onClose}
-                  className="px-6 py-3 bg-primary-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition-all duration-200 shadow-lg"
+                  className="px-6 py-3 bg-primary-500 text-white rounded-lg font-semibold hover:bg-primary-600 transition-all duration-200 shadow-lg"
                 >
                   알겠습니다.
                 </motion.button>
@@ -156,3 +156,4 @@ const TipsModal: React.FC<TipsModalProps> = ({ isOpen, onClose }) => {
 };
 
 export default TipsModal;
+

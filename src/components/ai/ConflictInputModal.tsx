@@ -1,10 +1,10 @@
-"use client";
-import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { PlusCircle, XCircle, MessageCircle, Info } from "lucide-react";
-import MiniTipsModal from "./MiniTipsModal";
+'use client';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { PlusCircle, XCircle, MessageCircle, Info } from 'lucide-react';
+import MiniTipsModal from './MiniTipsModal';
 
-import type { ParticipantSituation } from "../../types/aijudgment/aiMessage";
+import type { ParticipantSituation } from '../../types/aijudgment/aiMessage';
 
 interface ConflictInputModalProps {
   isOpen: boolean;
@@ -53,10 +53,10 @@ const ConflictInputModal: React.FC<ConflictInputModalProps> = ({
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
             className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden relative"
           >
-            <div className="bg-gradient-to-r from-primary-500 to-primary-600 p-6 text-white">
+            <div className="bg-primary-500 p-6 text-white">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
@@ -64,7 +64,7 @@ const ConflictInputModal: React.FC<ConflictInputModalProps> = ({
                   </div>
                   <div>
                     <h2 className="text-2xl font-bold">갈등 상황 입력</h2>
-                    <p className="text-orange-100 text-sm">
+                    <p className="text-primary-100 text-sm">
                       각자의 입장을 자세히 설명해주세요
                     </p>
                   </div>
@@ -86,7 +86,7 @@ const ConflictInputModal: React.FC<ConflictInputModalProps> = ({
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={handleOpenTips}
-                  className="p-2 text-gray-500 hover:text-orange-600 transition-colors flex items-center space-x-1"
+                  className="p-2 text-gray-500 hover:text-primary-500 transition-colors flex items-center space-x-1"
                 >
                   <Info className="w-5 h-5" />
                   <span>작성 팁</span>
@@ -106,11 +106,11 @@ const ConflictInputModal: React.FC<ConflictInputModalProps> = ({
                       <input
                         type="text"
                         value={participant.name}
-                        onChange={(e) =>
-                          onSituationChange(index, "name", e.target.value)
+                        onChange={e =>
+                          onSituationChange(index, 'name', e.target.value)
                         }
                         placeholder="참가자 이름 (예: 룸메이트 A)"
-                        className="w-40 px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
+                        className="w-40 px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
                       />
                       <label className="font-semibold text-gray-800">
                         의 입장
@@ -128,14 +128,14 @@ const ConflictInputModal: React.FC<ConflictInputModalProps> = ({
                     </div>
                     <textarea
                       value={participant.situation}
-                      onChange={(e) =>
-                        onSituationChange(index, "situation", e.target.value)
+                      onChange={e =>
+                        onSituationChange(index, 'situation', e.target.value)
                       }
                       placeholder={`${
-                        participant.name || "참가자"
+                        participant.name || '참가자'
                       }의 입장과 상황을 자세히 설명해주세요...`}
                       rows={4}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none transition-all duration-200 hover:border-gray-300"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none transition-all duration-200 hover:border-gray-300"
                     />
                   </motion.div>
                 ))}
@@ -169,7 +169,7 @@ const ConflictInputModal: React.FC<ConflictInputModalProps> = ({
                     onClick={onSubmit}
                     disabled={
                       situations.some(
-                        (p) => p.name.trim() === "" || p.situation.trim() === ""
+                        p => p.name.trim() === '' || p.situation.trim() === ''
                       ) || situations.length < 2
                     }
                     className="px-8 py-3 bg-primary-500 text-white rounded-lg font-semibold hover:bg-primary-600 transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
