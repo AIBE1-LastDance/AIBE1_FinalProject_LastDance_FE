@@ -242,7 +242,7 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                                 type="text"
                                 value={formData.title}
                                 onChange={(e) => setFormData({...formData, title: e.target.value})}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
                                 placeholder="지출 내용을 입력하세요"
                             />
                         </div>
@@ -261,7 +261,7 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                                     const numericValue = e.target.value.replace(/[^0-9]/g, '');
                                     setFormData({...formData, amount: numericValue});
                                 }}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-2xl font-bold text-right"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent text-2xl font-bold text-right"
                                 placeholder="10,000"
                                 inputMode="numeric"
                             />
@@ -280,7 +280,7 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                                         type="button"
                                         className={`p-3 rounded-lg border-2 transition-colors ${
                                             formData.category === category.value
-                                                ? 'border-primary-500 bg-primary-50'
+                                                ? 'border-accent-500 bg-accent-50'
                                                 : 'border-gray-200 hover:border-gray-300'
                                         }`}
                                         whileHover={{scale: 1.02}}
@@ -312,7 +312,7 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                                 type="date"
                                 value={formData.date}
                                 onChange={(e) => setFormData({...formData, date: e.target.value})}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
                             />
                         </div>
 
@@ -325,7 +325,7 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                             <textarea
                                 value={formData.memo}
                                 onChange={(e) => setFormData({...formData, memo: e.target.value})}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
                                 placeholder="추가 설명을 입력하세요"
                                 rows={3}
                             />
@@ -355,7 +355,7 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                                             setReceiptUrl(null);
                                         }
                                     }}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
                                 />
                                 {(formData.receipt || receiptUrl) && (
                                     <div className="mt-2">
@@ -435,7 +435,7 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                                             splitType: e.target.value,
                                             splitData: {}
                                         })}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
                                     >
                                         {splitTypes.map((type) => (
                                             <option key={type.value} value={type.value}>
@@ -473,7 +473,7 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                                                                 splitData: newSplitData
                                                             });
                                                         }}
-                                                        className="w-24 px-2 py-1 border border-gray-300 rounded text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                                        className="w-24 px-2 py-1 border border-gray-300 rounded text-sm text-center focus:outline-none focus:ring-2 focus:ring-accent-500"
                                                         placeholder="0"
                                                         inputMode="numeric"  // 모바일에서 숫자 키패드
                                                     />
@@ -525,7 +525,7 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                                                                                     });
                                                                                 }
                                                                             }}
-                                                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
                                                                         >
                                                                             내가 부담 (+{new Intl.NumberFormat('ko-KR', {
                                                                             style: 'currency',
@@ -547,7 +547,7 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                                                                                         }
                                                                                     });
                                                                                 }}
-                                                                                className="px-2 py-1 bg-primary-100 text-primary-600 rounded text-xs hover:bg-primary-200 transition-colors"
+                                                                                className="px-2 py-1 bg-accent-100 text-accent-600 rounded text-xs hover:bg-accent-200 transition-colors"
                                                                             >
                                                                                 {getDisplayNickname(member)}가 부담
                                                                             </button>
@@ -606,12 +606,12 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                                                                     splitData: newSplitData
                                                                 });
                                                             }}
-                                                            className="rounded border-gray-300 accent-primary-500 focus:ring-primary-500 focus:outline-none"
+                                                            className="rounded border-gray-300 accent-accent-500 focus:ring-accent-500 focus:outline-none"
                                                         />
                                                         <span
                                                             className="text-sm text-gray-700">{getDisplayNickname(member)}</span>
                                                         {formData.splitData[member.userId] !== undefined && (
-                                                            <span className="text-sm text-primary-600 ml-auto">
+                                                            <span className="text-sm text-accent-600 ml-auto">
                                                                 {new Intl.NumberFormat('ko-KR', {
                                                                     style: 'currency',
                                                                     currency: 'KRW'
@@ -637,9 +637,9 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
 
                                 {/* Equal Split Info */}
                                 {formData.splitType === 'EQUAL' && (
-                                    <div className="bg-primary-50 rounded-lg p-4">
-                                        <h4 className="text-sm font-medium text-primary-600 mb-2">균등 분할</h4>
-                                        <p className="text-sm text-primary-600">
+                                    <div className="bg-accent-50 rounded-lg p-4">
+                                        <h4 className="text-sm font-medium text-accent-600 mb-2">균등 분할</h4>
+                                        <p className="text-sm text-accent-600">
                                             총 {currentGroup.members.length}명이 균등하게 분담합니다.
                                         </p>
                                     </div>
@@ -688,8 +688,8 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                             {!expense?.isGroupShare && (
                                 <motion.button
                                     type="submit"
-                                    className={`px-4 py-2 bg-primary-500 text-white rounded-lg font-medium transition-colors ${
-                                        isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary-600'
+                                    className={`px-4 py-2 bg-accent-500 text-white rounded-lg font-medium transition-colors ${
+                                        isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-accent-600'
                                     }`}
                                     whileHover={isSubmitting ? {} : {scale: 1.02}}
                                     whileTap={isSubmitting ? {} : {scale: 0.98}}
