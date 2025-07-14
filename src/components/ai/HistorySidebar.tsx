@@ -115,13 +115,13 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
           >
             <div className="bg-gradient-to-r from-primary-300 to-primary-400 p-5 text-white rounded-tr-2xl relative overflow-hidden">
               <div className="flex items-center justify-between relative z-10">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                <div className="flex items-center space-x-3 min-w-0">
+                  <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
                     <History className="w-5 h-5" />
                   </div>
-                  <div>
-                    <h2 className="text-xl font-bold">히스토리 </h2>
-                    <p className="text-primary-100 text-sm">
+                  <div className="min-w-0">
+                    <h2 className="text-xl font-bold truncate">히스토리</h2>
+                    <p className="text-primary-100 text-sm truncate">
                       지난 기록들을 살펴보세요
                     </p>
                   </div>
@@ -130,7 +130,7 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={toggleHistory}
-                  className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                  className="p-2 hover:bg-white/10 rounded-lg transition-colors flex-shrink-0"
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </motion.button>
@@ -192,13 +192,16 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
                           >
                             <div className="flex items-start space-x-3">
                               <div
-                                className={`flex-shrink-0 w-6 h-6 bg-white rounded-lg flex items-center justify-center font-bold text-xs border ${chosenColor.split(' ')[1].replace('bg-', 'border-')}`}
+                                className={`flex-shrink-0 w-8 h-8 bg-white rounded-lg flex items-center justify-center font-bold text-sm border ${chosenColor.split(' ')[1].replace('bg-', 'border-')}`}
                               >
                                 {name.charAt(0).toUpperCase()}
                               </div>
-                              <p className="text-gray-700 leading-relaxed text-sm flex-grow">
-                                {situation}
-                              </p>
+                              <div className="flex-grow min-w-0">
+                                <p className="font-bold text-gray-800 truncate" title={name}>{name}</p>
+                                <p className="text-gray-700 text-sm truncate" title={situation}>
+                                  {situation}
+                                </p>
+                              </div>
                             </div>
                           </motion.div>
                         );
@@ -294,11 +297,11 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
                           whileTap={{ scale: 0.99 }}
                         >
                           <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center space-x-3">
-                              <div className="w-8 h-8 bg-orange-300 rounded-xl flex items-center justify-center">
+                            <div className="flex items-center space-x-3 min-w-0">
+                              <div className="w-8 h-8 bg-orange-300 rounded-xl flex items-center justify-center flex-shrink-0">
                                 <ShieldCheck className="w-4 h-4 text-white" />
                               </div>
-                              <span className="font-bold text-gray-800">
+                              <span className="font-bold text-gray-800 truncate">
                                 AI 판단
                               </span>
                             </div>
@@ -309,16 +312,16 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
                                 e.stopPropagation(); // Prevent triggering onClick of parent div
                                 handleDelete(item.judgmentId);
                               }}
-                              className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                              className="p-1 text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
                             >
                               <Trash2 className="w-4 h-4" />
                             </motion.button>
                           </div>
-                          <div className="text-sm text-gray-600 mb-3">
-                            <span className="font-medium text-gray-700">
+                          <div className="flex text-sm text-gray-600 mb-3">
+                            <span className="font-medium text-gray-700 flex-shrink-0">
                               참여자:
-                            </span>{" "}
-                            <span className="text-orange-500 font-medium">
+                            </span>
+                            <span className="text-orange-500 font-medium ml-2 truncate" title={Object.keys(item.situations).join(", ")}>
                               {Object.keys(item.situations).join(", ")}
                             </span>
                           </div>
