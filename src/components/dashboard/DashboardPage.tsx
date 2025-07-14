@@ -489,27 +489,23 @@ const DashboardPage: React.FC = () => {
           </div>
           <div className="flex-1 min-h-[200px] flex items-center justify-center">
             <ResponsiveContainer width="100%" height={200}>
-              <AreaChart data={activityData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="day" />
-                <YAxis />
-                <Tooltip
-                  formatter={(value, name) => [
-                    name === "tasks"
-                      ? `${value}개`
-                      : `₩${value.toLocaleString()}`,
-                    name === "tasks" ? "완료된 할일" : "지출",
-                  ]}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="tasks"
-                  stackId="1"
-                  stroke="#df6d14"
-                  fill="#df6d14"
-                  fillOpacity={0.3}
-                />
-              </AreaChart>
+              <AreaChart data={activityData} margin={{ left: -20, right: 20 }}>
+                                <CartesianGrid strokeDasharray="3 3"/>
+                                <XAxis dataKey="day"/>
+                                <YAxis/>
+                                <Tooltip formatter={(value, name) => [
+                                    name === 'tasks' ? `${value}개` : `₩${value.toLocaleString()}`,
+                                    name === 'tasks' ? '완료된 할일' : '지출'
+                                ]}/>
+                                <Area
+                                    type="monotone"
+                                    dataKey="tasks"
+                                    stackId="1"
+                                    stroke="#df6d14"
+                                    fill="#df6d14"
+                                    fillOpacity={0.3}
+                                />
+                            </AreaChart>
             </ResponsiveContainer>
           </div>
         </motion.div>
