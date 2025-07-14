@@ -36,7 +36,7 @@ const LandingPage: React.FC = () => {
       icon: Users,
       title: '커뮤니티',
       description: '같은 관심사를 가진 사람들과 소통하고 정보 공유',
-      color: 'from-orange-500 to-red-500'
+      color: 'from-primary-500 to-red-500'
     },
     {
       icon: Gamepad2,
