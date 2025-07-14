@@ -14,24 +14,6 @@ const Footer: React.FC = () => {
       ]
     },
     {
-      title: '지원',
-      links: [
-        { name: '도움말', href: '#' },
-        { name: '문의하기', href: '#' },
-        { name: 'FAQ', href: '#' },
-        { name: '피드백', href: '#' },
-      ]
-    },
-    {
-      title: '회사',
-      links: [
-        { name: '회사소개', href: '#' },
-        { name: '채용정보', href: '#' },
-        { name: '블로그', href: '#' },
-        { name: '파트너십', href: '#' },
-      ]
-    },
-    {
       title: '법적고지',
       links: [
         { name: '이용약관', href: '#' },
@@ -54,9 +36,9 @@ const Footer: React.FC = () => {
   return (
     <footer className="bg-white border-t border-gray-200 mt-20 hidden md:block">
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8">
           {/* Company Info */}
-          <div className="lg:col-span-2">
+          <div className="md:col-span-2 lg:col-span-2">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -72,7 +54,7 @@ const Footer: React.FC = () => {
               <div className="space-y-3">
                 <div className="flex items-center space-x-3 text-gray-600">
                   <MapPin className="w-4 h-4" />
-                  <span>서울특별시 강남구 테헤란로 123</span>
+                  <span>서울특별시 서초구 반포대로 45, 4층(서초동, 명정빌딩)</span>
                 </div>
                 <div className="flex items-center space-x-3 text-gray-600">
                   <Phone className="w-4 h-4" />
@@ -80,43 +62,47 @@ const Footer: React.FC = () => {
                 </div>
                 <div className="flex items-center space-x-3 text-gray-600">
                   <Mail className="w-4 h-4" />
-                  <span>contact@woori-zip.com</span>
+                  <span>lastdance857@gmail.com</span>
                 </div>
               </div>
             </motion.div>
           </div>
 
-          {/* Footer Links */}
-          {footerLinks.map((section, index) => (
-            <motion.div
-              key={section.title}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-            >
-              <h3 className="font-semibold text-gray-900 mb-4">{section.title}</h3>
-              <ul className="space-y-3">
-                {section.links.map((link) => (
-                  <li key={link.name}>
-                    <motion.a
-                      href={link.href}
-                      className="text-gray-600 hover:text-primary-600 transition-colors"
-                      whileHover={{ x: 4 }}
-                    >
-                      {link.name}
-                    </motion.a>
-                  </li>
-                ))}
-              </ul>
-            </motion.div>
-          ))}
+          {/* Footer Links - 가운데 정렬을 위한 컨테이너 */}
+          <div className="md:col-span-1 lg:col-span-2 flex justify-center">
+            <div className="grid grid-cols-2 gap-8 max-w-md w-full">
+              {footerLinks.map((section, index) => (
+                <motion.div
+                  key={section.title}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                >
+                  <h3 className="font-semibold text-gray-900 mb-4">{section.title}</h3>
+                  <ul className="space-y-3">
+                    {section.links.map((link) => (
+                      <li key={link.name}>
+                        <motion.a
+                          href={link.href}
+                          className="text-gray-600 hover:text-primary-600 transition-colors"
+                          whileHover={{ x: 4 }}
+                        >
+                          {link.name}
+                        </motion.a>
+                      </li>
+                    ))}
+                  </ul>
+                </motion.div>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Bottom Section */}
         <div className="border-t border-gray-200 mt-12 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <div className="text-gray-600 text-sm">
-              © 2024 우리.zip. All rights reserved.
+              © 2025 우리.zip. All rights reserved.
             </div>
             <div className="flex items-center space-x-6">
               {socialLinks.map((social) => (
