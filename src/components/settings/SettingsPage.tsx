@@ -511,7 +511,7 @@ const SettingsPage: React.FC = () => {
                                 type="text"
                                 value={profileData.nickname}
                                 onChange={(e) => handleProfileChange('nickname', e.target.value)}
-                                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:outline-none focus:ring-accent-500 focus:border-transparent ${
                                     nicknameState.available ? 'border-green-500' :
                                         !nicknameState.available ? 'border-red-500' :
                                             'border-gray-300'
@@ -545,7 +545,7 @@ const SettingsPage: React.FC = () => {
                                         handleProfileChange('monthlyBudget', numericValue.toString());
                                     }
                                 }}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent pr-8"
+                                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-accent-500 focus:outline-none focus:border-transparent pr-8"
                                 placeholder="0"
                             />
                             <span className="absolute right-3 top-3 text-gray-500">원</span>

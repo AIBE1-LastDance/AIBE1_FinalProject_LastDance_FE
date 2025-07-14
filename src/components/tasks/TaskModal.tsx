@@ -6,6 +6,7 @@ import { useAuthStore } from '../../store/authStore';
 import { ChecklistResponseDTO, ChecklistRequestDTO } from '../../types/checklist';
 import { ChecklistService } from '../../api/checklist';
 import toast from 'react-hot-toast';
+import {createPortal} from "react-dom";
 
 interface TaskModalProps {
   task: ChecklistResponseDTO | null;
@@ -117,7 +118,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onSave }) => {
     }
   };
 
-  return (
+  const modalContent = (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
@@ -258,9 +259,19 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onSave }) => {
                 {isSubmitting ? '삭제 중...' : '삭제'}
               </motion.button>
             )}
+
+            <motion.button
+              type="submit"
+              className="flex-1 px-4 py-2 bg-accent-500 text-white rounded-lg font-medium hover:bg-accent-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
+              whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (task ? '수정 중...' : '추가 중...') : (task ? '수정' : '추가')}
+            </motion.button>
             <motion.button
               type="button"
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
               whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
               onClick={onClose}
@@ -268,20 +279,12 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onSave }) => {
             >
               취소
             </motion.button>
-            <motion.button
-              type="submit"
-              className="px-4 py-2 bg-accent-600 text-white rounded-lg font-medium hover:bg-accent-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
-              whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (task ? '수정 중...' : '추가 중...') : (task ? '수정' : '추가')}
-            </motion.button>
           </div>
         </form>
       </motion.div>
     </div>
   );
+  return createPortal(modalContent, document.body);
 };
 
 export default TaskModal;
