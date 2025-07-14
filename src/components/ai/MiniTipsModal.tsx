@@ -1,7 +1,7 @@
-"use client";
-import type React from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { XCircle, MessageSquare } from "lucide-react";
+'use client';
+import type React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { XCircle, MessageSquare } from 'lucide-react';
 
 interface MiniTipsModalProps {
   isOpen: boolean;
@@ -19,10 +19,10 @@ const MiniTipsModal: React.FC<MiniTipsModalProps> = ({ isOpen, onClose }) => {
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            transition={{ type: "spring", damping: 20, stiffness: 500 }}
+            transition={{ type: 'spring', damping: 20, stiffness: 500 }}
             className="bg-white rounded-2xl shadow-2xl max-w-xl w-full max-h-[90vh] overflow-hidden"
           >
-            <div className="bg-gradient-to-r from-primary-500 to-primary-600 p-6 text-white">
+            <div className="bg-primary-500 p-6 text-white">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
@@ -30,7 +30,7 @@ const MiniTipsModal: React.FC<MiniTipsModalProps> = ({ isOpen, onClose }) => {
                   </div>
                   <div>
                     <h2 className="text-2xl font-bold">작성 예시</h2>
-                    <p className="text-orange-100 text-sm">
+                    <p className="text-primary-100 text-sm">
                       효과적인 작성을 위한 예시를 확인하세요
                     </p>
                   </div>
@@ -49,13 +49,13 @@ const MiniTipsModal: React.FC<MiniTipsModalProps> = ({ isOpen, onClose }) => {
             <div className="p-6 max-h-[70vh] overflow-y-auto">
               <div className="bg-gray-50 rounded-xl p-6">
                 <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
-                  <MessageSquare className="w-5 h-5 text-orange-600 mr-2" />
+                  <MessageSquare className="w-5 h-5 text-primary-500 mr-2" />
                   작성 예시
                 </h3>
                 <div className="bg-white rounded-lg p-4 border border-gray-200">
                   <div className="text-sm text-gray-700 leading-relaxed">
                     <p className="mb-3">
-                      <strong className="text-orange-600">좋은 예시:</strong>
+                      <strong className="text-primary-600">좋은 예시:</strong>
                     </p>
                     <p className="bg-green-50 p-3 rounded-lg border-l-4 border-green-400 mb-4">
                       "저는 룸메이트 A입니다.{" "}
@@ -95,7 +95,7 @@ const MiniTipsModal: React.FC<MiniTipsModalProps> = ({ isOpen, onClose }) => {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={onClose}
-                  className="px-6 py-3 bg-primary-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition-all duration-200 shadow-lg"
+                  className="px-6 py-3 bg-primary-500 text-white rounded-lg font-semibold hover:bg-primary-600 transition-all duration-200 shadow-lg"
                 >
                   닫기
                 </motion.button>
@@ -109,3 +109,4 @@ const MiniTipsModal: React.FC<MiniTipsModalProps> = ({ isOpen, onClose }) => {
 };
 
 export default MiniTipsModal;
+

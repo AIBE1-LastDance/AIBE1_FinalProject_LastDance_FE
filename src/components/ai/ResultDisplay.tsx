@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import type React from "react";
-import { useState } from "react";
-import { motion } from "framer-motion";
+import type React from 'react';
+import { useState } from 'react';
+import { motion } from 'framer-motion';
 import {
   ShieldCheck,
   Users,
@@ -12,15 +12,15 @@ import {
   RotateCcw,
   Check,
   Sparkles,
-} from "lucide-react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import toast from "react-hot-toast";
-import { sendFeedback } from "../../api/aijudgment/aiJudgment";
+} from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import toast from 'react-hot-toast';
+import { sendFeedback } from '../../api/aijudgment/aiJudgment';
 // ParticipantSituation 타입을 aiMessage에서 제거했다면 여기서는 필요 없습니다.
 // 현재 코드에서는 사용되지 않으므로 제거하거나, 필요하다면 적절히 수정해야 합니다.
-import type { AiJudgmentResponse } from "../../types/aijudgment/aiMessage";
-import { copyToClipboard } from "../../utils/api";
+import type { AiJudgmentResponse } from '../../types/aijudgment/aiMessage';
+import { copyToClipboard } from '../../utils/api';
 
 interface ResultDisplayProps {
   aiJudgmentResult: AiJudgmentResponse | null;
@@ -33,7 +33,7 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
   onReset,
   onFeedbackSent,
 }) => {
-  const [currentRating, setCurrentRating] = useState<"up" | "down" | null>(
+  const [currentRating, setCurrentRating] = useState<'up' | 'down' | null>(
     null
   );
   const [copySuccess, setCopySuccess] = useState(false);
@@ -42,7 +42,7 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
     return null;
   }
 
-  const handleRating = async (rating: "up" | "down") => {
+  const handleRating = async (rating: 'up' | 'down') => {
     if (!aiJudgmentResult?.judgmentId) return;
 
     const willBeCanceled = currentRating === rating;
@@ -54,17 +54,17 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
       if (willBeCanceled) {
         setCurrentRating(null);
         toast.success(
-          rating === "up" ? "좋아요를 취소했습니다." : "싫어요를 취소했습니다."
+          rating === 'up' ? '좋아요를 취소했습니다.' : '싫어요를 취소했습니다.'
         );
       } else {
         setCurrentRating(rating);
         toast.success(
-          rating === "up" ? "좋아요를 남겼습니다." : "싫어요를 남겼습니다."
+          rating === 'up' ? '좋아요를 남겼습니다.' : '싫어요를 남겼습니다.'
         );
       }
       onFeedbackSent();
     } catch (error: any) {
-      toast.error(error.message || "피드백 처리 중 오류가 발생했습니다.");
+      toast.error(error.message || '피드백 처리 중 오류가 발생했습니다.');
     }
   };
 
@@ -119,7 +119,7 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
         className="bg-white rounded-3xl p-8 mb-8 border border-gray-200 shadow-xl border-l-4 border-l-primary-400"
       >
         <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-          <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center mr-4 shadow-lg">
+          <div className="w-10 h-10 bg-primary-500 rounded-2xl flex items-center justify-center mr-4 shadow-lg">
             <Users className="w-5 h-5 text-white" />
           </div>
           입력된 갈등 상황
@@ -127,19 +127,19 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
         <div className="grid gap-6">
           {/* participantSituations 배열을 사용하도록 변경 */}
           {participantSituations
-            .filter((p) => p.situation.trim() !== "")
+            .filter(p => p.situation.trim() !== '')
             .map((participant, index) => {
               const colors = [
-                "bg-blue-50 border-blue-200 border-l-4 border-blue-400",
-                "bg-green-50 border-green-200 border-l-4 border-green-400",
-                "bg-yellow-50 border-yellow-200 border-l-4 border-yellow-400",
-                "bg-purple-50 border-purple-200 border-l-4 border-purple-400",
+                'bg-primary-50 border-primary-200 border-l-4 border-primary-400',
+                'bg-accent-50 border-accent-200 border-l-4 border-accent-400',
+                'bg-yellow-50 border-yellow-200 border-l-4 border-yellow-400',
+                'bg-purple-50 border-purple-200 border-l-4 border-purple-400',
               ];
               const labelColors = [
-                "bg-blue-500",
-                "bg-green-500",
-                "bg-yellow-500",
-                "bg-purple-500",
+                'bg-primary-500',
+                'bg-accent-500',
+                'bg-yellow-500',
+                'bg-purple-500',
               ];
               const chosenColor = colors[index % colors.length];
               const chosenLabelColor = labelColors[index % labelColors.length];
@@ -179,7 +179,7 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.2 }}
-        className="relative bg-white border border-gray-200 border-l-4 border-l-orange-400 rounded-3xl p-8 shadow-xl transition-all duration-300 mb-8"
+        className="relative bg-white border border-gray-200 border-l-4 border-l-primary-400 rounded-3xl p-8 shadow-xl transition-all duration-300 mb-8"
       >
         <div className="flex items-center space-x-4 mb-6">
           <div className="w-14 h-14 bg-primary-500 rounded-2xl flex items-center justify-center">
@@ -205,8 +205,8 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
             onClick={() => handleCopy(aiJudgmentResult.judgmentResult)}
             className={`absolute bottom-4 right-4 flex items-center justify-center p-3 rounded-xl font-medium transition-all duration-200 shadow-sm ${
               copySuccess
-                ? "bg-orange-400 text-white"
-                : "bg-white text-gray-700 hover:bg-orange-50 hover:text-orange-500 border border-orange-200"
+                ? 'bg-primary-400 text-white'
+                : 'bg-white text-gray-700 hover:bg-primary-50 hover:text-primary-500 border border-primary-200'
             }`}
           >
             {copySuccess ? (
@@ -230,13 +230,13 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
       >
         <motion.button
           className={`flex items-center px-8 py-4 rounded-2xl font-semibold transition-all duration-200 shadow-lg ${
-            currentRating === "up"
-              ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-xl"
-              : "bg-white text-gray-700 hover:bg-green-50 hover:text-green-600 border border-gray-200 hover:border-green-300"
+            currentRating === 'up'
+              ? 'bg-green-500 text-white shadow-xl'
+              : 'bg-white text-gray-700 hover:bg-green-50 hover:text-green-600 border border-gray-200 hover:border-green-300'
           }`}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          onClick={() => handleRating("up")}
+          onClick={() => handleRating('up')}
         >
           <ThumbsUp className="w-5 h-5 mr-3" />
           좋아요
@@ -244,13 +244,13 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
 
         <motion.button
           className={`flex items-center px-8 py-4 rounded-2xl font-semibold transition-all duration-200 shadow-lg ${
-            currentRating === "down"
-              ? "bg-gradient-to-r from-red-500 to-red-600 text-white shadow-xl"
-              : "bg-white text-gray-700 hover:bg-red-50 hover:text-red-600 border border-gray-200 hover:border-red-300"
+            currentRating === 'down'
+              ? 'bg-red-500 text-white shadow-xl'
+              : 'bg-white text-gray-700 hover:bg-red-50 hover:text-red-600 border border-gray-200 hover:border-red-300'
           }`}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          onClick={() => handleRating("down")}
+          onClick={() => handleRating('down')}
         >
           <ThumbsDown className="w-5 h-5 mr-3" />
           싫어요
@@ -271,3 +271,4 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
 };
 
 export default ResultDisplay;
+

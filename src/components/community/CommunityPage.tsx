@@ -36,19 +36,24 @@ import { Post } from "../../types/community/community";
 const CommunityPage: React.FC = () => {
   const { user } = useAuthStore();
   const navigate = useNavigate();
+  // useLocation은 계속 사용되므로 남겨둡니다. (예: navigate 함수 등)
   const location = useLocation();
 
+  // 페이지 기억 기능 제거: 이 useEffect 훅을 삭제합니다.
+  /*
   useEffect(() => {
     if (!location.pathname.startsWith("/community")) {
       localStorage.removeItem("communityCurrentPage");
     }
   }, [location.pathname]);
+  */
 
   const { posts, loadPosts, deletePost, toggleLike, toggleBookmark } =
     usePostStore();
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [tempSearchQuery, setTempSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [sortBy, setSortBy] = useState<"latest" | "likes" | "comments">(
     "latest"
@@ -60,10 +65,8 @@ const CommunityPage: React.FC = () => {
 
   const [isLoading, setIsLoading] = useState(true);
 
-  const [currentPage, setCurrentPage] = useState(() => {
-    const savedPage = localStorage.getItem("communityCurrentPage");
-    return savedPage ? parseInt(savedPage, 10) : 1;
-  });
+  // 페이지 기억 기능 제거: localStorage에서 값을 불러오지 않고 1로 초기화합니다.
+  const [currentPage, setCurrentPage] = useState(1);
   const postsPerPage = 15;
 
   useEffect(() => {
@@ -75,9 +78,12 @@ const CommunityPage: React.FC = () => {
     fetchAndSetLoading();
   }, [user?.id, loadPosts]);
 
+  // 페이지 기억 기능 제거: 이 useEffect 훅을 삭제합니다.
+  /*
   useEffect(() => {
     localStorage.setItem("communityCurrentPage", currentPage.toString());
   }, [currentPage]);
+  */
 
   const totalLikes = useMemo(() => {
     return posts.reduce((sum, post) => sum + (post.likeCount || 0), 0);
@@ -101,31 +107,42 @@ const CommunityPage: React.FC = () => {
     await toggleBookmark(postId);
   };
 
+  const handleSearch = () => {
+    setSearchQuery(tempSearchQuery);
+    setCurrentPage(1);
+  };
+
+  const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
+  };
+
   const categories = [
-    { id: "all", name: "전체", icon: Filter, color: "text-primary-600" },
+    { id: "all", name: "전체", icon: Filter, color: "text-orange-600" },
     {
       id: "FIND_MATE",
       name: "메이트구하기",
       icon: Megaphone,
-      color: "text-primary-600",
+      color: "text-orange-600",
     },
     {
       id: "LIFE_TIPS",
       name: "생활팁",
       icon: GraduationCap,
-      color: "text-primary-600",
+      color: "text-orange-600",
     },
     {
       id: "FREE_BOARD",
       name: "자유게시판",
       icon: MessageSquare,
-      color: "text-primary-600",
+      color: "text-orange-600",
     },
     {
       id: "QNA",
       name: "질문답변",
       icon: Handshake,
-      color: "text-primary-600",
+      color: "text-orange-600",
     },
   ];
 
@@ -233,19 +250,18 @@ const CommunityPage: React.FC = () => {
             <input
               type="text"
               placeholder="게시글을 검색해보세요..."
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              value={tempSearchQuery}
+              onChange={(e) => setTempSearchQuery(e.target.value)}
+              onKeyPress={handleSearchKeyPress}
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent"
             />
           </div>
           <button
-            onClick={() => setCurrentPage(1)}
-            className="ml-2 px-6 py-3 bg-accent-500 text-white rounded-2xl font-medium hover:bg-accent-600 transition-colors shadow-md hover:shadow-lg whitespace-nowrap"
+            onClick={handleSearch}
+            className="ml-2 px-6 py-3 bg-accent-500 text-white rounded-2xl font-medium hover:bg-accent-600 transition-colors shadow-md hover:shadow-lg whitespace-nowrap flex items-center gap-2"
           >
-            검색하기
+            <Search className="w-4 h-4" />
+            <span>검색</span>
           </button>
         </div>
 
@@ -337,7 +353,7 @@ const CommunityPage: React.FC = () => {
               }}
               className={`p-2 rounded-lg transition-colors ${
                 filterBy === "liked"
-                  ? "bg-primary-100 text-primary-700 border border-primary-300"
+                  ? "bg-orange-100 text-orange-700 border border-orange-300"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
@@ -388,6 +404,15 @@ const CommunityPage: React.FC = () => {
                 ? "검색 조건에 맞는 게시글을 찾을 수 없습니다."
                 : "첫 번째 게시글을 작성해보세요!"}
             </p>
+            <button
+              onClick={() => {
+                setEditingPost(null);
+                setIsCreateModalOpen(true);
+              }}
+              className="flex items-center space-x-2 px-6 py-3 bg-accent-500 text-white rounded-2xl font-medium hover:bg-accent-600 transition-colors shadow-md hover:shadow-lg whitespace-nowrap"
+            >
+              글쓰기
+            </button>
           </div>
         ) : (
           <div className="w-full space-y-4">
