@@ -18,7 +18,7 @@ import remarkGfm from "remark-gfm";
 import toast from "react-hot-toast";
 import { sendFeedback } from "../../api/aijudgment/aiJudgment";
 import type { AiJudgmentResponse } from "../../types/aijudgment/aiMessage";
-import { copyToClipboard } from "../../utils/api"; // .ts 확장자는 import 시 생략 가능 (tsconfig.json 설정에 따라 다름)
+import { copyToClipboard } from "../../utils/api";
 
 interface ResultDisplayProps {
   aiJudgmentResult: AiJudgmentResponse | null;
@@ -28,7 +28,6 @@ interface ResultDisplayProps {
 
 const personLabels = ["A", "B", "C", "D"];
 
-// 각 인물에 다른 테마 색상을 적용하도록 수정했습니다.
 const personThemes = {
   A: {
     gradient: "bg-blue-50",
@@ -72,22 +71,33 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
 
   const handleRating = async (rating: "up" | "down") => {
     if (!aiJudgmentResult?.judgmentId) return;
-    const isSame = currentRating === rating;
-    const newRating: "up" | "down" | null = isSame ? null : rating;
+
+    // 현재 피드백 상태가 없거나, 클릭한 피드백이 기존 피드백과 다르면
+    // 새로운 피드백을 적용합니다.
+    // 만약 현재 피드백과 클릭한 피드백이 같다면, 'null'로 설정하여 취소 상태를 나타냅니다.
+    const willBeCanceled = currentRating === rating;
+    const feedbackTypeToSend = rating; // 백엔드는 'up' 또는 'down'을 예상합니다.
 
     try {
-      if (newRating) {
-        await sendFeedback(aiJudgmentResult.judgmentId, newRating);
+      // 백엔드에 요청을 보냅니다. 백엔드에서 취소 로직을 처리합니다.
+      await sendFeedback(aiJudgmentResult.judgmentId, feedbackTypeToSend);
+
+      if (willBeCanceled) {
+        // 이미 같은 타입의 피드백이 있었고 다시 눌러서 취소된 경우
+        setCurrentRating(null); // 프론트엔드 상태를 null로 변경
         toast.success(
-          newRating === "up" ? "좋아요를 남겼습니다." : "싫어요를 남겼습니다."
+          rating === "up" ? "좋아요를 취소했습니다." : "싫어요를 취소했습니다."
         );
       } else {
-        toast.error("피드백 취소는 지원되지 않습니다.");
-        return;
+        // 새로운 피드백이 적용되거나 다른 피드백으로 변경된 경우
+        setCurrentRating(rating); // 프론트엔드 상태를 새 rating으로 변경
+        toast.success(
+          rating === "up" ? "좋아요를 남겼습니다." : "싫어요를 남겼습니다."
+        );
       }
-      setCurrentRating(newRating);
-      onFeedbackSent();
+      onFeedbackSent(); // 피드백 상태가 변경되었으므로 부모 컴포넌트에 알림
     } catch (error: any) {
+      // 백엔드 오류 메시지를 그대로 사용
       toast.error(error.message || "피드백 처리 중 오류가 발생했습니다.");
     }
   };
@@ -162,7 +172,6 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
                         "bg-primary-500"
                       )} rounded-2xl flex items-center justify-center font-bold text-lg shadow-lg`}
                     >
-                      {/* 이 부분이 수정되었습니다: 텍스트 노드를 div의 자식으로 직접 렌더링 */}
                       {person}
                     </div>
                     <div className="flex-grow">
