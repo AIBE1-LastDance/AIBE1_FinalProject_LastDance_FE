@@ -174,8 +174,7 @@ const AIAssistantPage: React.FC = () => {
                         갈등 상황 입력
                       </h4>
                       <p className="text-gray-600 text-sm leading-relaxed">
-                        각 룸메이트의 입장을 최소 2명부터 최대 4명까지
-                        구체적이고 객관적으로 입력해주세요.
+                        각 룸메이트의 입장을 구체적이고 객관적으로 입력해주세요.
                       </p>
                     </div>
                   </div>
@@ -193,6 +192,20 @@ const AIAssistantPage: React.FC = () => {
                       </p>
                     </div>
                   </div>
+                  <div className="flex items-start space-x-4">
+                    <div className="flex-shrink-0 w-10 h-10 bg-transparent rounded-xl flex items-center justify-center">
+                      <History className="w-5 h-5 text-primary-600" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-800 mb-2">
+                        히스토리 기능
+                      </h4>
+                      <p className="text-gray-600 text-sm leading-relaxed">
+                        과거 AI 판단 내역을 조회하고 상세 내용을 확인할 수
+                        있습니다.
+                      </p>
+                    </div>
+                  </div>
                 </div>
                 <div className="rounded-xl p-6 border border-gray-100 bg-gray-50">
                   <div className="flex items-center mb-4">
@@ -206,7 +219,8 @@ const AIAssistantPage: React.FC = () => {
                   <ul className="space-y-2 text-sm text-primary-700">
                     <li className="flex items-start">
                       <span className="text-primary-500 mr-2">•</span>
-                      감정보다는 구체적인 사실과 상황을 위주로 작성
+                      감정보다는 구체적인 사실과 상황을 육하원칙(누가, 언제,
+                      어디서, 무엇을, 어떻게, 왜)에 따라 작성
                     </li>
                     <li className="flex items-start">
                       <span className="text-primary-500 mr-2">•</span>
@@ -215,6 +229,10 @@ const AIAssistantPage: React.FC = () => {
                     <li className="flex items-start">
                       <span className="text-primary-500 mr-2">•</span>
                       AI 판단은 참고용이며, 최종 결정은 대화로 해결
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-primary-500 mr-2">•</span>
+                      AI 판단 결과에 대해 '좋아요' 또는 '싫어요'로 피드백 제공
                     </li>
                   </ul>
                 </div>
@@ -340,8 +358,6 @@ const AIAssistantPage: React.FC = () => {
       />
 
       <TipsModal isOpen={showTipsModal} onClose={handleCloseTipsModal} />
-
-      
     </>
   );
 };
