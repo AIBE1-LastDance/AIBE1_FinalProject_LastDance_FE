@@ -2081,7 +2081,7 @@ const ExpensesPage: React.FC = () => {
                               )}
                             </div>
                             <div>
-                              <h4 className="font-semibold text-gray-900 group-hover:text-[#df6d14] transition-colors">
+                              <h4 className="font-middle text-gray-900 group-hover:text-[#df6d14] transition-colors">
                                 {expense.title}
                               </h4>
                               <div className="flex items-center space-x-3 text-sm text-gray-500">
