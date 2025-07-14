@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Home, Mail, Phone, MapPin, Github, Twitter, Instagram } from 'lucide-react';
+import { Mail, Phone, MapPin, Github, Twitter, Instagram } from 'lucide-react';
 
 const Footer: React.FC = () => {
   const footerLinks = [
@@ -30,8 +30,8 @@ const Footer: React.FC = () => {
     { icon: Instagram, href: '#', label: 'Instagram' },
   ];
 
-  // 로고 URL - favicon과 동일한 이미지 사용
-  const logoUrl = "dist/image/Logo.png";
+  // 로고 URL 환경 변수 (S3에 업로드된 favicon과 동일한 이미지)
+  const logoUrl = import.meta.env.VITE_LOGO_URL;
 
   return (
     <footer className="bg-white border-t border-gray-200 mt-20 hidden md:block">
