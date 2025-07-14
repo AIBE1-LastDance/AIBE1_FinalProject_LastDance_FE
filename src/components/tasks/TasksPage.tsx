@@ -147,8 +147,8 @@ const TasksPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0">
         <div className="flex items-center space-x-6">
-          <div>
-            <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">
+          <div className="lg:w-80">
+            <h1 className="text-2xl lg:text-3xl font-bold text-gray-500">
               {mode === "personal" ? (
                   "내 할일"
               ) : (
