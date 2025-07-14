@@ -1,7 +1,7 @@
-"use client";
-import type React from "react";
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+'use client';
+import type React from 'react';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   PlusCircle,
   MessageCircle,
@@ -10,28 +10,28 @@ import {
   Lightbulb,
   Users,
   History,
-} from "lucide-react";
-import toast, { Toaster } from "react-hot-toast";
-import { judgeConflict } from "../../api/aijudgment/aiJudgment";
+} from 'lucide-react';
+import toast from 'react-hot-toast';
+import { judgeConflict } from '../../api/aijudgment/aiJudgment';
 import type {
   AiJudgmentRequest,
   AiJudgmentResponse,
   ParticipantSituation,
-} from "../../types/aijudgment/aiMessage";
-import HistorySidebar from "./HistorySidebar";
-import ResultDisplay from "./ResultDisplay";
-import ConflictInputModal from "./ConflictInputModal";
-import TipsModal from "./TipsModal";
+} from '../../types/aijudgment/aiMessage';
+import HistorySidebar from './HistorySidebar';
+import ResultDisplay from './ResultDisplay';
+import ConflictInputModal from './ConflictInputModal';
+import TipsModal from './TipsModal';
 
-type PageState = "INITIAL" | "LOADING" | "RESULT";
+type PageState = 'INITIAL' | 'LOADING' | 'RESULT';
 
 const AIAssistantPage: React.FC = () => {
-  const [pageState, setPageState] = useState<PageState>("INITIAL");
+  const [pageState, setPageState] = useState<PageState>('INITIAL');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showTipsModal, setShowTipsModal] = useState(false);
   const [situations, setSituations] = useState<ParticipantSituation[]>([
-    { name: "", situation: "" },
-    { name: "", situation: "" },
+    { name: '', situation: '' },
+    { name: '', situation: '' },
   ]);
   const [aiJudgmentResult, setAiJudgmentResult] =
     useState<AiJudgmentResponse | null>(null);
@@ -44,8 +44,8 @@ const AIAssistantPage: React.FC = () => {
   const closeModal = () => {
     setIsModalOpen(false);
     setSituations([
-      { name: "", situation: "" },
-      { name: "", situation: "" },
+      { name: '', situation: '' },
+      { name: '', situation: '' },
     ]);
   };
 
@@ -58,25 +58,25 @@ const AIAssistantPage: React.FC = () => {
     field: keyof ParticipantSituation,
     value: string
   ) => {
-    setSituations((prev) =>
+    setSituations(prev =>
       prev.map((item, i) => (i === index ? { ...item, [field]: value } : item))
     );
   };
 
   const addPerson = () => {
     if (situations.length < 4) {
-      setSituations((prev) => [...prev, { name: "", situation: "" }]);
+      setSituations(prev => [...prev, { name: '', situation: '' }]);
     } else {
-      toast.error("최대 4명까지 추가할 수 있습니다.");
+      toast.error('최대 4명까지 추가할 수 있습니다.');
     }
   };
 
   const removePerson = (indexToRemove: number) => {
-    setSituations((prev) => prev.filter((_, index) => index !== indexToRemove));
+    setSituations(prev => prev.filter((_, index) => index !== indexToRemove));
   };
 
   const toggleHistory = () => {
-    setIsHistoryOpen((prev) => !prev);
+    setIsHistoryOpen(prev => !prev);
   };
 
   const handleSendSituations = async () => {
@@ -95,34 +95,34 @@ const AIAssistantPage: React.FC = () => {
     });
 
     if (!allFieldsFilled) {
-      toast.error("모든 참가자의 이름과 입장을 채워주세요.");
+      toast.error('모든 참가자의 이름과 입장을 채워주세요.');
       return;
     }
 
     if (Object.keys(requestSituations).length < 2) {
-      toast.error("최소 2명의 입장을 입력해야 합니다.");
+      toast.error('최소 2명의 입장을 입력해야 합니다.');
       return;
     }
 
     closeModal();
-    setPageState("LOADING");
+    setPageState('LOADING');
 
     try {
       const requestBody: AiJudgmentRequest = { situations: requestSituations };
       const response = await judgeConflict(requestBody);
       setAiJudgmentResult(response);
-      setPageState("RESULT");
+      setPageState('RESULT');
     } catch (error: any) {
-      toast.error(error.message || "AI 응답을 받아오는 데 실패했습니다.");
-      setPageState("INITIAL");
+      toast.error(error.message || 'AI 응답을 받아오는 데 실패했습니다.');
+      setPageState('INITIAL');
     }
   };
 
   const resetPage = () => {
-    setPageState("INITIAL");
+    setPageState('INITIAL');
     setSituations([
-      { name: "", situation: "" },
-      { name: "", situation: "" },
+      { name: '', situation: '' },
+      { name: '', situation: '' },
     ]);
     setAiJudgmentResult(null);
   };
@@ -133,7 +133,7 @@ const AIAssistantPage: React.FC = () => {
     <>
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
         <div className="max-w-6xl w-full mx-auto">
-          {pageState !== "RESULT" && (
+          {pageState !== 'RESULT' && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -141,7 +141,7 @@ const AIAssistantPage: React.FC = () => {
               className="mb-12 bg-white rounded-2xl p-8 border border-gray-200"
             >
               <div className="text-center mb-8">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl mb-4 shadow-lg">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-500 rounded-2xl mb-4 shadow-lg">
                   <BookOpenText className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="text-2xl font-bold text-gray-800 mb-2">
@@ -155,7 +155,7 @@ const AIAssistantPage: React.FC = () => {
                 <div className="space-y-6">
                   <div className="flex items-start space-x-4">
                     <div className="flex-shrink-0 w-10 h-10 bg-transparent rounded-xl flex items-center justify-center">
-                      <Users className="w-5 h-5 text-primary-600" />
+                      <Users className="w-5 h-5 text-primary-500" />
                     </div>
                     <div>
                       <h4 className="font-semibold text-gray-800 mb-2">
@@ -168,7 +168,7 @@ const AIAssistantPage: React.FC = () => {
                   </div>
                   <div className="flex items-start space-x-4">
                     <div className="flex-shrink-0 w-10 h-10 bg-transparent rounded-xl flex items-center justify-center">
-                      <Sparkles className="w-5 h-5 text-primary-600" />
+                      <Sparkles className="w-5 h-5 text-primary-500" />
                     </div>
                     <div>
                       <h4 className="font-semibold text-gray-800 mb-2">
@@ -182,7 +182,7 @@ const AIAssistantPage: React.FC = () => {
                   </div>
                   <div className="flex items-start space-x-4">
                     <div className="flex-shrink-0 w-10 h-10 bg-transparent rounded-xl flex items-center justify-center">
-                      <History className="w-5 h-5 text-primary-600" />
+                      <History className="w-5 h-5 text-primary-500" />
                     </div>
                     <div>
                       <h4 className="font-semibold text-gray-800 mb-2">
@@ -198,13 +198,13 @@ const AIAssistantPage: React.FC = () => {
                 <div className="rounded-xl p-6 border border-gray-100 bg-gray-50">
                   <div className="flex items-center mb-4">
                     <div className="flex-shrink-0 w-10 h-10 bg-transparent rounded-xl flex items-center justify-center mr-2">
-                      <Lightbulb className="w-5 h-5 text-primary-600" />
+                      <Lightbulb className="w-5 h-5 text-primary-500" />
                     </div>
-                    <h4 className="font-semibold text-primary-800">
+                    <h4 className="font-semibold text-primary-700">
                       효과적인 사용 팁
                     </h4>
                   </div>
-                  <ul className="space-y-2 text-sm text-primary-700">
+                  <ul className="space-y-2 text-sm text-primary-600">
                     <li className="flex items-start">
                       <span className="text-primary-500 mr-2">•</span>
                       감정보다는 구체적인 사실과 상황을 육하원칙(누가, 언제,
@@ -235,7 +235,7 @@ const AIAssistantPage: React.FC = () => {
           >
             <div className="p-8 lg:p-12">
               <AnimatePresence mode="wait">
-                {pageState === "INITIAL" && (
+                {pageState === 'INITIAL' && (
                   <motion.div
                     key="initial"
                     initial={{ opacity: 0, scale: 0.95 }}
@@ -245,7 +245,7 @@ const AIAssistantPage: React.FC = () => {
                     className="text-center"
                   >
                     <div className="mb-8">
-                      <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl mb-6 shadow-lg">
+                      <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-500 rounded-2xl mb-6 shadow-lg">
                         <MessageCircle className="w-8 h-8 text-white" />
                       </div>
                       <h2 className="text-3xl font-bold text-gray-800 mb-4">
@@ -257,7 +257,7 @@ const AIAssistantPage: React.FC = () => {
                       </p>
                     </div>
                     <motion.button
-                      className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-2xl text-lg font-semibold hover:from-primary-600 hover:to-primary-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+                      className="inline-flex items-center px-8 py-4 bg-primary-500 text-white rounded-2xl text-lg font-semibold hover:bg-primary-600 transition-all duration-200 shadow-lg hover:shadow-xl"
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={openModal}
@@ -268,7 +268,7 @@ const AIAssistantPage: React.FC = () => {
                   </motion.div>
                 )}
 
-                {pageState === "LOADING" && (
+                {pageState === 'LOADING' && (
                   <motion.div
                     key="loading"
                     initial={{ opacity: 0 }}
@@ -277,30 +277,14 @@ const AIAssistantPage: React.FC = () => {
                     transition={{ duration: 0.5 }}
                     className="text-center py-16"
                   >
-                    <div className="relative mb-8 flex justify-center items-center">
+                    <div className="flex flex-col items-center justify-center">
                       <div className="w-16 h-16 border-2 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
-                      <motion.div
-                        className="absolute"
-                        animate={{ rotate: 360 }}
-                        transition={{
-                          duration: 2,
-                          repeat: Number.POSITIVE_INFINITY,
-                          ease: "linear",
-                        }}
-                      >
-                        <Sparkles className="w-8 h-8 text-primary-500" />
-                      </motion.div>
+                      <p className="mt-4 text-gray-600">AI가 상황을 분석하고 있습니다...</p>
                     </div>
-                    <h3 className="text-2xl font-bold text-gray-800 mb-3">
-                      AI가 상황을 분석하고 있습니다
-                    </h3>
-                    <p className="text-gray-600">
-                      공정한 판단을 위해 모든 입장을 신중히 검토 중입니다...
-                    </p>
                   </motion.div>
                 )}
 
-                {pageState === "RESULT" && (
+                {pageState === 'RESULT' && (
                   <ResultDisplay
                     aiJudgmentResult={aiJudgmentResult}
                     onReset={resetPage}
@@ -322,9 +306,9 @@ const AIAssistantPage: React.FC = () => {
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 1, duration: 0.5 }}
         style={{
-          position: "fixed",
-          bottom: "1.5rem",
-          left: "1.5rem",
+          position: 'fixed',
+          bottom: '1.5rem',
+          left: '1.5rem',
         }}
       >
         <History className="w-6 h-6" />
@@ -351,3 +335,4 @@ const AIAssistantPage: React.FC = () => {
 };
 
 export default AIAssistantPage;
+
