@@ -19,7 +19,7 @@ import {
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { fetchAiJudgmentHistory, deleteAiJudgmentHistory } from "../../api/aijudgment/aiJudgment";
-import type { AiJudgmentHistoryResponse, ParticipantSituation } from "../../types/aijudgment/aiMessage";
+import type { AiJudgmentHistoryResponse } from "../../types/aijudgment/aiMessage";
 import { copyToClipboard } from "../../utils/api.ts";
 import toast from "react-hot-toast";
 
@@ -174,7 +174,7 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
                       갈등 상황
                     </h4>
                     <div className="space-y-3">
-                      {selectedHistoryItem.situations.map((participant, index) => {
+                      {Object.entries(selectedHistoryItem.situations).map(([name, situation], index) => {
                         const colors = [
                           "bg-primary-50 border-primary-200 text-primary-600",
                           "bg-amber-50 border-amber-200 text-amber-600",
@@ -194,10 +194,10 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
                               <div
                                 className={`flex-shrink-0 w-6 h-6 bg-white rounded-lg flex items-center justify-center font-bold text-xs border ${chosenColor.split(' ')[1].replace('bg-', 'border-')}`}
                               >
-                                {participant.name.charAt(0).toUpperCase()}
+                                {name.charAt(0).toUpperCase()}
                               </div>
                               <p className="text-gray-700 leading-relaxed text-sm flex-grow">
-                                {participant.situation}
+                                {situation}
                               </p>
                             </div>
                           </motion.div>
@@ -319,7 +319,7 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
                               참여자:
                             </span>{" "}
                             <span className="text-orange-500 font-medium">
-                              {item.situations.map(s => s.name).join(", ")}
+                              {Object.keys(item.situations).join(", ")}
                             </span>
                           </div>
                           {item.rating && (
