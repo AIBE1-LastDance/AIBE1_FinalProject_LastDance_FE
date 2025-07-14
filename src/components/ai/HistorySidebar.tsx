@@ -19,7 +19,7 @@ import {
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { fetchAiJudgmentHistory, deleteAiJudgmentHistory } from "../../api/aijudgment/aiJudgment";
-import type { AiJudgmentHistoryResponse } from "../../types/aijudgment/aiMessage";
+import type { AiJudgmentHistoryResponse, ParticipantSituation } from "../../types/aijudgment/aiMessage";
 import { copyToClipboard } from "../../utils/api.ts";
 import toast from "react-hot-toast";
 
@@ -28,32 +28,7 @@ interface HistorySidebarProps {
   toggleHistory: () => void;
 }
 
-const personThemes = {
-  A: {
-    bg: "bg-primary-50",
-    border: "border-primary-200",
-    text: "text-primary-600",
-    dot: "bg-primary-300",
-  },
-  B: {
-    bg: "bg-amber-50",
-    border: "border-amber-200",
-    text: "text-amber-600",
-    dot: "bg-amber-300",
-  },
-  C: {
-    bg: "bg-yellow-50",
-    border: "border-yellow-200",
-    text: "text-yellow-600",
-    dot: "bg-yellow-300",
-  },
-  D: {
-    bg: "bg-rose-50",
-    border: "border-rose-200",
-    text: "text-rose-600",
-    dot: "bg-rose-300",
-  },
-};
+
 
 const HistorySidebar: React.FC<HistorySidebarProps> = ({
   isHistoryOpen,
@@ -199,33 +174,35 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
                       갈등 상황
                     </h4>
                     <div className="space-y-3">
-                      {Object.entries(selectedHistoryItem.situations).map(
-                        ([person, content], index) => {
-                          const theme =
-                            personThemes[person as keyof typeof personThemes] ||
-                            personThemes.A;
-                          return (
-                            <motion.div
-                              key={person}
-                              initial={{ opacity: 0, x: -15 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: index * 0.1 }}
-                              className={`${theme.bg} ${theme.border} rounded-xl p-3 border-l-4 hover:shadow-sm transition-all duration-200`}
-                            >
-                              <div className="flex items-start space-x-3">
-                                <div
-                                  className={`flex-shrink-0 w-6 h-6 ${theme.text} bg-white rounded-lg flex items-center justify-center font-bold text-xs border ${theme.border}`}
-                                >
-                                  {person}
-                                </div>
-                                <p className="text-gray-700 leading-relaxed text-sm flex-grow">
-                                  {content}
-                                </p>
+                      {selectedHistoryItem.situations.map((participant, index) => {
+                        const colors = [
+                          "bg-primary-50 border-primary-200 text-primary-600",
+                          "bg-amber-50 border-amber-200 text-amber-600",
+                          "bg-yellow-50 border-yellow-200 text-yellow-600",
+                          "bg-rose-50 border-rose-200 text-rose-600",
+                        ];
+                        const chosenColor = colors[index % colors.length];
+                        return (
+                          <motion.div
+                            key={index}
+                            initial={{ opacity: 0, x: -15 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: index * 0.1 }}
+                            className={`${chosenColor} rounded-xl p-3 border-l-4 hover:shadow-sm transition-all duration-200`}
+                          >
+                            <div className="flex items-start space-x-3">
+                              <div
+                                className={`flex-shrink-0 w-6 h-6 bg-white rounded-lg flex items-center justify-center font-bold text-xs border ${chosenColor.split(' ')[1].replace('bg-', 'border-')}`}
+                              >
+                                {participant.name.charAt(0).toUpperCase()}
                               </div>
-                            </motion.div>
-                          );
-                        }
-                      )}
+                              <p className="text-gray-700 leading-relaxed text-sm flex-grow">
+                                {participant.situation}
+                              </p>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
                     </div>
                   </motion.div>
 
@@ -342,7 +319,7 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
                               참여자:
                             </span>{" "}
                             <span className="text-orange-500 font-medium">
-                              {Object.keys(item.situations).join(", ")}
+                              {item.situations.map(s => s.name).join(", ")}
                             </span>
                           </div>
                           {item.rating && (

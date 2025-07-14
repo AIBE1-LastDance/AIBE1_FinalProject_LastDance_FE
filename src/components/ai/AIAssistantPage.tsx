@@ -3,7 +3,6 @@ import type React from "react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Bot,
   PlusCircle,
   MessageCircle,
   Sparkles,
@@ -17,80 +16,63 @@ import { judgeConflict } from "../../api/aijudgment/aiJudgment";
 import type {
   AiJudgmentRequest,
   AiJudgmentResponse,
+  ParticipantSituation,
 } from "../../types/aijudgment/aiMessage";
 import HistorySidebar from "./HistorySidebar";
 import ResultDisplay from "./ResultDisplay";
-import ConflictInputModal from "./ConflictInputModal.tsx";
-import TipsModal from "./TipsModal.tsx"; // TipsModal도 여전히 사용됩니다.
+import ConflictInputModal from "./ConflictInputModal";
+import TipsModal from "./TipsModal";
 
 type PageState = "INITIAL" | "LOADING" | "RESULT";
-
-const personLabels = ["A", "B", "C", "D"];
 
 const AIAssistantPage: React.FC = () => {
   const [pageState, setPageState] = useState<PageState>("INITIAL");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [showTipsModal, setShowTipsModal] = useState(false); // TipsModal 상태 추가
-  // TipsModal 상태는 ConflictInputModal 내부에서 관리되므로, AIAssistantPage에서는 더 이상 필요 없습니다.
-  // const [isTipsModalOpen, setIsTipsModalOpen] = useState(false);
-  const [situations, setSituations] = useState<{ [key: string]: string }>({
-    A: "",
-    B: "",
-  });
+  const [showTipsModal, setShowTipsModal] = useState(false);
+  const [situations, setSituations] = useState<ParticipantSituation[]>([
+    { name: "", situation: "" },
+    { name: "", situation: "" },
+  ]);
   const [aiJudgmentResult, setAiJudgmentResult] =
     useState<AiJudgmentResponse | null>(null);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
   const openModal = () => {
     setIsModalOpen(true);
-    setShowTipsModal(true); // ConflictInputModal이 열릴 때 TipsModal도 함께 열기
+    setShowTipsModal(true);
   };
   const closeModal = () => {
     setIsModalOpen(false);
-    setSituations({ A: "", B: "" });
+    setSituations([
+      { name: "", situation: "" },
+      { name: "", situation: "" },
+    ]);
   };
 
   const handleCloseTipsModal = () => {
     setShowTipsModal(false);
   };
 
-  // TipsModal의 열림/닫힘 함수는 이제 ConflictInputModal 내부에서 처리되므로 제거합니다.
-  // const openTipsModal = () => setIsTipsModalOpen(true);
-  // const closeTipsModal = () => setIsTipsModalOpen(false);
-
-  const handleSituationChange = (person: string, value: string) => {
-    setSituations((prev) => ({ ...prev, [person]: value }));
+  const handleSituationChange = (
+    index: number,
+    field: keyof ParticipantSituation,
+    value: string
+  ) => {
+    setSituations((prev) =>
+      prev.map((item, i) => (i === index ? { ...item, [field]: value } : item))
+    );
   };
 
   const addPerson = () => {
-    if (Object.keys(situations).length < 4) {
-      const currentPersonIds = Object.keys(situations);
-      const nextAvailableLabel = personLabels.find(
-        (label) => !currentPersonIds.includes(label)
-      );
-      if (nextAvailableLabel) {
-        setSituations((prev) => ({ ...prev, [nextAvailableLabel]: "" }));
-      }
+    if (situations.length < 4) {
+      setSituations((prev) => [...prev, { name: "", situation: "" }]);
     } else {
       toast.error("최대 4명까지 추가할 수 있습니다.");
     }
   };
 
-  const removePerson = (personToRemove: string) => {
-    setSituations((prev) => {
-      const newSituations = { ...prev };
-      delete newSituations[personToRemove];
-      const sortedKeys = Object.keys(newSituations).sort(
-        (a, b) => personLabels.indexOf(a) - personLabels.indexOf(b)
-      );
-      const reorderedSituations: { [key: string]: string } = {};
-      personLabels.forEach((label, index) => {
-        if (index < sortedKeys.length) {
-          reorderedSituations[label] = newSituations[sortedKeys[index]];
-        }
-      });
-      return reorderedSituations;
-    });
+  const removePerson = (indexToRemove: number) => {
+    setSituations((prev) => prev.filter((_, index) => index !== indexToRemove));
   };
 
   const toggleHistory = () => {
@@ -98,23 +80,26 @@ const AIAssistantPage: React.FC = () => {
   };
 
   const handleSendSituations = async () => {
-    const filledSituations: { [key: string]: string } = {};
+    const requestSituations: { [key: string]: string } = {};
     let allFieldsFilled = true;
 
-    Object.entries(situations).forEach(([person, content]) => {
-      if (content.trim()) {
-        filledSituations[person] = content.trim();
+    situations.forEach((participant, index) => {
+      const name = participant.name.trim();
+      const situation = participant.situation.trim();
+      if (name && situation) {
+        // 사용자 정의 이름을 키로 사용
+        requestSituations[name] = situation;
       } else {
         allFieldsFilled = false;
       }
     });
 
     if (!allFieldsFilled) {
-      toast.error("모든 입력란을 채워주세요.");
+      toast.error("모든 참가자의 이름과 입장을 채워주세요.");
       return;
     }
 
-    if (Object.keys(filledSituations).length < 2) {
+    if (Object.keys(requestSituations).length < 2) {
       toast.error("최소 2명의 입장을 입력해야 합니다.");
       return;
     }
@@ -123,7 +108,7 @@ const AIAssistantPage: React.FC = () => {
     setPageState("LOADING");
 
     try {
-      const requestBody: AiJudgmentRequest = { situations: filledSituations };
+      const requestBody: AiJudgmentRequest = { situations: requestSituations };
       const response = await judgeConflict(requestBody);
       setAiJudgmentResult(response);
       setPageState("RESULT");
@@ -135,7 +120,10 @@ const AIAssistantPage: React.FC = () => {
 
   const resetPage = () => {
     setPageState("INITIAL");
-    setSituations({ A: "", B: "" });
+    setSituations([
+      { name: "", situation: "" },
+      { name: "", situation: "" },
+    ]);
     setAiJudgmentResult(null);
   };
 
@@ -272,7 +260,7 @@ const AIAssistantPage: React.FC = () => {
                       className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-2xl text-lg font-semibold hover:from-primary-600 hover:to-primary-700 transition-all duration-200 shadow-lg hover:shadow-xl"
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      onClick={openModal} // 이 버튼 클릭 시 ConflictInputModal이 열립니다.
+                      onClick={openModal}
                     >
                       <PlusCircle className="w-5 h-5 mr-2" />
                       갈등 상황 입력하기

@@ -1,23 +1,22 @@
-export interface AiJudgmentRequest {
-  situations: {
-    [key: string]: string; // 예: { "A": "A의 입장", "B": "B의 입장" }
-  };
+export interface ParticipantSituation {
+  name: string;
+  situation: string;
 }
 
+export interface AiJudgmentRequest {
+  situations: { [key: string]: string }; // 참가자 이름을 키로 하는 Map<string, string>으로 변경
+}
+// 이 파일은 백엔드의 AiJudgmentResponseDTO와 일치해야 합니다.
 export interface AiJudgmentResponse {
   judgmentResult: string;
-  judgmentId: string;
-  situations: {
-    [key: string]: string;
-  };
+  judgmentId: string | null; // UUID를 문자열로 변환하므로 string
+  situations: { [key: string]: string }; // Map<String, String>에 해당
 }
 
 export interface AiJudgmentHistoryResponse {
   judgmentResult: string;
   judgmentId: string;
-  situations: {
-    [key: string]: string;
-  };
-  rating?: "up" | "down" | null; // 히스토리 조회 시 rating 정보도 포함될 수 있도록 추가 (선택 사항)
-  timestamp: string; // 히스토리 조회 시 타임스탬프 정보도 포함될 수 있도록 추가
+  situations: { [key: string]: string }; // Map<string, string>으로 변경
+  rating?: "up" | "down" | null;
+  timestamp: string;
 }

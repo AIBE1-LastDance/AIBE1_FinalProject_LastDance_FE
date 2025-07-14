@@ -17,6 +17,8 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import toast from "react-hot-toast";
 import { sendFeedback } from "../../api/aijudgment/aiJudgment";
+// ParticipantSituation 타입을 aiMessage에서 제거했다면 여기서는 필요 없습니다.
+// 현재 코드에서는 사용되지 않으므로 제거하거나, 필요하다면 적절히 수정해야 합니다.
 import type { AiJudgmentResponse } from "../../types/aijudgment/aiMessage";
 import { copyToClipboard } from "../../utils/api";
 
@@ -25,35 +27,6 @@ interface ResultDisplayProps {
   onReset: () => void;
   onFeedbackSent: () => void;
 }
-
-const personLabels = ["A", "B", "C", "D"];
-
-const personThemes = {
-  A: {
-    gradient: "bg-blue-50",
-    border: "border-blue-200",
-    label: "bg-blue-500 text-white",
-    accent: "border-l-4 border-blue-400",
-  },
-  B: {
-    gradient: "bg-green-50",
-    border: "border-green-200",
-    label: "bg-green-500 text-white",
-    accent: "border-l-4 border-green-400",
-  },
-  C: {
-    gradient: "bg-yellow-50",
-    border: "border-yellow-200",
-    label: "bg-yellow-500 text-white",
-    accent: "border-l-4 border-yellow-400",
-  },
-  D: {
-    gradient: "bg-purple-50",
-    border: "border-purple-200",
-    label: "bg-purple-500 text-white",
-    accent: "border-l-4 border-purple-400",
-  },
-};
 
 const ResultDisplay: React.FC<ResultDisplayProps> = ({
   aiJudgmentResult,
@@ -72,32 +45,25 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
   const handleRating = async (rating: "up" | "down") => {
     if (!aiJudgmentResult?.judgmentId) return;
 
-    // 현재 피드백 상태가 없거나, 클릭한 피드백이 기존 피드백과 다르면
-    // 새로운 피드백을 적용합니다.
-    // 만약 현재 피드백과 클릭한 피드백이 같다면, 'null'로 설정하여 취소 상태를 나타냅니다.
     const willBeCanceled = currentRating === rating;
-    const feedbackTypeToSend = rating; // 백엔드는 'up' 또는 'down'을 예상합니다.
+    const feedbackTypeToSend = rating;
 
     try {
-      // 백엔드에 요청을 보냅니다. 백엔드에서 취소 로직을 처리합니다.
       await sendFeedback(aiJudgmentResult.judgmentId, feedbackTypeToSend);
 
       if (willBeCanceled) {
-        // 이미 같은 타입의 피드백이 있었고 다시 눌러서 취소된 경우
-        setCurrentRating(null); // 프론트엔드 상태를 null로 변경
+        setCurrentRating(null);
         toast.success(
           rating === "up" ? "좋아요를 취소했습니다." : "싫어요를 취소했습니다."
         );
       } else {
-        // 새로운 피드백이 적용되거나 다른 피드백으로 변경된 경우
-        setCurrentRating(rating); // 프론트엔드 상태를 새 rating으로 변경
+        setCurrentRating(rating);
         toast.success(
           rating === "up" ? "좋아요를 남겼습니다." : "싫어요를 남겼습니다."
         );
       }
-      onFeedbackSent(); // 피드백 상태가 변경되었으므로 부모 컴포넌트에 알림
+      onFeedbackSent();
     } catch (error: any) {
-      // 백엔드 오류 메시지를 그대로 사용
       toast.error(error.message || "피드백 처리 중 오류가 발생했습니다.");
     }
   };
@@ -112,6 +78,16 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
       toast.error(message);
     }
   };
+
+  // aiJudgmentResult.situations가 객체이므로, 이를 배열로 변환하여 사용합니다.
+  // Object.entries를 사용하여 [key, value] 쌍의 배열을 얻은 후,
+  // map을 사용하여 { name: key, situation: value } 형태로 변환합니다.
+  const participantSituations = Object.entries(aiJudgmentResult.situations).map(
+    ([name, situation]) => ({
+      name,
+      situation,
+    })
+  );
 
   return (
     <motion.div
@@ -149,37 +125,45 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
           입력된 갈등 상황
         </h3>
         <div className="grid gap-6">
-          {Object.entries(aiJudgmentResult.situations)
-            .filter(([, content]) => content.trim() !== "")
-            .sort(
-              ([keyA], [keyB]) =>
-                personLabels.indexOf(keyA) - personLabels.indexOf(keyB)
-            )
-            .map(([person, content], index) => {
-              const theme = personThemes[person as keyof typeof personThemes];
+          {/* participantSituations 배열을 사용하도록 변경 */}
+          {participantSituations
+            .filter((p) => p.situation.trim() !== "")
+            .map((participant, index) => {
+              const colors = [
+                "bg-blue-50 border-blue-200 border-l-4 border-blue-400",
+                "bg-green-50 border-green-200 border-l-4 border-green-400",
+                "bg-yellow-50 border-yellow-200 border-l-4 border-yellow-400",
+                "bg-purple-50 border-purple-200 border-l-4 border-purple-400",
+              ];
+              const labelColors = [
+                "bg-blue-500",
+                "bg-green-500",
+                "bg-yellow-500",
+                "bg-purple-500",
+              ];
+              const chosenColor = colors[index % colors.length];
+              const chosenLabelColor = labelColors[index % labelColors.length];
+
               return (
                 <motion.div
-                  key={person}
+                  key={index}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className={`relative ${theme.gradient} ${theme.border} ${theme.accent} rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300`}
+                  className={`relative ${chosenColor} rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300`}
                 >
                   <div className="flex items-start space-x-4">
                     <div
-                      className={`flex-shrink-0 w-12 h-12 ${theme.label.replace(
-                        "bg-gradient-to-br from-primary-500 to-primary-600",
-                        "bg-primary-500"
-                      )} rounded-2xl flex items-center justify-center font-bold text-lg shadow-lg`}
+                      className={`flex-shrink-0 w-12 h-12 ${chosenLabelColor} text-white rounded-2xl flex items-center justify-center font-bold text-lg shadow-lg`}
                     >
-                      {person}
+                      {participant.name.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-grow">
                       <div className="text-sm font-semibold text-gray-600 mb-2">
-                        {person}의 입장
+                        {participant.name}의 입장
                       </div>
                       <p className="text-gray-800 leading-relaxed text-xl font-medium">
-                        {content}
+                        {participant.situation}
                       </p>
                     </div>
                   </div>
