@@ -3,7 +3,7 @@ import Header from './Header';
 import MobileNav from './MobileNav';
 import Footer from './Footer';
 import FloatingButtons from '../common/FloatingButtons';
-import { Toaster } from 'react-hot-toast';
+
 // ❌ useNotifications import 제거
 // import { useNotifications } from '../../hooks/useNotifications';
 
@@ -28,19 +28,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <Footer />
       <MobileNav />
       <FloatingButtons />
-      <Toaster 
-        position="top-right"
-        toastOptions={{
-          duration: 3000,
-          style: {
-            background: '#fff',
-            color: '#374151',
-            border: '1px solid #E5E7EB',
-            borderRadius: '12px',
-            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-          },
-        }}
-      />
+      
     </div>
   );
 };

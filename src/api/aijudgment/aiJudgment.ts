@@ -27,3 +27,9 @@ export const fetchAiJudgmentHistory = async (): Promise<
   const response = await apiClient.get("/api/v1/ai/judgments/history");
   return response.data.data;
 };
+
+export const deleteAiJudgmentHistory = async (
+  judgmentId: string
+): Promise<void> => {
+  await apiClient.delete(`/api/v1/ai/judgments/history/${judgmentId}/delete`); // 백엔드 삭제 엔드포인트에 맞춰 수정
+};
