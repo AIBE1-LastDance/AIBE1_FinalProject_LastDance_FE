@@ -19,12 +19,14 @@ import {
   ThumbsUp,
   ChevronLeft,
   ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
   GraduationCap,
   Megaphone,
   Handshake,
   ScrollText,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "../../store/authStore";
 import { usePostStore } from "../../store/community/postStore";
 import PostCard from "./PostCard";
@@ -34,12 +36,24 @@ import { Post } from "../../types/community/community";
 const CommunityPage: React.FC = () => {
   const { user } = useAuthStore();
   const navigate = useNavigate();
+  // useLocation은 계속 사용되므로 남겨둡니다. (예: navigate 함수 등)
+  const location = useLocation();
+
+  // 페이지 기억 기능 제거: 이 useEffect 훅을 삭제합니다.
+  /*
+  useEffect(() => {
+    if (!location.pathname.startsWith("/community")) {
+      localStorage.removeItem("communityCurrentPage");
+    }
+  }, [location.pathname]);
+  */
 
   const { posts, loadPosts, deletePost, toggleLike, toggleBookmark } =
     usePostStore();
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [tempSearchQuery, setTempSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [sortBy, setSortBy] = useState<"latest" | "likes" | "comments">(
     "latest"
@@ -51,10 +65,8 @@ const CommunityPage: React.FC = () => {
 
   const [isLoading, setIsLoading] = useState(true);
 
-  const [currentPage, setCurrentPage] = useState(() => {
-    const savedPage = localStorage.getItem("communityCurrentPage");
-    return savedPage ? parseInt(savedPage, 10) : 1;
-  });
+  // 페이지 기억 기능 제거: localStorage에서 값을 불러오지 않고 1로 초기화합니다.
+  const [currentPage, setCurrentPage] = useState(1);
   const postsPerPage = 15;
 
   useEffect(() => {
@@ -66,9 +78,12 @@ const CommunityPage: React.FC = () => {
     fetchAndSetLoading();
   }, [user?.id, loadPosts]);
 
+  // 페이지 기억 기능 제거: 이 useEffect 훅을 삭제합니다.
+  /*
   useEffect(() => {
     localStorage.setItem("communityCurrentPage", currentPage.toString());
   }, [currentPage]);
+  */
 
   const totalLikes = useMemo(() => {
     return posts.reduce((sum, post) => sum + (post.likeCount || 0), 0);
@@ -92,6 +107,17 @@ const CommunityPage: React.FC = () => {
     await toggleBookmark(postId);
   };
 
+  const handleSearch = () => {
+    setSearchQuery(tempSearchQuery);
+    setCurrentPage(1);
+  };
+
+  const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
+  };
+
   const categories = [
     { id: "all", name: "전체", icon: Filter, color: "text-orange-600" },
     {
@@ -112,6 +138,7 @@ const CommunityPage: React.FC = () => {
       icon: MessageSquare,
       color: "text-orange-600",
     },
+    //질문답변
     {
       id: "QNA",
       name: "질문답변",
@@ -215,59 +242,28 @@ const CommunityPage: React.FC = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-2xl p-6 text-white"
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-              <MessageSquare className="w-6 h-6" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold">커뮤니티</h1>
-              <p className="text-orange-100">
-                다양한 생활 정보를 공유하고 소통해보세요!
-              </p>
-              <div className="flex items-center mt-2 text-orange-50">
-                <ThumbsUp className="w-4 h-4 mr-1" />
-                <span className="text-sm font-medium">
-                  총 좋아요: {totalLikes}개
-                </span>
-              </div>
-            </div>
-          </div>
-          <button
-            onClick={() => {
-              setEditingPost(null);
-              setIsCreateModalOpen(true);
-            }}
-            className="flex items-center space-x-2 bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-xl transition-colors"
-          >
-            <Plus className="w-5 h-5" />
-            <span className="font-medium">글쓰기</span>
-          </button>
-        </div>
-      </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
         className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200"
       >
         <div className="flex flex-col lg:flex-row gap-4">
-          <div className="relative flex-1">
+          <div className="relative flex-grow">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
               placeholder="게시글을 검색해보세요..."
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setCurrentPage(1);
-              }}
+              value={tempSearchQuery}
+              onChange={(e) => setTempSearchQuery(e.target.value)}
+              onKeyPress={handleSearchKeyPress}
               className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent"
             />
           </div>
+          <button
+            onClick={handleSearch}
+            className="ml-2 px-6 py-3 bg-accent-500 text-white rounded-2xl font-medium hover:bg-accent-600 transition-colors shadow-md hover:shadow-lg whitespace-nowrap flex items-center gap-2"
+          >
+            <Search className="w-4 h-4" />
+            <span>검색</span>
+          </button>
         </div>
 
         <div className="mt-4 flex flex-wrap gap-2">
@@ -301,73 +297,88 @@ const CommunityPage: React.FC = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15 }}
-        className="flex justify-end items-center space-x-4"
+        className="flex justify-between items-center"
       >
-        <div className="flex items-center space-x-2">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => {
-              setFilterBy(filterBy === "bookmarked" ? "all" : "bookmarked");
-              setCurrentPage(1);
-            }}
-            className={`p-2 rounded-lg transition-colors ${
-              filterBy === "bookmarked"
-                ? "bg-blue-100 text-blue-700 border border-blue-300"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            }`}
-          >
-            <Bookmark
-              className={`w-5 h-5 ${
-                filterBy === "bookmarked" ? "fill-current" : ""
-              }`}
-            />
-          </motion.button>
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 bg-gray-50 rounded-xl p-1">
+            {[
+              { key: "latest", label: "최신순", icon: Clock },
+              { key: "likes", label: "좋아요순", icon: ThumbsUp },
+              { key: "comments", label: "댓글순", icon: MessageCircle },
+            ].map((option) => (
+              <button
+                key={option.key}
+                onClick={() => {
+                  setSortBy(option.key as any);
+                  setCurrentPage(1);
+                }}
+                className={`flex items-center space-x-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  sortBy === option.key
+                    ? "bg-white text-accent-600 shadow-sm"
+                    : "text-gray-600 hover:text-gray-800"
+                }`}
+              >
+                <option.icon className="w-4 h-4" />
+                <span>{option.label}</span>
+              </button>
+            ))}
+          </div>
 
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => {
-              setFilterBy(filterBy === "liked" ? "all" : "liked");
-              setCurrentPage(1);
-            }}
-            className={`p-2 rounded-lg transition-colors ${
-              filterBy === "liked"
-                ? "bg-accent-100 text-accent-700 border border-accent-300"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            }`}
-          >
-            <Heart
-              className={`w-5 h-5 ${
-                filterBy === "liked" ? "fill-current" : ""
-              }`}
-            />
-          </motion.button>
-        </div>
-
-        <div className="flex items-center space-x-2 bg-gray-50 rounded-xl p-1">
-          {[
-            { key: "latest", label: "최신순", icon: Clock },
-            { key: "likes", label: "좋아요순", icon: ThumbsUp },
-            { key: "comments", label: "댓글순", icon: MessageCircle },
-          ].map((option) => (
-            <button
-              key={option.key}
+          <div className="flex items-center space-x-2">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => {
-                setSortBy(option.key as any);
+                setFilterBy(filterBy === "bookmarked" ? "all" : "bookmarked");
                 setCurrentPage(1);
               }}
-              className={`flex items-center space-x-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                sortBy === option.key
-                  ? "bg-white text-accent-600 shadow-sm"
-                  : "text-gray-600 hover:text-gray-800"
+              className={`p-2 rounded-lg transition-colors ${
+                filterBy === "bookmarked"
+                  ? "bg-amber-100 text-amber-700 border border-amber-300"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
-              <option.icon className="w-4 h-4" />
-              <span>{option.label}</span>
-            </button>
-          ))}
+              <Bookmark
+                className={`w-5 h-5 ${
+                  filterBy === "bookmarked" ? "fill-current" : ""
+                }`}
+              />
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                setFilterBy(filterBy === "liked" ? "all" : "liked");
+                setCurrentPage(1);
+              }}
+              className={`p-2 rounded-lg transition-colors ${
+                filterBy === "liked"
+                  ? "bg-orange-100 text-orange-700 border border-orange-300"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+            >
+              <Heart
+                className={`w-5 h-5 ${
+                  filterBy === "liked" ? "fill-current" : ""
+                }`}
+              />
+            </motion.button>
+          </div>
         </div>
+
+        <motion.button
+          className="flex items-center space-x-2 px-6 py-3 bg-accent-500 text-white rounded-2xl font-medium hover:bg-accent-600 transition-colors shadow-md hover:shadow-lg whitespace-nowrap"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => {
+            setEditingPost(null);
+            setIsCreateModalOpen(true);
+          }}
+        >
+          <Plus className="w-5 h-5" />
+          <span>글 작성</span>
+        </motion.button>
       </motion.div>
 
       <motion.div
@@ -399,7 +410,7 @@ const CommunityPage: React.FC = () => {
                 setEditingPost(null);
                 setIsCreateModalOpen(true);
               }}
-              className="bg-accent-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-accent-700 transition-colors"
+              className="flex items-center space-x-2 px-6 py-3 bg-accent-500 text-white rounded-2xl font-medium hover:bg-accent-600 transition-colors shadow-md hover:shadow-lg whitespace-nowrap"
             >
               글쓰기
             </button>
@@ -435,6 +446,15 @@ const CommunityPage: React.FC = () => {
           className="flex justify-center items-center space-x-2 py-6"
         >
           <button
+            onClick={() => paginate(1)}
+            disabled={currentPage === 1}
+            className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+            aria-label="맨 처음 페이지"
+          >
+            <span className="sr-only">맨 처음</span>
+            <ChevronsLeft className="w-5 h-5 text-gray-600" />
+          </button>
+          <button
             onClick={() => paginate(currentPage - 1)}
             disabled={currentPage === 1}
             className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -448,7 +468,7 @@ const CommunityPage: React.FC = () => {
               onClick={() => paginate(number)}
               className={`px-4 py-2 rounded-full font-medium transition-colors ${
                 currentPage === number
-                  ? "bg-accent-600 text-white shadow-md"
+                  ? "bg-accent-500 text-white shadow-md"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
               aria-current={currentPage === number ? "page" : undefined}
@@ -463,6 +483,15 @@ const CommunityPage: React.FC = () => {
             aria-label="다음 페이지"
           >
             <ChevronRight className="w-5 h-5 text-gray-600" />
+          </button>
+          <button
+            onClick={() => paginate(totalPages)}
+            disabled={currentPage === totalPages}
+            className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+            aria-label="맨 끝 페이지"
+          >
+            <span className="sr-only">맨 끝</span>
+            <ChevronsRight className="w-5 h-5 text-gray-600" />
           </button>
         </motion.div>
       )}

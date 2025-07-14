@@ -69,7 +69,7 @@ const AdminDashboard: React.FC = () => {
           )}
           {change && !isLoading && (
             <div className={`flex items-center mt-2 text-sm ${
-              change > 0 ? 'text-green-600' : 'text-red-600'
+              change > 0 ? 'text-status-success' : 'text-status-error'
             }`}>
               {change > 0 ? <TrendingUp className="w-4 h-4 mr-1" /> : <TrendingDown className="w-4 h-4 mr-1" />}
               {Math.abs(change)}% vs 지난주
@@ -92,7 +92,7 @@ const AdminDashboard: React.FC = () => {
           <p className="text-gray-600 mb-4">{error}</p>
           <button
             onClick={refetch}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="px-4 py-2 bg-accent-600 text-white rounded-lg hover:bg-accent-700 transition-colors"
           >
             다시 시도
           </button>
@@ -121,21 +121,21 @@ const AdminDashboard: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <button 
             onClick={() => navigate('/admin/users')}
-            className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:text-blue-500 transition-colors"
+            className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-accent-500 hover:text-accent-500 transition-colors"
           >
             <Users className="w-5 h-5 mr-2" />
             사용자 관리
           </button>
           <button 
             onClick={() => navigate('/admin/reports')}
-            className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-orange-500 hover:text-orange-500 transition-colors"
+            className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary-500 hover:text-primary-500 transition-colors"
           >
             <AlertTriangle className="w-5 h-5 mr-2" />
             신고 처리
           </button>
           <button 
             onClick={() => navigate('/admin/ai')}
-            className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-500 hover:text-purple-500 transition-colors"
+            className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary-500 hover:text-primary-500 transition-colors"
           >
             <Activity className="w-5 h-5 mr-2" />
             AI 시스템
@@ -149,28 +149,28 @@ const AdminDashboard: React.FC = () => {
           title="전체 사용자 수"
           value={dashboardStats?.dashboardUserStats.total}
           icon={Users}
-          color="bg-blue-500"
+          color="bg-accent-500"
           isLoading={loading}
         />
         <StatCard
           title="활성 사용자"
           value={dashboardStats?.dashboardUserStats.active}
           icon={UserCheck}
-          color="bg-green-500"
+          color="bg-status-success"
           isLoading={loading}
         />
         <StatCard
           title="정지된 사용자"
           value={dashboardStats?.dashboardUserStats.suspended}
           icon={UserX}
-          color="bg-red-500"
+          color="bg-status-error"
           isLoading={loading}
         />
         <StatCard
           title="이번 주 신규 가입"
           value={dashboardStats?.dashboardUserStats.newThisWeek}
           icon={UserPlus}
-          color="bg-purple-500"
+          color="bg-primary-500"
           isLoading={loading}
         />
       </div>
@@ -181,28 +181,28 @@ const AdminDashboard: React.FC = () => {
           title="전체 게시글"
           value={dashboardStats?.dashboardContentStats.totalPosts}
           icon={MessageSquare}
-          color="bg-indigo-500"
+          color="bg-accent-700"
           isLoading={loading}
         />
         <StatCard
           title="전체 댓글"
           value={dashboardStats?.dashboardContentStats.totalComments}
           icon={MessageCircle}
-          color="bg-teal-500"
+          color="bg-category-teal"
           isLoading={loading}
         />
         <StatCard
           title="오늘 게시글"
           value={dashboardStats?.dashboardContentStats.todayPosts}
           icon={MessageSquare}
-          color="bg-cyan-500"
+          color="bg-category-cyan"
           isLoading={loading}
         />
         <StatCard
           title="오늘 댓글"
           value={dashboardStats?.dashboardContentStats.todayComments}
           icon={MessageCircle}
-          color="bg-emerald-500"
+          color="bg-category-green"
           isLoading={loading}
         />
       </div>
@@ -223,7 +223,7 @@ const AdminDashboard: React.FC = () => {
                   onClick={() => handlePeriodChange(period)}
                   className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
                     selectedPeriod === period
-                      ? 'bg-white text-blue-600 shadow-sm'
+                      ? 'bg-white text-accent-600 shadow-sm'
                       : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
@@ -236,7 +236,7 @@ const AdminDashboard: React.FC = () => {
           {loading ? (
             <div className="h-[400px] flex items-center justify-center">
               <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-600 mx-auto mb-2"></div>
                 <p className="text-sm text-gray-500">데이터를 불러오는 중...</p>
               </div>
             </div>
@@ -283,17 +283,17 @@ const AdminDashboard: React.FC = () => {
                   <Line 
                     type="monotone" 
                     dataKey="signups" 
-                    stroke="#3b82f6" 
+                    stroke="#6C92E6" 
                     strokeWidth={3}
                     dot={{ 
-                      fill: '#3b82f6', 
+                      fill: '#6C92E6', 
                       strokeWidth: 2, 
                       r: 5,
                       fillOpacity: 1
                     }}
                     activeDot={{ 
                       r: 7, 
-                      fill: '#1d4ed8',
+                      fill: '#5a7bc7',
                       strokeWidth: 2,
                       stroke: '#fff'
                     }}
@@ -304,19 +304,19 @@ const AdminDashboard: React.FC = () => {
               {/* Chart Summary */}
               <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-gray-100">
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-blue-600">
+                  <p className="text-2xl font-bold text-accent-600">
                     {chartData.reduce((sum, item) => sum + item.signups, 0).toLocaleString()}
                   </p>
                   <p className="text-sm text-gray-500 mt-1">총 가입자</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-green-600">
+                  <p className="text-2xl font-bold text-status-success">
                     {chartData.length > 0 ? Math.round(chartData.reduce((sum, item) => sum + item.signups, 0) / chartData.length) : 0}
                   </p>
                   <p className="text-sm text-gray-500 mt-1">평균 가입자</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-purple-600">
+                  <p className="text-2xl font-bold text-primary-600">
                     {Math.max(...chartData.map(item => item.signups), 0)}
                   </p>
                   <p className="text-sm text-gray-500 mt-1">최대 가입자</p>

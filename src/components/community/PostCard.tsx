@@ -1,3 +1,4 @@
+// 기존 코드 유지
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import {
@@ -28,6 +29,7 @@ interface PostCardProps {
   onDelete?: (postId: string) => void;
   onToggleLike: (postId: string) => void;
   onToggleBookmark: (postId: string) => void;
+  showActions?: boolean;
 }
 
 const PostCard: React.FC<PostCardProps> = ({
@@ -37,6 +39,7 @@ const PostCard: React.FC<PostCardProps> = ({
   onDelete,
   onToggleLike,
   onToggleBookmark,
+  showActions = true,
 }) => {
   const { user } = useAuthStore();
   const [showMenu, setShowMenu] = useState(false);
@@ -48,23 +51,23 @@ const PostCard: React.FC<PostCardProps> = ({
     > = {
       LIFE_TIPS: {
         icon: GraduationCap,
-        borderColor: "border-orange-600",
-        textColor: "text-orange-700",
+        borderColor: "border-primary-600",
+        textColor: "text-primary-700",
       },
       FREE_BOARD: {
         icon: MessageSquare,
-        borderColor: "border-orange-700",
-        textColor: "text-orange-800",
+        borderColor: "border-primary-700",
+        textColor: "text-primary-800",
       },
       FIND_MATE: {
         icon: Megaphone,
-        borderColor: "border-orange-500",
-        textColor: "text-orange-600",
+        borderColor: "border-primary-500",
+        textColor: "text-primary-600",
       },
       QNA: {
         icon: Handshake,
-        borderColor: "border-orange-800",
-        textColor: "text-orange-900",
+        borderColor: "border-primary-800",
+        textColor: "text-primary-900",
       },
     };
     return (
@@ -198,7 +201,7 @@ const PostCard: React.FC<PostCardProps> = ({
               className="w-10 h-10 rounded-full object-cover border border-gray-200"
             />
           ) : (
-            <div className="w-10 h-10 bg-gradient-to-r from-orange-400 to-amber-500 rounded-full flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-r from-primary-400 to-amber-500 rounded-full flex items-center justify-center">
               <span className="text-white font-medium text-sm">
                 {displayAuthorNickname.charAt(0)}
               </span>
@@ -230,40 +233,7 @@ const PostCard: React.FC<PostCardProps> = ({
             <span>{post.categoryName}</span>
           </div>
 
-          {isAuthor && (
-            <div className="relative">
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowMenu(!showMenu);
-                }}
-                className="p-1 rounded-full hover:bg-gray-100 transition-colors"
-              >
-                <MoreVertical className="w-4 h-4 text-gray-500" />
-              </motion.button>
-
-              {showMenu && (
-                <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[120px]">
-                  <button
-                    onClick={handleEdit}
-                    className="flex items-center space-x-2 w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                  >
-                    <Edit className="w-4 h-4" />
-                    <span>편집</span>
-                  </button>
-                  <button
-                    onClick={handleDelete}
-                    className="flex items-center space-x-2 w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    <span>삭제</span>
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
+          
         </div>
       </div>
 
@@ -278,17 +248,18 @@ const PostCard: React.FC<PostCardProps> = ({
 
       <div className="flex items-center justify-between pt-4 border-t border-gray-100">
         <div className="flex items-center space-x-6">
+          {/* 좋아요 버튼 추가 및 수정된 부분 */}
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={handleLike}
             className={`flex items-center space-x-2 ${
               isLiked
-                ? "text-orange-500"
-                : "text-gray-500 hover:text-orange-500"
+                ? "text-primary-500"
+                : "text-gray-500 hover:text-primary-500"
             } transition-colors`}
           >
-            <Heart className={`w-5 h-5 ${isLiked ? "fill-orange-500" : ""}`} />
+            <Heart className={`w-5 h-5 ${isLiked ? "fill-current" : ""}`} />
             <span className="text-sm font-medium">{post.likeCount || 0}</span>
           </motion.button>
 
@@ -298,11 +269,6 @@ const PostCard: React.FC<PostCardProps> = ({
               {post.commentCount || 0}
             </span>
           </div>
-
-          <button className="flex items-center space-x-2 text-gray-500 hover:text-blue-500 transition-colors">
-            <Share2 className="w-5 h-5" />
-            <span className="text-sm font-medium">공유</span>
-          </button>
         </div>
 
         <motion.button

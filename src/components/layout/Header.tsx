@@ -223,19 +223,22 @@ const Header: React.FC = () => {
   const getNotificationTypeConfig = (type: string) => {
     const configs = {
       SCHEDULE: {
-        icon: "📅",
-        bgColor: "bg-blue-50",
-        borderColor: "border-blue-500",
+        icon: Calendar,
+        bgColor: "bg-accent-50",
+        borderColor: "border-accent-500",
+        iconColor: "text-accent-600"
       },
       PAYMENT: {
-        icon: "💳",
+        icon: CreditCard,
         bgColor: "bg-green-50",
-        borderColor: "border-green-500",
+        borderColor: "border-status-success",
+        iconColor: "text-status-success"
       },
       CHECKLIST: {
-        icon: "✅",
-        bgColor: "bg-purple-50",
-        borderColor: "border-purple-500",
+        icon: CheckSquare,
+        bgColor: "bg-primary-50",
+        borderColor: "border-primary-500",
+        iconColor: "text-primary-600"
       },
     };
     return configs[type as keyof typeof configs] || configs.SCHEDULE;
@@ -311,13 +314,13 @@ const Header: React.FC = () => {
                   {/* SSE 연결 상태 표시 */}
                   <div
                     className={`absolute -top-1 -left-1 w-2 h-2 rounded-full ${
-                      isSSEConnected ? "bg-green-500" : "bg-gray-400"
+                      isSSEConnected ? "bg-status-success" : "bg-gray-400"
                     }`}
                     title={isSSEConnected ? "SSE 연결됨" : "SSE 연결 끊김"}
                   />
                 </div>
                 {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-red-500 text-white text-[10px] sm:text-xs rounded-full flex items-center justify-center font-medium">
+                  <span className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-status-error text-white text-[10px] sm:text-xs rounded-full flex items-center justify-center font-medium">
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </span>
                 )}
@@ -346,7 +349,7 @@ const Header: React.FC = () => {
                           <h3 className="font-semibold text-gray-900">알림</h3>
                           <div className="flex items-center space-x-1">
                             {unreadCount > 0 && (
-                              <span className="px-2 py-1 bg-red-100 text-red-600 text-xs rounded-full font-medium">
+                              <span className="px-2 py-1 bg-status-error text-white text-xs rounded-full font-medium">
                                 {unreadCount}개 안읽음
                               </span>
                             )}
@@ -354,7 +357,7 @@ const Header: React.FC = () => {
                             <span
                               className={`px-2 py-1 text-xs rounded-full font-medium ${
                                 isSSEConnected
-                                  ? "bg-green-100 text-green-600"
+                                  ? "bg-status-success text-white"
                                   : "bg-gray-100 text-gray-600"
                               }`}
                             >
@@ -365,7 +368,7 @@ const Header: React.FC = () => {
                         {unreadCount > 0 && (
                           <button
                             onClick={handleMarkAllAsRead}
-                            className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                            className="text-xs text-accent-600 hover:text-accent-700 font-medium"
                           >
                             모두 읽음
                           </button>
@@ -403,7 +406,7 @@ const Header: React.FC = () => {
                                   notification.url ||
                                   notification.relatedId ||
                                   notification.type
-                                    ? "hover:border-blue-300"
+                                    ? "hover:border-accent-300"
                                     : ""
                                 }`}
                                 whileHover={{ x: 4, scale: 1.01 }}
@@ -418,8 +421,8 @@ const Header: React.FC = () => {
                                 }
                               >
                                 <div className="flex items-start space-x-3">
-                                  <div className="flex-shrink-0 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-sm">
-                                    {notification.icon}
+                                  <div className={`flex-shrink-0 w-8 h-8 ${typeConfig.bgColor} rounded-lg flex items-center justify-center`}>
+                                    <typeConfig.icon className={`w-4 h-4 ${typeConfig.iconColor}`} />
                                   </div>
                                   <div className="flex-1 min-w-0">
                                     <div className="flex items-center justify-between">
@@ -432,21 +435,9 @@ const Header: React.FC = () => {
                                       >
                                         {notification.title}
                                       </p>
-                                      <div className="flex items-center space-x-2">
-                                        {(notification.url ||
-                                          notification.relatedId ||
-                                          notification.type) && (
-                                          <div className="flex items-center space-x-1">
-                                            <ExternalLink className="w-3 h-3 text-blue-500" />
-                                            <span className="text-xs text-blue-500 font-medium">
-                                              보기
-                                            </span>
-                                          </div>
-                                        )}
-                                        {!notification.read && (
-                                          <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0" />
-                                        )}
-                                      </div>
+                                      {!notification.read && (
+                                        <div className="w-2 h-2 bg-accent-500 rounded-full flex-shrink-0" />
+                                      )}
                                     </div>
                                     <p
                                         className={`text-sm mt-1 ${
@@ -464,11 +455,11 @@ const Header: React.FC = () => {
                                       <span
                                         className={`text-xs px-2 py-1 rounded-full ${
                                           notification.type === "SCHEDULE"
-                                            ? "bg-blue-100 text-blue-600"
+                                            ? "bg-accent-100 text-accent-600"
                                             : notification.type === "PAYMENT"
-                                            ? "bg-green-100 text-green-600"
+                                            ? "bg-green-100 text-status-success"
                                             : notification.type === "CHECKLIST"
-                                            ? "bg-purple-100 text-purple-600"
+                                            ? "bg-primary-100 text-primary-600"
                                             : "bg-gray-100 text-gray-600"
                                         }`}
                                       >
@@ -541,137 +532,6 @@ const Header: React.FC = () => {
                         </div>
                       </div>
 
-                      {/* Mode Toggle */}
-                      <div className="px-4 py-3 border-b border-gray-100">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-3">
-                            {mode === "personal" ? (
-                              <ToggleLeft className="w-5 h-5 text-primary-600" />
-                            ) : (
-                              <ToggleRight className="w-5 h-5 text-primary-600" />
-                            )}
-                            <span className="text-sm font-medium text-gray-700">
-                              모드 변경
-                            </span>
-                          </div>
-                          <div className="flex flex-col items-end">
-                            <motion.button
-                              className={`px-3 py-1 rounded-lg text-xs font-medium transition-all duration-200 ${
-                                isDisabled
-                                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                                  : mode === "personal"
-                                  ? "bg-white text-primary-600 border border-primary-600 hover:bg-primary-50"
-                                  : "bg-primary-600 text-white hover:bg-primary-700"
-                              }`}
-                              whileHover={isDisabled ? {} : { scale: 1.05 }}
-                              whileTap={isDisabled ? {} : { scale: 0.95 }}
-                              onClick={handleModeToggle}
-                              disabled={isDisabled}
-                            >
-                              {mode === "personal" ? "개인 모드" : "그룹 모드"}
-                            </motion.button>
-                            {mode === "personal" && !canSwitchToGroup && (
-                              <span className="text-xs text-gray-400 mt-1">
-                                그룹에 먼저 참여하세요
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Group Selector - only show in group mode */}
-                      {(mode === "group" || joinedGroups.length === 0) && (
-                        <div className="px-4 py-3 border-b border-gray-100">
-                          {mode === "group" && joinedGroups.length > 0 && (
-                            <>
-                              <div className="text-xs font-medium text-gray-500 mb-2">
-                                현재 그룹
-                              </div>
-                              <div className="space-y-2 max-h-32 overflow-y-auto">
-                                {joinedGroups.map((group) => (
-                                  <motion.div
-                                    key={group.id}
-                                    className={`w-full flex items-center justify-between px-3 py-2 hover:bg-gray-50 transition-colors rounded-lg ${
-                                      currentGroup?.id === group.id
-                                        ? "bg-primary-50 border border-primary-200"
-                                        : ""
-                                    }`}
-                                  >
-                                    <motion.button
-                                      className="flex items-center space-x-3 flex-1 text-left"
-                                      whileHover={{ x: 2 }}
-                                      onClick={() => {
-                                        setCurrentGroup(group);
-                                        setShowUserMenu(false);
-                                      }}
-                                    >
-                                      <div className="flex-1 min-w-0">
-                                        <div
-                                          className="text-sm font-medium text-gray-900 truncate"
-                                          title={group.name}
-                                        >
-                                          {group.name.length > 10
-                                            ? `${group.name.substring(0, 10)}...`
-                                            : group.name}
-                                        </div>
-                                        <div className="text-xs text-gray-500">
-                                          {group.members.length}명
-                                        </div>
-                                      </div>
-                                      {currentGroup?.id === group.id && (
-                                        <div className="w-2 h-2 bg-primary-600 rounded-full flex-shrink-0"></div>
-                                      )}
-                                    </motion.button>
-
-                                    {currentGroup?.id === group.id && (
-                                      <motion.button
-                                        whileHover={{ scale: 1.1 }}
-                                        whileTap={{ scale: 0.9 }}
-                                        onClick={() => {
-                                          setShowGroupSettingsModal(true);
-                                          setShowUserMenu(false);
-                                        }}
-                                        className="p-1 text-gray-400 hover:text-primary-600 transition-colors"
-                                      >
-                                        <Settings className="w-4 h-4" />
-                                      </motion.button>
-                                    )}
-                                  </motion.div>
-                                ))}
-                              </div>
-                            </>
-                          )}
-                          <div
-                            className={`${
-                              mode === "group" && joinedGroups.length > 0
-                                ? "mt-3 pt-2 border-t border-gray-100"
-                                : ""
-                            } space-y-1`}
-                          >
-                            <motion.button
-                              className="w-full flex items-center space-x-2 px-3 py-1.5 text-left text-primary-600 hover:bg-primary-50 transition-colors rounded-lg text-sm"
-                              whileHover={{ x: 2 }}
-                              onClick={() => {
-                                setShowCreateGroupModal(true);
-                                setShowUserMenu(false);
-                              }}
-                            >
-                              <span>+ 새 그룹 만들기</span>
-                            </motion.button>
-                            <motion.button
-                              className="w-full flex items-center space-x-2 px-3 py-1.5 text-left text-primary-600 hover:bg-primary-50 transition-colors rounded-lg text-sm"
-                              whileHover={{ x: 2 }}
-                              onClick={() => {
-                                setShowJoinGroupModal(true);
-                                setShowUserMenu(false);
-                              }}
-                            >
-                              <span>+ 그룹 참여하기</span>
-                            </motion.button>
-                          </div>
-                        </div>
-                      )}
-
                       {/* Menu Items */}
                       <motion.button
                         className="w-full flex items-center space-x-3 px-4 py-3 sm:py-2 text-left text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors"
@@ -685,7 +545,7 @@ const Header: React.FC = () => {
                         <span>설정</span>
                       </motion.button>
                       <motion.button
-                        className="w-full flex items-center space-x-3 px-4 py-3 sm:py-2 text-left text-red-600 hover:bg-red-50 active:bg-red-100 transition-colors"
+                        className="w-full flex items-center space-x-3 px-4 py-3 sm:py-2 text-left text-status-error hover:bg-red-50 active:bg-red-100 transition-colors"
                         whileHover={{ x: 4 }}
                         onClick={handleLogout}
                       >

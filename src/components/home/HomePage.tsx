@@ -1,18 +1,19 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, useScroll, useTransform, useInView, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, CheckSquare, CreditCard, Users, Gamepad2, Bot, ArrowRight, ChevronDown, BarChart3, User, ChevronDown as ChevronDownIcon, Settings, LogOut, Bell } from 'lucide-react';
+import { Calendar, CheckSquare, CreditCard, Users, Gamepad2, Bot, ArrowRight, ChevronDown, BarChart3, User, ChevronDown as ChevronDownIcon, Settings, LogOut, Bell, ExternalLink } from 'lucide-react';
 import { FaGoogle, FaComment } from 'react-icons/fa';
 import { SiNaver } from 'react-icons/si';
-import { useAuthStore } from '../../store/authStore';
+import Footer from '../layout/Footer';
+import {useAuthStore} from "../../store/authStore.ts";
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
-  const { user, logout } = useAuthStore();
+  const {user, logout} = useAuthStore();
   const [activeSection, setActiveSection] = useState(0);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-  
+
   const notificationRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
@@ -108,20 +109,24 @@ const HomePage: React.FC = () => {
 
   const getProviderIcon = (provider: string) => {
     switch (provider) {
-      case 'google': return <FaGoogle className="w-4 h-4" />;
-      case 'kakao': return <FaComment className="w-4 h-4 text-yellow-500" />;
-      case 'naver': return <SiNaver className="w-4 h-4" />;
-      default: return <User className="w-4 h-4" />;
+      case 'google':
+        return <FaGoogle className="w-4 h-4"/>;
+      case 'kakao':
+        return <FaComment className="w-4 h-4 text-yellow-500"/>;
+      case 'naver':
+        return <SiNaver className="w-4 h-4"/>;
+      default:
+        return <User className="w-4 h-4"/>;
     }
   };
 
   // Scroll progress
-  const { scrollYProgress } = useScroll();
+  const {scrollYProgress} = useScroll();
   const scaleX = useTransform(scrollYProgress, [0, 1], [0, 1]);
 
   // Hero section refs and animations
   const heroRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress: heroProgress } = useScroll({
+  const {scrollYProgress: heroProgress} = useScroll({
     target: heroRef,
     offset: ["start start", "end start"]
   });
@@ -194,6 +199,15 @@ const HomePage: React.FC = () => {
       color: "from-primary-500 to-primary-600",
       image: logoUrl,
       path: "/community"
+    },
+    {
+      title: "청년정책",
+      subtitle: "청년을 위한 혜택",
+      description: "청년을 위한 다양한 정책 정보와 혜택을 한곳에서 확인하세요. 주거, 취업, 창업, 교육 등 분야별 정책을 쉽게 찾아보세요.",
+      icon: ExternalLink,
+      color: "from-primary-500 to-primary-600",
+      image: logoUrl,
+      path: "/youth-policy"
     }
   ];
 
@@ -209,7 +223,7 @@ const HomePage: React.FC = () => {
           }
         });
       },
-      { threshold: 0.5 }
+      {threshold: 0.5}
     );
 
     sections.forEach((section) => observer.observe(section));
@@ -219,29 +233,30 @@ const HomePage: React.FC = () => {
   // Section navigation
   const scrollToSection = (index: number) => {
     const section = document.querySelector(`[data-section="${index}"]`);
-    section?.scrollIntoView({ behavior: 'smooth' });
+    section?.scrollIntoView({behavior: 'smooth'});
   };
 
   const navigationItems = [
-    { icon: BarChart3, label: '대시보드', path: '/dashboard' },
-    { icon: Calendar, label: '캘린더', path: '/calendar' },
-    { icon: CheckSquare, label: '할일', path: '/tasks' },
-    { icon: CreditCard, label: '가계부', path: '/expenses' },
-    { icon: Gamepad2, label: '게임', path: '/games' },
-    { icon: Bot, label: 'AI 도우미', path: '/ai-assistant' },
-    { icon: Users, label: '커뮤니티', path: '/community' },
+    {icon: BarChart3, label: '대시보드', path: '/dashboard'},
+    {icon: Calendar, label: '캘린더', path: '/calendar'},
+    {icon: CheckSquare, label: '할일', path: '/tasks'},
+    {icon: CreditCard, label: '가계부', path: '/expenses'},
+    {icon: Gamepad2, label: '게임', path: '/games'},
+    {icon: Bot, label: 'AI 도우미', path: '/ai-assistant'},
+    {icon: Users, label: '커뮤니티', path: '/community'},
   ];
 
   return (
     <div className="bg-white text-gray-900 overflow-hidden">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md border-b border-gray-200/20 fixed top-0 left-0 right-0 z-50 shadow-sm">
+      <header
+        className="bg-white/80 backdrop-blur-md border-b border-gray-200/20 fixed top-0 left-0 right-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 sm:h-20">
             {/* Logo */}
             <motion.div
               className="flex items-center cursor-pointer"
-              whileHover={{ scale: 1.05 }}
+              whileHover={{scale: 1.05}}
               onClick={() => navigate('/')}
             >
               <span className="text-2xl sm:text-3xl font-title font-bold text-primary-500">
@@ -252,6 +267,7 @@ const HomePage: React.FC = () => {
             {/* Navigation - 메인페이지에서는 스크롤 네비게이션 */}
             <nav className="hidden lg:flex items-center space-x-2">
               {[
+
                 { label: '대시보드', section: 1, icon: BarChart3 },
                 { label: '캘린더', section: 2, icon: Calendar },
                 { label: '할일', section: 3, icon: CheckSquare },
@@ -259,15 +275,17 @@ const HomePage: React.FC = () => {
                 { label: '게임', section: 5, icon: Gamepad2 },
                 { label: 'AI 도우미', section: 6, icon: Bot },
                 { label: '커뮤니티', section: 7, icon: Users },
+                { label: '청년정책', section: 8, icon: ExternalLink },
+
               ].map((item) => (
                 <motion.button
                   key={item.label}
-                  className="flex items-center space-x-2 px-4 py-2 rounded-xl transition-all duration-200 text-gray-600 hover:text-[#df6d14] hover:bg-gray-50"
+                  className="flex items-center space-x-2 px-4 py-2 rounded-xl transition-all duration-200 text-gray-600 hover:text-primary-600 hover:bg-gray-50"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => scrollToSection(item.section)}
                 >
-                  <item.icon className="w-5 h-5" />
+                  <item.icon className="w-5 h-5"/>
                   <span className="font-medium font-body hidden lg:block whitespace-nowrap">{item.label}</span>
                 </motion.button>
               ))}
@@ -281,13 +299,13 @@ const HomePage: React.FC = () => {
                   <div className="relative" ref={notificationRef}>
                     <motion.button
                       className="relative p-2 rounded-xl hover:bg-gray-50 transition-colors"
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
+                      whileHover={{scale: 1.05}}
+                      whileTap={{scale: 0.95}}
                       onClick={() => setShowNotifications(!showNotifications)}
                     >
-                      <Bell className="w-6 h-6 text-gray-600" />
+                      <Bell className="w-6 h-6 text-gray-600"/>
                       {unreadCount > 0 && (
-                        <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
+                        <span className="absolute -top-1 -right-1 w-5 h-5 bg-status-error text-white text-xs rounded-full flex items-center justify-center font-medium">
                           {unreadCount > 9 ? '9+' : unreadCount}
                         </span>
                       )}
@@ -297,10 +315,10 @@ const HomePage: React.FC = () => {
                     <AnimatePresence>
                       {showNotifications && (
                         <motion.div
-                          initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                          transition={{ duration: 0.2 }}
+                          initial={{opacity: 0, y: 10, scale: 0.95}}
+                          animate={{opacity: 1, y: 0, scale: 1}}
+                          exit={{opacity: 0, y: 10, scale: 0.95}}
+                          transition={{duration: 0.2}}
                           className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-200 py-2 max-h-96 overflow-hidden z-50"
                         >
                           {/* Header */}
@@ -308,7 +326,7 @@ const HomePage: React.FC = () => {
                             <div className="flex items-center space-x-2">
                               <h3 className="font-semibold font-body text-gray-900">알림</h3>
                               {unreadCount > 0 && (
-                                <span className="px-2 py-1 bg-red-100 text-red-600 text-xs rounded-full font-medium font-body">
+                                <span className="px-2 py-1 bg-status-error text-white text-xs rounded-full font-medium font-body">
                                   {unreadCount}개 안읽음
                                 </span>
                               )}
@@ -316,7 +334,7 @@ const HomePage: React.FC = () => {
                             {unreadCount > 0 && (
                               <button
                                 onClick={markAllAsRead}
-                                className="text-xs text-blue-600 hover:text-blue-700 font-medium font-body"
+                                className="text-xs text-accent-600 hover:text-accent-700 font-medium font-body"
                               >
                                 모두 읽음
                               </button>
@@ -327,7 +345,7 @@ const HomePage: React.FC = () => {
                           <div className="max-h-80 overflow-y-auto">
                             {notifications.length === 0 ? (
                               <div className="text-center py-8">
-                                <Bell className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                                <Bell className="w-12 h-12 text-gray-300 mx-auto mb-3"/>
                                 <p className="text-gray-500 font-body">새로운 알림이 없습니다.</p>
                               </div>
                             ) : (
@@ -337,16 +355,17 @@ const HomePage: React.FC = () => {
                                   className={`px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer border-l-4 ${
                                     notification.read 
                                       ? 'border-transparent bg-white' 
-                                      : 'border-blue-500 bg-blue-50'
+                                      : 'border-accent-500 bg-accent-50'
                                   }`}
-                                  whileHover={{ x: 2 }}
+                                  whileHover={{x: 2}}
                                   onClick={() => {
                                     // 알림 클릭 시 해당 페이지로 이동하거나 상세 보기
                                     console.log('Notification clicked:', notification.id);
                                   }}
                                 >
                                   <div className="flex items-start space-x-3">
-                                    <div className="flex-shrink-0 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-sm">
+                                    <div
+                                      className="flex-shrink-0 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-sm">
                                       {notification.icon}
                                     </div>
                                     <div className="flex-1 min-w-0">
@@ -357,7 +376,7 @@ const HomePage: React.FC = () => {
                                           {notification.title}
                                         </p>
                                         {!notification.read && (
-                                          <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 ml-2" />
+                                          <div className="w-2 h-2 bg-accent-500 rounded-full flex-shrink-0 ml-2" />
                                         )}
                                       </div>
                                       <p className={`text-sm mt-1 font-body ${
@@ -381,38 +400,41 @@ const HomePage: React.FC = () => {
 
                   {/* User Menu */}
                   <div className="relative" ref={userMenuRef}>
-                  <motion.button
-                    className="flex items-center p-2 rounded-xl hover:bg-gray-50 transition-colors"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => setShowUserMenu(!showUserMenu)}
-                  >
-                    <div className="w-10 h-10 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full flex items-center justify-center">
-                      {getProviderIcon(user?.provider || '')}
-                    </div>
-                    <ChevronDownIcon className={`w-4 h-4 text-gray-400 transition-transform ml-2 ${showUserMenu ? 'rotate-180' : ''}`} />
-                  </motion.button>
+                    <motion.button
+                      className="flex items-center p-2 rounded-xl hover:bg-gray-50 transition-colors"
+                      whileHover={{scale: 1.05}}
+                      whileTap={{scale: 0.95}}
+                      onClick={() => setShowUserMenu(!showUserMenu)}
+                    >
+                      <div
+                        className="w-10 h-10 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full flex items-center justify-center">
+                        {getProviderIcon(user?.provider || '')}
+                      </div>
+                      <ChevronDownIcon
+                        className={`w-4 h-4 text-gray-400 transition-transform ml-2 ${showUserMenu ? 'rotate-180' : ''}`}/>
+                    </motion.button>
 
-                  <AnimatePresence>
-                    {showUserMenu && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        transition={{ duration: 0.2 }}
-                        className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-lg border border-gray-200 py-2"
-                      >
-                        <div className="px-4 py-3 border-b border-gray-100">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full flex items-center justify-center">
-                              {getProviderIcon(user?.provider || '')}
-                            </div>
-                            <div>
-                              <div className="text-sm font-medium font-body text-gray-900">{user?.name}</div>
-                              <div className="text-xs font-body text-gray-500">{user?.email}</div>
+                    <AnimatePresence>
+                      {showUserMenu && (
+                        <motion.div
+                          initial={{opacity: 0, y: 10, scale: 0.95}}
+                          animate={{opacity: 1, y: 0, scale: 1}}
+                          exit={{opacity: 0, y: 10, scale: 0.95}}
+                          transition={{duration: 0.2}}
+                          className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-lg border border-gray-200 py-2"
+                        >
+                          <div className="px-4 py-3 border-b border-gray-100">
+                            <div className="flex items-center space-x-3">
+                              <div
+                                className="w-8 h-8 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full flex items-center justify-center">
+                                {getProviderIcon(user?.provider || '')}
+                              </div>
+                              <div>
+                                <div className="text-sm font-medium font-body text-gray-900">{user?.name}</div>
+                                <div className="text-xs font-body text-gray-500">{user?.email}</div>
+                              </div>
                             </div>
                           </div>
-                        </div>
 
                         <motion.button
                           className="w-full flex items-center space-x-3 px-4 py-2 text-left text-gray-700 hover:bg-gray-50 transition-colors"
@@ -437,7 +459,7 @@ const HomePage: React.FC = () => {
                           <span className="font-body">설정</span>
                         </motion.button>
                         <motion.button
-                          className="w-full flex items-center space-x-3 px-4 py-2 text-left text-red-600 hover:bg-red-50 transition-colors"
+                          className="w-full flex items-center space-x-3 px-4 py-2 text-left text-status-error hover:bg-red-50 transition-colors"
                           whileHover={{ x: 4 }}
                           onClick={handleLogout}
                         >
@@ -452,8 +474,8 @@ const HomePage: React.FC = () => {
               ) : (
                 <motion.button
                   className="bg-primary-600 text-white px-6 py-2 rounded-xl font-medium font-body hover:bg-primary-700 transition-colors"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{scale: 1.05}}
+                  whileTap={{scale: 0.95}}
                   onClick={handleLogin}
                 >
                   로그인
@@ -475,18 +497,19 @@ const HomePage: React.FC = () => {
           { index: 5, label: '게임' },
           { index: 6, label: 'AI' },
           { index: 7, label: '커뮤니티' },
-          { index: 8, label: '시작하기' }
+          { index: 8, label: '청년정책' },
+          { index: 9, label: '시작하기' }
         ].map((section) => (
           <motion.div
             key={section.index}
             className="flex items-center justify-end group cursor-pointer"
-            whileHover={{ x: -10 }}
+            whileHover={{x: -10}}
             onClick={() => scrollToSection(section.index)}
           >
             <motion.div
               className="text-xs text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap mr-3"
-              initial={{ opacity: 0 }}
-              whileHover={{ opacity: 1 }}
+              initial={{opacity: 0}}
+              whileHover={{opacity: 1}}
             >
               {section.label}
             </motion.div>
@@ -502,14 +525,14 @@ const HomePage: React.FC = () => {
       </div>
 
       {/* Hero Section */}
-      <motion.section 
+      <motion.section
         ref={heroRef}
         className="section-observer min-h-screen flex items-center justify-center relative overflow-hidden pt-20"
         data-section="0"
-        style={{ opacity: heroOpacity }}
+        style={{opacity: heroOpacity}}
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-primary-50 via-white to-primary-100" />
-        
+        <div className="absolute inset-0 bg-gradient-to-br from-primary-50 via-white to-primary-100"/>
+
         {/* Animated background particles */}
         <div className="absolute inset-0">
           {[...Array(30)].map((_, i) => (
@@ -534,50 +557,50 @@ const HomePage: React.FC = () => {
           ))}
         </div>
 
-        <motion.div 
+        <motion.div
           className="text-center z-10 px-6 max-w-6xl mx-auto"
-          style={{ scale: heroScale }}
+          style={{scale: heroScale}}
         >
           <motion.div
-            style={{ scale: logoScale }}
+            style={{scale: logoScale}}
             className="mb-8"
           >
-            <img src={logoUrl} alt="우리.zip" className="w-64 h-64 mx-auto mb-8 drop-shadow-2xl" />
+            <img src={logoUrl} alt="우리.zip" className="w-64 h-64 mx-auto mb-8 drop-shadow-2xl"/>
           </motion.div>
 
-          <motion.p 
+          <motion.p
             className="text-xl md:text-2xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed font-body"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5, duration: 0.8 }}
+            initial={{opacity: 0, y: 30}}
+            animate={{opacity: 1, y: 0}}
+            transition={{delay: 0.5, duration: 0.8}}
           >
             개인과 그룹 생활을 하나로 묶어주는 스마트 라이프 플랫폼
           </motion.p>
 
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8, duration: 0.8 }}
+            initial={{opacity: 0, y: 30}}
+            animate={{opacity: 1, y: 0}}
+            transition={{delay: 0.8, duration: 0.8}}
             className="flex justify-center items-center"
           >
             <motion.button
               className="group bg-primary-500 hover:bg-primary-600 text-white px-12 py-4 rounded-full text-lg font-medium font-body transition-all duration-300 shadow-lg"
-              whileHover={{ scale: 1.05, y: -2 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{scale: 1.05, y: -2}}
+              whileTap={{scale: 0.95}}
               onClick={() => navigate('/dashboard')}
             >
               시작하기
-              <ArrowRight className="inline-block ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              <ArrowRight className="inline-block ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform"/>
             </motion.button>
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1.2, duration: 1 }}
+            initial={{opacity: 0}}
+            animate={{opacity: 1}}
+            transition={{delay: 1.2, duration: 1}}
             className="mt-16"
           >
-            <ChevronDown className="w-6 h-6 mx-auto text-gray-400 animate-bounce" />
+            <ChevronDown className="w-6 h-6 mx-auto text-gray-400 animate-bounce"/>
           </motion.div>
         </motion.div>
       </motion.section>
@@ -593,13 +616,13 @@ const HomePage: React.FC = () => {
       ))}
 
       {/* CTA Section */}
-      <section className="section-observer min-h-screen flex items-center justify-center relative bg-gray-50" data-section="8">
+      <section className="section-observer min-h-screen flex items-center justify-center relative bg-gray-50" data-section="9">
         <div className="text-center z-10 max-w-4xl mx-auto px-6">
           <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
+            initial={{opacity: 0, y: 50}}
+            whileInView={{opacity: 1, y: 0}}
+            transition={{duration: 0.8}}
+            viewport={{once: true}}
           >
             <h2 className="text-5xl md:text-7xl font-title font-light mb-8 text-gray-900">
               지금 바로 시작하세요
@@ -607,11 +630,11 @@ const HomePage: React.FC = () => {
             <p className="text-xl text-gray-600 mb-12 max-w-2xl mx-auto font-body">
               더 나은 공동생활을 위한 새로운 경험을 만나보세요
             </p>
-            
+
             <motion.button
               className="bg-primary-500 hover:bg-primary-600 text-white px-12 py-4 rounded-full text-lg font-medium font-body transition-all duration-300 shadow-lg"
-              whileHover={{ scale: 1.05, y: -2 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{scale: 1.05, y: -2}}
+              whileTap={{scale: 0.95}}
               onClick={() => navigate('/dashboard')}
             >
               무료로 시작하기
@@ -624,9 +647,12 @@ const HomePage: React.FC = () => {
       <footer className="py-16 border-t border-gray-200 bg-white">
         <div className="max-w-7xl mx-auto px-6 text-center">
           <div className="flex items-center justify-center mb-8">
-            <img src={logoUrl} alt="우리.zip" className="w-16 h-16" />
+            <img src={logoUrl} alt="우리.zip" className="w-16 h-16"/>
+            <span className="text-2xl sm:text-3xl font-title font-bold text-primary-500">
+              우리.zip
+            </span>
           </div>
-          <p className="text-gray-500 font-body">&copy; 2024 우리.zip. All rights reserved.</p>
+          <p className="text-gray-500 font-body">&copy; 2025 우리.zip. All rights reserved.</p>
         </div>
       </footer>
     </div>
@@ -638,11 +664,11 @@ const FeatureSection: React.FC<{
   feature: any;
   index: number;
   isEven: boolean;
-}> = ({ feature, index, isEven }) => {
+}> = ({feature, index, isEven}) => {
   const navigate = useNavigate();
   const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, margin: "-100px" });
-  const { scrollYProgress } = useScroll({
+  const isInView = useInView(ref, {once: true, margin: "-100px"});
+  const {scrollYProgress} = useScroll({
     target: ref,
     offset: ["start end", "end start"]
   });
@@ -655,7 +681,7 @@ const FeatureSection: React.FC<{
       ref={ref}
       className="section-observer min-h-screen flex items-center justify-center py-20"
       data-section={index.toString()}
-      style={{ opacity }}
+      style={{opacity}}
     >
       <div className="max-w-7xl mx-auto px-6">
         <div className={`grid grid-cols-1 lg:grid-cols-2 gap-16 items-center ${
@@ -664,14 +690,15 @@ const FeatureSection: React.FC<{
           {/* Text Content */}
           <motion.div
             className={isEven ? '' : 'lg:col-start-2'}
-            initial={{ opacity: 0, x: isEven ? -50 : 50 }}
-            animate={isInView ? { opacity: 1, x: 0 } : {}}
-            transition={{ duration: 0.8, delay: 0.2 }}
+            initial={{opacity: 0, x: isEven ? -50 : 50}}
+            animate={isInView ? {opacity: 1, x: 0} : {}}
+            transition={{duration: 0.8, delay: 0.2}}
           >
-            <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-r ${feature.color} mb-8`}>
-              <feature.icon className="w-8 h-8 text-white" />
+            <div
+              className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-r ${feature.color} mb-8`}>
+              <feature.icon className="w-8 h-8 text-white"/>
             </div>
-            
+
             <h3 className="text-sm font-medium font-body text-primary-600 mb-4 uppercase tracking-wider">
               {feature.subtitle}
             </h3>
@@ -684,27 +711,27 @@ const FeatureSection: React.FC<{
 
             <motion.button
               className="flex items-center space-x-2 text-primary-600 hover:text-primary-700 font-medium font-body"
-              whileHover={{ x: 10 }}
+              whileHover={{x: 10}}
               onClick={() => navigate(feature.path)}
             >
               <span>자세히 보기</span>
-              <ArrowRight className="w-5 h-5" />
+              <ArrowRight className="w-5 h-5"/>
             </motion.button>
           </motion.div>
 
           {/* Visual Content */}
           <motion.div
             className={isEven ? 'lg:col-start-2' : ''}
-            style={{ y }}
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={isInView ? { opacity: 1, scale: 1 } : {}}
-            transition={{ duration: 0.8 }}
+            style={{y}}
+            initial={{opacity: 0, scale: 0.8}}
+            animate={isInView ? {opacity: 1, scale: 1} : {}}
+            transition={{duration: 0.8}}
           >
             <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary-500/10 to-transparent rounded-3xl" />
+              <div className="absolute inset-0 bg-gradient-to-br from-primary-500/10 to-transparent rounded-3xl"/>
               <div className="bg-white rounded-3xl p-8 shadow-2xl border border-gray-100">
-                <img 
-                  src={feature.image} 
+                <img
+                  src={feature.image}
                   alt={feature.title}
                   className="w-full max-w-lg mx-auto"
                 />

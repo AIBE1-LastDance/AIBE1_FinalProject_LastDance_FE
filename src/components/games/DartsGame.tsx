@@ -158,7 +158,7 @@ const DartsGame: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-cyan-900 via-blue-900 to-indigo-900 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-primary-800 via-accent-800 to-primary-900 p-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <motion.div
@@ -168,7 +168,7 @@ const DartsGame: React.FC = () => {
         >
           <button
             onClick={() => navigate('/games')}
-            className="flex items-center space-x-2 text-white hover:text-cyan-300 transition-colors"
+            className="flex items-center space-x-2 text-white hover:text-primary-300 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
             <span>게임 목록</span>
@@ -177,7 +177,7 @@ const DartsGame: React.FC = () => {
           <div className="text-center">
             <h1 className="text-3xl font-bold text-white mb-2">다트 게임</h1>
             {gameState === 'playing' && (
-              <div className="text-cyan-300">
+              <div className="text-primary-300">
                 라운드 {getCurrentRound()}/{maxRounds} - {players[currentPlayerIndex].name}의 차례
               </div>
             )}
@@ -185,7 +185,7 @@ const DartsGame: React.FC = () => {
 
           <button
             onClick={resetGame}
-            className="flex items-center space-x-2 px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors"
+            className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
           >
             <RotateCcw className="w-4 h-4" />
             <span>재시작</span>
@@ -213,7 +213,7 @@ const DartsGame: React.FC = () => {
                     onClick={() => setMaxRounds(rounds)}
                     className={`px-6 py-3 rounded-xl font-bold transition-all ${
                       maxRounds === rounds
-                        ? 'bg-cyan-500 text-white'
+                        ? 'bg-primary-500 text-white'
                         : 'bg-white bg-opacity-20 text-white hover:bg-opacity-30'
                     }`}
                   >
@@ -226,7 +226,7 @@ const DartsGame: React.FC = () => {
             <div className="text-center">
               <button
                 onClick={startGame}
-                className="px-8 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-xl font-bold text-lg hover:from-cyan-600 hover:to-blue-600 transition-all"
+                className="px-8 py-3 bg-gradient-to-r from-primary-500 to-accent-500 text-white rounded-xl font-bold text-lg hover:from-primary-600 hover:to-accent-600 transition-all"
               >
                 <Target className="w-5 h-5 inline mr-2" />
                 게임 시작!
@@ -363,9 +363,9 @@ const DartsGame: React.FC = () => {
                         key={player.id}
                         className={`p-4 rounded-xl ${
                           player.id === players[currentPlayerIndex].id
-                            ? 'bg-cyan-500 bg-opacity-30 border-2 border-cyan-400'
+                            ? 'bg-primary-500 bg-opacity-30 border-2 border-primary-400'
                             : index === 0
-                              ? 'bg-gradient-to-r from-yellow-400 to-orange-500'
+                              ? 'bg-gradient-to-r from-status-warning to-primary-500'
                               : 'bg-white bg-opacity-20'
                         }`}
                       >
@@ -409,7 +409,7 @@ const DartsGame: React.FC = () => {
               exit={{ opacity: 0, scale: 0.8 }}
               className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80"
             >
-              <div className="bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl p-12 text-center text-white max-w-md mx-4">
+              <div className="bg-gradient-to-br from-status-warning to-primary-500 rounded-2xl p-12 text-center text-white max-w-md mx-4">
                 <motion.div
                   animate={{ 
                     rotate: [0, 10, -10, 0],
@@ -431,13 +431,13 @@ const DartsGame: React.FC = () => {
                 <div className="space-y-3">
                   <button
                     onClick={resetGame}
-                    className="w-full px-6 py-3 bg-white text-orange-500 rounded-xl font-bold hover:bg-gray-100 transition-colors"
+                    className="w-full px-6 py-3 bg-white text-primary-500 rounded-xl font-bold hover:bg-gray-100 transition-colors"
                   >
                     다시 플레이
                   </button>
                   <button
                     onClick={() => navigate('/games')}
-                    className="w-full px-6 py-3 bg-orange-600 text-white rounded-xl font-bold hover:bg-orange-700 transition-colors"
+                    className="w-full px-6 py-3 bg-primary-600 text-white rounded-xl font-bold hover:bg-primary-700 transition-colors"
                   >
                     게임 목록으로
                   </button>
