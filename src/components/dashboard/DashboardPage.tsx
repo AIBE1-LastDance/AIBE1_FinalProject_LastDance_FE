@@ -48,7 +48,9 @@ import {
   isSameDay,
   addMonths,
   isToday,
-  startOfToday
+  startOfToday,
+  startOfWeek,
+  endOfWeek
 } from "date-fns";
 import { ko } from "date-fns/locale";
 import { expenseAPI } from "../../api/expense.ts";
@@ -204,7 +206,10 @@ const DashboardPage: React.FC = () => {
   // Calendar functions
   const monthStart = startOfMonth(calendarDate);
   const monthEnd = endOfMonth(calendarDate);
-  const calendarDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
+  // 캘린더 시작과 끝을 주 단위로 확장 (이전달/다음달 포함)
+  const calendarStart = startOfWeek(monthStart, { weekStartsOn: 0 }); // 일요일 시작
+  const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 0 });
+  const calendarDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
   const handlePreviousMonth = () => {
     setCalendarDate(subMonths(calendarDate, 1));
