@@ -244,6 +244,7 @@ const HomePage: React.FC = () => {
     {icon: Gamepad2, label: '게임', path: '/games'},
     {icon: Bot, label: 'AI 도우미', path: '/ai-assistant'},
     {icon: Users, label: '커뮤니티', path: '/community'},
+    {icon: ExternalLink, label: '청년정책', path: '/youth-policy'},
   ];
 
   return (
