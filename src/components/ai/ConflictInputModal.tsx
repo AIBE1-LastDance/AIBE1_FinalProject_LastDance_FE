@@ -110,7 +110,7 @@ const ConflictInputModal: React.FC<ConflictInputModalProps> = ({
                           onSituationChange(index, 'name', e.target.value)
                         }
                         placeholder="참가자 이름 (예: 룸메이트 A)"
-                        className="w-40 px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
+                        className="w-40 px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:outline-none focus:ring-primary-500 focus:border-transparent transition-all duration-200"
                       />
                       <label className="font-semibold text-gray-800">
                         의 입장
@@ -135,7 +135,7 @@ const ConflictInputModal: React.FC<ConflictInputModalProps> = ({
                         participant.name || '참가자'
                       }의 입장과 상황을 자세히 설명해주세요...`}
                       rows={4}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none transition-all duration-200 hover:border-gray-300"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:outline-none focus:ring-primary-500 focus:border-transparent resize-none transition-all duration-200 hover:border-gray-300"
                     />
                   </motion.div>
                 ))}

@@ -466,7 +466,7 @@ const AISystemManagement: React.FC = () => {
                   <ResponsiveContainer width="100%" height={250} className="min-w-0">
                     <LineChart data={stats.trends}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
+                      <XAxis dataKey="date" tickFormatter={(tickItem) => new Date(tickItem).toLocaleDateString('ko-KR')} />
                       <YAxis yAxisId="left" />
                       <YAxis yAxisId="right" orientation="right" />
                       <Tooltip />
@@ -751,7 +751,13 @@ const AISystemManagement: React.FC = () => {
                   <ResponsiveContainer width="100%" height={250} className="min-w-0">
                     <LineChart data={expenseStats.trends}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
+                      <XAxis dataKey="date" tickFormatter={(tickItem, index) => {
+                        const trend = expenseStats.trends[index];
+                        if (trend) {
+                          return `${trend.year}.${trend.month}.${trend.day}`;
+                        }
+                        return '';
+                      }} />
                       <YAxis yAxisId="left" />
                       <YAxis yAxisId="right" orientation="right" />
                       <Tooltip />

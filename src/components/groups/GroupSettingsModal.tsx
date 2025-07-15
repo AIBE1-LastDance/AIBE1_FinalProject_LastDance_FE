@@ -40,7 +40,9 @@ const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({isOpen, onClose,
     const [isEditingBudget, setIsEditingBudget] = useState(false);
     const [isEditingMaxMembers, setIsEditingMaxMembers] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [deleteConfirmText, setDeleteConfirmText] = useState("");
     const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+    const [leaveConfirmText, setLeaveConfirmText] = useState("");
     const [promotingMember, setPromotingMember] = useState<string | null>(null);
     const [kickingMember, setKickingMember] = useState<string | null>(null);
 
@@ -276,7 +278,15 @@ const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({isOpen, onClose,
     };
 
     const handleLeaveGroup = async () => {
-        if (showLeaveConfirm) {
+        // 첫 클릭: 확인 UI 표시
+        if (!showLeaveConfirm) {
+            setShowLeaveConfirm(true);
+            setLeaveConfirmText("");
+            return;
+        }
+
+        // 두 번째 클릭: 입력값 확인 후 탈퇴 처리
+        if (leaveConfirmText === '지금탈퇴') {
             try {
                 // API 호출
                 await groupsAPI.leaveGroup(group.id);
@@ -291,14 +301,19 @@ const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({isOpen, onClose,
                 console.error('그룹 탈퇴 오류:', error);
                 toast.error(error.message || '그룹 탈퇴에 실패했습니다.');
             }
-        } else {
-            setShowLeaveConfirm(true);
-            setTimeout(() => setShowLeaveConfirm(false), 5000);
         }
     };
 
     const handleDeleteGroup = async () => {
-        if (showDeleteConfirm) {
+        // 첫 클릭: 확인 UI 표시
+        if (!showDeleteConfirm) {
+            setShowDeleteConfirm(true);
+            setDeleteConfirmText("");
+            return;
+        }
+
+        // 두 번째 클릭: 입력값 확인 후 삭제 처리
+        if (deleteConfirmText === '지금삭제') {
             try {
                 // API 호출
                 await groupsAPI.deleteGroup(group.id);
@@ -313,9 +328,6 @@ const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({isOpen, onClose,
                 console.error('그룹 삭제 오류:', error);
                 toast.error(error.message || '그룹 삭제에 실패했습니다.');
             }
-        } else {
-            setShowDeleteConfirm(true);
-            setTimeout(() => setShowDeleteConfirm(false), 5000);
         }
     };
 
@@ -559,10 +571,13 @@ const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({isOpen, onClose,
                 <button
                     onClick={handleDeleteGroup}
                     className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors ${
-                        showDeleteConfirm
+                        showDeleteConfirm && deleteConfirmText === '지금삭제'
                             ? 'bg-red-600 text-white hover:bg-red-700'
+                            : showDeleteConfirm
+                            ? 'bg-red-400 text-white cursor-not-allowed'
                             : 'bg-red-100 text-red-700 hover:bg-red-200'
                     }`}
+                    disabled={showDeleteConfirm && deleteConfirmText !== '지금삭제'}
                 >
                     <Trash2 className="w-4 h-4"/>
                     <span>
@@ -570,9 +585,18 @@ const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({isOpen, onClose,
           </span>
                 </button>
                 {showDeleteConfirm && (
-                    <p className="text-xs text-red-600 mt-2">
-                        5초 내에 다시 클릭하면 그룹이 삭제됩니다.
-                    </p>
+                    <>
+                <p className="text-xs text-red-600 mt-2">
+                    삭제를 원하시면 "지금삭제"를 입력해주세요.
+                </p>
+                <input
+                    type="text"
+                    value={deleteConfirmText}
+                    onChange={(e) => setDeleteConfirmText(e.target.value)}
+                    placeholder='지금삭제'
+                    className='w-full px-4 py-2 mt-2 border border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent'
+                />
+                </>
                 )}
             </div>
         </div>
@@ -682,10 +706,13 @@ const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({isOpen, onClose,
                         <button
                             onClick={handleLeaveGroup}
                             className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors ${
-                                showLeaveConfirm
+                                showLeaveConfirm && leaveConfirmText === '지금탈퇴'
                                     ? 'bg-red-600 text-white hover:bg-red-700'
+                                    : showLeaveConfirm
+                                    ? 'bg-red-400 text-white cursor-not-allowed'
                                     : 'bg-red-100 text-red-700 hover:bg-red-200'
                             }`}
+                            disabled={showLeaveConfirm && leaveConfirmText !== '지금탈퇴'}
                         >
                             <UserMinus className="w-4 h-4"/>
                             <span>
@@ -693,9 +720,18 @@ const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({isOpen, onClose,
               </span>
                         </button>
                         {showLeaveConfirm && (
-                            <p className="text-xs text-red-600 mt-2">
-                                5초 내에 다시 클릭하면 그룹에서 탈퇴됩니다.
-                            </p>
+                            <>
+                                <p className="text-xs text-red-600 mt-2">
+                                    탈퇴를 원하시면 "지금탈퇴"를 입력해주세요.
+                                </p>
+                                <input
+                                    type="text"
+                                    value={leaveConfirmText}
+                                    onChange={(e) => setLeaveConfirmText(e.target.value)}
+                                    placeholder='지금탈퇴'
+                                    className='w-full px-4 py-2 mt-2 border border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent'
+                                />
+                            </>
                         )}
                     </div>
                 </div>
