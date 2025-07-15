@@ -9,6 +9,16 @@
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat-square&logo=docker)](https://www.docker.com/)
 [![Deploy](https://img.shields.io/badge/Deploy-Render-46E3B7?style=flat-square&logo=render)](https://render.com/)
 
+## 팀 소개
+
+
+| 조다미 | 반준영 | 한정호 | 진소희 | 조준호 |
+|:------:|:------:|:------:|:------:|:------:|
+| <img src="https://avatars.githubusercontent.com/dochmai382" width="100"/> | <img src="https://avatars.githubusercontent.com/aibeban" width="100"/> | <img src="https://avatars.githubusercontent.com/hanjungho" width="100"/> | <img src="https://avatars.githubusercontent.com/soheeGit" width="100"/> | <img src="https://avatars.githubusercontent.com/lSNOTNULL" width="100"/> |
+| [@dochmai382](https://github.com/dochmai382) | [@aibeban](https://github.com/aibeban) | [@hanjungho](https://github.com/hanjungho) | [@soheeGit](https://github.com/soheeGit) | [@lSNOTNULL](https://github.com/lSNOTNULL) |
+
+
+
 ## 🏠 프로젝트 소개
 
 **LastDance**는 자취생, 룸메이트, 신혼부부 등 **공동생활을 하는 모든 사람들**을 위한 종합 생활관리 플랫폼입니다. 
