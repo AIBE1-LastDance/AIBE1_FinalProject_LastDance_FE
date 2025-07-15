@@ -206,6 +206,7 @@ const SettingsPage: React.FC = () => {
     });
     const [notificationLoading, setNotificationLoading] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [deleteConfirmText, setDeleteConfirmText] = useState("");
     const [isAdmin, setIsAdmin] = useState(false);
     const [adminCheckLoading, setAdminCheckLoading] = useState(true);
 
@@ -315,7 +316,15 @@ const SettingsPage: React.FC = () => {
     };
 
     const handleDeleteAccount = async () => {
-        if (showDeleteConfirm) {
+        // 첫 클릭: 확인 UI 표시
+        if (!showDeleteConfirm) {
+            setShowDeleteConfirm(true);
+            setDeleteConfirmText("");
+            return;
+        }
+
+        // 두 번째 클릭: 입력값 확인 후 삭제 처리
+        if (deleteConfirmText === '지금삭제') {
             try {
                 setProcessingAccountDeletion(true);
 
@@ -332,9 +341,6 @@ const SettingsPage: React.FC = () => {
             } finally {
                 setProcessingAccountDeletion(false);
             }
-        } else {
-            setShowDeleteConfirm(true);
-            setTimeout(() => setShowDeleteConfirm(false), 5000); // 5초 후 자동으로 확인 상태 해제
         }
     };
 
@@ -581,10 +587,13 @@ const SettingsPage: React.FC = () => {
                                 whileHover={{scale: 1.02}}
                                 whileTap={{scale: 0.98}}
                                 className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors ${
-                                    showDeleteConfirm
+                                    showDeleteConfirm && deleteConfirmText === '지금삭제'
                                         ? 'bg-red-600 text-white hover:bg-red-700'
+                                        : showDeleteConfirm
+                                        ? 'bg-red-400 text-white cursor-not-allowed'
                                         : 'bg-red-100 text-red-700 hover:bg-red-200'
                                 }`}
+                                disabled={showDeleteConfirm && deleteConfirmText !== '지금삭제'}
                             >
                                 <Trash2 className="w-4 h-4"/>
                                 <span>
@@ -592,9 +601,18 @@ const SettingsPage: React.FC = () => {
                 </span>
                             </motion.button>
                             {showDeleteConfirm && (
+                                <>
                                 <p className="text-xs text-red-600 mt-2">
-                                    5초 내에 다시 클릭하면 계정이 삭제됩니다.
+                                    삭제를 원하시면 "지금삭제"를 입력해주세요.
                                 </p>
+                                <input
+                                    type="text"
+                                    value={deleteConfirmText}
+                                    onChange={(e) => setDeleteConfirmText(e.target.value)}
+                                    placeholder='지금삭제'
+                                    className='w-full px-4 py-2 mt-2 border border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent'
+                                />
+                                </>
                             )}
                         </div>
                     </div>

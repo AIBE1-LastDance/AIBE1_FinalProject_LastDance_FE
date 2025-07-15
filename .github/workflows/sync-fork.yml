@@ -1,0 +1,33 @@
+name: Sync to Personal Repository
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  sync:
+    name: Sync to personal repo
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout team repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PERSONAL_REPO_TOKEN }}
+          fetch-depth: 0
+          ref: main
+
+      - name: Configure git and add personal repo
+        run: |
+          git remote add personal-repo https://soheeGit:${{ secrets.PERSONAL_REPO_TOKEN }}@github.com/AIBE1-LastDance/AIBE1_FinalProject_LastDance_FE.git
+          git config user.name "soheeGit"
+          git config user.email "63wlsthgml@gmail.com"
+
+      - name: Push to personal repository
+        run: |
+          git push -f personal-repo main
+
+      - name: Clean up
+        run: |
+          git remote remove personal-repo
