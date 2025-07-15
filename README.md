@@ -336,7 +336,6 @@ hotfix/긴급-보안-패치
 
 ## 📚 관련 문서
 
-- **🏗️ [DEPLOYMENT.md](DEPLOYMENT.md)**: 배포 가이드
 - **🐛 [Issues](https://github.com/prgrms-aibe-devcourse/AIBE1_FinalProject_LastDance_FE/issues)**: 버그 신고 & 기능 요청
 - **💬 [Discussions](https://github.com/prgrms-aibe-devcourse/AIBE1_FinalProject_LastDance_FE/discussions)**: 아이디어 토론
 - **📖 [Wiki](https://github.com/prgrms-aibe-devcourse/AIBE1_FinalProject_LastDance_FE/wiki)**: 상세 개발 문서
