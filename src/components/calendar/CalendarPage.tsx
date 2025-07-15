@@ -369,7 +369,9 @@ const CalendarPage: React.FC = () => {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => {
-                  setSelectedDate(new Date());
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0); // 시간을 00:00:00으로 설정
+                  setSelectedDate(today);
                   setSelectedEvent(null);
                   setShowEventModal(true);
                 }}
