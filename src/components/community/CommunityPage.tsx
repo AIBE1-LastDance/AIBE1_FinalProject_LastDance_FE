@@ -254,7 +254,7 @@ const CommunityPage: React.FC = () => {
               value={tempSearchQuery}
               onChange={(e) => setTempSearchQuery(e.target.value)}
               onKeyPress={handleSearchKeyPress}
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:outline-none focus:ring-primary-500 focus:border-transparent"
             />
           </div>
           <button
