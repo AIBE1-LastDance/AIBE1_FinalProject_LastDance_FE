@@ -122,6 +122,7 @@ const ExpensesPage: React.FC = () => {
   const [pageLoading, setPageLoading] = useState(false);
   const [sharePageLoading, setSharePageLoading] = useState(false); // New state for group shares loading
   const [isInitialLoad, setIsInitialLoad] = useState(true); // New state for initial load
+  const [analysisHistoryLoading, setAnalysisHistoryLoading] = useState(false);
 
   // URL 쿼리 파라미터에서 splitId 확인하여 상세 모달 열기
   useEffect(() => {
@@ -297,7 +298,15 @@ const ExpensesPage: React.FC = () => {
       // Only run refreshAllData on initial load
       refreshAllData();
       // AI 분석 내역도 함께 로드
-      loadSavedAnalysesPaginated({ page: 0, size: 10 }); // 초기 페이지 로드
+      const loadAnalyses = async () => {
+        setAnalysisHistoryLoading(true);
+        try {
+          await loadSavedAnalysesPaginated({ page: 0, size: 10 }); // 초기 페이지 로드
+        } finally {
+          setAnalysisHistoryLoading(false);
+        }
+      };
+      loadAnalyses();
       setIsInitialLoad(false); // Set to false after initial load
     }
     // AI 분석 내역도 함께 로드
@@ -2244,7 +2253,12 @@ const ExpensesPage: React.FC = () => {
         ) : (
           <>
             <div className="divide-y divide-gray-100">
-              {savedAnalyses.length > 0 ? (
+              {analysisHistoryLoading ? (
+        <div className="text-center py-12">
+          <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="mt-4 text-gray-600">AI 분석 내역을 불러오는 중입니다...</p>
+        </div>
+      ) : savedAnalyses.length > 0 ? (
                 savedAnalyses.map((analysis) => (
                   <motion.div
                     key={analysis.id}
