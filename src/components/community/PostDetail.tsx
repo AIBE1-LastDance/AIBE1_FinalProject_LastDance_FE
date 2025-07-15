@@ -582,7 +582,7 @@ const PostDetail: React.FC<PostDetailProps> = ({
               onChange={(e) => setNewComment(e.target.value)}
               placeholder="댓글을 작성해보세요..."
               rows={3}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:outline-none focus:border-transparent resize-none"
               maxLength={500}
             />
             <div className="flex items-center justify-between mt-3">
