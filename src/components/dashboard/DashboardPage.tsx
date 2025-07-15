@@ -760,7 +760,7 @@ const DashboardPage: React.FC = () => {
                   selectedDateEvents.map((event) => (
                     <motion.div
                       key={event.id}
-                      className={`text-xs p-2 rounded cursor-pointer hover:opacity-80 transition-opacity ${
+                      className={`text-xs p-2 rounded cursor-pointer hover:opacity-80 transition-opacity break-words overflow-hidden ${
                         event.category === "bill"
                           ? "bg-red-100 text-red-800"
                           : event.category === "cleaning"
@@ -784,9 +784,9 @@ const DashboardPage: React.FC = () => {
                         navigate(`/calendar?eventId=${event.id}`);
                       }}
                     >
-                      <div className="font-medium">{event.title}</div>
-                      <div className="text-xs opacity-75">
-                        {event.startTime} - {event.endTime}
+                      <div className="font-medium break-words" style={{ wordBreak: 'break-all' }}>{event.title}</div>
+                      <div className="text-xs opacity-75 break-words" style={{ wordBreak: 'break-all' }}>
+                        {event.isAllDay ? "하루 종일" : `${event.startTime} - ${event.endTime}`}
                       </div>
                     </motion.div>
                   ))
