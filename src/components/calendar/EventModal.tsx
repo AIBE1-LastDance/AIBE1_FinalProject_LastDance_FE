@@ -115,7 +115,7 @@ const EventModal: React.FC<EventModalProps> = ({
 
     // 종료 날짜가 시작 날짜보다 이전인지 검증
     if (formData.endDate && formData.date && formData.endDate < formData.date) {
-      toast.error('종료 날짜는 시작 날짜보다 이후여야 합니다.');
+      toast.error('종료 날짜는 시작 날짜와 같거나 이후여야 합니다.');
       return;
     }
 
