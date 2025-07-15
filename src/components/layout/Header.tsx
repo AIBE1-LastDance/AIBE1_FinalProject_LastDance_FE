@@ -314,13 +314,13 @@ const Header: React.FC = () => {
                   {/* SSE 연결 상태 표시 */}
                   <div
                     className={`absolute -top-1 -left-1 w-2 h-2 rounded-full ${
-                      isSSEConnected ? "bg-status-success" : "bg-gray-400"
+                      isSSEConnected ? "bg-green-500" : "bg-gray-400"
                     }`}
                     title={isSSEConnected ? "SSE 연결됨" : "SSE 연결 끊김"}
                   />
                 </div>
                 {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-status-error text-white text-[10px] sm:text-xs rounded-full flex items-center justify-center font-medium">
+                  <span className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-red-500 text-white text-[10px] sm:text-xs rounded-full flex items-center justify-center font-medium">
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </span>
                 )}
@@ -349,7 +349,7 @@ const Header: React.FC = () => {
                           <h3 className="font-semibold text-gray-900">알림</h3>
                           <div className="flex items-center space-x-1">
                             {unreadCount > 0 && (
-                              <span className="px-2 py-1 bg-status-error text-white text-xs rounded-full font-medium">
+                              <span className="px-2 py-1 bg-red-500 text-white text-xs rounded-full font-medium">
                                 {unreadCount}개 안읽음
                               </span>
                             )}
@@ -357,7 +357,7 @@ const Header: React.FC = () => {
                             <span
                               className={`px-2 py-1 text-xs rounded-full font-medium ${
                                 isSSEConnected
-                                  ? "bg-status-success text-white"
+                                  ? "bg-green-500 text-white"
                                   : "bg-gray-100 text-gray-600"
                               }`}
                             >
@@ -437,7 +437,7 @@ const Header: React.FC = () => {
                                         {notification.title}
                                       </p>
                                       {!notification.read && (
-                                        <div className="w-2 h-2 bg-accent-500 rounded-full flex-shrink-0 ml-2" />
+                                        <div className="w-2 h-2 bg-red-500 rounded-full flex-shrink-0 ml-2" />
                                       )}
                                     </div>
                                     <p
