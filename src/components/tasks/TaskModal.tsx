@@ -29,9 +29,9 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onSave }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const priorityOptions = [
-    { value: 'low', label: '낮음', color: 'bg-green-100 text-green-800' },
-    { value: 'medium', label: '보통', color: 'bg-yellow-100 text-yellow-800' },
-    { value: 'high', label: '높음', color: 'bg-red-100 text-red-800' },
+    { value: 'low', label: '낮음', bgColor: '#10B981' + '33', iconColor: '#10B981' },
+    { value: 'medium', label: '보통', bgColor: '#F59E0B' + '33', iconColor: '#F59E0B' },
+    { value: 'high', label: '높음', bgColor: '#EF4444' + '33', iconColor: '#EF4444' },
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -214,9 +214,16 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onSave }) => {
                   onClick={() => setFormData({ ...formData, priority: priority.value })}
                   disabled={isSubmitting}
                 >
-                  <div className={`text-xs px-2 py-1 rounded ${priority.color}`}>
-                    {priority.label}
+                  <div
+                    className="w-8 h-8 rounded-lg mx-auto mb-2 flex items-center justify-center"
+                    style={{ backgroundColor: priority.bgColor }}
+                  >
+                    <div
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: priority.iconColor }}
+                    />
                   </div>
+                  <span className="text-sm font-medium">{priority.label}</span>
                 </motion.button>
               ))}
             </div>
