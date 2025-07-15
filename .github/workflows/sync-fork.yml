@@ -16,7 +16,7 @@ jobs:
 
     steps:
       - name: Sync fork with upstream
-        uses: TG908/fork-sync@v1.7.0
+        uses: tgymnich/fork-sync@v2.0.10
         with:
           github_token: ${{ secrets.FORK_SYNC_TOKEN }}
           owner: TARGET_ORGANIZATION_NAME  # 포크된 조직명
