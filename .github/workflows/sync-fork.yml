@@ -19,7 +19,8 @@ jobs:
         uses: tgymnich/fork-sync@v2.0.10
         with:
           github_token: ${{ secrets.FORK_SYNC_TOKEN }}
-          owner: TARGET_ORGANIZATION_NAME  # 포크된 조직명
+          owner: prgrms-aibe-devcourse
+          repo: AIBE1_FinalProject_LastDance_FE
           head: main
           base: main
           pr_title: "🔄 Auto sync with upstream"
