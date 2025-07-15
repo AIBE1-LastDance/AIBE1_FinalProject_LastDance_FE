@@ -93,6 +93,7 @@ const ExpensesPage: React.FC = () => {
     aiAnalysesTotalElements,
     setAiAnalysesCurrentPage, // New
     loadSavedAnalysesPaginated, // New
+    setGroupSharesCurrentPage,
   } = useAppStore();
   const { user } = useAuthStore();
   const location = useLocation();
@@ -290,7 +291,15 @@ const ExpensesPage: React.FC = () => {
   };
 
   useEffect(() => {
+    // 마운트 시 초기화
     setCurrentPage(0);
+    setGroupSharesCurrentPage(0);
+
+    // 언마운트 시에도 초기화
+    return () => {
+      setCurrentPage(0);
+      setGroupSharesCurrentPage(0);
+    }
   }, []);
 
   useEffect(() => {
@@ -645,13 +654,44 @@ const ExpensesPage: React.FC = () => {
     setCurrentPage(0);
 
     try {
-      const params = {
+      const promises = [];
+
+      // 1. 통합 지출 데이터 로드
+      const expenseParams = {
         mode,
         year: newMonth.getFullYear(),
         month: newMonth.getMonth() + 1,
-        groupId: mode === "group" ? currentGroup?.id : undefined,
+        page: 0,
+        size: 10,
+        groupId: mode === "group" ? currentGroup?.id : null,
+        category: categoryFilter === "all" ? undefined : categoryFilter,
+        search: searchTerm || undefined,
       };
-      await loadCombinedExpenses(params);
+      promises.push(loadCombinedExpenses(expenseParams));
+
+      // 2. 분담금 데이터 로드 (중요!)
+      if (mode === "group" && currentGroup?.id) {
+        promises.push(
+          loadGroupSharesPaginated({
+            year: newMonth.getFullYear(),
+            month: newMonth.getMonth() + 1,
+            groupId: currentGroup.id,
+            page: 0,
+            size: 5,
+          })
+        );
+      }
+
+      if (mode === "personal") {
+        promises.push(
+          loadGroupShares({
+            year: newMonth.getFullYear(),
+            month: newMonth.getMonth() + 1,
+          })
+        );
+      }
+
+      await Promise.all(promises);
     } finally {
       setLoading(false);
     }
@@ -670,13 +710,44 @@ const ExpensesPage: React.FC = () => {
       setCurrentPage(0);
 
       try {
-        const params = {
+        const promises = [];
+
+        // 1. 통합 지출 데이터 로드
+        const expenseParams = {
           mode,
           year: nextMonth.getFullYear(),
           month: nextMonth.getMonth() + 1,
-          groupId: mode === "group" ? currentGroup?.id : undefined,
+          page: 0,
+          size: 10,
+          groupId: mode === "group" ? currentGroup?.id : null,
+          category: categoryFilter === "all" ? undefined : categoryFilter,
+          search: searchTerm || undefined,
         };
-        await loadCombinedExpenses(params);
+        promises.push(loadCombinedExpenses(expenseParams));
+
+        // 2. 분담금 데이터 로드 (중요!)
+        if (mode === "group" && currentGroup?.id) {
+          promises.push(
+            loadGroupSharesPaginated({
+              year: nextMonth.getFullYear(),
+              month: nextMonth.getMonth() + 1,
+              groupId: currentGroup.id,
+              page: 0,
+              size: 5,
+            })
+          );
+        }
+
+        if (mode === "personal") {
+          promises.push(
+            loadGroupShares({
+              year: nextMonth.getFullYear(),
+              month: nextMonth.getMonth() + 1,
+            })
+          );
+        }
+
+        await Promise.all(promises);
       } finally {
         setLoading(false);
       }
