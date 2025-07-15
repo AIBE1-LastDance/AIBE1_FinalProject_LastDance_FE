@@ -324,6 +324,10 @@ const ExpensesPage: React.FC = () => {
       setCurrentPage(0);
       setCategoryFilter("all");
       setSearchTerm("");
+      setActiveTab("expenses");
+      setShowAnalysis(false);
+      setSelectedAnalysis(null);
+      setAnalysisResult(null);
 
       const refreshModeData = async () => {
         setPageLoading(true);
