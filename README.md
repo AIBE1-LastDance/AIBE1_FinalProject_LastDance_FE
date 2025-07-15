@@ -346,7 +346,7 @@ hotfix/긴급-보안-패치
 
 ### 🌟 AIBE1 Final Project Team
 
-> **"조금 덜 싸우고, 많이 웃을 수 있는 공동생활"**을 만들어가는 팀입니다.
+> "조금 덜 싸우고, 많이 웃을 수 있는 공동생활"을 만들어가는 팀입니다.
 
 - **🔗 프로젝트 관리**: [GitHub Issues](https://github.com/prgrms-aibe-devcourse/AIBE1_FinalProject_LastDance_FE/issues)
 - **💬 팀 소통**: [GitHub Discussions](https://github.com/prgrms-aibe-devcourse/AIBE1_FinalProject_LastDance_FE/discussions)  
