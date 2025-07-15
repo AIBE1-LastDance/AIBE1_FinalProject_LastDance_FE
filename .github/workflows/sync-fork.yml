@@ -1,0 +1,30 @@
+name: Auto Sync Fork
+
+on:
+  # 원본 레포에 푸시될 때마다 실행
+  push:
+    branches: [main]
+  # 매 30분마다 체크 (선택사항)
+  schedule:
+    - cron: '*/30 * * * *'
+  # 수동 실행 가능
+  workflow_dispatch:
+
+jobs:
+  sync-fork:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Sync fork with upstream
+        uses: TG908/fork-sync@v1.7.0
+        with:
+          github_token: ${{ secrets.FORK_SYNC_TOKEN }}
+          owner: TARGET_ORGANIZATION_NAME  # 포크된 조직명
+          head: main
+          base: main
+          pr_title: "🔄 Auto sync with upstream"
+          pr_message: |
+            자동으로 원본 레포의 변경사항을 동기화합니다.
+            
+            - 최신 커밋: ${{ github.sha }}
+            - 동기화 시간: ${{ github.event.head_commit.timestamp }}
