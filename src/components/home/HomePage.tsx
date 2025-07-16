@@ -763,11 +763,13 @@ const FeatureSection: React.FC<{
     >
       <div className="max-w-7xl mx-auto px-6">
         <div
-          className={"grid grid-cols-1 lg:grid-cols-5 gap-16 items-center"}
+          className={`grid grid-cols-1 lg:grid-cols-2 gap-16 items-center ${
+            isEven ? "" : "lg:grid-flow-col-dense"
+          }`}
         >
           {/* Text Content */}
           <motion.div
-            className={`lg:col-span-2 ${isEven ? "" : "lg:col-start-4"}`}
+            className={isEven ? "" : "lg:col-start-2"}
             initial={{ opacity: 0, x: isEven ? -50 : 50 }}
             animate={isInView ? { opacity: 1, x: 0 } : {}}
             transition={{ duration: 0.8, delay: 0.2 }}
@@ -800,18 +802,20 @@ const FeatureSection: React.FC<{
 
           {/* Visual Content */}
           <motion.div
-            className={`lg:col-span-3 ${isEven ? "" : "lg:row-start-1"}`}
+            className={isEven ? "lg:col-start-2" : ""}
             style={{ y }}
             initial={{ opacity: 0, scale: 0.8 }}
             animate={isInView ? { opacity: 1, scale: 1 } : {}}
             transition={{ duration: 0.8 }}
           >
-            <div>
+            <div className="relative">
+              <div>
                 <img
                   src={feature.image}
                   alt={feature.title}
-                  className="w-full"
+                  className="w-full max-w-5xl mx-auto"
                 />
+              </div>
             </div>
           </motion.div>
         </div>

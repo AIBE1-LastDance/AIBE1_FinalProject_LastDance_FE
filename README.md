@@ -53,6 +53,9 @@
 | **UI & Routing** | ![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white) ![Framer Motion](https://img.shields.io/badge/Framer%20Motion-0055FF?style=for-the-badge&logo=framer&logoColor=white) ![React Router](https://img.shields.io/badge/React%20Router-CA4245?style=for-the-badge&logo=reactrouter&logoColor=white) | 
 | **배포** | ![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white) |
 
+## 시스템 아키텍쳐
+<img width="800" alt="Image" src="https://github.com/user-attachments/assets/cdc751b8-ca9f-4ca5-ad66-37c4b95210ce" />
+
 ## 시작하기
 ### 1. 필수 요구사항
 -   Node.js 18.0.0 이상
