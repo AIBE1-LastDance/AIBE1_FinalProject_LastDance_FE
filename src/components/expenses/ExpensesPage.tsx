@@ -2397,7 +2397,7 @@ const ExpensesPage: React.FC = () => {
                     AI 분석을 실행하고 결과를 저장해보세요!
                   </p>
                   <motion.button
-                    className="px-6 py-3 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 transition-colors"
+                    className="px-6 py-3 bg-accent-600 text-white rounded-xl font-medium hover:bg-accent-700 transition-colors"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={handleAnalysis}
@@ -2429,7 +2429,7 @@ const ExpensesPage: React.FC = () => {
               className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full h-[85vh] flex flex-col"
             >
               {/* Modal Header */}
-              <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6 flex-shrink-0 rounded-t-3xl">
+              <div className="bg-gradient-to-r from-primary-500 to-primary-400 text-white p-6 flex-shrink-0 rounded-t-3xl">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <div className="w-12 h-12 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center">

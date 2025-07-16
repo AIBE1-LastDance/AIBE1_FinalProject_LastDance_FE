@@ -54,7 +54,7 @@ export default {
           yellow: '#FFF2B3',     // 파스텔 노랑
           purple: '#E6B3E6',     // 파스텔 보라
           indigo: '#B3B3FF',     // 파스텔 인디고
-          pink: '#FFB3D9',       // 파스텔 핑크
+          pink: '#ff91cb',       // 파스텔 핑크
           orange: '#FFCC99',     // 파스텔 오렌지 (쇼핑용)
           teal: '#99E6D9',       // 파스텔 틸
           lavender: '#D9B3FF',   // 라벤더 (여행용)
@@ -69,10 +69,10 @@ export default {
         
         // Status colors (파스텔 톤으로 변경)
         status: {
-          success: '#B3E6B3',    // 파스텔 그린
-          warning: '#FFDFB3',    // 파스텔 오렌지
-          error: '#FFB3B3',      // 파스텔 빨강
-          info: '#B3D9FF',       // 파스텔 블루
+          success: '#22C55E',    // 그린
+          warning: '#F97316',    // 오렌지
+          error: '#f84f4f',      // 라이트 레드
+          info: '#60A5FA',       // 라이트 블루
         },
       },
       fontFamily: {
