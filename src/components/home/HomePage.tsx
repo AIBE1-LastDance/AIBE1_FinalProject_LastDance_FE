@@ -163,7 +163,8 @@ const HomePage: React.FC = () => {
   const heroScale = useTransform(heroProgress, [0, 1], [1, 0.8]);
   const logoScale = useTransform(heroProgress, [0, 0.5, 1], [1, 1.2, 0.8]);
 
-  const mainPageImageUrl = "https://lastdance-s3-bucket.s3.ap-northeast-2.amazonaws.com/main-page-image/";
+  const mainPageImageUrl =
+    "https://lastdance-s3-bucket.s3.ap-northeast-2.amazonaws.com/main-page-image/";
 
   // Feature sections
   const features = [
@@ -174,7 +175,7 @@ const HomePage: React.FC = () => {
         "개인과 그룹의 모든 활동을 분석하고 시각화합니다. 할일 완료율, 지출 패턴, 일정 현황을 한 곳에서 확인하세요.",
       icon: BarChart3,
       color: "from-primary-500 to-primary-600",
-      image: mainPageImageUrl + '1.png',
+      image: mainPageImageUrl + "1.png",
       path: "/dashboard",
     },
     {
@@ -184,7 +185,7 @@ const HomePage: React.FC = () => {
         "개인과 그룹 일정을 하나의 캘린더에서 관리하세요. 월간, 주간, 일간 뷰로 일정을 효율적으로 계획할 수 있습니다.",
       icon: Calendar,
       color: "from-primary-500 to-primary-600",
-      image: mainPageImageUrl + '2.png',
+      image: mainPageImageUrl + "2.png",
       path: "/calendar",
     },
     {
@@ -194,7 +195,7 @@ const HomePage: React.FC = () => {
         "집안일을 공평하게 분배하고, 진행 상황을 실시간으로 추적하세요. 우선순위 설정과 마감일 알림으로 놓치는 일이 없습니다.",
       icon: CheckSquare,
       color: "from-primary-500 to-primary-600",
-      image: mainPageImageUrl + '3.png',
+      image: mainPageImageUrl + "3.png",
       path: "/tasks",
     },
     {
@@ -204,7 +205,7 @@ const HomePage: React.FC = () => {
         "공동 지출을 자동으로 분할하고, 카테고리별 분석을 제공합니다. 월별 지출 패턴과 절약 팁도 확인할 수 있어요.",
       icon: CreditCard,
       color: "from-primary-500 to-primary-600",
-      image: mainPageImageUrl + '4.png',
+      image: mainPageImageUrl + "4.png",
       path: "/expenses",
     },
     {
@@ -214,7 +215,7 @@ const HomePage: React.FC = () => {
         "룰렛, 가위바위보, 주사위 등 8가지 다양한 게임으로 당번을 공정하게 정하세요. 게임 결과는 자동으로 기록됩니다.",
       icon: Gamepad2,
       color: "from-primary-500 to-primary-600",
-      image: mainPageImageUrl + '5.png',
+      image: mainPageImageUrl + "5.png",
       path: "/games",
     },
     {
@@ -224,7 +225,7 @@ const HomePage: React.FC = () => {
         "AI가 여러분의 생활 패턴을 분석하여 맞춤형 조언을 제공합니다. 효율적인 일정 관리와 절약 팁을 받아보세요.",
       icon: Bot,
       color: "from-primary-500 to-primary-600",
-      image: mainPageImageUrl + '6.png',
+      image: mainPageImageUrl + "6.png",
       path: "/ai-assistant",
     },
     {
@@ -234,7 +235,7 @@ const HomePage: React.FC = () => {
         "생활팁, 레시피, 청소법 등을 공유하고 다른 사용자들과 소통하세요. 카테고리별로 정리된 유용한 정보들을 만나보세요.",
       icon: Users,
       color: "from-primary-500 to-primary-600",
-      image: mainPageImageUrl + '7.png',
+      image: mainPageImageUrl + "7.png",
       path: "/community",
     },
     {
@@ -244,7 +245,7 @@ const HomePage: React.FC = () => {
         "청년들을 위한 다양한 정책 정보와 혜택을 한곳에서 확인하세요. 주거, 취업, 창업, 교육 등 분야별 정책을 쉽게 찾아보세요.",
       icon: ExternalLink,
       color: "from-primary-500 to-primary-600",
-      image: mainPageImageUrl + '8.png',
+      image: mainPageImageUrl + "8.png",
       path: "/youth-policy",
     },
   ];
@@ -752,13 +753,11 @@ const FeatureSection: React.FC<{
     >
       <div className="max-w-7xl mx-auto px-6">
         <div
-          className={`grid grid-cols-1 lg:grid-cols-2 gap-16 items-center ${
-            isEven ? "" : "lg:grid-flow-col-dense"
-          }`}
+          className={"grid grid-cols-1 lg:grid-cols-5 gap-16 items-center"}
         >
           {/* Text Content */}
           <motion.div
-            className={isEven ? "" : "lg:col-start-2"}
+            className={`lg:col-span-2 ${isEven ? "" : "lg:col-start-4"}`}
             initial={{ opacity: 0, x: isEven ? -50 : 50 }}
             animate={isInView ? { opacity: 1, x: 0 } : {}}
             transition={{ duration: 0.8, delay: 0.2 }}
@@ -791,21 +790,18 @@ const FeatureSection: React.FC<{
 
           {/* Visual Content */}
           <motion.div
-            className={isEven ? "lg:col-start-2" : ""}
+            className={`lg:col-span-3 ${isEven ? "" : "lg:row-start-1"}`}
             style={{ y }}
             initial={{ opacity: 0, scale: 0.8 }}
             animate={isInView ? { opacity: 1, scale: 1 } : {}}
             transition={{ duration: 0.8 }}
           >
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary-500/10 to-transparent rounded-3xl" />
-              <div className="bg-white rounded-3xl p-8 shadow-2xl border border-gray-100">
+            <div>
                 <img
                   src={feature.image}
                   alt={feature.title}
-                  className="w-full max-w-lg mx-auto rounded-3xl"
+                  className="w-full"
                 />
-              </div>
             </div>
           </motion.div>
         </div>
