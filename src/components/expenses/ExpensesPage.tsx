@@ -651,9 +651,13 @@ const ExpensesPage: React.FC = () => {
         feedback: null,
       }); // Log the value being set
       setShowAnalysis(true);
-    } catch (error) {
+    } catch (error: any) {
       console.error("AI 분석 실패:", error);
-      toast.error("AI 분석 요청이 너무 잦습니다. 잠시 후 다시 시도해주세요.");
+      if (error.response && error.response.data && error.response.data.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error("AI 분석 중 알 수 없는 오류가 발생했습니다.");
+      }
     } finally {
       setAnalysisLoading(false);
     }
