@@ -169,6 +169,16 @@ const HomePage: React.FC = () => {
   // Feature sections
   const features = [
     {
+      title: "그룹 관리",
+      subtitle: "함께하는 공간",
+      description:
+        "그룹을 생성하고 멤버를 초대하여 공동의 목표를 설정하고 관리하세요. 그룹 전용 캘린더, 할일, 가계부를 통해 효율적으로 협업할 수 있습니다.",
+      icon: Users,
+      color: "from-primary-500 to-primary-600",
+      image: mainPageImageUrl + "9.png",
+      path: "/groups",
+    },
+    {
       title: "대시보드",
       subtitle: "한눈에 보는 현황",
       description:
