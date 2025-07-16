@@ -53,6 +53,9 @@
 | **UI & Routing** | ![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white) ![Framer Motion](https://img.shields.io/badge/Framer%20Motion-0055FF?style=for-the-badge&logo=framer&logoColor=white) ![React Router](https://img.shields.io/badge/React%20Router-CA4245?style=for-the-badge&logo=reactrouter&logoColor=white) | 
 | **배포** | ![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white) |
 
+## 시스템 아키텍쳐
+<img width=1000 src="https://private-user-images.githubusercontent.com/179586933/466773609-97cda1ef-e6cc-4e77-98a7-bb14232e6bf1.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NTI2Mjk4ODcsIm5iZiI6MTc1MjYyOTU4NywicGF0aCI6Ii8xNzk1ODY5MzMvNDY2NzczNjA5LTk3Y2RhMWVmLWU2Y2MtNGU3Ny05OGE3LWJiMTQyMzJlNmJmMS5wbmc_WC1BbXotQWxnb3JpdGhtPUFXUzQtSE1BQy1TSEEyNTYmWC1BbXotQ3JlZGVudGlhbD1BS0lBVkNPRFlMU0E1M1BRSzRaQSUyRjIwMjUwNzE2JTJGdXMtZWFzdC0xJTJGczMlMkZhd3M0X3JlcXVlc3QmWC1BbXotRGF0ZT0yMDI1MDcxNlQwMTMzMDdaJlgtQW16LUV4cGlyZXM9MzAwJlgtQW16LVNpZ25hdHVyZT0wZTI5ZDRkNGI4NWQxZmEwZDRjNGE1YmJhMTNhYWRhOWNmMWRlOTgyNWIxMTU5ZGU0MmQ1YTRmYzMxMjI4Njg4JlgtQW16LVNpZ25lZEhlYWRlcnM9aG9zdCJ9.34UDRhXWUA9VCm2Q1vtuy0jAHFrVTrh_xL3zTRIdpRI">
+
 ## 시작하기
 ### 1. 필수 요구사항
 -   Node.js 18.0.0 이상
