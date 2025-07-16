@@ -146,6 +146,23 @@ const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({isOpen, onClose,
         }
     };
 
+    // 숫자 입력 처리 함수 (앞자리 0 방지)
+    const handleNumberInput = (value: string, setter: (value: number) => void) => {
+        // 빈 문자열이면 0으로 처리
+        if (value === '') {
+            setter(0);
+            return;
+        }
+
+        // 숫자만 허용
+        const numericValue = value.replace(/[^0-9]/g, '');
+        
+        // 앞자리 0 제거 (단, '0' 하나만 있는 경우는 0으로 처리)
+        const cleanedValue = numericValue.replace(/^0+/, '') || '0';
+        
+        setter(parseInt(cleanedValue) || 0);
+    };
+
     const handleSaveMonthlyBudget = async () => {
         try {
             // 백엔드가 부분 업데이트를 지원하지 않을 수 있으므로
@@ -445,12 +462,10 @@ const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({isOpen, onClose,
                 {isGroupLeader && isEditingBudget ? (
                     <div className="relative">
                         <input
-                            type="number"
-                            value={editedMonthlyBudget}
-                            onChange={(e) => setEditedMonthlyBudget(parseInt(e.target.value) || 0)}
+                            type="text"
+                            value={editedMonthlyBudget === 0 ? '' : editedMonthlyBudget.toString()}
+                            onChange={(e) => handleNumberInput(e.target.value, setEditedMonthlyBudget)}
                             className="w-full px-3 py-2 pr-8 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                            min="0"
-                            step="1000"
                             placeholder="예산을 입력하세요"
                         />
                         <span className="absolute right-3 top-2 text-gray-500">원</span>
@@ -529,12 +544,10 @@ const GroupSettingsModal: React.FC<GroupSettingsModalProps> = ({isOpen, onClose,
                 {isGroupLeader && isEditingMaxMembers ? (
                     <div className="relative">
                         <input
-                            type="number"
+                            type="text"
                             value={editedMaxMembers}
-                            onChange={(e) => setEditedMaxMembers(parseInt(e.target.value) || 2)}
+                            onChange={(e) => handleNumberInput(e.target.value, setEditedMaxMembers)}
                             className="w-full px-3 py-2 pr-8 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                            min="2"
-                            max="100"
                             placeholder="최대 인원을 입력하세요"
                         />
                         <span className="absolute right-3 top-2 text-gray-500">명</span>
