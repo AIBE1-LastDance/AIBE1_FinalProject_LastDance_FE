@@ -1,89 +1,102 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
-import { Calendar, CheckSquare, CreditCard, Users, Gamepad2, Bot, ArrowRight, Star, Users2, Shield, Heart, Sparkles } from 'lucide-react';
+import React from "react";
+import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import {
+  Calendar,
+  CheckSquare,
+  CreditCard,
+  Users,
+  Gamepad2,
+  Bot,
+  ArrowRight,
+  Star,
+  Users2,
+  Shield,
+  Heart,
+  Sparkles,
+} from "lucide-react";
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
 
   // 로고 URL 환경 변수
   const logoUrl = import.meta.env.VITE_LOGO_URL;
-  
+
   // 디버깅용 로그
-  console.log('LandingPage - VITE_LOGO_URL:', import.meta.env.VITE_LOGO_URL);
-  console.log('LandingPage - All env vars:', import.meta.env);
+  console.log("LandingPage - VITE_LOGO_URL:", import.meta.env.VITE_LOGO_URL);
+  console.log("LandingPage - All env vars:", import.meta.env);
 
   const features = [
     {
       icon: Calendar,
-      title: '스마트 캘린더',
-      description: '개인과 그룹 일정을 한 눈에 관리하고 공유하세요',
-      color: 'from-blue-500 to-cyan-500'
+      title: "스마트 캘린더",
+      description: "개인과 그룹 일정을 한 눈에 관리하고 공유하세요",
+      color: "from-blue-500 to-cyan-500",
     },
     {
       icon: CheckSquare,
-      title: '할일 관리',
-      description: '효율적인 작업 분배와 진행 상황 추적',
-      color: 'from-green-500 to-emerald-500'
+      title: "할일 관리",
+      description: "효율적인 작업 분배와 진행 상황 추적",
+      color: "from-green-500 to-emerald-500",
     },
     {
       icon: CreditCard,
-      title: '가계부',
-      description: '개인 및 공동 지출을 체계적으로 관리',
-      color: 'from-purple-500 to-pink-500'
+      title: "가계부",
+      description: "개인 및 공동 지출을 체계적으로 관리",
+      color: "from-purple-500 to-pink-500",
     },
     {
       icon: Users,
-      title: '커뮤니티',
-      description: '같은 관심사를 가진 사람들과 소통하고 정보 공유',
-      color: 'from-primary-500 to-red-500'
+      title: "커뮤니티",
+      description: "같은 관심사를 가진 사람들과 소통하고 정보 공유",
+      color: "from-primary-500 to-red-500",
     },
     {
       icon: Gamepad2,
-      title: '미니게임',
-      description: '재미있는 게임으로 스트레스 해소',
-      color: 'from-indigo-500 to-purple-500'
+      title: "미니게임",
+      description: "재미있는 게임으로 스트레스 해소",
+      color: "from-indigo-500 to-purple-500",
     },
     {
       icon: Bot,
-      title: 'AI 도우미',
-      description: '똑똑한 AI가 일상을 더욱 편리하게',
-      color: 'from-pink-500 to-rose-500'
+      title: "AI 도우미",
+      description: "똑똑한 AI가 일상을 더욱 편리하게",
+      color: "from-pink-500 to-rose-500",
     },
     {
       icon: Star,
-      title: '청년정책',
-      description: '청년을 위한 다양한 정책 정보와 혜택을 확인하세요',
-      color: 'from-amber-500 to-yellow-500'
-    }
+      title: "청년정책",
+      description: "청년을 위한 다양한 정책 정보와 혜택을 확인하세요",
+      color: "from-amber-500 to-yellow-500",
+    },
   ];
 
   const testimonials = [
     {
-      name: '김민수',
-      role: '직장인',
-      content: '개인 모드와 그룹 모드를 자유롭게 전환할 수 있어서 정말 편해요!',
-      rating: 5
+      name: "김민수",
+      role: "직장인",
+      content: "개인 모드와 그룹 모드를 자유롭게 전환할 수 있어서 정말 편해요!",
+      rating: 5,
     },
     {
-      name: '이지영',
-      role: '대학생',
-      content: 'AI 도우미가 정말 똑똑해요. 일정 관리가 훨씬 쉬워졌어요.',
-      rating: 5
+      name: "이지영",
+      role: "대학생",
+      content: "AI 도우미가 정말 똑똑해요. 일정 관리가 훨씬 쉬워졌어요.",
+      rating: 5,
     },
     {
-      name: '박성호',
-      role: '프리랜서',
-      content: '미니게임으로 업무 스트레스를 풀 수 있어서 좋아요.',
-      rating: 5
-    }
+      name: "박성호",
+      role: "프리랜서",
+      content: "미니게임으로 업무 스트레스를 풀 수 있어서 좋아요.",
+      rating: 5,
+    },
   ];
 
   const stats = [
-    { number: '10,000+', label: '활성 사용자' },
-    { number: '50,000+', label: '관리된 일정' },
-    { number: '98%', label: '사용자 만족도' },
-    { number: '24/7', label: '고객 지원' }
+    { number: "10,000+", label: "활성 사용자" },
+    { number: "50,000+", label: "관리된 일정" },
+    { number: "98%", label: "사용자 만족도" },
+    { number: "24/7", label: "고객 지원" },
   ];
 
   return (
@@ -99,17 +112,23 @@ const LandingPage: React.FC = () => {
               key={i}
               className="absolute w-2 h-2 bg-primary-400 rounded-full opacity-30"
               animate={{
-                x: [Math.random() * window.innerWidth, Math.random() * window.innerWidth],
-                y: [Math.random() * window.innerHeight, Math.random() * window.innerHeight],
+                x: [
+                  Math.random() * window.innerWidth,
+                  Math.random() * window.innerWidth,
+                ],
+                y: [
+                  Math.random() * window.innerHeight,
+                  Math.random() * window.innerHeight,
+                ],
               }}
               transition={{
                 duration: 10 + Math.random() * 20,
                 repeat: Infinity,
-                ease: "linear"
+                ease: "linear",
               }}
               style={{
-                left: Math.random() * 100 + '%',
-                top: Math.random() * 100 + '%'
+                left: Math.random() * 100 + "%",
+                top: Math.random() * 100 + "%",
               }}
             />
           ))}
@@ -122,7 +141,11 @@ const LandingPage: React.FC = () => {
             transition={{ duration: 0.8 }}
             className="mb-8"
           >
-            <img src={logoUrl} alt="우리.zip" className="w-48 h-48 mx-auto mb-8 drop-shadow-lg" />
+            <img
+              src={logoUrl}
+              alt="우리.zip"
+              className="w-48 h-48 mx-auto mb-8 drop-shadow-lg"
+            />
             <h1 className="text-6xl md:text-8xl font-title font-bold mb-6">
               <span className="bg-gradient-to-r from-primary-500 to-primary-700 bg-clip-text text-transparent">
                 우리.zip
@@ -143,7 +166,7 @@ const LandingPage: React.FC = () => {
               className="group bg-gradient-to-r from-primary-500 to-primary-600 text-white px-12 py-4 rounded-2xl text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
               whileHover={{ scale: 1.05, y: -2 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => navigate('/dashboard')}
+              onClick={() => navigate("/dashboard")}
             >
               시작하기
               <ArrowRight className="inline-block ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -204,8 +227,8 @@ const LandingPage: React.FC = () => {
               모든 것을 <span className="text-primary-600">하나로</span>
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto font-body">
-              개인 모드와 그룹 모드를 자유롭게 전환하며, 
-              일정, 할일, 가계부, 커뮤니티까지 한 번에 관리하세요
+              개인 모드와 그룹 모드를 자유롭게 전환하며, 일정, 할일, 가계부,
+              커뮤니티까지 한 번에 관리하세요
             </p>
           </motion.div>
 
@@ -220,11 +243,17 @@ const LandingPage: React.FC = () => {
                 whileHover={{ y: -10, scale: 1.02 }}
                 className="bg-white rounded-3xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100"
               >
-                <div className={`w-16 h-16 rounded-2xl bg-gradient-to-r ${feature.color} flex items-center justify-center mb-6 shadow-lg`}>
+                <div
+                  className={`w-16 h-16 rounded-2xl bg-gradient-to-r ${feature.color} flex items-center justify-center mb-6 shadow-lg`}
+                >
                   <feature.icon className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="text-2xl font-title font-bold text-gray-900 mb-4">{feature.title}</h3>
-                <p className="text-gray-600 leading-relaxed font-body">{feature.description}</p>
+                <h3 className="text-2xl font-title font-bold text-gray-900 mb-4">
+                  {feature.title}
+                </h3>
+                <p className="text-gray-600 leading-relaxed font-body">
+                  {feature.description}
+                </p>
               </motion.div>
             ))}
           </div>
@@ -244,7 +273,9 @@ const LandingPage: React.FC = () => {
                 viewport={{ once: true }}
                 className="text-center text-white"
               >
-                <div className="text-4xl md:text-5xl font-bold mb-2">{stat.number}</div>
+                <div className="text-4xl md:text-5xl font-bold mb-2">
+                  {stat.number}
+                </div>
                 <div className="text-primary-100 text-lg">{stat.label}</div>
               </motion.div>
             ))}
@@ -282,17 +313,28 @@ const LandingPage: React.FC = () => {
               >
                 <div className="flex items-center space-x-1 mb-4">
                   {[...Array(testimonial.rating)].map((_, i) => (
-                    <Star key={i} className="w-5 h-5 text-yellow-500 fill-current" />
+                    <Star
+                      key={i}
+                      className="w-5 h-5 text-yellow-500 fill-current"
+                    />
                   ))}
                 </div>
-                <p className="text-gray-700 mb-6 leading-relaxed font-body">"{testimonial.content}"</p>
+                <p className="text-gray-700 mb-6 leading-relaxed font-body">
+                  "{testimonial.content}"
+                </p>
                 <div className="flex items-center space-x-3">
                   <div className="w-12 h-12 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full flex items-center justify-center">
-                    <span className="text-white font-semibold">{testimonial.name[0]}</span>
+                    <span className="text-white font-semibold">
+                      {testimonial.name[0]}
+                    </span>
                   </div>
                   <div>
-                    <div className="font-semibold text-gray-900">{testimonial.name}</div>
-                    <div className="text-gray-600 text-sm">{testimonial.role}</div>
+                    <div className="font-semibold text-gray-900">
+                      {testimonial.name}
+                    </div>
+                    <div className="text-gray-600 text-sm">
+                      {testimonial.role}
+                    </div>
                   </div>
                 </div>
               </motion.div>
@@ -319,14 +361,15 @@ const LandingPage: React.FC = () => {
               지금 바로 시작하세요
             </h2>
             <p className="text-xl text-primary-100 mb-12 max-w-2xl mx-auto font-body">
-              개인과 그룹 생활을 더욱 스마트하게 관리할 수 있는 새로운 경험을 만나보세요
+              개인과 그룹 생활을 더욱 스마트하게 관리할 수 있는 새로운 경험을
+              만나보세요
             </p>
 
             <motion.button
               className="bg-white text-primary-600 px-12 py-4 rounded-2xl text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 group"
               whileHover={{ scale: 1.05, y: -2 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => navigate('/dashboard')}
+              onClick={() => navigate("/dashboard")}
             >
               무료로 시작하기
               <Heart className="inline-block ml-2 w-5 h-5 group-hover:scale-110 transition-transform" />
@@ -345,8 +388,8 @@ const LandingPage: React.FC = () => {
                 <h3 className="text-2xl font-title font-bold">우리.zip</h3>
               </div>
               <p className="text-gray-400 mb-6 max-w-md font-body">
-                개인과 그룹 생활을 하나로 묶어주는 스마트 라이프 플랫폼으로, 
-                더 나은 일상을 만들어갑니다.
+                개인과 그룹 생활을 하나로 묶어주는 스마트 라이프 플랫폼으로, 더
+                나은 일상을 만들어갑니다.
               </p>
               <div className="flex items-center space-x-2 text-gray-400">
                 <Shield className="w-4 h-4" />
