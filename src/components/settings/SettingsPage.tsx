@@ -85,7 +85,7 @@ const SettingsPage: React.FC = () => {
         const loadNotificationSettings = async () => {
             try {
                 setNotificationLoading(true);
-                console.log('Loading started, notificationLoading:', true);
+                console.log('Loading notification settings started');
 
                 const data = await notificationApi.getMySettings();
                 console.log('API Response:', data);
@@ -99,9 +99,10 @@ const SettingsPage: React.FC = () => {
                     sseEnabled: data.sseEnabled ?? true,
                 });
 
-                console.log('Notifications set, setting loading to false');
+                console.log('Notification settings loaded successfully');
             } catch (error) {
                 console.error('Failed to load notification settings:', error);
+                toast.error('알림 설정을 불러오는데 실패했습니다.');
                 // 에러 시 기본값 유지
                 setNotifications({
                     emailEnabled: false,
@@ -113,7 +114,7 @@ const SettingsPage: React.FC = () => {
                 });
             } finally {
                 setNotificationLoading(false);
-                console.log('Loading finished, notificationLoading:', false);
+                console.log('Notification loading finished');
             }
         };
 
@@ -210,41 +211,124 @@ const SettingsPage: React.FC = () => {
     const [isAdmin, setIsAdmin] = useState(false);
     const [adminCheckLoading, setAdminCheckLoading] = useState(true);
 
+    // 알림방식 변경을 감지하고 자동으로 세부 알림들을 조정하는 useEffect
+    useEffect(() => {
+        // SSE와 이메일이 모두 꺼져있으면 세부 알림들도 모두 끄기
+        if (!notifications.sseEnabled && !notifications.emailEnabled) {
+            setNotifications(prev => ({
+                ...prev,
+                scheduleReminder: false,
+                paymentReminder: false,
+                checklistReminder: false
+            }));
+        }
+    }, [notifications.sseEnabled, notifications.emailEnabled]);
+
     // SSE/웹푸시 특별 처리 함수
     const handleSpecialMethodToggle = async (methodKey: string, enabled: boolean) => {
         try {
             if (methodKey === 'sseEnabled') {
+                // 먼저 상태 업데이트
                 setNotifications(prev => ({ ...prev, sseEnabled: enabled }));
 
-                const currentSettings = await notificationApi.getMySettings();
-                await notificationApi.updateMySettings({
-                    ...currentSettings,
-                    sseEnabled: enabled
-                });
+                // API 호출 전에 현재 설정 가져오기
+                let currentSettings;
+                try {
+                    currentSettings = await notificationApi.getMySettings();
+                } catch (apiError) {
+                    console.error('알림 설정 조회 실패:', apiError);
+                    toast.error('알림 설정을 불러오는데 실패했습니다. 다시 시도해주세요.');
+                    // 상태 되돌리기
+                    setNotifications(prev => ({ ...prev, sseEnabled: !enabled }));
+                    return;
+                }
 
+                // API 업데이트
+                try {
+                    await notificationApi.updateMySettings({
+                        ...currentSettings,
+                        sseEnabled: enabled
+                    });
+                } catch (apiError) {
+                    console.error('알림 설정 업데이트 실패:', apiError);
+                    toast.error('알림 설정 저장에 실패했습니다. 다시 시도해주세요.');
+                    // 설정 되돌리기
+                    setNotifications(prev => ({ ...prev, sseEnabled: !enabled }));
+                    return;
+                }
+
+                // SSE 연결/해제 처리
                 if (enabled) {
-                    connectSSE?.();
-                    toast.success('실시간 알림이 활성화되었습니다.');
+                    try {
+                        if (connectSSE) {
+                            connectSSE();
+                            toast.success('실시간 알림이 활성화되었습니다.');
+                        } else {
+                            toast.warning('실시간 알림 함수가 아직 준비되지 않았습니다. 잠시 후 다시 시도해주세요.');
+                            console.warn('connectSSE 함수가 undefined입니다. useNotifications 훅이 아직 초기화되지 않았을 수 있습니다.');
+                        }
+                    } catch (sseError) {
+                        console.error('SSE 연결 실패:', sseError);
+                        toast.warning('실시간 알림 설정은 저장되었지만 연결에 실패했습니다.');
+                    }
                 } else {
-                    disconnectSSE?.();
-                    toast.success('실시간 알림이 비활성화되었습니다.');
+                    try {
+                        if (disconnectSSE) {
+                            disconnectSSE();
+                        }
+                        toast.success('실시간 알림이 비활성화되었습니다.');
+                        
+                        // SSE를 끌 때 이메일도 꺼져있다면 경고 메시지
+                        if (!notifications.emailEnabled) {
+                            toast.warning('모든 알림방식이 꺼져서 세부 알림들이 자동으로 비활성화됩니다.');
+                        }
+                    } catch (sseError) {
+                        console.error('SSE 해제 실패:', sseError);
+                        // 해제 실패는 큰 문제가 아니므로 경고만 로그
+                    }
                 }
             } else if (methodKey === 'webpushEnabled') {
                 if (enabled) {
-                    const success = await subscribeToWebPush?.();
-                    if (success) {
-                        setNotifications(prev => ({ ...prev, webpushEnabled: true }));
+                    try {
+                        if (subscribeToWebPush) {
+                            const success = await subscribeToWebPush();
+                            if (success) {
+                                setNotifications(prev => ({ ...prev, webpushEnabled: true }));
+                                toast.success('웹푸시 알림이 활성화되었습니다.');
+                            } else {
+                                toast.error('웹푸시 알림 활성화에 실패했습니다.');
+                            }
+                        } else {
+                            toast.warning('웹푸시 함수가 아직 준비되지 않았습니다. 잠시 후 다시 시도해주세요.');
+                            console.warn('subscribeToWebPush 함수가 undefined입니다.');
+                        }
+                    } catch (pushError) {
+                        console.error('웹푸시 구독 실패:', pushError);
+                        toast.error('웹푸시 알림 설정에 실패했습니다.');
                     }
                 } else {
-                    const success = await unsubscribeFromWebPush?.();
-                    if (success) {
-                        setNotifications(prev => ({ ...prev, webpushEnabled: false }));
+                    try {
+                        if (unsubscribeFromWebPush) {
+                            const success = await unsubscribeFromWebPush();
+                            if (success) {
+                                setNotifications(prev => ({ ...prev, webpushEnabled: false }));
+                                toast.success('웹푸시 알림이 비활성화되었습니다.');
+                            } else {
+                                toast.error('웹푸시 알림 비활성화에 실패했습니다.');
+                            }
+                        } else {
+                            toast.warning('웹푸시 함수가 아직 준비되지 않았습니다. 잠시 후 다시 시도해주세요.');
+                            console.warn('unsubscribeFromWebPush 함수가 undefined입니다.');
+                        }
+                    } catch (pushError) {
+                        console.error('웹푸시 구독 해제 실패:', pushError);
+                        toast.error('웹푸시 알림 해제에 실패했습니다.');
                     }
                 }
             }
         } catch (error) {
-            console.error('특별 메서드 토글 실패:', error);
-            toast.error('설정 변경에 실패했습니다.');
+            console.error('알림 설정 처리 중 예상치 못한 오류:', error);
+            toast.error('알림 설정 처리 중 오류가 발생했습니다. 페이지를 새로고침 후 다시 시도해주세요.');
         }
     };
 
@@ -259,6 +343,13 @@ const SettingsPage: React.FC = () => {
     console.log('User role:', user?.role);
     console.log('Is admin (API check):', isAdmin);
     console.log('Admin check loading:', adminCheckLoading);
+    console.log('SSE functions available:', {
+        connectSSE: !!connectSSE,
+        disconnectSSE: !!disconnectSSE,
+        subscribeToWebPush: !!subscribeToWebPush,
+        unsubscribeFromWebPush: !!unsubscribeFromWebPush
+    });
+    console.log('Current notifications state:', notifications);
     console.log('Tabs:', tabs);
 
     const handleProfileChange = (field: string, value: string) => {
@@ -778,10 +869,18 @@ const SettingsPage: React.FC = () => {
                                             <input
                                                 type="checkbox"
                                                 checked={notifications.emailEnabled}
-                                                onChange={(e) => setNotifications(prev => ({
-                                                    ...prev,
-                                                    emailEnabled: e.target.checked
-                                                }))}
+                                                onChange={(e) => {
+                                                    const enabled = e.target.checked;
+                                                    setNotifications(prev => ({
+                                                        ...prev,
+                                                        emailEnabled: enabled
+                                                    }));
+                                                    
+                                                    // 이메일을 끌 때 SSE도 꺼져있다면 경고 메시지
+                                                    if (!enabled && !notifications.sseEnabled) {
+                                                        toast.warning('모든 알림방식이 꺼져서 세부 알림들이 자동으로 비활성화됩니다.');
+                                                    }
+                                                }}
                                                 disabled={notificationLoading}
                                                 className="sr-only peer"
                                             />
@@ -855,6 +954,7 @@ const SettingsPage: React.FC = () => {
                                 };
 
                                 const setting = settings[key as keyof typeof settings];
+                                const isMethodsDisabled = !notifications.sseEnabled && !notifications.emailEnabled;
 
                                 return (
                                     <motion.div
@@ -863,7 +963,9 @@ const SettingsPage: React.FC = () => {
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: index * 0.1 }}
                                         className={`relative overflow-hidden rounded-xl border-2 transition-all duration-300 ${
-                                            value
+                                            isMethodsDisabled
+                                                ? 'border-gray-300 bg-gray-100 opacity-60'
+                                                : value
                                                 ? 'border-primary-200 bg-primary-50'
                                                 : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
                                         }`}
@@ -873,7 +975,9 @@ const SettingsPage: React.FC = () => {
                                                 <div className="flex items-center space-x-4">
                                                     {/* 아이콘 영역 */}
                                                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                                                        value ? setting.color : 'bg-gray-400'
+                                                        isMethodsDisabled 
+                                                            ? 'bg-gray-400' 
+                                                            : value ? setting.color : 'bg-gray-400'
                                                     } text-white shadow-sm`}>
                                                         <setting.icon className="w-6 h-6" />
                                                     </div>
@@ -881,14 +985,21 @@ const SettingsPage: React.FC = () => {
                                                     {/* 텍스트 영역 */}
                                                     <div className="flex-1">
                                                         <h4 className={`font-semibold text-lg transition-colors ${
-                                                            value ? 'text-gray-900' : 'text-gray-600'
+                                                            isMethodsDisabled
+                                                                ? 'text-gray-500'
+                                                                : value ? 'text-gray-900' : 'text-gray-600'
                                                         }`}>
                                                             {setting.label}
                                                         </h4>
                                                         <p className={`text-sm mt-1 transition-colors ${
-                                                            value ? 'text-gray-700' : 'text-gray-500'
+                                                            isMethodsDisabled
+                                                                ? 'text-gray-400'
+                                                                : value ? 'text-gray-700' : 'text-gray-500'
                                                         }`}>
-                                                            {setting.description}
+                                                            {isMethodsDisabled 
+                                                                ? '알림방식을 먼저 활성화해주세요'
+                                                                : setting.description
+                                                            }
                                                         </p>
                                                     </div>
                                                 </div>
@@ -898,23 +1009,37 @@ const SettingsPage: React.FC = () => {
                                                     <input
                                                         type="checkbox"
                                                         checked={value}
-                                                        onChange={(e) => setNotifications(prev => ({
-                                                            ...prev,
-                                                            [key]: e.target.checked
-                                                        }))}
-                                                        disabled={notificationLoading}
+                                                        onChange={(e) => {
+                                                            const checked = e.target.checked;
+                                                            
+                                                            // 세부 알림을 켜려고 할 때 알림방식이 모두 꺼져있으면 경고
+                                                            if (checked && !notifications.sseEnabled && !notifications.emailEnabled) {
+                                                                toast.error('알림을 받으려면 먼저 알림방식(인앱 알림 또는 이메일 알림)을 활성화해주세요.');
+                                                                return;
+                                                            }
+                                                            
+                                                            setNotifications(prev => ({
+                                                                ...prev,
+                                                                [key]: checked
+                                                            }));
+                                                        }}
+                                                        disabled={notificationLoading || isMethodsDisabled}
                                                         className="sr-only peer"
                                                     />
                                                     <div className={`relative w-16 h-8 transition-all duration-300 ease-in-out rounded-full shadow-inner ${
-                                                        value
+                                                        isMethodsDisabled
+                                                            ? 'bg-gray-300 cursor-not-allowed'
+                                                            : value
                                                             ? 'bg-primary-400'
                                                             : 'bg-gray-300'
-                                                    } ${notificationLoading ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                                    } ${(notificationLoading || isMethodsDisabled) ? 'opacity-50 cursor-not-allowed' : ''}`}>
                                                         <div className={`absolute top-0.5 w-7 h-7 bg-white rounded-full shadow-lg transition-all duration-300 ease-in-out ${
-                                                            value ? 'right-0.5' : 'left-0.5'
+                                                            value && !isMethodsDisabled ? 'right-0.5' : 'left-0.5'
                                                         }`}>
                                                             <div className={`w-full h-full rounded-full flex items-center justify-center text-xs transition-colors ${
-                                                                value ? 'text-primary-600' : 'text-gray-400'
+                                                                isMethodsDisabled
+                                                                    ? 'text-gray-400'
+                                                                    : value ? 'text-primary-600' : 'text-gray-400'
                                                             }`}>
                                                             </div>
                                                         </div>
