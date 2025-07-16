@@ -17,12 +17,25 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({isOpen, onClose}) =>
     const {createGroup, loadMyGroups} = useAppStore();
     const [groupName, setGroupName] = useState('');
     const [description, setDescription] = useState('');
-    const [maxMembers, setMaxMembers] = useState(4);
-    const [monthlyBudget, setMonthlyBudget] = useState(0);
+    const [maxMembers, setMaxMembers] = useState('');
+    const [monthlyBudget, setMonthlyBudget] = useState('');
     const [isCreating, setIsCreating] = useState(false);
 
     const generateGroupCode = () => {
         return Math.random().toString(36).substring(2, 8).toUpperCase();
+    };
+
+    // 숫자 입력 처리 함수 (앞자리 0 방지)
+    const handleNumberInput = (value: string, setter: (value: string) => void) => {
+        // 숫자와 빈 문자열만 허용
+        const numericValue = value.replace(/[^0-9]/g, '');
+        
+        // 앞자리 0 방지
+        if (numericValue.length > 1 && numericValue.startsWith('0')) {
+            setter(numericValue.substring(1));
+        } else {
+            setter(numericValue);
+        }
     };
 
     const handleCreate = async () => {
@@ -42,8 +55,8 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({isOpen, onClose}) =>
             // API를 통해 그룹 생성
             const groupResponse = await groupsAPI.createGroup({
                 groupName: groupName.trim(),
-                maxMembers,
-                groupBudget: monthlyBudget || 0,
+                maxMembers: parseInt(maxMembers) || 4,
+                groupBudget: parseInt(monthlyBudget) || 0,
             });
 
             // 그룹 목록 새로고침
@@ -63,8 +76,8 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({isOpen, onClose}) =>
     const resetForm = () => {
         setGroupName('');
         setDescription('');
-        setMaxMembers(4);
-        setMonthlyBudget(0);
+        setMaxMembers('');
+        setMonthlyBudget('');
     };
 
     const handleClose = () => {
@@ -146,15 +159,19 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({isOpen, onClose}) =>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     최대 인원
                                 </label>
-                                <select
-                                    value={maxMembers}
-                                    onChange={(e) => setMaxMembers(Number(e.target.value))}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:outline-none focus:border-transparent"
-                                >
-                                    {[2, 3, 4, 5, 6, 7, 8].map(num => (
-                                        <option key={num} value={num}>{num}명</option>
-                                    ))}
-                                </select>
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        value={maxMembers}
+                                        onChange={(e) => handleNumberInput(e.target.value, setMaxMembers)}
+                                        placeholder="예: 4"
+                                        className="w-full px-4 py-3 pr-8 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:outline-none focus:border-transparent"
+                                    />
+                                    <span className="absolute right-3 top-3 text-gray-500">명</span>
+                                </div>
+                                <p className="text-xs text-gray-500 mt-1">
+                                    최소 2명 이상 입력해주세요
+                                </p>
                             </div>
 
                             {/* 한 달 예산 */}
@@ -164,12 +181,10 @@ const CreateGroupModal: React.FC<CreateGroupModalProps> = ({isOpen, onClose}) =>
                                 </label>
                                 <div className="relative">
                                     <input
-                                        type="number"
+                                        type="text"
                                         value={monthlyBudget}
-                                        onChange={(e) => setMonthlyBudget(parseInt(e.target.value) || 0)}
-                                        placeholder="0"
-                                        min="0"
-                                        step="1000"
+                                        onChange={(e) => handleNumberInput(e.target.value, setMonthlyBudget)}
+                                        placeholder="예: 500000"
                                         className="w-full px-4 py-3 pr-8 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:outline-none focus:border-transparent"
                                     />
                                     <span className="absolute right-3 top-3 text-gray-500">원</span>
