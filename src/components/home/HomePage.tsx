@@ -176,7 +176,7 @@ const HomePage: React.FC = () => {
       icon: Users,
       color: "from-primary-500 to-primary-600",
       image: mainPageImageUrl + "9.png",
-      path: "/groups",
+      path: "/login",
     },
     {
       title: "대시보드",
