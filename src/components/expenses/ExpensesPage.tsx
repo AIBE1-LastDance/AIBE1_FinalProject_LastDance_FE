@@ -432,6 +432,19 @@ const ExpensesPage: React.FC = () => {
     }
   }, [categoryFilter, searchTerm]); // 의존성에 필터와 검색어 추가
 
+  // 월별 추이 그래프 새로고침 이벤트 리스너
+  useEffect(() => {
+    const handleRefresh = () => {
+      loadMonthlyTrendData();
+    };
+
+    window.addEventListener('refreshMonthlyTrend', handleRefresh);
+
+    return () => {
+      window.removeEventListener('refreshMonthlyTrend', handleRefresh);
+    };
+  }, [loadMonthlyTrendData]);
+
   const categoryData = [
     { category: "FOOD", label: "식비", color: "#FF6B6B" },
     { category: "UTILITIES", label: "공과금", color: "#4ECDC4" },

@@ -184,6 +184,7 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
 
         onClose();
         toast.success(expense ? '지출이 수정되었습니다' : '지출이 추가되었습니다');
+        window.dispatchEvent(new CustomEvent('refreshMonthlyTrend'));
       } catch (error) {
         console.error('지출 처리 실패: ', error);
       } finally {
