@@ -210,9 +210,9 @@ const HomePage: React.FC = () => {
     },
     {
       title: "스마트 가계부",
-      subtitle: "지출을 투명하게",
+      subtitle: "지출을 투명하게, AI 분석으로 현명하게",
       description:
-        "공동 지출을 자동으로 분할하고, 카테고리별 분석을 제공합니다. 월별 지출 패턴과 절약 팁도 확인할 수 있어요.",
+        "공동 지출을 자동으로 분할하고, 카테고리별 분석을 제공합니다. AI가 소비 패턴을 파악하여 맞춤형 피드백과 절약 팁을 제공하여 현명한 소비를 돕습니다.",
       icon: CreditCard,
       color: "from-primary-500 to-primary-600",
       image: mainPageImageUrl + "4.png",
@@ -222,7 +222,7 @@ const HomePage: React.FC = () => {
       title: "미니게임",
       subtitle: "재미있는 당번 정하기",
       description:
-        "룰렛, 가위바위보, 주사위 등 8가지 다양한 게임으로 당번을 공정하게 정하세요. 게임 결과는 자동으로 기록됩니다.",
+        "룰렛, 가위바위보, 주사위 등 3가지 다양한 게임으로 당번을 공정하게 정하세요. 게임 결과는 자동으로 기록됩니다.",
       icon: Gamepad2,
       color: "from-primary-500 to-primary-600",
       image: mainPageImageUrl + "5.png",
@@ -230,9 +230,9 @@ const HomePage: React.FC = () => {
     },
     {
       title: "AI 도우미",
-      subtitle: "똑똑한 생활 조언",
+      subtitle: "분쟁 해결사",
       description:
-        "AI가 여러분의 생활 패턴을 분석하여 맞춤형 조언을 제공합니다. 효율적인 일정 관리와 절약 팁을 받아보세요.",
+        "AI가 각 분쟁에 대한 양측의 입장을 분석하고, 공정하게 판단하여 해결책을 제시합니다.",
       icon: Bot,
       color: "from-primary-500 to-primary-600",
       image: mainPageImageUrl + "6.png",
