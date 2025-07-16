@@ -6,6 +6,7 @@ const BASE_URL = 'http://localhost:8080';
 
 export default defineConfig({
   plugins: [react()],
+  base: '/', // Vercel에서 루트 경로 명시
   server: {
     // port: 3000,
       proxy: {

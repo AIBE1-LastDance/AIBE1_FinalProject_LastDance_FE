@@ -119,6 +119,12 @@ const EventModal: React.FC<EventModalProps> = ({
       return;
     }
 
+    // 반복일정 선택 시 종료일 필수 검증
+    if (formData.repeat && formData.repeat !== 'none' && !formData.repeatEndDate) {
+      toast.error('반복일정을 선택했을 때는 반복 종료 날짜를 꼭 선택해야 합니다.');
+      return;
+    }
+
     // 반복 종료 날짜가 시작 날짜보다 이전인지 검증
     if (formData.repeatEndDate && formData.date && formData.repeatEndDate < formData.date) {
       toast.error('반복 종료 날짜는 시작 날짜보다 이후여야 합니다.');
@@ -407,7 +413,22 @@ const EventModal: React.FC<EventModalProps> = ({
                 </label>
                 <select
                     value={formData.repeat}
-                    onChange={(e) => setFormData(prev => ({ ...prev, repeat: e.target.value as Event['repeat'] }))}
+                    onChange={(e) => {
+                      const repeatValue = e.target.value as Event['repeat'];
+                      setFormData(prev => ({ 
+                        ...prev, 
+                        repeat: repeatValue,
+                        // 반복을 'none'으로 변경하면 종료일 초기화
+                        repeatEndDate: repeatValue === 'none' ? undefined : prev.repeatEndDate
+                      }));
+                      
+                      // 반복일정을 선택한 경우 안내 메시지
+                      if (repeatValue !== 'none') {
+                        setTimeout(() => {
+                          toast.success('반복일정을 선택했습니다. 반복 종료 날짜를 꼭 설정해주세요.');
+                        }, 100);
+                      }
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:outline-none focus:ring-accent-500 focus:border-transparent"
                     disabled={isSubmitting}
                 >
@@ -423,7 +444,7 @@ const EventModal: React.FC<EventModalProps> = ({
               {formData.repeat && formData.repeat !== 'none' && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      반복 종료 날짜 (선택사항)
+                      반복 종료 날짜 * <span className="text-xs text-red-500">(필수)</span>
                     </label>
                     <input
                         type="date"
@@ -432,9 +453,13 @@ const EventModal: React.FC<EventModalProps> = ({
                           ...prev,
                           repeatEndDate: e.target.value ? new Date(e.target.value) : undefined
                         }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:outline-none focus:ring-accent-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border-2 border-red-300 rounded-lg focus:ring-2 focus:outline-none focus:ring-red-500 focus:border-red-500 bg-red-50"
                         disabled={isSubmitting}
+                        required
                     />
+                    <p className="text-xs text-gray-500 mt-1">
+                      반복일정을 선택했을 때는 반드시 종료 날짜를 설정해야 합니다.
+                    </p>
                   </div>
               )}
 
