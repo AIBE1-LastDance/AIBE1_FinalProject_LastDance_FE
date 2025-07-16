@@ -13,48 +13,57 @@ const LandingPage: React.FC = () => {
   console.log('LandingPage - VITE_LOGO_URL:', import.meta.env.VITE_LOGO_URL);
   console.log('LandingPage - All env vars:', import.meta.env);
 
+  const mainPageImageUrl = "https://lastdance-s3-bucket.s3.ap-northeast-2.amazonaws.com/main-page-image/";
+
   const features = [
     {
       icon: Calendar,
       title: '스마트 캘린더',
       description: '개인과 그룹 일정을 한 눈에 관리하고 공유하세요',
-      color: 'from-blue-500 to-cyan-500'
+      color: 'from-blue-500 to-cyan-500',
+      image: mainPageImageUrl + '2.png'
     },
     {
       icon: CheckSquare,
       title: '할일 관리',
       description: '효율적인 작업 분배와 진행 상황 추적',
-      color: 'from-green-500 to-emerald-500'
+      color: 'from-green-500 to-emerald-500',
+      image: mainPageImageUrl + '3.png'
     },
     {
       icon: CreditCard,
       title: '가계부',
       description: '개인 및 공동 지출을 체계적으로 관리',
-      color: 'from-purple-500 to-pink-500'
+      color: 'from-purple-500 to-pink-500',
+      image: mainPageImageUrl + '4.png'
     },
     {
       icon: Users,
       title: '커뮤니티',
       description: '같은 관심사를 가진 사람들과 소통하고 정보 공유',
-      color: 'from-primary-500 to-red-500'
+      color: 'from-primary-500 to-red-500',
+      image: mainPageImageUrl + '7.png'
     },
     {
       icon: Gamepad2,
       title: '미니게임',
       description: '재미있는 게임으로 스트레스 해소',
-      color: 'from-indigo-500 to-purple-500'
+      color: 'from-indigo-500 to-purple-500',
+      image: mainPageImageUrl + '5.png'
     },
     {
       icon: Bot,
       title: 'AI 도우미',
       description: '똑똑한 AI가 일상을 더욱 편리하게',
-      color: 'from-pink-500 to-rose-500'
+      color: 'from-pink-500 to-rose-500',
+      image: mainPageImageUrl + '6.png'
     },
     {
       icon: Star,
       title: '청년정책',
       description: '청년을 위한 다양한 정책 정보와 혜택을 확인하세요',
-      color: 'from-amber-500 to-yellow-500'
+      color: 'from-amber-500 to-yellow-500',
+      image: mainPageImageUrl + '8.png'
     }
   ];
 
@@ -218,13 +227,30 @@ const LandingPage: React.FC = () => {
                 transition={{ duration: 0.6, delay: index * 0.1 }}
                 viewport={{ once: true }}
                 whileHover={{ y: -10, scale: 1.02 }}
-                className="bg-white rounded-3xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100"
+                className="bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100"
               >
-                <div className={`w-16 h-16 rounded-2xl bg-gradient-to-r ${feature.color} flex items-center justify-center mb-6 shadow-lg`}>
-                  <feature.icon className="w-8 h-8 text-white" />
+                {/* Feature Image */}
+                <div className="aspect-[4/3] w-full overflow-hidden bg-gray-50">
+                  <img
+                    src={feature.image}
+                    alt={feature.title}
+                    className="w-full h-full object-cover object-center transition-transform duration-300 hover:scale-105"
+                    loading="lazy"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = 'https://via.placeholder.com/400x300/E5E7EB/6B7280?text=' + encodeURIComponent(feature.title);
+                    }}
+                  />
                 </div>
-                <h3 className="text-2xl font-title font-bold text-gray-900 mb-4">{feature.title}</h3>
-                <p className="text-gray-600 leading-relaxed font-body">{feature.description}</p>
+                
+                {/* Feature Content */}
+                <div className="p-6 sm:p-8">
+                  <div className={`w-16 h-16 rounded-2xl bg-gradient-to-r ${feature.color} flex items-center justify-center mb-6 shadow-lg`}>
+                    <feature.icon className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-title font-bold text-gray-900 mb-4">{feature.title}</h3>
+                  <p className="text-gray-600 leading-relaxed font-body">{feature.description}</p>
+                </div>
               </motion.div>
             ))}
           </div>

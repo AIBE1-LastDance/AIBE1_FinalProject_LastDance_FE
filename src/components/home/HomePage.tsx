@@ -165,7 +165,6 @@ const HomePage: React.FC = () => {
 
   const mainPageImageUrl = "https://lastdance-s3-bucket.s3.ap-northeast-2.amazonaws.com/main-page-image/";
 
-  // Feature sections
   const features = [
     {
       title: "대시보드",
@@ -799,12 +798,19 @@ const FeatureSection: React.FC<{
           >
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-br from-primary-500/10 to-transparent rounded-3xl" />
-              <div className="bg-white rounded-3xl p-8 shadow-2xl border border-gray-100">
-                <img
-                  src={feature.image}
-                  alt={feature.title}
-                  className="w-full max-w-lg mx-auto rounded-3xl"
-                />
+              <div className="bg-white rounded-3xl overflow-hidden shadow-2xl border border-gray-100">
+                <div className="aspect-[4/3] w-full bg-gray-50">
+                  <img
+                    src={feature.image}
+                    alt={feature.title}
+                    className="w-full h-full object-cover object-center transition-transform duration-300 hover:scale-105"
+                    loading="lazy"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = 'https://via.placeholder.com/800x600/E5E7EB/6B7280?text=' + encodeURIComponent(feature.title);
+                    }}
+                  />
+                </div>
               </div>
             </div>
           </motion.div>
