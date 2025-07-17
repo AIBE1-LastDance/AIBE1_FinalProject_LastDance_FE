@@ -329,7 +329,7 @@ export const useCalendar = (options: UseCalendarOptions = {}): UseCalendarReturn
         const targetDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
         const targetDateString = targetDate.toISOString().split('T')[0]; // YYYY-MM-DD 형식
 
-        return events.filter(event => {
+        const filteredEvents = events.filter(event => {
 
             const eventStartDate = event.date instanceof Date ? new Date(event.date) : new Date(event.date);
             const eventStart = new Date(eventStartDate.getFullYear(), eventStartDate.getMonth(), eventStartDate.getDate());
@@ -408,6 +408,25 @@ export const useCalendar = (options: UseCalendarOptions = {}): UseCalendarReturn
 
             return patternMatch;
         });
+
+        // 중복 제거: 같은 제목, 시간, 카테고리를 가진 이벤트들을 하나로 합치기
+        const uniqueEvents = filteredEvents.reduce((acc: Event[], current: Event) => {
+            const duplicate = acc.find(event => 
+                event.title === current.title &&
+                event.startTime === current.startTime &&
+                event.endTime === current.endTime &&
+                event.category === current.category &&
+                event.isAllDay === current.isAllDay
+            );
+
+            if (!duplicate) {
+                acc.push(current);
+            }
+
+            return acc;
+        }, []);
+
+        return uniqueEvents;
     }, [events]);
 
     // 자동 로드 - groupId, currentDate, currentView 변경 시 실행
