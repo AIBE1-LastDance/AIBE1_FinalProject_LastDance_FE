@@ -67,7 +67,7 @@ export class CalendarApi {
     const hours = date.getHours().toString().padStart(2, '0');
     const minutes = date.getMinutes().toString().padStart(2, '0');
     const seconds = date.getSeconds().toString().padStart(2, '0');
-    
+
     return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
   }
 
@@ -77,13 +77,13 @@ export class CalendarApi {
   private extractTimeFromDate(date: Date | string): string {
     // 백엔드에서 LocalDateTime으로 오는 데이터를 로컬 시간으로 처리
     // 예: "2025-06-23T09:00:00" → "09:00"
-    
+
     if (date instanceof Date) {
       const hours = date.getHours();
       const minutes = date.getMinutes();
       return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
     }
-    
+
     // Date가 아닌 경우 (문자열 등) ISO 문자열에서 추출
     const dateStr = String(date);
     const timeMatch = dateStr.match(/T(\d{2}:\d{2})/);
@@ -148,9 +148,9 @@ export class CalendarApi {
     // startDate에서 시간 추출 (시간대 보정)
     const startTime = calendar?.isAllDay ? '' : this.extractTimeFromDate(safeStartDate);
     const endTime = calendar?.isAllDay ? '' : (
-      calendar?.endDate 
-        ? this.extractTimeFromDate(new Date(calendar.endDate))
-        : this.extractTimeFromDate(new Date(safeStartDate.getTime() + 60 * 60 * 1000))
+        calendar?.endDate
+            ? this.extractTimeFromDate(new Date(calendar.endDate))
+            : this.extractTimeFromDate(new Date(safeStartDate.getTime() + 60 * 60 * 1000))
     );
 
     // exceptionDates 처리
@@ -242,7 +242,7 @@ export class CalendarApi {
    */
   private mapRepeatTypeFromBackend(repeatType?: string): 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly' {
     if (!repeatType) return 'none';
-    
+
     switch (repeatType.toUpperCase()) {
       case 'DAILY': return 'daily';
       case 'WEEKLY': return 'weekly';
@@ -304,13 +304,13 @@ export class CalendarApi {
     Object.entries(query).forEach(([key, value]) => {
       if (value !== undefined) {
         let stringValue = String(value);
-        
+
         // dateTime 파라미터의 경우 LocalDateTime 호환 형식으로 변환
         if (key === 'dateTime' && typeof value === 'string') {
           // ISO 문자열에서 Z 제거하고 밀리초 제거
           stringValue = value.replace('Z', '').split('.')[0];
         }
-        
+
         searchParams.append(key, stringValue);
       }
     });
@@ -357,10 +357,10 @@ export class CalendarApi {
       if (response.data) {
         const responseData = response.data.data || response.data;
         const event = this.calendarToEvent(responseData);
-        return { 
-          success: true, 
-          data: event, 
-          message: response.data.message 
+        return {
+          success: true,
+          data: event,
+          message: response.data.message
         };
       }
 
@@ -383,11 +383,17 @@ export class CalendarApi {
     try {
       const requestData = this.eventToCalendarRequest(eventData);
 
-      const response = await apiClient.post('/api/v1/calendars', requestData);
+      // groupId가 있으면 URL 파라미터로 추가
+      let endpoint = '/api/v1/calendars';
+      if (eventData.groupId) {
+        endpoint += `?groupId=${eventData.groupId}`;
+      }
+
+      const response = await apiClient.post(endpoint, requestData);
 
       if (response.data) {
         const responseData = response.data.data || response.data;
-        
+
         // 응답 데이터 유효성 검사
         if (!responseData.calendarId) {
           // 임시 ID 할당
@@ -428,10 +434,10 @@ export class CalendarApi {
       if (response.data) {
         const responseData = response.data.data || response.data;
         const event = this.calendarToEvent(responseData);
-        return { 
-          success: true, 
-          data: event, 
-          message: response.data.message 
+        return {
+          success: true,
+          data: event,
+          message: response.data.message
         };
       }
 
@@ -457,7 +463,7 @@ export class CalendarApi {
       console.log('[CalendarApi] Deleting calendar:', endpoint);
 
       const response = await apiClient.delete(endpoint);
-      
+
       return {
         success: true,
         message: response.data?.message || 'Calendar deleted successfully'
@@ -480,13 +486,13 @@ export class CalendarApi {
     Object.entries(query).forEach(([key, value]) => {
       if (value !== undefined) {
         let stringValue = String(value);
-        
+
         // dateTime 파라미터의 경우 LocalDateTime 호환 형식으로 변환
         if (key === 'dateTime' && typeof value === 'string') {
           // ISO 문자열에서 Z 제거하고 밀리초 제거
           stringValue = value.replace('Z', '').split('.')[0];
         }
-        
+
         searchParams.append(key, stringValue);
       }
     });
