@@ -34,6 +34,8 @@ import { useAppStore } from "./store/appStore.ts";
 import YouthPolicyList from "./components/youthpolicy/YouthPolicyList";
 import YouthPolicyDetailPage from "./components/youthpolicy/YouthPolicyDetailPage";
 
+import AuthNavigator from "./utils/AuthNavigator"; // 추가
+
 function App() {
   const { isAuthenticated, user } = useAuthStore();
   const { getCurrentUser } = useAuth();
@@ -123,6 +125,7 @@ function App() {
         v7_relativeSplatPath: true,
       }}
     >
+      <AuthNavigator /> {/* 추가 */}
       <ScrollToTop />
       {/* Version indicator for debugging */}
       <div

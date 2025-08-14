@@ -1,6 +1,7 @@
 import axios from "axios";
 import { useAuthStore } from "../store/authStore";
 import toast from "react-hot-toast";
+import { eventEmitter } from "./eventEmitter"; // 추가
 
 const getApiBaseUrl = () => {
   const envUrl = import.meta.env.VITE_API_BASE_URL;
@@ -50,10 +51,10 @@ const handleUnauthorized = () => {
       }
     });
 
-    // 3초 후 로그인 페이지로 이동
+    // 1초 후 로그인 페이지로 이동 (이벤트 발생)
     setTimeout(() => {
       authErrorShown = false;
-      window.location.href = "/login";
+      eventEmitter.emit('unauthorized'); // 변경
     }, 1000);
   }
 };
