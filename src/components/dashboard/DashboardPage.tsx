@@ -716,7 +716,7 @@ const DashboardPage: React.FC = () => {
                 ))}
               </div>
               <div className="grid grid-cols-7 gap-1">
-                {calendarDays.map((day) => {
+                {calendarDays.map((day, index) => {
                   const dayEvents = getEventsForDate(day);
                   const isCurrentMonth = isSameMonth(day, calendarDate);
                   const isDayToday = isToday(day);
@@ -724,7 +724,7 @@ const DashboardPage: React.FC = () => {
 
                   return (
                     <motion.button
-                      key={day.toString()}
+                      key={`${day.getTime()}-${index}`}
                       className={`
                         text-xs p-1 rounded transition-colors relative
                         ${isCurrentMonth ? "text-gray-800" : "text-gray-300"}
