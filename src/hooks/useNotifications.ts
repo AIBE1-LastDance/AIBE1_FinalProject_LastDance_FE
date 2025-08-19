@@ -233,21 +233,31 @@ class SSEManager {
                 this.eventSource = null;
             }
 
-            // 현재 사용자가 있고 재연결 횟수가 초과되지 않았을 때만 재연결
-            if (this.currentUserId && this.reconnectAttempts < this.maxReconnectAttempts) {
+            // 재연결 시도 전에 현재 인증 상태를 확인
+            const isAuthenticated = useAuthStore.getState().isAuthenticated;
+
+            // 현재 사용자가 있고 재연결 횟수가 초과되지 않았으며, 인증된 상태일 때만 재연결
+            if (this.currentUserId && this.reconnectAttempts < this.maxReconnectAttempts && isAuthenticated) {
                 const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
                 this.reconnectAttempts++;
 
                 console.log(`[SSEManager] SSE 재연결 시도 (${this.reconnectAttempts}/${this.maxReconnectAttempts}) ${delay}ms 후`);
 
                 this.reconnectTimeout = setTimeout(() => {
-                    if (this.currentUserId) { // 재연결 시점에 여전히 사용자가 있는지 확인
+                    // 재연결 시점에 여전히 사용자가 있고 인증된 상태인지 다시 확인
+                    if (this.currentUserId && useAuthStore.getState().isAuthenticated) {
                         this.connect(this.currentUserId);
+                    } else {
+                        console.log('[SSEManager] 재연결 조건 불충족 (사용자 없음 또는 인증되지 않음)');
+                        sseDebugger.log('재연결 조건 불충족', { userId: useAuthStore.getState().user?.id, isAuthenticated: useAuthStore.getState().isAuthenticated }, useAuthStore.getState().user?.id);
                     }
                 }, delay);
             } else if (this.reconnectAttempts >= this.maxReconnectAttempts) {
                 console.log('[SSEManager] SSE 재연결 포기. 웹푸시 모드로 전환');
                 toast.error('실시간 알림 연결이 실패했습니다. 브라우저 알림으로 전환됩니다.');
+            } else if (!isAuthenticated) {
+                console.log('[SSEManager] SSE 재연결 포기. 사용자 인증되지 않음.');
+                sseDebugger.log('SSE 재연결 포기 - 사용자 인증되지 않음', { userId: this.currentUserId, isAuthenticated: isAuthenticated }, this.currentUserId);
             }
         };
     }
