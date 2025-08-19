@@ -39,7 +39,6 @@ export interface CreateCalendarRequestDTO {
   type: string;
   repeatType?: string;
   repeatEndDate?: string;
-  groupId?: string;
 }
 
 export interface UpdateCalendarRequestDTO extends Partial<CreateCalendarRequestDTO> {}
@@ -93,7 +92,7 @@ export class CalendarApi {
   /**
    * Event를 백엔드 요청으로 변환
    */
-  private eventToCalendarRequest(event: Partial<Event>): CreateCalendarRequestDTO | UpdateCalendarRequestDTO {
+  private eventToCalendarRequest(event: Partial<Event>): CreateCalendarRequestDTO & { groupId?: string } {
     // 날짜와 시간을 합쳐서 LocalDateTime으로 변환
     const eventDate = event.date ? new Date(event.date) : new Date();
     let startDateTime = eventDate;
@@ -382,14 +381,18 @@ export class CalendarApi {
   async createCalendar(eventData: Partial<Event>): Promise<ApiResponse<Event>> {
     try {
       const requestData = this.eventToCalendarRequest(eventData);
-
-      // groupId가 있으면 URL 파라미터로 추가
-      let endpoint = '/api/v1/calendars';
-      if (eventData.groupId) {
-        endpoint += `?groupId=${eventData.groupId}`;
+      
+      const { groupId, ...bodyData } = requestData;
+      
+      // 쿼리 파라미터 생성
+      const params = new URLSearchParams();
+      if (groupId) {
+        params.append('groupId', groupId);
       }
+      
+      const endpoint = `/api/v1/calendars${params.toString() ? `?${params.toString()}` : ''}`;
 
-      const response = await apiClient.post(endpoint, requestData);
+      const response = await apiClient.post(endpoint, bodyData);
 
       if (response.data) {
         const responseData = response.data.data || response.data;

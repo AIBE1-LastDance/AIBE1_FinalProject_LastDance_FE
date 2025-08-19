@@ -36,7 +36,7 @@ const EventModal: React.FC<EventModalProps> = ({
     category: 'general' as const,
     repeat: 'none',
     repeatEndDate: undefined,
-    groupId: mode === 'group' && currentGroup ? currentGroup.id : undefined,
+    groupId: mode === 'group' && currentGroup?.id ? currentGroup.id : undefined,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -66,9 +66,10 @@ const EventModal: React.FC<EventModalProps> = ({
   // 모드나 그룹이 변경될 때 groupId 업데이트
   useEffect(() => {
     if (!event) { // 새 일정 생성 모드일 때만
+      const newGroupId = mode === 'group' && currentGroup?.id ? currentGroup.id : undefined;
       setFormData(prev => ({
         ...prev,
-        groupId: mode === 'group' && currentGroup ? currentGroup.id : undefined,
+        groupId: newGroupId,
       }));
     }
   }, [mode, currentGroup, event]);
