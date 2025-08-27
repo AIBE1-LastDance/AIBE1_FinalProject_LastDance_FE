@@ -210,17 +210,11 @@ export const expenseAPI = {
         startDate: string;
         endDate: string;
     }) => {
-        const response = await apiClient.post<AnalyzeExpenseResponse>('/api/v1/expenses/analyze', params);
+        const response = await apiClient.post<AnalyzeExpenseResponse>('/api/v1/analysis/expenses', params);
         return response.data;
     },
 
-    saveAnalysis: async (requestDTO: { startDate: string; endDate: string; }, analysisResponseDTO: AnalyzeExpenseResponse) => {
-        const response = await apiClient.post('/api/v1/expenses/analyze/save', {
-            requestDTO,
-            analysisResponseDTO
-        });
-        return response.data;
-    },
+    
 
     // 저장된 AI 분석 목록 페이징 조회
     getSavedAnalysesPaginated: async (params: {
@@ -229,12 +223,12 @@ export const expenseAPI = {
         sortBy?: string;
         sortDirection?: 'asc' | 'desc';
     }) => {
-        const response = await apiClient.get<ExpenseAnalysisHistoryDTO[]>('/api/v1/expenses/analyze/history', { params });
+        const response = await apiClient.get<ExpenseAnalysisHistoryDTO[]>('/api/v1/analysis/expenses/history', { params });
         return response.data;
     },
 
     submitFeedback: async (historyId: number, type: 'up' | 'down' | null) => {
-        let url = `/api/v1/expenses/analyze/${historyId}/feedback`;
+        let url = `/api/v1/analysis/expenses/${historyId}/feedback`;
         // type이 null이면 빈 문자열로 보내고, 아니면 해당 type으로 보냄
         url += `?type=${type === null ? '' : type}`;
         console.log('Submitting feedback URL:', url); // 디버깅 로그 추가
