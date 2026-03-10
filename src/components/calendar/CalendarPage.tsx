@@ -238,7 +238,7 @@ const CalendarPage: React.FC = () => {
         <div className="flex flex-col xl:flex-row xl:items-center justify-between space-y-2 xl:space-y-0 mb-2">
           <div>
             <div className="flex flex-col lg:flex-row lg:items-center space-y-1 lg:space-y-0 lg:space-x-4">
-              <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 leading-tight">
+              <h1 className="text-2xl lg:text-3xl font-bold text-gray-500 leading-tight">
                 {mode === 'personal' ? '내 캘린더' : (
                     <div className="space-y-1">
                       <div className="text-base font-medium text-gray-500">
@@ -289,11 +289,12 @@ const CalendarPage: React.FC = () => {
                   onClick={() => setShowViewDropdown(!showViewDropdown)}
               >
                 <div className="flex items-center space-x-2">
-                  {viewOptions.find(option => option.value === currentView)?.icon && (
-                      React.createElement(viewOptions.find(option => option.value === currentView).icon,
-                          { className: "w-4 h-4 text-gray-400" }
-                      )
-                  )}
+                  {(() => {
+                      const currentViewOption = viewOptions.find(option => option.value === currentView);
+                      return currentViewOption
+                        ? React.createElement(currentViewOption.icon, { className: "w-4 h-4 text-gray-400" })
+                        : null;
+                  })()}
                   <span className="flex-1 text-left">
         {viewOptions.find(option => option.value === currentView)?.label}
       </span>
