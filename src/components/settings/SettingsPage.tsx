@@ -3,8 +3,13 @@ import {motion} from 'framer-motion';
 import {Settings, User, Bell, Save, Camera, Trash2, Wifi, WifiOff, Smartphone, TestTube, ArrowRight, Calendar, CreditCard, CheckSquare, Mail, Shield} from 'lucide-react';
 import {useAuthStore} from '../../store/authStore';
 import toast from 'react-hot-toast';
+
+const toastWarning = (message: string) => toast(message, {
+    icon: '⚠️',
+    style: { background: '#FEF3C7', color: '#92400E', border: '1px solid #F59E0B' },
+});
 import {profileApi} from "../../api/profile";
-import {notificationApi, NotificationSettingRequest} from "../../api/notifications";
+import {notificationApi} from "../../api/notifications";
 import {AdminAPI} from "../../api/admin";
 import Avatar from "../common/Avatar";
 import {useSSEStore} from "../../store/sseStore";
@@ -14,13 +19,6 @@ const SettingsPage: React.FC = () => {
     const {user, setProcessingAccountDeletion} = useAuthStore();
     const navigate = useNavigate();
     const {
-        isSSEConnected,
-        isWebPushSupported,
-        isWebPushSubscribed,
-        notificationPermission,
-        requestNotificationPermission,
-        subscribeToWebPush,
-        unsubscribeFromWebPush,
         connectSSE,
         disconnectSSE
     } = useSSEStore();
@@ -35,8 +33,6 @@ const SettingsPage: React.FC = () => {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [hasImageChange, setHasImageChange] = useState<boolean>(false);
     const [isSaving, setIsSaving] = useState(false);
-    const [isNotificationSaving, setIsNotificationSaving] = useState(false);
-
 
     // user가 변경될 때마다 profileData 업데이트
     useEffect(() => {
@@ -85,21 +81,17 @@ const SettingsPage: React.FC = () => {
         const loadNotificationSettings = async () => {
             try {
                 setNotificationLoading(true);
-                console.log('Loading notification settings started');
 
                 const data = await notificationApi.getMySettings();
-                console.log('API Response:', data);
 
                 setNotifications({
                     emailEnabled: data.emailEnabled || false,
                     scheduleReminder: data.scheduleReminder || false,
                     paymentReminder: data.paymentReminder || false,
                     checklistReminder: data.checklistReminder || false,
-                    webpushEnabled: data.webpushEnabled || false,
                     sseEnabled: data.sseEnabled ?? true,
                 });
 
-                console.log('Notification settings loaded successfully');
             } catch (error) {
                 console.error('Failed to load notification settings:', error);
                 toast.error('알림 설정을 불러오는데 실패했습니다.');
@@ -109,7 +101,6 @@ const SettingsPage: React.FC = () => {
                     scheduleReminder: false,
                     paymentReminder: false,
                     checklistReminder: false,
-                    webpushEnabled: false,
                     sseEnabled: true
                 });
             } finally {
@@ -202,7 +193,6 @@ const SettingsPage: React.FC = () => {
         scheduleReminder: true,
         paymentReminder: true,
         checklistReminder: true,
-        webpushEnabled: false,
         sseEnabled: true,
     });
     const [notificationLoading, setNotificationLoading] = useState(false);
@@ -211,7 +201,6 @@ const SettingsPage: React.FC = () => {
     const [isAdmin, setIsAdmin] = useState(false);
     const [adminCheckLoading, setAdminCheckLoading] = useState(true);
 
-    // 알림방식 변경을 감지하고 자동으로 세부 알림들을 조정하는 useEffect
     useEffect(() => {
         // SSE와 이메일이 모두 꺼져있으면 세부 알림들도 모두 끄기
         if (!notifications.sseEnabled && !notifications.emailEnabled) {
@@ -224,7 +213,7 @@ const SettingsPage: React.FC = () => {
         }
     }, [notifications.sseEnabled, notifications.emailEnabled]);
 
-    // SSE/웹푸시 특별 처리 함수
+    // SSE 특별 처리 함수
     const handleSpecialMethodToggle = async (methodKey: string, enabled: boolean) => {
         try {
             if (methodKey === 'sseEnabled') {
@@ -264,12 +253,12 @@ const SettingsPage: React.FC = () => {
                             connectSSE();
                             toast.success('실시간 알림이 활성화되었습니다.');
                         } else {
-                            toast.warning('실시간 알림 함수가 아직 준비되지 않았습니다. 잠시 후 다시 시도해주세요.');
+                            toast.error('실시간 알림 함수가 아직 준비되지 않았습니다. 잠시 후 다시 시도해주세요.');
                             console.warn('connectSSE 함수가 undefined입니다. useNotifications 훅이 아직 초기화되지 않았을 수 있습니다.');
                         }
                     } catch (sseError) {
                         console.error('SSE 연결 실패:', sseError);
-                        toast.warning('실시간 알림 설정은 저장되었지만 연결에 실패했습니다.');
+                        toastWarning('실시간 알림 설정은 저장되었지만 연결에 실패했습니다.');
                     }
                 } else {
                     try {
@@ -280,49 +269,11 @@ const SettingsPage: React.FC = () => {
                         
                         // SSE를 끌 때 이메일도 꺼져있다면 경고 메시지
                         if (!notifications.emailEnabled) {
-                            toast.warning('모든 알림방식이 꺼져서 세부 알림들이 자동으로 비활성화됩니다.');
+                            toastWarning('모든 알림방식이 꺼져서 세부 알림들이 자동으로 비활성화됩니다.');
                         }
                     } catch (sseError) {
                         console.error('SSE 해제 실패:', sseError);
                         // 해제 실패는 큰 문제가 아니므로 경고만 로그
-                    }
-                }
-            } else if (methodKey === 'webpushEnabled') {
-                if (enabled) {
-                    try {
-                        if (subscribeToWebPush) {
-                            const success = await subscribeToWebPush();
-                            if (success) {
-                                setNotifications(prev => ({ ...prev, webpushEnabled: true }));
-                                toast.success('웹푸시 알림이 활성화되었습니다.');
-                            } else {
-                                toast.error('웹푸시 알림 활성화에 실패했습니다.');
-                            }
-                        } else {
-                            toast.warning('웹푸시 함수가 아직 준비되지 않았습니다. 잠시 후 다시 시도해주세요.');
-                            console.warn('subscribeToWebPush 함수가 undefined입니다.');
-                        }
-                    } catch (pushError) {
-                        console.error('웹푸시 구독 실패:', pushError);
-                        toast.error('웹푸시 알림 설정에 실패했습니다.');
-                    }
-                } else {
-                    try {
-                        if (unsubscribeFromWebPush) {
-                            const success = await unsubscribeFromWebPush();
-                            if (success) {
-                                setNotifications(prev => ({ ...prev, webpushEnabled: false }));
-                                toast.success('웹푸시 알림이 비활성화되었습니다.');
-                            } else {
-                                toast.error('웹푸시 알림 비활성화에 실패했습니다.');
-                            }
-                        } else {
-                            toast.warning('웹푸시 함수가 아직 준비되지 않았습니다. 잠시 후 다시 시도해주세요.');
-                            console.warn('unsubscribeFromWebPush 함수가 undefined입니다.');
-                        }
-                    } catch (pushError) {
-                        console.error('웹푸시 구독 해제 실패:', pushError);
-                        toast.error('웹푸시 알림 해제에 실패했습니다.');
                     }
                 }
             }
@@ -337,20 +288,6 @@ const SettingsPage: React.FC = () => {
         {id: 'notifications', label: '알림', icon: Bell},
         ...(isAdmin ? [{id: 'admin', label: '관리자 페이지', icon: Shield}] : []),
     ];
-
-    // 디버깅용 로그 추가
-    console.log('Current user:', user);
-    console.log('User role:', user?.role);
-    console.log('Is admin (API check):', isAdmin);
-    console.log('Admin check loading:', adminCheckLoading);
-    console.log('SSE functions available:', {
-        connectSSE: !!connectSSE,
-        disconnectSSE: !!disconnectSSE,
-        subscribeToWebPush: !!subscribeToWebPush,
-        unsubscribeFromWebPush: !!unsubscribeFromWebPush
-    });
-    console.log('Current notifications state:', notifications);
-    console.log('Tabs:', tabs);
 
     const handleProfileChange = (field: string, value: string) => {
         if (field === 'monthlyBudget') {
@@ -469,7 +406,6 @@ const SettingsPage: React.FC = () => {
                 scheduleReminder: notifications.scheduleReminder,
                 paymentReminder: notifications.paymentReminder,
                 checklistReminder: notifications.checklistReminder,
-                webpushEnabled: notifications.webpushEnabled,
                 sseEnabled: notifications.sseEnabled,
             });
 
@@ -878,7 +814,7 @@ const SettingsPage: React.FC = () => {
                                                     
                                                     // 이메일을 끌 때 SSE도 꺼져있다면 경고 메시지
                                                     if (!enabled && !notifications.sseEnabled) {
-                                                        toast.warning('모든 알림방식이 꺼져서 세부 알림들이 자동으로 비활성화됩니다.');
+                                                        toastWarning('모든 알림방식이 꺼져서 세부 알림들이 자동으로 비활성화됩니다.');
                                                     }
                                                 }}
                                                 disabled={notificationLoading}
