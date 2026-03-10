@@ -470,8 +470,8 @@ export const useNotifications = () => {
             await apiClient.post('/api/v1/notifications/webpush/subscribe', subscriptionData);
             setWebPushSubscribed(true);
             try {
-                const currentSettings = await apiClient.get('/api/v1/notification-settings/me');
-                await apiClient.put('/api/v1/notification-settings/me', {
+                const currentSettings = await apiClient.get('/api/v2/notification-settings/me');
+                await apiClient.patch('/api/v2/notification-settings/me', {
                     ...currentSettings.data,
                     webpushEnabled: true
                 });
@@ -511,8 +511,8 @@ export const useNotifications = () => {
 
             // 👇 백엔드 설정도 업데이트
             try {
-                const currentSettings = await apiClient.get('/api/v1/notification-settings/me');
-                await apiClient.put('/api/v1/notification-settings/me', {
+                const currentSettings = await apiClient.get('/api/v2/notification-settings/me');
+                await apiClient.patch('/api/v2/notification-settings/me', {
                     ...currentSettings.data,
                     webpushEnabled: false
                 });
