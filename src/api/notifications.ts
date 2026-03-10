@@ -30,7 +30,7 @@ export const notificationApi = {
 
   // 내 알림 설정 수정
   updateMySettings: async (settings: NotificationSettingRequest): Promise<string> => {
-    const response = await apiClient.put('/api/v2/notification-settings/me', settings);
+    const response = await apiClient.patch('/api/v2/notification-settings/me', settings);
     return response.data;
   },
 };
