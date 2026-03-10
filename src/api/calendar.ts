@@ -1,5 +1,15 @@
 import { apiClient } from '../utils/api.ts';
 import { Event } from '../types';
+import axios from 'axios';
+
+// Axios 에러에서 메시지 추출하는 헬퍼
+const getErrorMessage = (error: unknown, fallback = 'Network error'): string => {
+  if (axios.isAxiosError(error)) {
+    return error.response?.data?.message || error.message || fallback;
+  }
+  if (error instanceof Error) return error.message;
+  return fallback;
+};
 
 // Axios 기반 API Response 타입
 export interface ApiResponse<T> {
@@ -40,8 +50,6 @@ export interface CreateCalendarRequestDTO {
   repeatType?: string;
   repeatEndDate?: string;
 }
-
-export interface UpdateCalendarRequestDTO extends Partial<CreateCalendarRequestDTO> {}
 
 export interface CalendarsQuery {
   viewType?: 'YEARLY' | 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'NONE';
@@ -136,7 +144,7 @@ export class CalendarApi {
   /**
    * 백엔드 응답을 Event로 안전하게 변환
    */
-  private calendarToEvent(calendar: any): Event {
+  private calendarToEvent(calendar: CalendarResponseDTO & { exceptionDates?: (string | Date)[]; originalEventId?: string; isRepeated?: boolean }): Event {
     // 안전한 필드 접근
     const safeId = calendar?.calendarId?.toString() || `temp-${Date.now()}`;
     const safeTitle = calendar?.title || '제목 없음';
@@ -155,7 +163,7 @@ export class CalendarApi {
     // exceptionDates 처리
     let processedExceptionDates: string[] = [];
     if (calendar?.exceptionDates && Array.isArray(calendar.exceptionDates)) {
-      processedExceptionDates = calendar.exceptionDates.map((date: any) => {
+      processedExceptionDates = calendar.exceptionDates.map((date: string | Date) => {
         if (typeof date === 'string') {
           return date;
         } else {
@@ -270,24 +278,25 @@ export class CalendarApi {
   /**
    * 안전한 배열 처리 함수
    */
-  private ensureArray<T>(data: any): T[] {
+  private ensureArray<T>(data: unknown): T[] {
     if (Array.isArray(data)) {
-      return data;
+      return data as T[];
     }
 
     if (data && typeof data === 'object') {
+      const obj = data as Record<string, unknown>;
       // 백엔드에서 페이징된 응답을 보내는 경우
-      if (data.content && Array.isArray(data.content)) {
-        return data.content;
+      if (obj.content && Array.isArray(obj.content)) {
+        return obj.content as T[];
       }
 
       // 백엔드에서 data 필드에 배열을 감싸서 보내는 경우
-      if (data.data && Array.isArray(data.data)) {
-        return data.data;
+      if (obj.data && Array.isArray(obj.data)) {
+        return obj.data as T[];
       }
 
       // 단일 객체인 경우 배열로 감싸기
-      return [data];
+      return [data as T];
     }
 
     // null, undefined, 기타 값인 경우 빈 배열 반환
@@ -314,7 +323,7 @@ export class CalendarApi {
       }
     });
 
-    const endpoint = `/api/v1/calendars/me${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+    const endpoint = `/api/v2/calendars/me${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
 
     try {
       const response = await apiClient.get(endpoint);
@@ -336,12 +345,12 @@ export class CalendarApi {
         data: [],
         error: 'No data received'
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[CalendarApi] Exception in getMyCalendars:', error);
       return {
         success: false,
         data: [],
-        error: error.response?.data?.message || error.message || 'Network error'
+        error: getErrorMessage(error)
       };
     }
   }
@@ -351,7 +360,7 @@ export class CalendarApi {
    */
   async getCalendar(calendarId: string): Promise<ApiResponse<Event>> {
     try {
-      const response = await apiClient.get(`/api/v1/calendars/${calendarId}`);
+      const response = await apiClient.get(`/api/v2/calendars/${calendarId}`);
 
       if (response.data) {
         const responseData = response.data.data || response.data;
@@ -367,10 +376,10 @@ export class CalendarApi {
         success: false,
         error: 'No data received'
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.response?.data?.message || error.message || 'Network error'
+        error: getErrorMessage(error)
       };
     }
   }
@@ -383,14 +392,14 @@ export class CalendarApi {
       const requestData = this.eventToCalendarRequest(eventData);
       
       const { groupId, ...bodyData } = requestData;
-      
+
       // 쿼리 파라미터 생성
       const params = new URLSearchParams();
       if (groupId) {
         params.append('groupId', groupId);
       }
       
-      const endpoint = `/api/v1/calendars${params.toString() ? `?${params.toString()}` : ''}`;
+      const endpoint = `/api/v2/calendars${params.toString() ? `?${params.toString()}` : ''}`;
 
       const response = await apiClient.post(endpoint, bodyData);
 
@@ -416,10 +425,10 @@ export class CalendarApi {
         success: false,
         error: 'No data received'
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       return {
         success: false,
-        error: error.response?.data?.message || error.message || 'Network error'
+        error: getErrorMessage(error)
       };
     }
   }
@@ -430,9 +439,11 @@ export class CalendarApi {
   async updateCalendar(calendarId: string, eventData: Partial<Event>): Promise<ApiResponse<Event>> {
     try {
       const requestData = this.eventToCalendarRequest(eventData);
-      console.log('[CalendarApi] Updating calendar with data:', requestData);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { groupId, ...bodyData } = requestData;
+      console.log('[CalendarApi] Updating calendar with data:', bodyData);
 
-      const response = await apiClient.patch(`/api/v1/calendars/${calendarId}`, requestData);
+      const response = await apiClient.patch(`/api/v2/calendars/${calendarId}`, bodyData);
 
       if (response.data) {
         const responseData = response.data.data || response.data;
@@ -448,11 +459,11 @@ export class CalendarApi {
         success: false,
         error: 'No data received'
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[CalendarApi] Exception in updateCalendar:', error);
       return {
         success: false,
-        error: error.response?.data?.message || error.message || 'Network error'
+        error: getErrorMessage(error)
       };
     }
   }
@@ -462,7 +473,7 @@ export class CalendarApi {
    */
   async deleteCalendar(calendarId: string): Promise<ApiResponse<void>> {
     try {
-      const endpoint = `/api/v1/calendars/${calendarId}`;
+      const endpoint = `/api/v2/calendars/${calendarId}`;
       console.log('[CalendarApi] Deleting calendar:', endpoint);
 
       const response = await apiClient.delete(endpoint);
@@ -471,11 +482,11 @@ export class CalendarApi {
         success: true,
         message: response.data?.message || 'Calendar deleted successfully'
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[CalendarApi] Exception in deleteCalendar:', error);
       return {
         success: false,
-        error: error.response?.data?.message || error.message || 'Network error'
+        error: getErrorMessage(error)
       };
     }
   }
@@ -500,7 +511,7 @@ export class CalendarApi {
       }
     });
 
-    const endpoint = `/api/v1/calendars/groups/${groupId}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+    const endpoint = `/api/v2/calendars/groups/${groupId}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
 
     try {
       const response = await apiClient.get(endpoint);
@@ -520,12 +531,12 @@ export class CalendarApi {
         data: [],
         error: 'No data received'
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[CalendarApi] Exception in getGroupCalendars:', error);
       return {
         success: false,
         data: [],
-        error: error.response?.data?.message || error.message || 'Network error'
+        error: getErrorMessage(error)
       };
     }
   }
@@ -589,18 +600,19 @@ export class CalendarApi {
   /**
    * API 상태 확인 (디버깅용)
    */
-  async healthCheck(): Promise<ApiResponse<any>> {
+  async healthCheck(): Promise<ApiResponse<unknown>> {
     try {
       const response = await apiClient.get('/api/health');
       return {
         success: true,
         data: response.data
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Health check failed';
       console.error('[CalendarApi] Health check failed:', error);
       return {
         success: false,
-        error: error.response?.data?.message || error.message || 'Health check failed'
+        error: message
       };
     }
   }
