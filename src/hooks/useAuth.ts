@@ -45,7 +45,7 @@ export const useAuth = () => {
         try {
             setIsLoading(true);
             console.log('사용자 정보 요청 시작')
-            const response = await apiClient.get('/api/v1/auth/me');
+            const response = await apiClient.get('/api/v2/auth/me');
             // console.log('/me 응답: ', response.status, response.data);
             const userData = response.data;
             // HTML 응답인지 확인
@@ -91,7 +91,7 @@ export const useAuth = () => {
     const logout = async () => {
         try {
             setIsLoading(true);
-            await apiClient.post('/api/v1/auth/logout', {}, { timeout: 5000 });
+            await apiClient.post('/api/v2/auth/logout', {}, { timeout: 5000 });
             console.log('서버 로그아웃 요청 성공');
         } catch (error) {
             console.error('로그아웃 실패: ', error);
