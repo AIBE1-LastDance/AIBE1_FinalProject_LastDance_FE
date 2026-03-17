@@ -14,6 +14,8 @@ interface ExpenseModalProps {
 }
 
 const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
+  // console.log('expense 객체: ', expense?.expenseType, expense);
+
     const {addExpense, updateExpense, deleteExpense, mode, currentGroup} = useAppStore();
     const {user} = useAuthStore();
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -652,7 +654,7 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
 
             {/* Buttons */}
             <div className="flex space-x-3 pt-4">
-              {expense && !expense.isGroupShare && (
+              {expense && expense.expenseType !== 'SHARE' && (
                 <motion.button
                   type="button"
                   className={`px-4 py-2 border border-red-300 text-red-700 rounded-lg font-medium transition-colors ${
@@ -677,7 +679,7 @@ const ExpenseModal: React.FC<ExpenseModalProps> = ({expense, onClose}) => {
                 </motion.button>
               )}
 
-              {!expense?.isGroupShare && (
+              {expense?.expenseType !== 'SHARE' && (
                 <motion.button
                   type="submit"
                   className={`flex-1 px-4 py-2 bg-accent-500 text-white rounded-lg font-medium transition-colors ${
