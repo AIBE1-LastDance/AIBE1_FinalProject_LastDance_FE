@@ -327,10 +327,8 @@ export const useCalendar = (options: UseCalendarOptions = {}): UseCalendarReturn
     // 특정 날짜의 이벤트 필터링
     const getEventsForDate = useCallback((date: Date): Event[] => {
         const targetDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-        const targetDateString = targetDate.toISOString().split('T')[0]; // YYYY-MM-DD 형식
 
         const filteredEvents = events.filter(event => {
-
             const eventStartDate = event.date instanceof Date ? new Date(event.date) : new Date(event.date);
             const eventStart = new Date(eventStartDate.getFullYear(), eventStartDate.getMonth(), eventStartDate.getDate());
 
@@ -339,90 +337,20 @@ export const useCalendar = (options: UseCalendarOptions = {}): UseCalendarReturn
                 eventStartDate;
             const eventEnd = new Date(eventEndDate.getFullYear(), eventEndDate.getMonth(), eventEndDate.getDate());
 
-            // 반복 설정이 없는 경우
-            if (!event.repeat || event.repeat === 'none') {
-                return targetDate >= eventStart && targetDate <= eventEnd;
-            }
-
-            // 반복 일정 처리
-            if (targetDate < eventStart) {
-                return false;
-            }
-
-            // 반복 종료일 확인
-            if (event.repeatEndDate) {
-                const repeatEndDate = event.repeatEndDate instanceof Date ?
-                    new Date(event.repeatEndDate) :
-                    new Date(event.repeatEndDate);
-                const repeatEnd = new Date(repeatEndDate.getFullYear(), repeatEndDate.getMonth(), repeatEndDate.getDate());
-
-                if (targetDate > repeatEnd) {
-                    return false;
-                }
-            }
-
-            // 예외 날짜(exceptionDates) 확인 - 이 날짜들은 제외
-            if (event.exceptionDates && Array.isArray(event.exceptionDates) && event.exceptionDates.length > 0) {
-                
-                // 예외 날짜 배열에서 해당 날짜가 있는지 확인
-                const isExceptionDate = event.exceptionDates.some(exceptionDate => {
-                    // exceptionDate가 "2025-06-24T09:00:00" 형식인 경우 날짜 부분만 추출
-                    let exceptionDateString;
-                    if (typeof exceptionDate === 'string') {
-                        exceptionDateString = exceptionDate.split('T')[0];
-                    } else {
-                        exceptionDateString = new Date(exceptionDate).toISOString().split('T')[0];
-                    }
-                    
-                    return exceptionDateString === targetDateString;
-                });
-                
-                if (isExceptionDate) {
-                    return false; // 예외 날짜이므로 해당 날짜에는 표시하지 않음
-                }
-            }
-
-            // 반복 패턴 확인
-            let patternMatch = false;
-            switch (event.repeat) {
-                case 'daily':
-                    patternMatch = true;
-                    break;
-                case 'weekly':
-                    patternMatch = eventStart.getDay() === targetDate.getDay();
-                    break;
-                case 'monthly':
-                    const startDay = eventStart.getDate();
-                    const targetDay = targetDate.getDate();
-                    const lastDayOfTargetMonth = new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 0).getDate();
-                    const adjustedStartDay = startDay > lastDayOfTargetMonth ? lastDayOfTargetMonth : startDay;
-                    patternMatch = targetDay === adjustedStartDay;
-                    break;
-                case 'yearly':
-                    patternMatch = eventStart.getMonth() === targetDate.getMonth() &&
-                        eventStart.getDate() === targetDate.getDate();
-                    break;
-                default:
-                    patternMatch = false;
-            }
-
-            return patternMatch;
+            // 백엔드가 이미 반복 일정을 확장해서 인스턴스로 보내주므로
+            // 프론트에서는 단순히 날짜 범위만 체크
+            return targetDate >= eventStart && targetDate <= eventEnd;
         });
 
-        // 중복 제거: 같은 제목, 시간, 카테고리를 가진 이벤트들을 하나로 합치기
+        // 중복 제거
         const uniqueEvents = filteredEvents.reduce((acc: Event[], current: Event) => {
-            const duplicate = acc.find(event => 
-                event.title === current.title &&
-                event.startTime === current.startTime &&
-                event.endTime === current.endTime &&
-                event.category === current.category &&
-                event.isAllDay === current.isAllDay
+            const duplicate = acc.find(event =>
+                event.id === current.id &&
+                event.startTime === current.startTime
             );
-
             if (!duplicate) {
                 acc.push(current);
             }
-
             return acc;
         }, []);
 
