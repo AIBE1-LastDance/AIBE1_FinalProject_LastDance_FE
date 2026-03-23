@@ -106,7 +106,7 @@ class SSEManager {
         sseDebugger.log('SSE 연결 시작', { userId }, userId);
 
         const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
-        this.eventSource = new EventSource(`${apiBaseUrl}/api/v1/notifications/stream`, {
+        this.eventSource = new EventSource(`${apiBaseUrl}/api/v2/notifications/stream`, {
             withCredentials: true
         });
 
