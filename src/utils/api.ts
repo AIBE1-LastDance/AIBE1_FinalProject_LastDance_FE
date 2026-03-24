@@ -72,7 +72,7 @@ const shouldSkipUnauthorizedHandling = (url: string, method: string) => {
 
   // 계정삭제 API
   const isAccountDeletion =
-    url?.includes("/api/v1/users/me") && method === "delete";
+    url?.includes("/api/v2/users/me") && method === "delete";
 
   const isMainRoot = currentPath === "/";
 
@@ -85,7 +85,7 @@ const shouldSkipUnauthorizedHandling = (url: string, method: string) => {
 const handleRefreshToken = async (originalRequest: any) => {
   try {
     // 한번만 refresh 시도
-    await apiClient.post("/api/v1/auth/refresh");
+    await apiClient.post("/api/v2/auth/refresh");
     isHandling401 = false;
     // 성공하면 원래 요청 재시도
     return apiClient(originalRequest);

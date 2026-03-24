@@ -57,7 +57,7 @@ export const expenseAPI = {
                 splitType: data.splitType,
                 splitData: data.splitData,
             };
-            endpoint = '/api/v1/expenses/group';
+            endpoint = '/api/v2/expenses/group';
         } else {
             expenseData = {
                 title: data.title,
@@ -66,7 +66,7 @@ export const expenseAPI = {
                 date: data.date,
                 memo: data.memo,
             };
-            endpoint = '/api/v1/expenses/personal';
+            endpoint = '/api/v2/expenses/personal';
         }
 
         formData.append('expense', new Blob([JSON.stringify(expenseData)], {
@@ -91,7 +91,7 @@ export const expenseAPI = {
         year: number;
         month: number;
     }) => {
-        const response = await apiClient.get('/api/v1/expenses/group/shares', { params });
+        const response = await apiClient.get('/api/v2/expenses/group/shares', { params });
         return response.data;
     },
 
@@ -104,7 +104,7 @@ export const expenseAPI = {
         category?: string;
         search?: string;
     }) => {
-        const response = await apiClient.get(`/api/v1/expenses/group/${groupId}/shares/paging`, { params });
+        const response = await apiClient.get(`/api/v2/expenses/group/${groupId}/shares/paging`, { params });
         return response.data;
     },
 
@@ -117,7 +117,7 @@ export const expenseAPI = {
         category?: string;
         search?: string;
     }) => {
-        const response = await apiClient.get('/api/v1/expenses/personal/combined', {params});
+        const response = await apiClient.get('/api/v2/expenses/personal/combined', {params});
         return response.data;
     },
 
@@ -130,7 +130,7 @@ export const expenseAPI = {
         category?: string;
         search?: string;
     }) => {
-        const response = await apiClient.get(`/api/v1/expenses/group/${groupId}/with-stats`, {params});
+        const response = await apiClient.get(`/api/v2/expenses/group/${groupId}/with-stats`, {params});
         return response.data;
     },
 
@@ -157,7 +157,7 @@ export const expenseAPI = {
             formData.append('receiptFile', data.receipt);
         }
 
-        const response = await apiClient.patch(`/api/v1/expenses/${id}`, formData, {
+        const response = await apiClient.patch(`/api/v2/expenses/${id}`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data'
             }
@@ -167,19 +167,19 @@ export const expenseAPI = {
 
     // 지출 삭제
     delete: async (id: number) => {
-        const response = await apiClient.delete(`/api/v1/expenses/${id}`);
+        const response = await apiClient.delete(`/api/v2/expenses/${id}`);
         return response.data;
     },
 
     // 영수증 URL 조회
     getReceiptUrl: async (id: number) => {
-        const response = await apiClient.get(`/api/v1/expenses/${id}/receipt`);
+        const response = await apiClient.get(`/api/v2/expenses/${id}/receipt`);
         return response.data;
     },
 
     // 영수증만 삭제
     deleteReceipt: async (id: number) => {
-        const response = await apiClient.delete(`/api/v1/expenses/${id}/receipt`);
+        const response = await apiClient.delete(`/api/v2/expenses/${id}/receipt`);
         return response.data;
     },
 
@@ -190,7 +190,7 @@ export const expenseAPI = {
         months?: number;
         category?: string;
     }) => {
-        const response = await apiClient.get('/api/v1/expenses/personal/trend', { params });
+        const response = await apiClient.get('/api/v2/expenses/personal/trend', { params });
         return response.data;
     },
 
@@ -201,7 +201,7 @@ export const expenseAPI = {
         months?: number;
         category?: string;
     }) => {
-        const response = await apiClient.get(`/api/v1/expenses/group/${groupId}/trend`, { params });
+        const response = await apiClient.get(`/api/v2/expenses/group/${groupId}/trend`, { params });
         return response.data;
     },
 
