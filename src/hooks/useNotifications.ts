@@ -293,44 +293,17 @@ export const useNotifications = () => {
     // 🔥 중복 실행 방지를 위한 ref
     const initializationRef = useRef(false);
 
-    // SSE 연결 함수 (전역 관리자를 통해) - 설정 확인 후 연결
-    const connectSSE = useCallback(async () => {
+    // SSE 연결 함수 - sseEnabled 여부는 호출부(SettingsPage)에서 판단하므로 여기선 바로 연결
+    const connectSSE = useCallback(() => {
         const currentUser = useAuthStore.getState().user;
         if (!currentUser?.id) return;
-
-        try {
-            // 🔥 연결 전에 사용자의 SSE 설정 확인
-            const settings = await notificationApi.getMySettings();
-            if (!settings.sseEnabled) {
-                console.log('[connectSSE] SSE가 비활성화되어 있어 연결하지 않음');
-                return;
-            }
-        } catch (error) {
-            console.error('[connectSSE] 설정 확인 실패:', error);
-            // 설정 확인 실패 시에는 기본적으로 연결 시도
-        }
-
         sseManager.connect(currentUser.id);
-        updateSSESetting(true);
     }, [sseManager]);
 
-    // SSE 연결 해제 함수 (전역 관리자를 통해)
+    // SSE 연결 해제 함수
     const disconnectSSE = useCallback(() => {
         sseManager.disconnect();
-        updateSSESetting(false);
     }, [sseManager]);
-
-    const updateSSESetting = async (enabled: boolean) => {
-        try {
-            const currentSettings = await notificationApi.getMySettings();
-            await notificationApi.updateMySettings({
-                ...currentSettings,
-                sseEnabled: enabled
-            });
-        } catch (error) {
-            console.error('SSE 설정 업데이트 실패:', error);
-        }
-    };
 
     // 알림 권한 요청
     const requestNotificationPermission = useCallback(async (): Promise<boolean> => {
@@ -405,16 +378,21 @@ export const useNotifications = () => {
 
         if (user?.id) {
             console.log('[useNotifications] 사용자 로그인됨, SSE 연결 확인/시작');
-            sseDebugger.log('사용자 로그인됨 - SSE 연결 확인', {
-                userId: user.id,
-                currentSSEUser: sseManager.getCurrentUserId(),
-                isConnected: sseManager.isConnected()
-            }, user.id);
 
-            // 현재 연결된 사용자와 다르면 설정 확인 후 연결
             if (sseManager.getCurrentUserId() !== user.id) {
-                sseDebugger.log('SSE 연결 호출 (설정 확인 후)', { userId: user.id }, user.id);
-                connectSSE(); // 이제 내부에서 설정을 확인함
+                // 로그인 시 SSE 설정을 확인한 후 연결
+                notificationApi.getMySettings()
+                    .then(settings => {
+                        if (settings.sseEnabled) {
+                            sseManager.connect(user.id);
+                        } else {
+                            console.log('[useNotifications] SSE 비활성화 상태 — 연결 생략');
+                        }
+                    })
+                    .catch(() => {
+                        // 설정 조회 실패 시 기본적으로 연결 시도
+                        sseManager.connect(user.id);
+                    });
             }
         } else {
             console.log('[useNotifications] 사용자 로그아웃됨, SSE 연결 해제');

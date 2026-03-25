@@ -213,73 +213,33 @@ const SettingsPage: React.FC = () => {
         }
     }, [notifications.sseEnabled, notifications.emailEnabled]);
 
-    // SSE 특별 처리 함수
+    // SSE 토글 처리 — 로컬 state를 기준으로 API 1번만 호출
     const handleSpecialMethodToggle = async (methodKey: string, enabled: boolean) => {
+        if (methodKey !== 'sseEnabled') return;
+
+        // 1. 낙관적 UI 업데이트
+        setNotifications(prev => ({ ...prev, sseEnabled: enabled }));
+
+        // 2. DB 저장 — 이미 가진 state를 그대로 사용하므로 getMySettings() 추가 호출 없음
         try {
-            if (methodKey === 'sseEnabled') {
-                // 먼저 상태 업데이트
-                setNotifications(prev => ({ ...prev, sseEnabled: enabled }));
+            await notificationApi.updateMySettings({ ...notifications, sseEnabled: enabled });
+        } catch (apiError) {
+            console.error('알림 설정 업데이트 실패:', apiError);
+            toast.error('알림 설정 저장에 실패했습니다. 다시 시도해주세요.');
+            setNotifications(prev => ({ ...prev, sseEnabled: !enabled })); // 롤백
+            return;
+        }
 
-                // API 호출 전에 현재 설정 가져오기
-                let currentSettings;
-                try {
-                    currentSettings = await notificationApi.getMySettings();
-                } catch (apiError) {
-                    console.error('알림 설정 조회 실패:', apiError);
-                    toast.error('알림 설정을 불러오는데 실패했습니다. 다시 시도해주세요.');
-                    // 상태 되돌리기
-                    setNotifications(prev => ({ ...prev, sseEnabled: !enabled }));
-                    return;
-                }
-
-                // API 업데이트
-                try {
-                    await notificationApi.updateMySettings({
-                        ...currentSettings,
-                        sseEnabled: enabled
-                    });
-                } catch (apiError) {
-                    console.error('알림 설정 업데이트 실패:', apiError);
-                    toast.error('알림 설정 저장에 실패했습니다. 다시 시도해주세요.');
-                    // 설정 되돌리기
-                    setNotifications(prev => ({ ...prev, sseEnabled: !enabled }));
-                    return;
-                }
-
-                // SSE 연결/해제 처리
-                if (enabled) {
-                    try {
-                        if (connectSSE) {
-                            connectSSE();
-                            toast.success('실시간 알림이 활성화되었습니다.');
-                        } else {
-                            toast.error('실시간 알림 함수가 아직 준비되지 않았습니다. 잠시 후 다시 시도해주세요.');
-                            console.warn('connectSSE 함수가 undefined입니다. useNotifications 훅이 아직 초기화되지 않았을 수 있습니다.');
-                        }
-                    } catch (sseError) {
-                        console.error('SSE 연결 실패:', sseError);
-                        toastWarning('실시간 알림 설정은 저장되었지만 연결에 실패했습니다.');
-                    }
-                } else {
-                    try {
-                        if (disconnectSSE) {
-                            disconnectSSE();
-                        }
-                        toast.success('실시간 알림이 비활성화되었습니다.');
-                        
-                        // SSE를 끌 때 이메일도 꺼져있다면 경고 메시지
-                        if (!notifications.emailEnabled) {
-                            toastWarning('모든 알림방식이 꺼져서 세부 알림들이 자동으로 비활성화됩니다.');
-                        }
-                    } catch (sseError) {
-                        console.error('SSE 해제 실패:', sseError);
-                        // 해제 실패는 큰 문제가 아니므로 경고만 로그
-                    }
-                }
+        // 3. 실제 SSE 연결/해제
+        if (enabled) {
+            connectSSE?.();
+            toast.success('실시간 알림이 활성화되었습니다.');
+        } else {
+            disconnectSSE?.();
+            toast.success('실시간 알림이 비활성화되었습니다.');
+            if (!notifications.emailEnabled) {
+                toastWarning('모든 알림방식이 꺼져서 세부 알림들이 자동으로 비활성화됩니다.');
             }
-        } catch (error) {
-            console.error('알림 설정 처리 중 예상치 못한 오류:', error);
-            toast.error('알림 설정 처리 중 오류가 발생했습니다. 페이지를 새로고침 후 다시 시도해주세요.');
         }
     };
 
@@ -408,6 +368,13 @@ const SettingsPage: React.FC = () => {
                 checklistReminder: notifications.checklistReminder,
                 sseEnabled: notifications.sseEnabled,
             });
+
+            // SSE 설정 변경 시 실제 연결 상태도 반영
+            if (notifications.sseEnabled) {
+                connectSSE?.();
+            } else {
+                disconnectSSE?.();
+            }
 
             // 전역상태 업데이트
             const {updateUser} = useAuthStore.getState();
