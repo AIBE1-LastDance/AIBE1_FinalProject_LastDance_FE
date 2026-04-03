@@ -166,15 +166,7 @@ self.addEventListener('notificationclick', event => {
         event.waitUntil(handleAction());
     }
     
-    // 알림 읽음 처리 (선택사항)
-    if (event.notification.data?.notificationId) {
-        fetch(`/api/v1/notifications/read/${event.notification.data.notificationId}`, {
-            method: 'POST',
-            credentials: 'include'
-        }).catch(error => {
-            console.error('알림 읽음 처리 실패:', error);
-        });
-    }
+
 });
 
 // 백그라운드 동기화 (선택사항)
